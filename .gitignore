@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Documentation de développement (garder README.md et docs/)
+ADMIN_*.md
+DEMO_CREDENTIALS.md
+REPONSE_ERREURS_ADMIN.md
+PROJECT_SETUP.md

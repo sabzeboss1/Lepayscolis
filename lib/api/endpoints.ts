@@ -1,0 +1,195 @@
+/**
+ * API Endpoints mapping for Le Pays Express Colis
+ * Centralized endpoint definitions for type safety and maintainability
+ */
+
+export const API_ENDPOINTS = {
+  // ============================================================================
+  // Authentication Endpoints
+  // ============================================================================
+  auth: {
+    csrf: '/sanctum/csrf-cookie',
+    login: '/api/auth/login',
+    register: '/api/auth/register',
+    logout: '/api/auth/logout',
+    me: '/api/auth/me',
+    updateProfile: '/api/user',
+  },
+
+  // ============================================================================
+  // KYC Endpoints
+  // ============================================================================
+  kyc: {
+    submit: '/api/kyc/submit',
+    status: '/api/kyc/status',
+  },
+
+  // ============================================================================
+  // Trip Endpoints
+  // ============================================================================
+  trips: {
+    list: '/api/trips',
+    create: '/api/trips',
+    show: (id: string) => `/api/trips/${id}`,
+    update: (id: string) => `/api/trips/${id}`,
+    delete: (id: string) => `/api/trips/${id}`,
+    my: '/api/trips/my',
+    search: '/api/trips/search',
+  },
+
+  // ============================================================================
+  // Shipment Endpoints
+  // ============================================================================
+  shipments: {
+    list: '/api/shipments',
+    create: '/api/shipments',
+    show: (id: string) => `/api/shipments/${id}`,
+    update: (id: string) => `/api/shipments/${id}`,
+    my: '/api/shipments/my',
+    accept: (id: string) => `/api/shipments/${id}/accept`,
+    cancel: (id: string) => `/api/shipments/${id}/cancel`,
+    updateStatus: (id: string) => `/api/shipments/${id}/status`,
+  },
+
+  // ============================================================================
+  // Message Endpoints
+  // ============================================================================
+  messages: {
+    conversations: '/api/messages/conversations',
+    list: '/api/messages',
+    send: '/api/messages',
+    markRead: (id: string) => `/api/messages/${id}/read`,
+  },
+
+  // ============================================================================
+  // Payment Endpoints
+  // ============================================================================
+  payments: {
+    createCheckout: '/api/payments/create-checkout',
+    webhook: '/api/webhooks/stripe',
+  },
+
+  // ============================================================================
+  // Wallet Endpoints
+  // ============================================================================
+  wallet: {
+    balance: '/api/wallet',
+    transactions: '/api/wallet/transactions',
+  },
+
+  // ============================================================================
+  // Withdrawal Endpoints
+  // ============================================================================
+  withdrawals: {
+    create: '/api/withdrawals',
+    list: '/api/withdrawals',
+    show: (id: string) => `/api/withdrawals/${id}`,
+  },
+
+  // ============================================================================
+  // Rating Endpoints
+  // ============================================================================
+  ratings: {
+    submit: '/api/ratings',
+    list: (userId: string) => `/api/users/${userId}/ratings`,
+  },
+
+  // ============================================================================
+  // Notification Endpoints
+  // ============================================================================
+  notifications: {
+    list: '/api/notifications',
+    markRead: (id: string) => `/api/notifications/${id}/read`,
+    markAllRead: '/api/notifications/read-all',
+  },
+
+  // ============================================================================
+  // Admin Endpoints
+  // ============================================================================
+  admin: {
+    login: '/api/admin/login',
+    dashboard: '/api/admin/dashboard',
+    
+    users: {
+      list: '/api/admin/users',
+      show: (id: string) => `/api/admin/users/${id}`,
+      suspend: (id: string) => `/api/admin/users/${id}/suspend`,
+      unsuspend: (id: string) => `/api/admin/users/${id}/unsuspend`,
+    },
+    
+    kyc: {
+      list: '/api/admin/kyc',
+      show: (id: string) => `/api/admin/kyc/${id}`,
+      approve: (id: string) => `/api/admin/kyc/${id}/approve`,
+      reject: (id: string) => `/api/admin/kyc/${id}/reject`,
+    },
+    
+    withdrawals: {
+      list: '/api/admin/withdrawals',
+      show: (id: string) => `/api/admin/withdrawals/${id}`,
+      approve: (id: string) => `/api/admin/withdrawals/${id}/approve`,
+      reject: (id: string) => `/api/admin/withdrawals/${id}/reject`,
+    },
+    
+    trips: {
+      list: '/api/admin/trips',
+      show: (id: string) => `/api/admin/trips/${id}`,
+      cancel: (id: string) => `/api/admin/trips/${id}/cancel`,
+    },
+    
+    shipments: {
+      list: '/api/admin/shipments',
+      show: (id: string) => `/api/admin/shipments/${id}`,
+      cancel: (id: string) => `/api/admin/shipments/${id}/cancel`,
+    },
+    
+    payments: {
+      list: '/api/admin/payments',
+      show: (id: string) => `/api/admin/payments/${id}`,
+    },
+    
+    messages: {
+      list: '/api/admin/messages',
+      show: (id: string) => `/api/admin/messages/${id}`,
+    },
+    
+    ratings: {
+      list: '/api/admin/ratings',
+      show: (id: string) => `/api/admin/ratings/${id}`,
+    },
+    
+    analytics: '/api/admin/analytics',
+    
+    settings: {
+      get: '/api/admin/settings',
+      update: '/api/admin/settings',
+    },
+    
+    notifications: {
+      list: '/api/admin/notifications',
+      send: '/api/admin/notifications',
+    },
+    
+    auditLogs: {
+      list: '/api/admin/audit-logs',
+    },
+  },
+} as const;
+
+/**
+ * Helper type to extract endpoint paths
+ */
+export type EndpointPath = string | ((id: string) => string);
+
+/**
+ * Helper function to build endpoint with parameters
+ */
+export function buildEndpoint(endpoint: EndpointPath, id?: string): string {
+  if (typeof endpoint === 'function') {
+    if (!id) {
+      throw new Error('ID parameter is required for this endpoint');
+    }
+    return endpoint(id);
+  }
+  return endpoint;
+}
