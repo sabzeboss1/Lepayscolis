@@ -1,11 +1,100 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Le Pays Express Colis - Backend API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 11 REST API backend for Le Pays Express Colis, a peer-to-peer platform connecting travelers who can transport packages with senders who need to ship items internationally.
+
+## Technology Stack
+
+- **Framework**: Laravel 11.x
+- **PHP**: 8.2+
+- **Database**: MySQL 8.0+ / PostgreSQL 14+
+- **Cache & Queues**: Redis
+- **Authentication**: Laravel Sanctum
+- **File Storage**: AWS S3
+- **Payments**: Stripe (PaymentIntent + Connect)
+- **Real-time**: Pusher (WebSocket)
+- **Testing**: PHPUnit + Eris (Property-Based Testing)
+
+## Key Features
+
+- 🔐 **Authentication**: Secure token-based API authentication with Laravel Sanctum
+- ✅ **KYC Verification**: Identity verification system with document upload
+- 🚗 **Trip Management**: Travelers can publish trips with available capacity
+- 📦 **Shipment Tracking**: Senders can create and track package deliveries
+- 💬 **Real-time Messaging**: WebSocket-based messaging between users
+- ⭐ **Rating System**: User reputation and feedback management
+- 💳 **Escrow Payments**: Secure payment processing with Stripe
+- 📧 **Multi-channel Notifications**: Email, push, and WebSocket notifications
+
+## Property-Based Testing
+
+This project uses **Eris** for property-based testing, providing comprehensive test coverage through automatic test case generation. The project includes **112 properties** that validate universal rules across all features.
+
+### Running Property Tests
+
+```bash
+# Run all tests (including property tests)
+php artisan test
+
+# Run only property-based tests
+php artisan test --filter=PropertyBased
+
+# Run verification tests
+php artisan test --filter=ErisVerificationTest
+```
+
+### Documentation
+
+- [Property-Based Testing Guide](docs/PROPERTY_BASED_TESTING_GUIDE.md) - Complete guide to using Eris
+- [Task 1.5 Completion](docs/TASK_1.5_COMPLETION.md) - Installation verification
+
+## Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   composer install
+   ```
+3. Copy environment file:
+   ```bash
+   cp .env.example .env
+   ```
+4. Generate application key:
+   ```bash
+   php artisan key:generate
+   ```
+5. Configure your database and services in `.env`
+6. Run migrations:
+   ```bash
+   php artisan migrate
+   ```
+7. Run tests:
+   ```bash
+   php artisan test
+   ```
+
+## Development
+
+```bash
+# Start development server
+php artisan serve
+
+# Run queue worker
+php artisan queue:work
+
+# Watch logs
+php artisan pail
+```
+
+## Documentation
+
+- [Requirements Document](.kiro/specs/lepaysexpresscolis-backend/requirements.md)
+- [Design Document](.kiro/specs/lepaysexpresscolis-backend/design.md)
+- [Implementation Tasks](.kiro/specs/lepaysexpresscolis-backend/tasks.md)
+- [Stripe Setup](docs/STRIPE_SETUP.md)
+- [AWS S3 Setup](docs/AWS_S3_SETUP.md)
+- [Pusher Setup](docs/PUSHER_SETUP.md)
+
+---
 
 ## About Laravel
 

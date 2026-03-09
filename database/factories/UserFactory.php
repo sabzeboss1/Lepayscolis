@@ -26,9 +26,15 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
+            'phone' => fake()->unique()->phoneNumber(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'rating' => 0,
+            'completed_deliveries' => 0,
+            'is_recommended' => false,
+            'kyc_status' => 'pending',
+            'locale' => 'fr',
         ];
     }
 
@@ -39,6 +45,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has KYC approved status.
+     */
+    public function kycApproved(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'kyc_status' => 'approved',
         ]);
     }
 }

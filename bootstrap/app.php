@@ -7,11 +7,34 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Configure API middleware
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        // Configure rate limiting for API
+        $middleware->throttleApi();
+
+        // Use custom CSRF middleware that excludes admin routes
+        $middleware->validateCsrfTokens(except: [
+            'api/admin/login',
+            'api/admin/*',
+        ]);
+
+        // Register custom middleware aliases
+        $middleware->alias([
+            'kyc.verified' => \App\Http\Middleware\EnsureKYCVerified::class,
+            'trip.owner' => \App\Http\Middleware\CheckTripOwnership::class,
+            'shipment.access' => \App\Http\Middleware\CheckShipmentAccess::class,
+            'admin' => \App\Http\Middleware\EnsureAdminRole::class,
+            'super-admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

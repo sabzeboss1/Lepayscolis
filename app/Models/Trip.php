@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Trip extends Model
+{
+    use HasFactory, HasUuids, SoftDeletes;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'traveler_id',
+        'departure_city',
+        'departure_country',
+        'departure_date',
+        'arrival_city',
+        'arrival_country',
+        'arrival_date',
+        'available_capacity',
+        'price_per_kg',
+        'accepted_package_types',
+        'pickup_address',
+        'delivery_address',
+        'status',
+        'travel_proof_url',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'departure_date' => 'date',
+            'arrival_date' => 'date',
+            'available_capacity' => 'decimal:2',
+            'price_per_kg' => 'decimal:2',
+            'accepted_package_types' => 'array',
+            'status' => 'string',
+        ];
+    }
+
+    /**
+     * Get the traveler that owns the trip.
+     */
+    public function traveler(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'traveler_id');
+    }
+
+    /**
+     * Get the shipments for the trip.
+     */
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class);
+    }
+
+    /**
+     * Scope a query to only include active trips.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope a query to only include upcoming trips.
+     */
+    public function scopeUpcoming($query)
+    {
+        return $query->where('departure_date', '>', now());
+    }
+
+    /**
+     * Scope a query to filter trips by route.
+     */
+    public function scopeByRoute($query, $departure, $arrival)
+    {
+        return $query->where('departure_city', 'like', "%{$departure}%")
+                     ->where('arrival_city', 'like', "%{$arrival}%");
+    }
+}
