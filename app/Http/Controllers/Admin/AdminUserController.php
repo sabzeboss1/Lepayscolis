@@ -49,6 +49,27 @@ class AdminUserController extends Controller
     }
 
     /**
+     * Create a new user
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'required|string|unique:users,phone',
+            'password' => 'required|string|min:8',
+            'role' => 'nullable|in:user,admin,super_admin',
+        ]);
+
+        $user = $this->userService->createUser($validated, $request->user());
+
+        return response()->json([
+            'data' => new AdminUserResource($user),
+            'message' => 'User created successfully',
+        ], 201);
+    }
+
+    /**
      * Get user details
      */
     public function show(int $id): JsonResponse

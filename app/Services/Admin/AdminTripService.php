@@ -33,14 +33,16 @@ class AdminTripService
      */
     public function getTrips(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Trip::with('traveler');
+        $query = Trip::with(['traveler', 'shipments']);
 
         // Search by origin, destination, or traveler name
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('origin', 'like', "%{$search}%")
-                    ->orWhere('destination', 'like', "%{$search}%")
+                $q->where('origin_city', 'like', "%{$search}%")
+                    ->orWhere('origin_country', 'like', "%{$search}%")
+                    ->orWhere('destination_city', 'like', "%{$search}%")
+                    ->orWhere('destination_country', 'like', "%{$search}%")
                     ->orWhereHas('traveler', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     });
@@ -53,9 +55,11 @@ class AdminTripService
         }
 
         // Sort
-        $sort = $filters['sort'] ?? 'departure_date';
-        if ($sort === 'departure_date') {
+        $sortBy = $filters['sort_by'] ?? 'newest';
+        if ($sortBy === 'departure') {
             $query->orderBy('departure_date', 'desc');
+        } elseif ($sortBy === 'oldest') {
+            $query->oldest('created_at');
         } else {
             $query->latest('created_at');
         }

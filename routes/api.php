@@ -199,12 +199,14 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // Dashboard
     Route::prefix('dashboard')->group(function () {
         Route::get('/metrics', [AdminDashboardController::class, 'metrics'])->middleware('throttle:60,1');
+        Route::get('/charts', [AdminDashboardController::class, 'charts'])->middleware('throttle:60,1');
         Route::get('/activity', [AdminDashboardController::class, 'activity'])->middleware('throttle:60,1');
     });
     
     // User Management
     Route::prefix('users')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->middleware('throttle:60,1');
+        Route::post('/', [AdminUserController::class, 'store'])->middleware('throttle:30,1');
         Route::get('/{id}', [AdminUserController::class, 'show'])->middleware('throttle:60,1');
         Route::put('/{id}', [AdminUserController::class, 'update'])->middleware('throttle:30,1');
         Route::post('/{id}/suspend', [AdminUserController::class, 'suspend'])->middleware('throttle:30,1');

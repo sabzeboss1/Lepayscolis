@@ -44,9 +44,38 @@ class WalletManagementController extends Controller
 
         $wallets = $query->paginate($perPage);
 
+        // Transform wallets with aggregated data
+        $transformedWallets = $wallets->map(function ($wallet) {
+            $totalCredits = $wallet->transactions()
+                ->whereIn('type', ['credit', 'refund'])
+                ->sum('amount');
+            
+            $totalDebits = abs($wallet->transactions()
+                ->where('type', 'debit')
+                ->sum('amount'));
+            
+            $lastTransaction = $wallet->transactions()
+                ->latest('created_at')
+                ->first();
+
+            return [
+                'id' => $wallet->id,
+                'user' => [
+                    'id' => $wallet->user->id,
+                    'name' => $wallet->user->name,
+                    'email' => $wallet->user->email,
+                    'phone' => $wallet->user->phone,
+                ],
+                'balance' => (float) $wallet->balance,
+                'total_credits' => (float) $totalCredits,
+                'total_debits' => (float) $totalDebits,
+                'last_transaction_at' => $lastTransaction?->created_at?->toIso8601String(),
+            ];
+        });
+
         return response()->json([
             'success' => true,
-            'data' => WalletResource::collection($wallets->items()),
+            'data' => $transformedWallets,
             'meta' => [
                 'current_page' => $wallets->currentPage(),
                 'last_page' => $wallets->lastPage(),

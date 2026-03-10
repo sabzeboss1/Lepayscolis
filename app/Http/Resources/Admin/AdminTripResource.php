@@ -22,6 +22,8 @@ class AdminTripResource extends JsonResource
                 'email' => $this->traveler->email,
                 'average_rating' => $this->traveler->average_rating ? round($this->traveler->average_rating, 2) : null,
             ],
+            'origin' => "{$this->origin_city}, {$this->origin_country}",
+            'destination' => "{$this->destination_city}, {$this->destination_country}",
             'origin_city' => $this->origin_city,
             'origin_country' => $this->origin_country,
             'destination_city' => $this->destination_city,

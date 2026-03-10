@@ -90,6 +90,30 @@ class AdminUserService
     }
 
     /**
+     * Create a new user.
+     *
+     * @param array $data
+     * @param User $admin
+     * @return User
+     */
+    public function createUser(array $data, User $admin): User
+    {
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'password' => bcrypt($data['password']),
+            'role' => $data['role'] ?? 'user',
+            'kyc_status' => 'not_submitted',
+        ]);
+
+        // Create audit log
+        AuditLog::log($admin, 'create', 'user', $user->id, null, $user->only(['name', 'email', 'phone', 'role']));
+
+        return $user;
+    }
+
+    /**
      * Update user information.
      *
      * @param int $userId

@@ -102,7 +102,7 @@ class PlatformSetting extends Model
      * @param string $type
      * @return mixed
      */
-    protected static function castValue(string $value, string $type)
+    public static function castValue(string $value, string $type)
     {
         return match ($type) {
             'integer' => (int) $value,

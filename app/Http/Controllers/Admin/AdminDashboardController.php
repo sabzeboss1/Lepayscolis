@@ -31,6 +31,18 @@ class AdminDashboardController extends Controller
     }
 
     /**
+     * Get chart data for dashboard
+     */
+    public function charts(): JsonResponse
+    {
+        $chartData = $this->dashboardService->getChartData();
+
+        return response()->json([
+            'data' => $chartData,
+        ], 200);
+    }
+
+    /**
      * Get activity feed
      */
     public function activity(Request $request): JsonResponse

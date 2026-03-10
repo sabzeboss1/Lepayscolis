@@ -13,15 +13,75 @@ class AdminSettingsService
     {
         $settings = PlatformSetting::all()->pluck('value', 'key')->toArray();
 
-        // Cast values to appropriate types
-        return [
-            'platform_fee_percentage' => (float) ($settings['platform_fee_percentage'] ?? 10.0),
-            'withdrawal_fee' => (float) ($settings['withdrawal_fee'] ?? 2.50),
-            'min_withdrawal_amount' => (float) ($settings['min_withdrawal_amount'] ?? 20.00),
-            'max_withdrawal_amount' => (float) ($settings['max_withdrawal_amount'] ?? 5000.00),
-            'min_shipment_price' => (float) ($settings['min_shipment_price'] ?? 10.00),
-            'max_shipment_price' => (float) ($settings['max_shipment_price'] ?? 1000.00),
-        ];
+        // Cast values to appropriate types based on the stored type
+        $result = [];
+        foreach (PlatformSetting::all() as $setting) {
+            $result[$setting->key] = PlatformSetting::castValue($setting->value, $setting->type);
+        }
+
+        // Return all settings with defaults for missing ones
+        return array_merge([
+            // General
+            'platform_name' => 'Le Pays Express Colis',
+            'platform_url' => 'https://lepaysexpresscolis.com',
+            'support_email' => 'support@lepaysexpresscolis.com',
+            'support_phone' => '+33 1 23 45 67 89',
+            'platform_fee_percentage' => 10.0,
+            
+            // SMTP
+            'smtp_host' => 'smtp.gmail.com',
+            'smtp_port' => 587,
+            'smtp_username' => '',
+            'smtp_password' => '',
+            'smtp_encryption' => 'tls',
+            'smtp_from_address' => 'noreply@lepaysexpresscolis.com',
+            'smtp_from_name' => 'Le Pays Express Colis',
+            
+            // Payment
+            'stripe_public_key' => '',
+            'stripe_secret_key' => '',
+            'stripe_webhook_secret' => '',
+            'payment_currency' => 'EUR',
+            'orange_money_api_key' => '',
+            'orange_money_merchant_id' => '',
+            'orange_money_enabled' => false,
+            'mtn_money_api_key' => '',
+            'mtn_money_subscription_key' => '',
+            'mtn_money_enabled' => false,
+            'bank_name' => '',
+            'bank_iban' => '',
+            'bank_bic' => '',
+            'bank_transfer_enabled' => false,
+            'cash_payment_enabled' => false,
+            
+            // Withdrawal & Shipment
+            'withdrawal_fee' => 2.50,
+            'min_withdrawal_amount' => 20.00,
+            'max_withdrawal_amount' => 5000.00,
+            'min_shipment_price' => 10.00,
+            'max_shipment_price' => 1000.00,
+            
+            // Branding
+            'logo_url' => '/logo.png',
+            'favicon_url' => '/favicon.ico',
+            'primary_color' => '#3B82F6',
+            'secondary_color' => '#F97316',
+            
+            // Currency
+            'default_currency' => 'EUR',
+            'supported_currencies' => ['EUR', 'USD', 'GBP', 'XAF', 'XOF', 'RUB', 'CAD'],
+            
+            // Security
+            'kyc_required' => true,
+            'two_factor_enabled' => false,
+            'session_timeout' => 3600,
+            'max_login_attempts' => 5,
+            
+            // Notifications
+            'email_notifications_enabled' => true,
+            'push_notifications_enabled' => true,
+            'sms_notifications_enabled' => false,
+        ], $result);
     }
 
     public function updateSettings(array $data, User $admin): array

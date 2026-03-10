@@ -153,6 +153,117 @@ class AdminDashboardService
     }
 
     /**
+     * Get chart data for dashboard with caching.
+     *
+     * @return array
+     */
+    public function getChartData(): array
+    {
+        return Cache::remember('admin_dashboard_charts', self::METRICS_CACHE_TTL, function () {
+            return [
+                'user_growth' => $this->getUserGrowthData(),
+                'revenue_data' => $this->getRevenueData(),
+                'shipment_status' => $this->getShipmentStatusDistribution(),
+                'top_routes' => $this->getTopRoutes(),
+            ];
+        });
+    }
+
+    /**
+     * Get user growth data for the last 30 days.
+     *
+     * @return array
+     */
+    protected function getUserGrowthData(): array
+    {
+        $data = [];
+        $startDate = now()->subDays(29);
+
+        for ($i = 0; $i < 30; $i++) {
+            $date = $startDate->copy()->addDays($i);
+            $count = User::whereDate('created_at', $date->toDateString())->count();
+            
+            $data[] = [
+                'date' => $date->toDateString(),
+                'count' => $count,
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get revenue data for the last 30 days.
+     *
+     * @return array
+     */
+    protected function getRevenueData(): array
+    {
+        $data = [];
+        $startDate = now()->subDays(29);
+
+        for ($i = 0; $i < 30; $i++) {
+            $date = $startDate->copy()->addDays($i);
+            $amount = Payment::where('status', 'completed')
+                ->whereDate('created_at', $date->toDateString())
+                ->sum('amount');
+            
+            $data[] = [
+                'date' => $date->toDateString(),
+                'amount' => (float) $amount,
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get shipment status distribution.
+     *
+     * @return array
+     */
+    protected function getShipmentStatusDistribution(): array
+    {
+        $statuses = ['pending', 'accepted', 'in_transit', 'delivered', 'cancelled'];
+        $data = [];
+
+        foreach ($statuses as $status) {
+            $count = Shipment::where('status', $status)->count();
+            $data[] = [
+                'status' => $status,
+                'count' => $count,
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get top 5 routes by shipment count.
+     *
+     * @return array
+     */
+    protected function getTopRoutes(): array
+    {
+        $routes = DB::table('shipments')
+            ->select(
+                DB::raw("CONCAT(origin, ' → ', destination) as route"),
+                DB::raw('COUNT(*) as count')
+            )
+            ->groupBy('origin', 'destination')
+            ->orderByDesc('count')
+            ->limit(5)
+            ->get();
+
+        return $routes->map(function ($route) {
+            return [
+                'route' => $route->route,
+                'count' => $route->count,
+            ];
+        })->toArray();
+    }
+
+    /**
      * Generate alerts for items requiring attention.
      *
      * @return array

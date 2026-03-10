@@ -20,7 +20,7 @@ class AdminPaymentService
 
     public function getPayments(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Payment::with('user');
+        $query = Payment::with(['user', 'shipment']);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
