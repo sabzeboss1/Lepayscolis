@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DataTable, { Column } from '@/components/admin/DataTable';
-import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
+import TableFilters from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 
 interface Payment {
@@ -20,16 +20,9 @@ interface Payment {
   shipment?: {
     id: string;
     tracking_number: string;
-  };
+  } | null;
   created_at: string;
   completed_at?: string;
-}
-
-interface FilterValues {
-  status: string;
-  method: string;
-  date_from: string;
-  date_to: string;
 }
 
 export default function PaymentsPage() {
@@ -41,7 +34,7 @@ export default function PaymentsPage() {
   const [total, setTotal] = useState(0);
   const [sortKey, setSortKey] = useState<string>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filters, setFilters] = useState<FilterValues>({
+  const [filters, setFilters] = useState<Record<string, string | { from: string; to: string }>>({
     status: '',
     method: '',
     date_from: '',
@@ -56,19 +49,21 @@ export default function PaymentsPage() {
         per_page: perPage.toString(),
         sort_by: sortKey,
         sort_direction: sortDirection,
-        ...(filters.status && { status: filters.status }),
-        ...(filters.method && { method: filters.method }),
-        ...(filters.date_from && { date_from: filters.date_from }),
-        ...(filters.date_to && { date_to: filters.date_to })
+        ...(filters.status && typeof filters.status === 'string' && { status: filters.status }),
+        ...(filters.method && typeof filters.method === 'string' && { method: filters.method }),
+        ...(filters.date_from && typeof filters.date_from === 'string' && { date_from: filters.date_from }),
+        ...(filters.date_to && typeof filters.date_to === 'string' && { date_to: filters.date_to })
       });
 
       const response = await fetch(`/api/admin/payments?${params}`);
       const data = await response.json();
       
-      setPayments(data.data);
-      setTotal(data.meta.total);
+      setPayments(Array.isArray(data.data) ? data.data : []);
+      setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch payments:', error);
+      setPayments([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -83,7 +78,7 @@ export default function PaymentsPage() {
     setSortDirection(direction);
   };
 
-  const handleFilterChange = (newFilters: FilterValues) => {
+  const handleFilterChange = (newFilters: Record<string, string | { from: string; to: string }>) => {
     setFilters(newFilters);
     setCurrentPage(1);
   };
@@ -209,9 +204,8 @@ export default function PaymentsPage() {
   const filterConfig = [
     {
       type: 'select' as const,
-      name: 'status',
+      key: 'status',
       label: 'Status',
-      value: filters.status,
       options: [
         { value: '', label: 'All Statuses' },
         { value: 'pending', label: 'Pending' },
@@ -222,9 +216,8 @@ export default function PaymentsPage() {
     },
     {
       type: 'select' as const,
-      name: 'method',
+      key: 'method',
       label: 'Method',
-      value: filters.method,
       options: [
         { value: '', label: 'All Methods' },
         { value: 'card', label: 'Card' },
@@ -233,15 +226,13 @@ export default function PaymentsPage() {
     },
     {
       type: 'date' as const,
-      name: 'date_from',
-      label: 'From Date',
-      value: filters.date_from
+      key: 'date_from',
+      label: 'From Date'
     },
     {
       type: 'date' as const,
-      name: 'date_to',
-      label: 'To Date',
-      value: filters.date_to
+      key: 'date_to',
+      label: 'To Date'
     }
   ];
 
@@ -278,10 +269,10 @@ export default function PaymentsPage() {
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
-        perPage={perPage}
-        total={total}
+        itemsPerPage={perPage}
+        totalItems={total}
         onPageChange={setCurrentPage}
-        onPerPageChange={(newPerPage) => {
+        onItemsPerPageChange={(newPerPage: number) => {
           setPerPage(newPerPage);
           setCurrentPage(1);
         }}

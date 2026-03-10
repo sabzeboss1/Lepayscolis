@@ -5,7 +5,7 @@ import { Filter } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
-import BulkActions from '@/components/admin/BulkActions';
+import BulkActions, { BulkAction } from '@/components/admin/BulkActions';
 import KYCReviewModal from '@/components/admin/KYCReviewModal';
 
 interface KYCSubmission {
@@ -30,7 +30,8 @@ interface KYCSubmission {
   rejection_reason?: string;
 }
 
-interface FilterValues {
+interface KYCFilterValues {
+  [key: string]: string;
   status: string;
   sort_by: string;
 }
@@ -44,7 +45,7 @@ export default function KYCPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
   const [total, setTotal] = useState(0);
-  const [filters, setFilters] = useState<FilterValues>({
+  const [filters, setFilters] = useState<KYCFilterValues>({
     status: '',
     sort_by: 'newest'
   });
@@ -75,8 +76,8 @@ export default function KYCPage() {
     fetchSubmissions();
   }, [currentPage, perPage, filters]);
 
-  const handleFilterChange = (newFilters: FilterValues) => {
-    setFilters(newFilters);
+  const handleFilterChange = (newFilters: { [key: string]: string | { from: string; to: string } }) => {
+    setFilters(newFilters as KYCFilterValues);
     setCurrentPage(1);
   };
 
@@ -140,17 +141,17 @@ export default function KYCPage() {
     }
   };
 
-  const handleBulkAction = async (action: string) => {
+  const handleBulkAction = async (actionKey: string) => {
     const selectedIds = Array.from(selectedRows);
     
     try {
-      if (action === 'approve') {
+      if (actionKey === 'approve') {
         await fetch('/api/admin/kyc/bulk-approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: selectedIds })
         });
-      } else if (action === 'reject') {
+      } else if (actionKey === 'reject') {
         await fetch('/api/admin/kyc/bulk-reject', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -229,12 +230,11 @@ export default function KYCPage() {
     }
   ];
 
-  const filterConfig = [
+  const filterConfig: FilterConfig[] = [
     {
+      key: 'status',
       type: 'select' as const,
-      name: 'status',
       label: 'Status',
-      value: filters.status,
       options: [
         { value: '', label: 'All Statuses' },
         { value: 'pending', label: 'Pending' },
@@ -243,10 +243,9 @@ export default function KYCPage() {
       ]
     },
     {
+      key: 'sort_by',
       type: 'select' as const,
-      name: 'sort_by',
       label: 'Sort By',
-      value: filters.sort_by,
       options: [
         { value: 'newest', label: 'Newest First' },
         { value: 'oldest', label: 'Oldest First' }
@@ -254,9 +253,9 @@ export default function KYCPage() {
     }
   ];
 
-  const bulkActions = [
-    { value: 'approve', label: 'Approve Selected', variant: 'default' as const },
-    { value: 'reject', label: 'Reject Selected', variant: 'danger' as const }
+  const bulkActions: BulkAction[] = [
+    { key: 'approve', label: 'Approve Selected', variant: 'default' as const },
+    { key: 'reject', label: 'Reject Selected', variant: 'danger' as const }
   ];
 
   return (
@@ -283,7 +282,7 @@ export default function KYCPage() {
           selectedCount={selectedRows.size}
           actions={bulkActions}
           onAction={handleBulkAction}
-          onClear={() => setSelectedRows(new Set())}
+          onClearSelection={() => setSelectedRows(new Set())}
         />
       )}
 
@@ -305,10 +304,10 @@ export default function KYCPage() {
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
-        perPage={perPage}
-        total={total}
+        totalItems={total}
+        itemsPerPage={perPage}
         onPageChange={setCurrentPage}
-        onPerPageChange={(newPerPage) => {
+        onItemsPerPageChange={(newPerPage) => {
           setPerPage(newPerPage);
           setCurrentPage(1);
         }}

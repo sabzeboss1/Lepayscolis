@@ -25,12 +25,6 @@ interface Shipment {
   delivery_date?: string;
 }
 
-interface FilterValues {
-  search: string;
-  status: string;
-  sort_by: string;
-}
-
 export default function ShipmentsPage() {
   const router = useRouter();
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -40,7 +34,7 @@ export default function ShipmentsPage() {
   const [total, setTotal] = useState(0);
   const [sortKey, setSortKey] = useState<string>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filters, setFilters] = useState<FilterValues>({
+  const [filters, setFilters] = useState({
     search: '',
     status: '',
     sort_by: 'newest'
@@ -59,12 +53,20 @@ export default function ShipmentsPage() {
       });
 
       const response = await fetch(`/api/admin/shipments?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
-      setShipments(data.data);
-      setTotal(data.meta.total);
+      // Ensure data.data is an array
+      setShipments(Array.isArray(data.data) ? data.data : []);
+      setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch shipments:', error);
+      setShipments([]); // Set empty array on error
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -79,8 +81,8 @@ export default function ShipmentsPage() {
     setSortDirection(direction);
   };
 
-  const handleFilterChange = (newFilters: FilterValues) => {
-    setFilters(newFilters);
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(newFilters as typeof filters);
     setCurrentPage(1);
   };
 
@@ -180,19 +182,17 @@ export default function ShipmentsPage() {
     }
   ];
 
-  const filterConfig = [
+  const filterConfig: FilterConfig[] = [
     {
       type: 'text' as const,
-      name: 'search',
+      key: 'search',
       label: 'Search',
-      placeholder: 'Search by tracking, sender, or recipient...',
-      value: filters.search
+      placeholder: 'Search by tracking, sender, or recipient...'
     },
     {
       type: 'select' as const,
-      name: 'status',
+      key: 'status',
       label: 'Status',
-      value: filters.status,
       options: [
         { value: '', label: 'All Statuses' },
         { value: 'pending', label: 'Pending' },
@@ -204,9 +204,8 @@ export default function ShipmentsPage() {
     },
     {
       type: 'select' as const,
-      name: 'sort_by',
+      key: 'sort_by',
       label: 'Sort By',
-      value: filters.sort_by,
       options: [
         { value: 'newest', label: 'Newest First' },
         { value: 'oldest', label: 'Oldest First' },
@@ -249,10 +248,10 @@ export default function ShipmentsPage() {
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
-        perPage={perPage}
-        total={total}
+        itemsPerPage={perPage}
+        totalItems={total}
         onPageChange={setCurrentPage}
-        onPerPageChange={(newPerPage) => {
+        onItemsPerPageChange={(newPerPage: number) => {
           setPerPage(newPerPage);
           setCurrentPage(1);
         }}

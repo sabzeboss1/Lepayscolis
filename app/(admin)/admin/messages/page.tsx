@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
-import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
+import TableFilters from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 
 interface Conversation {
@@ -23,11 +23,6 @@ interface Conversation {
   has_reported_messages: boolean;
 }
 
-interface FilterValues {
-  search: string;
-  reported_only: string;
-}
-
 export default function MessagesPage() {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -35,7 +30,7 @@ export default function MessagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
   const [total, setTotal] = useState(0);
-  const [filters, setFilters] = useState<FilterValues>({
+  const [filters, setFilters] = useState<Record<string, string | { from: string; to: string }>>({
     search: '',
     reported_only: ''
   });
@@ -46,17 +41,19 @@ export default function MessagesPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         per_page: perPage.toString(),
-        ...(filters.search && { search: filters.search }),
-        ...(filters.reported_only && { reported_only: filters.reported_only })
+        ...(filters.search && typeof filters.search === 'string' && { search: filters.search }),
+        ...(filters.reported_only && typeof filters.reported_only === 'string' && { reported_only: filters.reported_only })
       });
 
       const response = await fetch(`/api/admin/messages?${params}`);
       const data = await response.json();
       
-      setConversations(data.data);
-      setTotal(data.meta.total);
+      setConversations(Array.isArray(data.data) ? data.data : []);
+      setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
+      setConversations([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -66,7 +63,7 @@ export default function MessagesPage() {
     fetchConversations();
   }, [currentPage, perPage, filters]);
 
-  const handleFilterChange = (newFilters: FilterValues) => {
+  const handleFilterChange = (newFilters: Record<string, string | { from: string; to: string }>) => {
     setFilters(newFilters);
     setCurrentPage(1);
   };
@@ -134,16 +131,14 @@ export default function MessagesPage() {
   const filterConfig = [
     {
       type: 'text' as const,
-      name: 'search',
+      key: 'search',
       label: 'Search',
-      placeholder: 'Search by participant name...',
-      value: filters.search
+      placeholder: 'Search by participant name...'
     },
     {
       type: 'select' as const,
-      name: 'reported_only',
+      key: 'reported_only',
       label: 'Filter',
-      value: filters.reported_only,
       options: [
         { value: '', label: 'All Conversations' },
         { value: 'yes', label: 'Reported Messages Only' }
@@ -183,10 +178,10 @@ export default function MessagesPage() {
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
-        perPage={perPage}
-        total={total}
+        itemsPerPage={perPage}
+        totalItems={total}
         onPageChange={setCurrentPage}
-        onPerPageChange={(newPerPage) => {
+        onItemsPerPageChange={(newPerPage: number) => {
           setPerPage(newPerPage);
           setCurrentPage(1);
         }}

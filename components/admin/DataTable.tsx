@@ -41,6 +41,9 @@ export default function DataTable<T>({
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Ensure data is always an array
+  const safeData = Array.isArray(data) ? data : [];
+
   const handleSort = (key: string) => {
     if (!onSort) return;
 
@@ -67,8 +70,8 @@ export default function DataTable<T>({
     }
   };
 
-  const allSelected = data.length > 0 && data.every(item => selectedRows.has(getRowId(item)));
-  const someSelected = data.some(item => selectedRows.has(getRowId(item))) && !allSelected;
+  const allSelected = safeData.length > 0 && safeData.every(item => selectedRows.has(getRowId(item)));
+  const someSelected = safeData.some(item => selectedRows.has(getRowId(item))) && !allSelected;
 
   // Loading skeleton
   if (loading) {
@@ -120,7 +123,7 @@ export default function DataTable<T>({
   }
 
   // Empty state
-  if (data.length === 0) {
+  if (safeData.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
@@ -219,7 +222,7 @@ export default function DataTable<T>({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((item) => {
+            {safeData.map((item) => {
               const rowId = getRowId(item);
               const isSelected = selectedRows.has(rowId);
 

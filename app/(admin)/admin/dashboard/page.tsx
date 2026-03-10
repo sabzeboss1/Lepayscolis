@@ -40,26 +40,19 @@ export default function AdminDashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      // Import API client and endpoints
-      const { apiClient } = await import('@/lib/api/client');
-      const { API_ENDPOINTS } = await import('@/lib/api/endpoints');
-
-      // Fetch metrics from real API
-      const metricsData = await apiClient.get<{ data: DashboardMetrics }>(
-        `${API_ENDPOINTS.admin.dashboard}/metrics`
-      );
+      // Fetch metrics from Next.js API routes
+      const metricsResponse = await fetch('/api/admin/dashboard/metrics');
+      const metricsData = await metricsResponse.json();
       setMetrics(metricsData.data);
 
-      // Fetch chart data from real API
-      const chartsData = await apiClient.get<{ data: ChartData }>(
-        `${API_ENDPOINTS.admin.dashboard}/charts`
-      );
+      // Fetch chart data from Next.js API routes
+      const chartsResponse = await fetch('/api/admin/dashboard/charts');
+      const chartsData = await chartsResponse.json();
       setChartData(chartsData.data);
 
-      // Fetch activity feed from real API
-      const activityData = await apiClient.get<{ data: Activity[] }>(
-        `${API_ENDPOINTS.admin.dashboard}/activity`
-      );
+      // Fetch activity feed from Next.js API routes
+      const activityResponse = await fetch('/api/admin/dashboard/activity');
+      const activityData = await activityResponse.json();
       setActivities(activityData.data);
 
       // Generate alerts based on metrics

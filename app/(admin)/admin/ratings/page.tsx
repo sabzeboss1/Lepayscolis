@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Star } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
-import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
+import TableFilters from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 
 interface Rating {
@@ -30,12 +30,6 @@ interface Rating {
   created_at: string;
 }
 
-interface FilterValues {
-  search: string;
-  rating: string;
-  type: string;
-}
-
 export default function RatingsPage() {
   const router = useRouter();
   const [ratings, setRatings] = useState<Rating[]>([]);
@@ -45,7 +39,7 @@ export default function RatingsPage() {
   const [total, setTotal] = useState(0);
   const [sortKey, setSortKey] = useState<string>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filters, setFilters] = useState<FilterValues>({
+  const [filters, setFilters] = useState<Record<string, string | { from: string; to: string }>>({
     search: '',
     rating: '',
     type: ''
@@ -59,18 +53,20 @@ export default function RatingsPage() {
         per_page: perPage.toString(),
         sort_by: sortKey,
         sort_direction: sortDirection,
-        ...(filters.search && { search: filters.search }),
-        ...(filters.rating && { rating: filters.rating }),
-        ...(filters.type && { type: filters.type })
+        ...(filters.search && typeof filters.search === 'string' && { search: filters.search }),
+        ...(filters.rating && typeof filters.rating === 'string' && { rating: filters.rating }),
+        ...(filters.type && typeof filters.type === 'string' && { type: filters.type })
       });
 
       const response = await fetch(`/api/admin/ratings?${params}`);
       const data = await response.json();
       
-      setRatings(data.data);
-      setTotal(data.meta.total);
+      setRatings(Array.isArray(data.data) ? data.data : []);
+      setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch ratings:', error);
+      setRatings([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -85,7 +81,7 @@ export default function RatingsPage() {
     setSortDirection(direction);
   };
 
-  const handleFilterChange = (newFilters: FilterValues) => {
+  const handleFilterChange = (newFilters: Record<string, string | { from: string; to: string }>) => {
     setFilters(newFilters);
     setCurrentPage(1);
   };
@@ -190,16 +186,14 @@ export default function RatingsPage() {
   const filterConfig = [
     {
       type: 'text' as const,
-      name: 'search',
+      key: 'search',
       label: 'Search',
-      placeholder: 'Search by reviewer or reviewed user...',
-      value: filters.search
+      placeholder: 'Search by reviewer or reviewed user...'
     },
     {
       type: 'select' as const,
-      name: 'rating',
+      key: 'rating',
       label: 'Rating',
-      value: filters.rating,
       options: [
         { value: '', label: 'All Ratings' },
         { value: '5', label: '5 Stars' },
@@ -211,9 +205,8 @@ export default function RatingsPage() {
     },
     {
       type: 'select' as const,
-      name: 'type',
+      key: 'type',
       label: 'Type',
-      value: filters.type,
       options: [
         { value: '', label: 'All Types' },
         { value: 'for_traveler', label: 'For Traveler' },
@@ -255,10 +248,10 @@ export default function RatingsPage() {
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
-        perPage={perPage}
-        total={total}
+        itemsPerPage={perPage}
+        totalItems={total}
         onPageChange={setCurrentPage}
-        onPerPageChange={(newPerPage) => {
+        onItemsPerPageChange={(newPerPage: number) => {
           setPerPage(newPerPage);
           setCurrentPage(1);
         }}

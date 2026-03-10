@@ -1,57 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminPayments } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const page = parseInt(searchParams.get('page') || '1');
-  const perPage = parseInt(searchParams.get('per_page') || '10');
-  const status = searchParams.get('status') || '';
-  const sortBy = searchParams.get('sort_by') || 'newest';
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    
+    // Build query parameters for Laravel backend
+    const params = new URLSearchParams();
+    
+    if (searchParams.get('page')) {
+      params.append('page', searchParams.get('page')!);
+    }
+    if (searchParams.get('per_page')) {
+      params.append('per_page', searchParams.get('per_page')!);
+    }
+    if (searchParams.get('status')) {
+      params.append('status', searchParams.get('status')!);
+    }
+    if (searchParams.get('method')) {
+      params.append('method', searchParams.get('method')!);
+    }
+    if (searchParams.get('date_from')) {
+      params.append('date_from', searchParams.get('date_from')!);
+    }
+    if (searchParams.get('date_to')) {
+      params.append('date_to', searchParams.get('date_to')!);
+    }
 
-  let filtered = [...mockAdminPayments];
+    // Make request to Laravel backend
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/payments?${params.toString()}`
+    );
 
-  if (status) {
-    filtered = filtered.filter(p => p.status === status);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to fetch payments' },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+
+    // Transform backend response to match frontend expectations
+    const transformed = Array.isArray(data.data) ? data.data.map((payment: any) => ({
+      id: payment.id,
+      user: payment.user,
+      amount: payment.amount,
+      stripe_payment_id: payment.stripe_payment_intent_id || '',
+      method: payment.payment_method,
+      status: payment.status,
+      shipment: payment.shipment || null,
+      created_at: payment.created_at,
+      completed_at: payment.updated_at
+    })) : [];
+
+    return NextResponse.json({
+      data: transformed,
+      meta: {
+        total: data.meta?.total || 0,
+        page: data.meta?.current_page || 1,
+        per_page: data.meta?.per_page || 50,
+        totalPages: data.meta?.last_page || 1,
+      },
+    });
+  } catch (error) {
+    console.error('Admin payments API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', data: [] },
+      { status: 500 }
+    );
   }
-
-  // Sort
-  if (sortBy === 'newest') {
-    filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  } else if (sortBy === 'oldest') {
-    filtered.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-  }
-
-  const start = (page - 1) * perPage;
-  const end = start + perPage;
-  const paginated = filtered.slice(start, end);
-
-  // Transform to snake_case for frontend
-  const transformed = paginated.map(payment => ({
-    id: payment.id,
-    user: {
-      id: payment.senderId,
-      name: payment.senderName,
-      email: 'sender@example.com' // Mock value
-    },
-    amount: payment.amount,
-    stripe_payment_id: `pi_${payment.id.substring(0, 24)}`,
-    method: payment.paymentMethod === 'card' ? 'card' : 'wallet',
-    status: payment.status === 'escrowed' ? 'pending' : payment.status === 'released' ? 'completed' : payment.status,
-    shipment: {
-      id: payment.shipmentId,
-      tracking_number: payment.shipmentId.substring(0, 8).toUpperCase()
-    },
-    created_at: payment.createdAt.toISOString(),
-    completed_at: payment.releasedAt?.toISOString()
-  }));
-
-  return NextResponse.json({
-    data: transformed,
-    meta: {
-      total: filtered.length,
-      page,
-      per_page: perPage,
-      totalPages: Math.ceil(filtered.length / perPage),
-    },
-  });
 }

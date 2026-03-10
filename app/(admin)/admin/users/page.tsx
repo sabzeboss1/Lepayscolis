@@ -6,7 +6,8 @@ import { Search, Filter, UserPlus } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
-import BulkActions from '@/components/admin/BulkActions';
+import BulkActions, { BulkAction } from '@/components/admin/BulkActions';
+import CreateUserModal from '@/components/admin/CreateUserModal';
 
 interface User {
   id: string;
@@ -20,7 +21,8 @@ interface User {
   last_login?: string;
 }
 
-interface FilterValues {
+interface UserFilterValues {
+  [key: string]: string;
   search: string;
   status: string;
   role: string;
@@ -37,12 +39,13 @@ export default function UsersPage() {
   const [total, setTotal] = useState(0);
   const [sortKey, setSortKey] = useState<string>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filters, setFilters] = useState<FilterValues>({
+  const [filters, setFilters] = useState<UserFilterValues>({
     search: '',
     status: '',
     role: '',
     kyc_status: ''
   });
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -96,8 +99,8 @@ export default function UsersPage() {
     setSortDirection(direction);
   };
 
-  const handleFilterChange = (newFilters: FilterValues) => {
-    setFilters(newFilters as FilterValues);
+  const handleFilterChange = (newFilters: { [key: string]: string | { from: string; to: string } }) => {
+    setFilters(newFilters as UserFilterValues);
     setCurrentPage(1); // Reset to first page on filter change
   };
 
@@ -119,18 +122,18 @@ export default function UsersPage() {
     }
   };
 
-  const handleBulkAction = async (action: string) => {
+  const handleBulkAction = async (actionKey: string) => {
     const selectedIds = Array.from(selectedRows);
     
     try {
-      if (action === 'suspend') {
+      if (actionKey === 'suspend') {
         // Bulk suspend users
         await fetch('/api/admin/users/bulk-suspend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_ids: selectedIds })
         });
-      } else if (action === 'activate') {
+      } else if (actionKey === 'activate') {
         // Bulk activate users
         await fetch('/api/admin/users/bulk-activate', {
           method: 'POST',
@@ -290,9 +293,9 @@ export default function UsersPage() {
     }
   ];
 
-  const bulkActions = [
-    { value: 'suspend', label: 'Suspend Selected', variant: 'danger' as const },
-    { value: 'activate', label: 'Activate Selected', variant: 'default' as const }
+  const bulkActions: BulkAction[] = [
+    { key: 'suspend', label: 'Suspend Selected', variant: 'danger' as const },
+    { key: 'activate', label: 'Activate Selected', variant: 'default' as const }
   ];
 
   return (
@@ -306,7 +309,7 @@ export default function UsersPage() {
           </p>
         </div>
         <button
-          onClick={() => router.push('/admin/users/new')}
+          onClick={() => setIsCreateModalOpen(true)}
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
         >
           <UserPlus className="w-4 h-4 mr-2" />
@@ -328,7 +331,7 @@ export default function UsersPage() {
           selectedCount={selectedRows.size}
           actions={bulkActions}
           onAction={handleBulkAction}
-          onClear={() => setSelectedRows(new Set())}
+          onClearSelection={() => setSelectedRows(new Set())}
         />
       )}
 
@@ -351,12 +354,21 @@ export default function UsersPage() {
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
-        perPage={perPage}
-        total={total}
+        totalItems={total}
+        itemsPerPage={perPage}
         onPageChange={setCurrentPage}
-        onPerPageChange={(newPerPage) => {
+        onItemsPerPageChange={(newPerPage) => {
           setPerPage(newPerPage);
           setCurrentPage(1);
+        }}
+      />
+
+      {/* Create User Modal */}
+      <CreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => {
+          fetchUsers(); // Refresh the user list
         }}
       />
     </div>

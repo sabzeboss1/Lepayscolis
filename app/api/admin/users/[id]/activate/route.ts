@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api/client';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function POST(
   request: NextRequest,
@@ -8,16 +8,26 @@ export async function POST(
   try {
     const params = await context.params;
     
-    // Call Laravel backend API
-    const response = await apiClient.post<any>(`/api/admin/users/${params.id}/activate`);
+    // Call Laravel backend API with authentication
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/users/${params.id}/activate`,
+      { method: 'POST' }
+    );
     
-    return NextResponse.json(response);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+    
+    return NextResponse.json(data);
   } catch (error: any) {
     console.error('Failed to activate user:', error);
     
     return NextResponse.json(
-      { error: error.message || 'Failed to activate user' },
-      { status: error.status || 500 }
+      { message: error.message || 'Failed to activate user' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
     );
   }
 }

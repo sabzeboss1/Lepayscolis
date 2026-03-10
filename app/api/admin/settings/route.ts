@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
-// Mock settings storage (in production, this would be in a database)
-let platformSettings = {
+// Default settings (used as fallback if backend is not available)
+const DEFAULT_SETTINGS = {
   platform_name: 'Le Pays Express Colis',
   platform_url: 'https://lepaysexpresscolis.com',
   support_email: 'support@lepaysexpresscolis.com',
@@ -63,17 +64,32 @@ let platformSettings = {
 
 export async function GET(request: NextRequest) {
   try {
-    // In production, fetch from database
+    // Fetch settings from Laravel backend
+    const response = await makeAdminRequest(request, '/api/admin/settings');
+    
+    if (!response.ok) {
+      console.error('Failed to fetch settings from backend, using defaults');
+      return NextResponse.json({
+        success: true,
+        settings: DEFAULT_SETTINGS
+      });
+    }
+    
+    const data = await response.json();
+    
+    // Merge backend data with defaults to ensure all fields exist
+    const settings = { ...DEFAULT_SETTINGS, ...(data.data || {}) };
+    
     return NextResponse.json({
       success: true,
-      settings: platformSettings
+      settings
     });
   } catch (error) {
     console.error('Error fetching settings:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch settings' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: true,
+      settings: DEFAULT_SETTINGS
+    });
   }
 }
 
@@ -111,20 +127,31 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    // Update settings (in production, save to database)
-    platformSettings = { ...platformSettings, ...body };
+    // Save settings to Laravel backend
+    const response = await makeAdminRequest(
+      request,
+      '/api/admin/settings',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      }
+    );
     
-    // In production, log this change to audit trail
-    console.log('Settings updated:', {
-      timestamp: new Date().toISOString(),
-      updatedBy: 'admin', // Get from auth context
-      changes: body
-    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { success: false, error: errorData.message || 'Failed to update settings' },
+        { status: response.status }
+      );
+    }
+    
+    const data = await response.json();
     
     return NextResponse.json({
       success: true,
       message: 'Settings updated successfully',
-      settings: platformSettings
+      settings: data.data || body
     });
   } catch (error) {
     console.error('Error updating settings:', error);

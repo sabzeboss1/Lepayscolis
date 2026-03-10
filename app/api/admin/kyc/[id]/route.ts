@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api/client';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function GET(
   request: NextRequest,
@@ -8,16 +8,26 @@ export async function GET(
   try {
     const params = await context.params;
     
-    // Call Laravel backend API
-    const response = await apiClient.get<any>(`/api/admin/kyc/${params.id}`);
+    // Call Laravel backend API with authentication
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/kyc/${params.id}`,
+      { method: 'GET' }
+    );
     
-    return NextResponse.json(response);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+    
+    return NextResponse.json(data);
   } catch (error: any) {
     console.error('Failed to fetch KYC submission from backend:', error);
     
     return NextResponse.json(
-      { error: error.message || 'KYC submission not found' },
-      { status: error.status || 404 }
+      { message: error.message || 'KYC submission not found' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 404 }
     );
   }
 }

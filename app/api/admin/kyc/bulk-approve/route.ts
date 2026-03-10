@@ -1,20 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api/client';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Call Laravel backend API
-    const response = await apiClient.post<any>('/api/admin/kyc/bulk-approve', body);
+    // Call Laravel backend API with authentication
+    const response = await makeAdminRequest(
+      request,
+      '/api/admin/kyc/bulk-approve',
+      { 
+        method: 'POST',
+        body: JSON.stringify(body)
+      }
+    );
     
-    return NextResponse.json(response);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+    
+    return NextResponse.json(data);
   } catch (error: any) {
     console.error('Failed to bulk approve KYC:', error);
     
     return NextResponse.json(
-      { error: error.message || 'Failed to bulk approve KYC' },
-      { status: error.status || 500 }
+      { message: error.message || 'Failed to bulk approve KYC' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
     );
   }
 }

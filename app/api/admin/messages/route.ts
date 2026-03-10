@@ -1,61 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminMessages } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const page = parseInt(searchParams.get('page') || '1');
-  const perPage = parseInt(searchParams.get('per_page') || '10');
-  const flagged = searchParams.get('flagged');
-  const sortBy = searchParams.get('sort_by') || 'newest';
-
-  let filtered = [...mockAdminMessages];
-
-  if (flagged === 'true') {
-    filtered = filtered.filter(m => m.flagged);
-  }
-
-  // Sort
-  if (sortBy === 'newest') {
-    filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  } else if (sortBy === 'oldest') {
-    filtered.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-  }
-
-  const start = (page - 1) * perPage;
-  const end = start + perPage;
-  const paginated = filtered.slice(start, end);
-
-  // Group messages by conversation
-  const conversationMap = new Map<string, any>();
-  
-  paginated.forEach(message => {
-    if (!conversationMap.has(message.conversationId)) {
-      conversationMap.set(message.conversationId, {
-        id: message.conversationId,
-        participants: [
-          { id: message.senderId, name: message.senderName, email: 'sender@example.com' },
-          { id: message.recipientId, name: message.recipientName, email: 'recipient@example.com' }
-        ],
-        last_message: {
-          content: message.content,
-          sent_at: message.createdAt.toISOString()
-        },
-        message_count: 1,
-        reported_count: message.flagged ? 1 : 0,
-        has_reported_messages: message.flagged
-      });
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    
+    // Build query parameters for Laravel backend
+    const params = new URLSearchParams();
+    
+    if (searchParams.get('page')) {
+      params.append('page', searchParams.get('page')!);
     }
-  });
+    if (searchParams.get('per_page')) {
+      params.append('per_page', searchParams.get('per_page')!);
+    }
+    if (searchParams.get('search')) {
+      params.append('search', searchParams.get('search')!);
+    }
+    if (searchParams.get('reported_only') === 'yes') {
+      params.append('reported', 'true');
+    }
 
-  const transformed = Array.from(conversationMap.values());
+    // Make request to Laravel backend
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/messages/conversations?${params.toString()}`
+    );
 
-  return NextResponse.json({
-    data: transformed,
-    meta: {
-      total: transformed.length,
-      page,
-      per_page: perPage,
-      totalPages: Math.ceil(transformed.length / perPage),
-    },
-  });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to fetch conversations' },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+
+    // Transform backend response to match frontend expectations
+    const transformed = Array.isArray(data.data) ? data.data.map((conversation: any) => ({
+      id: conversation.id,
+      participants: [
+        conversation.user1 || { id: conversation.user1_id, name: 'Unknown', email: '' },
+        conversation.user2 || { id: conversation.user2_id, name: 'Unknown', email: '' }
+      ],
+      last_message: conversation.last_message ? {
+        content: conversation.last_message.content || '',
+        sent_at: conversation.last_message.created_at || conversation.updated_at
+      } : {
+        content: 'No messages yet',
+        sent_at: conversation.created_at
+      },
+      message_count: conversation.messages_count || 0,
+      reported_count: conversation.reported_messages_count || 0,
+      has_reported_messages: (conversation.reported_messages_count || 0) > 0
+    })) : [];
+
+    return NextResponse.json({
+      data: transformed,
+      meta: {
+        total: data.meta?.total || 0,
+        page: data.meta?.current_page || 1,
+        per_page: data.meta?.per_page || 50,
+        totalPages: data.meta?.last_page || 1,
+      },
+    });
+  } catch (error) {
+    console.error('Admin messages API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', data: [] },
+      { status: 500 }
+    );
+  }
 }

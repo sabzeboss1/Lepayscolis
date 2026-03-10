@@ -20,11 +20,6 @@ interface Wallet {
   last_transaction_at?: string;
 }
 
-interface FilterValues {
-  search: string;
-  sort_by: string;
-}
-
 export default function WalletsPage() {
   const router = useRouter();
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -34,7 +29,7 @@ export default function WalletsPage() {
   const [total, setTotal] = useState(0);
   const [sortKey, setSortKey] = useState<string>('balance');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filters, setFilters] = useState<FilterValues>({
+  const [filters, setFilters] = useState({
     search: '',
     sort_by: 'balance_high'
   });
@@ -51,12 +46,20 @@ export default function WalletsPage() {
       });
 
       const response = await fetch(`/api/admin/wallets?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
-      setWallets(data.data);
-      setTotal(data.meta.total);
+      // Ensure data.data is an array
+      setWallets(Array.isArray(data.data) ? data.data : []);
+      setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch wallets:', error);
+      setWallets([]); // Set empty array on error
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -71,8 +74,8 @@ export default function WalletsPage() {
     setSortDirection(direction);
   };
 
-  const handleFilterChange = (newFilters: FilterValues) => {
-    setFilters(newFilters);
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(newFilters as typeof filters);
     setCurrentPage(1);
   };
 
@@ -140,19 +143,17 @@ export default function WalletsPage() {
     }
   ];
 
-  const filterConfig = [
+  const filterConfig: FilterConfig[] = [
     {
       type: 'text' as const,
-      name: 'search',
+      key: 'search',
       label: 'Search',
-      placeholder: 'Search by user name or email...',
-      value: filters.search
+      placeholder: 'Search by user name or email...'
     },
     {
       type: 'select' as const,
-      name: 'sort_by',
+      key: 'sort_by',
       label: 'Sort By',
-      value: filters.sort_by,
       options: [
         { value: 'balance_high', label: 'Balance: High to Low' },
         { value: 'balance_low', label: 'Balance: Low to High' },
@@ -195,10 +196,10 @@ export default function WalletsPage() {
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
-        perPage={perPage}
-        total={total}
+        itemsPerPage={perPage}
+        totalItems={total}
         onPageChange={setCurrentPage}
-        onPerPageChange={(newPerPage) => {
+        onItemsPerPageChange={(newPerPage: number) => {
           setPerPage(newPerPage);
           setCurrentPage(1);
         }}

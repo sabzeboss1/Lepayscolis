@@ -48,11 +48,20 @@ export default function TripsPage() {
         ...(filters.sort_by && { sort_by: filters.sort_by })
       });
       const response = await fetch(`/api/admin/trips?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      setTrips(data.data);
-      setTotal(data.meta.total);
+      
+      // Ensure data.data is an array
+      setTrips(Array.isArray(data.data) ? data.data : []);
+      setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch trips:', error);
+      setTrips([]); // Set empty array on error
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -129,19 +138,17 @@ export default function TripsPage() {
     }
   ];
 
-  const filterConfig = [
+  const filterConfig: FilterConfig[] = [
     {
       type: 'text' as const,
-      name: 'search',
+      key: 'search',
       label: 'Search',
-      placeholder: 'Search by origin, destination, or traveler...',
-      value: filters.search
+      placeholder: 'Search by origin, destination, or traveler...'
     },
     {
       type: 'select' as const,
-      name: 'status',
+      key: 'status',
       label: 'Status',
-      value: filters.status,
       options: [
         { value: '', label: 'All Statuses' },
         { value: 'upcoming', label: 'Upcoming' },
@@ -152,9 +159,8 @@ export default function TripsPage() {
     },
     {
       type: 'select' as const,
-      name: 'sort_by',
+      key: 'sort_by',
       label: 'Sort By',
-      value: filters.sort_by,
       options: [
         { value: 'newest', label: 'Newest First' },
         { value: 'oldest', label: 'Oldest First' },
@@ -192,10 +198,10 @@ export default function TripsPage() {
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
-        perPage={perPage}
-        total={total}
+        itemsPerPage={perPage}
+        totalItems={total}
         onPageChange={setCurrentPage}
-        onPerPageChange={(newPerPage) => {
+        onItemsPerPageChange={(newPerPage: number) => {
           setPerPage(newPerPage);
           setCurrentPage(1);
         }}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api/client';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function GET(
   request: NextRequest,
@@ -8,16 +8,26 @@ export async function GET(
   try {
     const params = await context.params;
     
-    // Call Laravel backend API
-    const response = await apiClient.get<any>(`/api/admin/users/${params.id}`);
+    // Call Laravel backend API with authentication
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/users/${params.id}`,
+      { method: 'GET' }
+    );
     
-    return NextResponse.json(response);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+    
+    return NextResponse.json(data);
   } catch (error: any) {
     console.error('Failed to fetch user details from backend:', error);
     
     return NextResponse.json(
-      { error: error.message || 'User not found' },
-      { status: error.status || 404 }
+      { message: error.message || 'User not found' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 404 }
     );
   }
 }
@@ -30,16 +40,29 @@ export async function PUT(
     const params = await context.params;
     const body = await request.json();
     
-    // Call Laravel backend API
-    const response = await apiClient.put<any>(`/api/admin/users/${params.id}`, body);
+    // Call Laravel backend API with authentication
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/users/${params.id}`,
+      { 
+        method: 'PUT',
+        body: JSON.stringify(body)
+      }
+    );
     
-    return NextResponse.json(response);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+    
+    return NextResponse.json(data);
   } catch (error: any) {
     console.error('Failed to update user:', error);
     
     return NextResponse.json(
-      { error: error.message || 'Failed to update user' },
-      { status: error.status || 500 }
+      { message: error.message || 'Failed to update user' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
     );
   }
 }
@@ -51,16 +74,26 @@ export async function DELETE(
   try {
     const params = await context.params;
     
-    // Call Laravel backend API
-    const response = await apiClient.delete<any>(`/api/admin/users/${params.id}`);
+    // Call Laravel backend API with authentication
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/users/${params.id}`,
+      { method: 'DELETE' }
+    );
     
-    return NextResponse.json(response);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+    
+    return NextResponse.json(data);
   } catch (error: any) {
     console.error('Failed to delete user:', error);
     
     return NextResponse.json(
-      { error: error.message || 'Failed to delete user' },
-      { status: error.status || 500 }
+      { message: error.message || 'Failed to delete user' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
     );
   }
 }

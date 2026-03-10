@@ -1,30 +1,44 @@
-import { NextResponse } from 'next/server';
-import { mockAdminStats, mockKYCSubmissions, mockAdminWithdrawals } from '@/lib/api/adminMockData';
+import { NextRequest, NextResponse } from 'next/server';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
-export async function GET() {
-  const pendingKYC = mockKYCSubmissions.filter(k => k.status === 'pending').length;
-  const pendingWithdrawals = mockAdminWithdrawals.filter(w => w.status === 'pending').length;
+export async function GET(request: NextRequest) {
+  try {
+    // Call Laravel backend API with authentication
+    const response = await makeAdminRequest(
+      request,
+      '/api/admin/dashboard/metrics',
+      { method: 'GET' }
+    );
 
-  const metrics = {
-    total_users: mockAdminStats.totalUsers,
-    active_trips: mockAdminStats.activeTrips,
-    pending_shipments: mockAdminStats.pendingShipments,
-    revenue_30_days: mockAdminStats.totalRevenue,
-    pending_kyc: pendingKYC,
-    pending_withdrawals: pendingWithdrawals,
-    trends: {
-      users: { value: 12.5, direction: 'up' as const },
-      trips: { value: 8.3, direction: 'up' as const },
-      shipments: { value: -2.1, direction: 'down' as const },
-      revenue: { value: 15.7, direction: 'up' as const },
-    },
-  };
-
-  return NextResponse.json({
-    data: metrics,
-    meta: {
-      cached_at: new Date().toISOString(),
-      cache_ttl: 300, // 5 minutes
-    },
-  });
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+    
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error('Failed to fetch dashboard metrics:', error);
+    
+    return NextResponse.json(
+      { 
+        message: error.message || 'Failed to fetch dashboard metrics',
+        data: {
+          total_users: 0,
+          active_trips: 0,
+          pending_shipments: 0,
+          revenue_30_days: 0,
+          pending_kyc: 0,
+          pending_withdrawals: 0,
+          trends: {
+            users: { value: 0, direction: 'neutral' },
+            trips: { value: 0, direction: 'neutral' },
+            shipments: { value: 0, direction: 'neutral' },
+            revenue: { value: 0, direction: 'neutral' }
+          }
+        }
+      },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+    );
+  }
 }
