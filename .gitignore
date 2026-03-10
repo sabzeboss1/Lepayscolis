@@ -1,0 +1,5 @@
+backend/composer.lock
+backend/storage/
+backend/vendor/
+ROADMAP_CMS.md
+frontend/package-lock.json

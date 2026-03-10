@@ -1,0 +1,705 @@
+{
+  "common": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "search": "Search",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "all": "All",
+    "characters": "characters",
+    "viewDetails": "View Details",
+    "contactUs": "Contact Us",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "select": "Select",
+    "uploaded": "Uploaded",
+    "optional": "optional"
+  },
+  "navigation": {
+    "home": "Home",
+    "howItWorks": "How It Works",
+    "security": "Security",
+    "destinations": "Destinations",
+    "faq": "FAQ",
+    "dashboard": "Dashboard",
+    "trips": "Trips",
+    "shipments": "Shipments",
+    "wallet": "Wallet",
+    "messages": "Messages",
+    "profile": "Profile"
+  },
+  "footer": {
+    "about": "About",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "contact": "Contact",
+    "copyright": "© {{year}} LePaysExpressColis. All rights reserved.",
+    "companyInfo": "Community-driven parcel delivery between Russia and Africa",
+    "followUs": "Follow Us",
+    "legal": "Legal"
+  },
+  "auth": {
+    "loginTitle": "Login to your account",
+    "registerTitle": "Create your account",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Full Name",
+    "phone": "Phone Number",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginSuccess": "Login successful!",
+    "registerSuccess": "Registration successful!",
+    "loginError": "Invalid email or password",
+    "registerError": "Registration failed. Please try again."
+  },
+  "home": {
+    "hero": {
+      "title": "Send packages between Russia and Africa with trusted travelers",
+      "titleHighlight": "Russia and Africa",
+      "subtitle": "Safe, affordable, and community-driven parcel delivery",
+      "cta": "Get Started",
+      "badge": "Trusted platform for your shipments"
+    },
+    "roles": {
+      "sender": {
+        "title": "I'm sending a package",
+        "description": "Find a trusted traveler"
+      },
+      "traveler": {
+        "title": "I'm transporting a package",
+        "description": "Earn money while traveling"
+      }
+    },
+    "stats": {
+      "deliveries": "Packages delivered",
+      "travelers": "Active travelers",
+      "destinations": "Destinations",
+      "rating": "Average rating"
+    },
+    "trustIndicators": {
+      "securePayment": "Secure payment",
+      "verifiedUsers": "Verified users",
+      "support247": "24/7 Support"
+    },
+    "benefits": {
+      "title": "Why Choose LePaysExpressColis?",
+      "safe": {
+        "title": "Safe & Secure",
+        "description": "KYC verification and escrow payment protection"
+      },
+      "escrow": {
+        "title": "Escrow Payment",
+        "description": "Money is released only after confirmed delivery"
+      },
+      "affordable": {
+        "title": "Affordable",
+        "description": "Save up to 70% compared to traditional shipping"
+      },
+      "community": {
+        "title": "Community-Driven",
+        "description": "Connect with verified travelers in our trusted network"
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "sender": "For Senders",
+      "traveler": "For Travelers",
+      "senderStep1": "Search for travelers going to your destination",
+      "senderStep2": "Request delivery and pay securely",
+      "senderStep3": "Track your package and confirm delivery",
+      "travelerStep1": "Publish your upcoming trip",
+      "travelerStep2": "Accept delivery requests",
+      "travelerStep3": "Deliver and get paid"
+    },
+    "testimonials": {
+      "title": "What Our Users Say",
+      "testimonial1": {
+        "text": "I saved so much money sending gifts to my family in Africa. The traveler was professional and my package arrived safely!",
+        "author": "Maria K.",
+        "location": "Moscow, Russia"
+      },
+      "testimonial2": {
+        "text": "As a frequent traveler, this platform helps me earn extra income while helping others. It's a win-win!",
+        "author": "Ahmed B.",
+        "location": "Cairo, Egypt"
+      },
+      "testimonial3": {
+        "text": "The escrow payment system gave me peace of mind. I knew my money was safe until delivery was confirmed.",
+        "author": "Olga S.",
+        "location": "St. Petersburg, Russia"
+      }
+    },
+    "destinations": {
+      "title": "Popular Destinations",
+      "viewAll": "View All Destinations"
+    },
+    "finalCta": {
+      "title": "Ready to get started?",
+      "subtitle": "Join thousands of users connecting Russia and Africa",
+      "cta": "Create Your Account"
+    }
+  },
+  "howItWorksPage": {
+    "title": "How It Works",
+    "description": "Learn how LePaysExpressColis connects senders and travelers",
+    "tabs": {
+      "send": "Send a Package",
+      "travel": "Deliver Packages"
+    },
+    "sender": {
+      "title": "For Senders",
+      "step1": {
+        "title": "Search for Travelers",
+        "description": "Browse travelers going to your destination. Filter by date, route, and price."
+      },
+      "step2": {
+        "title": "Request Delivery",
+        "description": "Contact the traveler and agree on delivery details. Pay securely through our escrow system."
+      },
+      "step3": {
+        "title": "Track & Confirm",
+        "description": "Track your package in real-time. Confirm delivery to release payment to the traveler."
+      }
+    },
+    "traveler": {
+      "title": "For Travelers",
+      "step1": {
+        "title": "Publish Your Trip",
+        "description": "Share your travel plans including route, dates, and available capacity."
+      },
+      "step2": {
+        "title": "Accept Requests",
+        "description": "Review delivery requests from senders. Accept the ones that fit your trip."
+      },
+      "step3": {
+        "title": "Deliver & Earn",
+        "description": "Deliver the package safely. Get paid automatically when delivery is confirmed."
+      }
+    }
+  },
+  "securityPage": {
+    "title": "Security & Trust",
+    "description": "Your safety is our priority",
+    "kyc": {
+      "title": "KYC Verification",
+      "description": "All users must complete identity verification before using the platform. We verify government-issued IDs to ensure everyone is who they claim to be.",
+      "benefits": [
+        "Government ID verification",
+        "Secure document upload",
+        "Fast approval process",
+        "Verified badge for approved users"
+      ]
+    },
+    "escrow": {
+      "title": "Escrow Payment System",
+      "description": "Your money is protected with our secure escrow system. Payment is held safely until delivery is confirmed by both parties.",
+      "benefits": [
+        "Payment held securely",
+        "Released only after delivery confirmation",
+        "Dispute resolution support",
+        "Full refund if delivery fails"
+      ]
+    },
+    "ratings": {
+      "title": "Rating & Review System",
+      "description": "Build trust through our transparent rating system. Both senders and travelers rate each other after every delivery.",
+      "benefits": [
+        "5-star rating system",
+        "Detailed reviews and comments",
+        "Recommended badge for top users",
+        "Rating history visible to all"
+      ]
+    },
+    "trust": {
+      "title": "Trust Badges",
+      "recommended": "Recommended users have 4.5+ stars and 5+ successful deliveries",
+      "verified": "Verified users have completed KYC verification"
+    }
+  },
+  "destinationsPage": {
+    "title": "Popular Destinations",
+    "description": "Connecting Russia and Africa",
+    "routes": {
+      "title": "Popular Routes",
+      "russiaToAfrica": "Russia → Africa",
+      "africaToRussia": "Africa → Russia"
+    },
+    "cities": {
+      "russia": {
+        "title": "Russia",
+        "moscow": "Moscow",
+        "stPetersburg": "St. Petersburg",
+        "kazan": "Kazan",
+        "sochi": "Sochi"
+      },
+      "africa": {
+        "title": "Africa",
+        "cairo": "Cairo, Egypt",
+        "lagos": "Lagos, Nigeria",
+        "johannesburg": "Johannesburg, South Africa",
+        "nairobi": "Nairobi, Kenya",
+        "casablanca": "Casablanca, Morocco",
+        "addisAbaba": "Addis Ababa, Ethiopia"
+      }
+    },
+    "stats": {
+      "title": "Route Statistics",
+      "activeTrips": "Active Trips",
+      "avgPrice": "Avg. Price/kg",
+      "avgDuration": "Avg. Duration"
+    }
+  },
+  "faqPage": {
+    "title": "Frequently Asked Questions",
+    "description": "Find answers to common questions",
+    "search": "Search questions...",
+    "categories": {
+      "general": "General",
+      "senders": "For Senders",
+      "travelers": "For Travelers",
+      "payments": "Payments",
+      "safety": "Safety & Security"
+    },
+    "general": {
+      "q1": {
+        "question": "What is LePaysExpressColis?",
+        "answer": "LePaysExpressColis is a community-driven platform that connects people who need to send packages between Russia and Africa with travelers making the same journey."
+      },
+      "q2": {
+        "question": "How does it work?",
+        "answer": "Travelers publish their upcoming trips with available luggage capacity. Senders search for travelers going to their destination and request delivery. Payment is held in escrow until delivery is confirmed."
+      },
+      "q3": {
+        "question": "Is it legal?",
+        "answer": "Yes, as long as the items being transported are legal and comply with customs regulations in both countries. Users are responsible for ensuring their packages meet all legal requirements."
+      }
+    },
+    "senders": {
+      "q1": {
+        "question": "How much does it cost?",
+        "answer": "Prices vary by route and traveler, but typically range from $5-15 per kg. This is up to 70% cheaper than traditional shipping services."
+      },
+      "q2": {
+        "question": "What can I send?",
+        "answer": "You can send most personal items including gifts, documents, electronics, and clothing. Prohibited items include weapons, drugs, hazardous materials, and anything illegal in either country."
+      },
+      "q3": {
+        "question": "How long does delivery take?",
+        "answer": "Delivery time depends on the traveler's schedule. Most deliveries are completed within 1-7 days of the traveler's arrival."
+      }
+    },
+    "travelers": {
+      "q1": {
+        "question": "How much can I earn?",
+        "answer": "Earnings depend on your route and capacity. Travelers typically earn $50-200 per trip by utilizing their unused luggage space."
+      },
+      "q2": {
+        "question": "What are my responsibilities?",
+        "answer": "You must transport the package safely, clear customs if required, and deliver to the agreed location. You should also communicate with the sender throughout the journey."
+      },
+      "q3": {
+        "question": "What if I can't complete the delivery?",
+        "answer": "Contact the sender and our support team immediately. If delivery cannot be completed, the payment will be refunded to the sender."
+      }
+    },
+    "payments": {
+      "q1": {
+        "question": "How does escrow payment work?",
+        "answer": "When a sender pays, the money is held securely by our platform. It's only released to the traveler after the sender confirms successful delivery."
+      },
+      "q2": {
+        "question": "What payment methods are accepted?",
+        "answer": "We accept credit cards, debit cards, and bank transfers. All payments are processed securely through our payment partners."
+      },
+      "q3": {
+        "question": "What if there's a dispute?",
+        "answer": "Our support team will mediate disputes between senders and travelers. We review evidence from both parties and make a fair decision."
+      }
+    },
+    "safety": {
+      "q1": {
+        "question": "How do you verify users?",
+        "answer": "All users must complete KYC verification by uploading a government-issued ID. We verify the authenticity of documents before approving accounts."
+      },
+      "q2": {
+        "question": "What if my package is damaged?",
+        "answer": "We recommend purchasing insurance for valuable items. In case of damage, our support team will investigate and help resolve the issue."
+      },
+      "q3": {
+        "question": "Can I trust the travelers?",
+        "answer": "All travelers are KYC-verified. You can also check their ratings, reviews, and delivery history before choosing them."
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome back, {{name}}!",
+    "quickActions": "Quick Actions",
+    "publishTrip": "Publish a Trip",
+    "searchTrips": "Search Trips",
+    "createShipment": "Create Shipment",
+    "activeTrips": "Active Trips",
+    "pendingShipments": "Pending Shipments",
+    "recentMessages": "Recent Messages",
+    "statistics": "Your Statistics",
+    "noActiveTrips": "No active trips",
+    "noPendingShipments": "No pending shipments",
+    "noRecentMessages": "No recent messages"
+  },
+  "trips": {
+    "publish": "Publish a Trip",
+    "search": "Search Trips",
+    "myTrips": "My Trips",
+    "departure": "Departure",
+    "arrival": "Arrival",
+    "capacity": "Available Capacity",
+    "pricePerKg": "Price per kg",
+    "departureCity": "Departure City",
+    "departureCountry": "Departure Country",
+    "departureDate": "Departure Date",
+    "arrivalCity": "Arrival City",
+    "arrivalCountry": "Arrival Country",
+    "arrivalDate": "Arrival Date",
+    "availableCapacity": "Available Capacity (kg)",
+    "price": "Price per kg",
+    "status": "Status",
+    "active": "Active",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "publishSuccess": "Trip published successfully!",
+    "publishError": "Failed to publish trip",
+    "updateSuccess": "Trip updated successfully!",
+    "updateError": "Failed to update trip",
+    "cancelSuccess": "Trip cancelled successfully!",
+    "cancelError": "Failed to cancel trip",
+    "noTripsFound": "No trips found",
+    "filterResults": "Filter Results",
+    "sortBy": "Sort By",
+    "sortByDate": "Sort by Date",
+    "sortByPrice": "Sort by Price",
+    "sortByRating": "Sort by Rating",
+    "travelerInfo": "Traveler Information",
+    "contactTraveler": "Contact Traveler",
+    "requestShipment": "Request Shipment",
+    "selectCountryFirst": "Select a country first",
+    "revenueBreakdown": "Revenue Breakdown",
+    "totalRevenue": "Total Revenue",
+    "yourEarnings": "Your Earnings",
+    "platformFee": "Platform Fee",
+    "revenueNote": "Note: Percentages are indicative and will be confirmed upon validation.",
+    "travelProof": "Travel Booking Proof (optional)",
+    "travelProofHelper": "Upload your flight ticket, train reservation or any document proving your travel",
+    "whyTravelProof": "Why provide travel proof?",
+    "travelProofBenefit": "This reassures senders and increases your chances of getting delivery requests. Your profile will be marked as 'Verified Travel'.",
+    "traveler": "Traveler",
+    "travelerName": "Traveler Name",
+    "travelerNamePlaceholder": "Search by traveler name",
+    "packageDetails": "Package Details",
+    "acceptedPackageTypes": "Accepted Package Types",
+    "packageTypes": {
+      "enveloppes": "Envelopes",
+      "petitsColis": "Small Packages",
+      "moyensColis": "Medium Packages",
+      "grandsColis": "Large Packages"
+    },
+    "pickupAddress": "Package Pickup Address",
+    "pickupAddressPlaceholder": "Enter the complete address where you will pick up packages...",
+    "pickupAddressHelper": "Specify the exact address where senders can drop off their packages",
+    "deliveryAddress": "Package Delivery Address",
+    "deliveryAddressPlaceholder": "Enter the complete address where you will deliver packages...",
+    "deliveryAddressHelper": "Specify the exact address where you will deliver packages at destination"
+  },
+  "shipments": {
+    "create": "Create Shipment",
+    "myShipments": "My Shipments",
+    "description": "Description",
+    "weight": "Weight (kg)",
+    "dimensions": "Dimensions",
+    "length": "Length (cm)",
+    "width": "Width (cm)",
+    "height": "Height (cm)",
+    "pickup": "Pickup Location",
+    "delivery": "Delivery Location",
+    "pickupCity": "Pickup City",
+    "pickupCountry": "Pickup Country",
+    "pickupAddress": "Pickup Address",
+    "deliveryCity": "Delivery City",
+    "deliveryCountry": "Delivery Country",
+    "deliveryAddress": "Delivery Address",
+    "currentLocation": "Where is your package currently located?",
+    "currentLocationHelper": "Specify the city and country where your package is currently located",
+    "currentCity": "Current City",
+    "currentCountry": "Current Country",
+    "currentCityPlaceholder": "e.g., Paris, Dakar, Abidjan...",
+    "currentCountryPlaceholder": "e.g., France, Senegal, Ivory Coast...",
+    "desiredDestination": "Where would you like the package to be delivered?",
+    "desiredDestinationHelper": "Specify the desired destination city and country",
+    "destinationCity": "Destination City",
+    "destinationCountry": "Destination Country",
+    "destinationCityPlaceholder": "e.g., New York, London, Montreal...",
+    "destinationCountryPlaceholder": "e.g., United States, United Kingdom, Canada...",
+    "status": "Status",
+    "pending": "Pending",
+    "accepted": "Accepted",
+    "inTransit": "In Transit",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "payment": "Payment",
+    "paymentStatus": "Payment Status",
+    "paymentPending": "Pending",
+    "paymentEscrowed": "Escrowed",
+    "paymentReleased": "Released",
+    "paymentRefunded": "Refunded",
+    "createSuccess": "Shipment created successfully!",
+    "createError": "Failed to create shipment",
+    "updateSuccess": "Shipment updated successfully!",
+    "updateError": "Failed to update shipment",
+    "cancelSuccess": "Shipment cancelled successfully!",
+    "cancelError": "Failed to cancel shipment",
+    "noShipmentsFound": "No shipments found",
+    "packageDetails": "Package Details",
+    "locationDetails": "Location Details",
+    "matchedTraveler": "Matched Traveler",
+    "deliveryProgress": "Delivery Progress",
+    "dimensionsHelper": "Dimensions help travelers assess the space needed",
+    "prohibitedItemsTitle": "Prohibited Items",
+    "prohibitedItemsWarning": "For everyone's safety, certain items cannot be shipped through our platform.",
+    "viewProhibitedList": "View prohibited items list",
+    "hideProhibitedList": "Hide list",
+    "prohibitedItemsListTitle": "Strictly prohibited items:",
+    "prohibitedItem1": "Drugs, narcotics and illicit substances",
+    "prohibitedItem2": "Weapons, ammunition and explosives",
+    "prohibitedItem3": "Hazardous materials (chemicals, toxic, flammable)",
+    "prohibitedItem4": "Counterfeit and pirated products",
+    "prohibitedItem5": "Undeclared cash and financial instruments",
+    "prohibitedItem6": "Unauthorized animal or plant products",
+    "prohibitedItem7": "Stolen items or items of dubious origin",
+    "prohibitedItem8": "Any item illegal in the departure or arrival country",
+    "prohibitedItemsConfirmation": "I confirm that my package does not contain any prohibited items and complies with the laws of both countries.",
+    "prohibitedItemsRequired": "You must confirm that your package does not contain prohibited items"
+  },
+  "messages": {
+    "title": "Messages",
+    "newMessage": "New Message",
+    "noMessages": "No messages",
+    "conversations": "Conversations",
+    "typeMessage": "Type a message...",
+    "send": "Send",
+    "unread": "Unread",
+    "unreadMessage": "unread message",
+    "unreadMessages": "unread messages",
+    "markAsRead": "Mark as Read",
+    "deleteConversation": "Delete Conversation",
+    "noConversations": "No conversations yet",
+    "startConversation": "Start a conversation",
+    "startConversationHint": "Start chatting with other users from their profiles or your shipments",
+    "characterLimit": "{{current}}/{{max}} characters",
+    "unknownUser": "Unknown User",
+    "you": "You",
+    "noMessagesYet": "No messages yet",
+    "messageSent": "Message sent",
+    "errorFetchingConversations": "Error loading conversations",
+    "errorFetchingMessages": "Error loading messages",
+    "errorSendingMessage": "Error sending message",
+    "errorNoRecipient": "Unable to find recipient"
+  },
+  "profile": {
+    "title": "Profile",
+    "edit": "Edit Profile",
+    "editProfile": "Edit Profile",
+    "rating": "Rating",
+    "completedDeliveries": "Completed Deliveries",
+    "recommended": "Recommended",
+    "verified": "Verified",
+    "kycStatus": "KYC Status",
+    "kycPending": "Pending Verification",
+    "kycVerified": "Verified",
+    "kycApproved": "Verified",
+    "kycRejected": "Verification Rejected",
+    "avatar": "Profile Picture",
+    "personalInfo": "Personal Information",
+    "contactInfo": "Contact Information",
+    "updateSuccess": "Profile updated successfully!",
+    "updateError": "Failed to update profile",
+    "ratingsAndReviews": "Ratings & Reviews",
+    "reviews": "reviews",
+    "noReviews": "No reviews yet",
+    "allReviews": "All Reviews",
+    "noRatings": "No ratings yet",
+    "averageRating": "Average Rating",
+    "totalRatings": "Total Ratings"
+  },
+  "ratings": {
+    "title": "Rate Your Experience",
+    "rateUser": "Rate {{name}}",
+    "yourRating": "Your Rating",
+    "comment": "Comment (optional)",
+    "submitRating": "Submit Rating",
+    "submitSuccess": "Rating submitted successfully!",
+    "submitError": "Failed to submit rating",
+    "stars": "{{count}} stars"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "viewAll": "View all notifications",
+    "shipmentAccepted": "Shipment accepted",
+    "paymentReleased": "Payment released",
+    "kycApproved": "KYC approved",
+    "messageReceived": "New message",
+    "tripUpdate": "Trip update"
+  },
+  "kyc": {
+    "title": "KYC Verification",
+    "description": "Complete your identity verification to access all features",
+    "uploadDocument": "Upload Document",
+    "documentType": "Document Type",
+    "passport": "Passport",
+    "idCard": "ID Card",
+    "driversLicense": "Driver's License",
+    "status": "Verification Status",
+    "pending": "Pending Review",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "rejectionReason": "Rejection Reason",
+    "resubmit": "Resubmit Documents",
+    "submitSuccess": "Documents submitted successfully!",
+    "submitError": "Failed to submit documents",
+    "required": "KYC verification required",
+    "requiredMessage": "You must complete KYC verification to {{action}}",
+    "documentFile": "Document File",
+    "idCardFront": "ID Card (Front)",
+    "idCardBack": "ID Card (Back)",
+    "selfie": "Selfie photo with your document",
+    "acceptedFormats": "Accepted formats: JPEG, PNG, PDF (max 5MB)",
+    "selfieFormats": "Accepted formats: JPEG, PNG (max 5MB)",
+    "selected": "Selected",
+    "submitting": "Submitting...",
+    "submitDocument": "Submit Documents",
+    "documentRequired": "Please select a document to upload",
+    "idCardBackRequired": "ID card back side is required",
+    "selfieRequired": "Selfie photo is required",
+    "invalidFileType": "Please upload a valid file (JPEG, PNG or PDF)",
+    "fileTooLarge": "File size must be less than 5MB",
+    "selfieInstructions": "Take a photo of yourself holding your ID document next to your face. Make sure your face and the document are clearly visible.",
+    "whyKycTitle": "Why KYC Verification?",
+    "whyKycDescription": "Identity verification is essential to ensure the safety of all users on our platform.",
+    "whyKycReason1": "Protects against fraud and illegal activities",
+    "whyKycReason2": "Creates a trusted environment for all users",
+    "whyKycReason3": "Complies with international regulations",
+    "whyKycReason4": "Enables secure and traceable transactions",
+    "importantInfo": "Important Information",
+    "info1": "Ensure your document is clear and all information is visible",
+    "info2": "Document must be valid and not expired",
+    "info3": "For ID cards, BOTH front and back sides are required",
+    "info4": "Selfie photo must clearly show your face and the document",
+    "info5": "Verification typically takes 1-2 business days"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidPhone": "Invalid phone number",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match",
+    "invalidDate": "Invalid date",
+    "dateMustBeFuture": "Date must be in the future",
+    "dateMustBeAfter": "Arrival date must be after departure date",
+    "mustBePositive": "Must be a positive number",
+    "mustBeGreaterThanZero": "Must be greater than zero",
+    "selectAtLeastOne": "Select at least one option",
+    "addressTooShort": "Address must be at least 5 characters",
+    "networkError": "Network error. Please try again.",
+    "serverError": "Server error. Please try again later.",
+    "notFound": "Resource not found",
+    "unauthorized": "You are not authorized to perform this action",
+    "forbidden": "Access forbidden",
+    "validationError": "Please fix the errors and try again"
+  },
+  "validation": {
+    "minLength": "Must be at least {{min}} characters",
+    "maxLength": "Must be at most {{max}} characters",
+    "min": "Must be at least {{min}}",
+    "max": "Must be at most {{max}}",
+    "email": "Must be a valid email address",
+    "url": "Must be a valid URL",
+    "phone": "Must be a valid phone number",
+    "date": "Must be a valid date",
+    "number": "Must be a valid number",
+    "integer": "Must be a whole number",
+    "positive": "Must be a positive number"
+  },
+  "payment": {
+    "checkout": {
+      "redirecting": "Redirecting to payment...",
+      "pleaseWait": "Please wait while we prepare your secure payment session.",
+      "error": "Payment Error"
+    },
+    "success": {
+      "title": "Payment Successful!",
+      "message": "Your payment has been processed successfully. The funds are now held in escrow and will be released to the traveler after confirmed delivery.",
+      "verifying": "Verifying payment...",
+      "pleaseWait": "Please wait while we verify your payment.",
+      "errorTitle": "Verification Error",
+      "status": "Status",
+      "amount": "Amount",
+      "transactionId": "Transaction ID",
+      "escrowInfo": "💡 Your funds are secured in escrow and will be released to the traveler only after you confirm delivery.",
+      "viewShipment": "View Shipment",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "cancel": {
+      "title": "Payment Cancelled",
+      "message": "You have cancelled the payment process. No amount has been charged.",
+      "info": "💡 You can retry the payment at any time. The shipment will remain pending until payment is completed.",
+      "retryPayment": "Retry Payment",
+      "viewShipment": "View Shipment"
+    },
+    "status": {
+      "label": "Payment Status",
+      "pending": "Pending",
+      "held": "Held in Escrow",
+      "released": "Released",
+      "refunded": "Refunded",
+      "failed": "Failed"
+    },
+    "escrow": {
+      "senderInfo": "💰 Your funds are secured in escrow. They will be released to the traveler after you confirm delivery.",
+      "travelerInfo": "💰 Funds are held in escrow. You will receive payment after the sender confirms delivery.",
+      "released": "✅ Payment has been released to the traveler.",
+      "refunded": "↩️ Payment has been refunded to the sender."
+    },
+    "transactionId": "Transaction ID",
+    "errors": {
+      "missingShipmentId": "Missing shipment ID. Please try again from the shipment page.",
+      "missingSessionId": "Invalid payment session. Please try again.",
+      "shipmentNotFound": "Shipment not found.",
+      "invalidShipment": "Invalid shipment or already paid.",
+      "unauthorized": "You are not authorized to make this payment.",
+      "checkoutFailed": "Failed to create payment session. Please try again.",
+      "verificationFailed": "Failed to verify payment. Please contact support if the issue persists."
+    }
+  },
+  "common": {
+    "retry": "Retry",
+    "total": "Total",
+    "backToDashboard": "Back to Dashboard"
+  }
+}

@@ -1,0 +1,705 @@
+{
+  "common": {
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "logout": "Déconnexion",
+    "search": "Rechercher",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "submit": "Soumettre",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "yes": "Oui",
+    "no": "Non",
+    "or": "ou",
+    "and": "et",
+    "all": "Tous",
+    "characters": "caractères",
+    "viewDetails": "Voir les détails",
+    "contactUs": "Nous contacter",
+    "getStarted": "Commencer",
+    "learnMore": "En savoir plus",
+    "select": "Sélectionner",
+    "uploaded": "Téléchargé",
+    "optional": "optionnel"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "howItWorks": "Comment ça marche",
+    "security": "Sécurité",
+    "destinations": "Destinations",
+    "faq": "FAQ",
+    "dashboard": "Tableau de bord",
+    "trips": "Voyages",
+    "shipments": "Expéditions",
+    "wallet": "Portefeuille",
+    "messages": "Messages",
+    "profile": "Profil"
+  },
+  "footer": {
+    "about": "À propos",
+    "terms": "Conditions d'utilisation",
+    "privacy": "Politique de confidentialité",
+    "contact": "Contact",
+    "copyright": "© {{year}} LePaysExpressColis. Tous droits réservés.",
+    "companyInfo": "Livraison de colis communautaire entre la Russie et l'Afrique",
+    "followUs": "Suivez-nous",
+    "legal": "Mentions légales"
+  },
+  "auth": {
+    "loginTitle": "Connectez-vous à votre compte",
+    "registerTitle": "Créez votre compte",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "name": "Nom complet",
+    "phone": "Numéro de téléphone",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "hasAccount": "Vous avez déjà un compte ?",
+    "loginSuccess": "Connexion réussie !",
+    "registerSuccess": "Inscription réussie !",
+    "loginError": "Email ou mot de passe invalide",
+    "registerError": "L'inscription a échoué. Veuillez réessayer."
+  },
+  "home": {
+    "hero": {
+      "title": "Envoyez des colis entre la Russie et l'Afrique avec des voyageurs de confiance",
+      "titleHighlight": "la Russie et l'Afrique",
+      "subtitle": "Livraison de colis sûre, abordable et communautaire",
+      "cta": "Commencer",
+      "badge": "Plateforme de confiance pour vos envois"
+    },
+    "roles": {
+      "sender": {
+        "title": "J'envoie un colis",
+        "description": "Trouvez un voyageur de confiance"
+      },
+      "traveler": {
+        "title": "Je transporte un colis",
+        "description": "Gagnez de l'argent en voyageant"
+      }
+    },
+    "stats": {
+      "deliveries": "Colis livrés",
+      "travelers": "Voyageurs actifs",
+      "destinations": "Destinations",
+      "rating": "Note moyenne"
+    },
+    "trustIndicators": {
+      "securePayment": "Paiement sécurisé",
+      "verifiedUsers": "Utilisateurs vérifiés",
+      "support247": "Support 24/7"
+    },
+    "benefits": {
+      "title": "Pourquoi choisir LePaysExpressColis ?",
+      "safe": {
+        "title": "Sûr et sécurisé",
+        "description": "Vérification KYC et protection par paiement séquestre"
+      },
+      "escrow": {
+        "title": "Paiement bloqué",
+        "description": "L'argent est libéré uniquement après livraison confirmée"
+      },
+      "affordable": {
+        "title": "Abordable",
+        "description": "Économisez jusqu'à 70% par rapport à l'expédition traditionnelle"
+      },
+      "community": {
+        "title": "Communautaire",
+        "description": "Connectez-vous avec des voyageurs vérifiés dans notre réseau de confiance"
+      }
+    },
+    "howItWorks": {
+      "title": "Comment ça marche",
+      "sender": "Pour les expéditeurs",
+      "traveler": "Pour les voyageurs",
+      "senderStep1": "Recherchez des voyageurs allant à votre destination",
+      "senderStep2": "Demandez la livraison et payez en toute sécurité",
+      "senderStep3": "Suivez votre colis et confirmez la livraison",
+      "travelerStep1": "Publiez votre prochain voyage",
+      "travelerStep2": "Acceptez les demandes de livraison",
+      "travelerStep3": "Livrez et soyez payé"
+    },
+    "testimonials": {
+      "title": "Ce que disent nos utilisateurs",
+      "testimonial1": {
+        "text": "J'ai économisé tellement d'argent en envoyant des cadeaux à ma famille en Afrique. Le voyageur était professionnel et mon colis est arrivé en toute sécurité !",
+        "author": "Maria K.",
+        "location": "Moscou, Russie"
+      },
+      "testimonial2": {
+        "text": "En tant que voyageur fréquent, cette plateforme m'aide à gagner un revenu supplémentaire tout en aidant les autres. C'est gagnant-gagnant !",
+        "author": "Ahmed B.",
+        "location": "Le Caire, Égypte"
+      },
+      "testimonial3": {
+        "text": "Le système de paiement séquestre m'a donné la tranquillité d'esprit. Je savais que mon argent était en sécurité jusqu'à la confirmation de la livraison.",
+        "author": "Olga S.",
+        "location": "Saint-Pétersbourg, Russie"
+      }
+    },
+    "destinations": {
+      "title": "Destinations populaires",
+      "viewAll": "Voir toutes les destinations"
+    },
+    "finalCta": {
+      "title": "Prêt à commencer ?",
+      "subtitle": "Rejoignez des milliers d'utilisateurs connectant la Russie et l'Afrique",
+      "cta": "Créer votre compte"
+    }
+  },
+  "howItWorksPage": {
+    "title": "Comment ça marche",
+    "description": "Découvrez comment LePaysExpressColis connecte les expéditeurs et les voyageurs",
+    "tabs": {
+      "send": "Envoyer un colis",
+      "travel": "Livrer des colis"
+    },
+    "sender": {
+      "title": "Pour les expéditeurs",
+      "step1": {
+        "title": "Rechercher des voyageurs",
+        "description": "Parcourez les voyageurs allant à votre destination. Filtrez par date, itinéraire et prix."
+      },
+      "step2": {
+        "title": "Demander la livraison",
+        "description": "Contactez le voyageur et convenez des détails de livraison. Payez en toute sécurité via notre système séquestre."
+      },
+      "step3": {
+        "title": "Suivre et confirmer",
+        "description": "Suivez votre colis en temps réel. Confirmez la livraison pour libérer le paiement au voyageur."
+      }
+    },
+    "traveler": {
+      "title": "Pour les voyageurs",
+      "step1": {
+        "title": "Publier votre voyage",
+        "description": "Partagez vos plans de voyage incluant l'itinéraire, les dates et la capacité disponible."
+      },
+      "step2": {
+        "title": "Accepter les demandes",
+        "description": "Examinez les demandes de livraison des expéditeurs. Acceptez celles qui correspondent à votre voyage."
+      },
+      "step3": {
+        "title": "Livrer et gagner",
+        "description": "Livrez le colis en toute sécurité. Soyez payé automatiquement lorsque la livraison est confirmée."
+      }
+    }
+  },
+  "securityPage": {
+    "title": "Sécurité et confiance",
+    "description": "Votre sécurité est notre priorité",
+    "kyc": {
+      "title": "Vérification KYC",
+      "description": "Tous les utilisateurs doivent compléter la vérification d'identité avant d'utiliser la plateforme. Nous vérifions les pièces d'identité émises par le gouvernement pour garantir que chacun est bien qui il prétend être.",
+      "benefits": [
+        "Vérification de pièce d'identité gouvernementale",
+        "Téléchargement sécurisé de documents",
+        "Processus d'approbation rapide",
+        "Badge vérifié pour les utilisateurs approuvés"
+      ]
+    },
+    "escrow": {
+      "title": "Système de paiement séquestre",
+      "description": "Votre argent est protégé avec notre système séquestre sécurisé. Le paiement est conservé en toute sécurité jusqu'à ce que la livraison soit confirmée par les deux parties.",
+      "benefits": [
+        "Paiement conservé en toute sécurité",
+        "Libéré uniquement après confirmation de livraison",
+        "Support de résolution des litiges",
+        "Remboursement complet si la livraison échoue"
+      ]
+    },
+    "ratings": {
+      "title": "Système de notation et d'avis",
+      "description": "Construisez la confiance grâce à notre système de notation transparent. Les expéditeurs et les voyageurs se notent mutuellement après chaque livraison.",
+      "benefits": [
+        "Système de notation 5 étoiles",
+        "Avis et commentaires détaillés",
+        "Badge recommandé pour les meilleurs utilisateurs",
+        "Historique de notation visible par tous"
+      ]
+    },
+    "trust": {
+      "title": "Badges de confiance",
+      "recommended": "Les utilisateurs recommandés ont 4,5+ étoiles et 5+ livraisons réussies",
+      "verified": "Les utilisateurs vérifiés ont complété la vérification KYC"
+    }
+  },
+  "destinationsPage": {
+    "title": "Destinations populaires",
+    "description": "Connecter la Russie et l'Afrique",
+    "routes": {
+      "title": "Itinéraires populaires",
+      "russiaToAfrica": "Russie → Afrique",
+      "africaToRussia": "Afrique → Russie"
+    },
+    "cities": {
+      "russia": {
+        "title": "Russie",
+        "moscow": "Moscou",
+        "stPetersburg": "Saint-Pétersbourg",
+        "kazan": "Kazan",
+        "sochi": "Sotchi"
+      },
+      "africa": {
+        "title": "Afrique",
+        "cairo": "Le Caire, Égypte",
+        "lagos": "Lagos, Nigeria",
+        "johannesburg": "Johannesburg, Afrique du Sud",
+        "nairobi": "Nairobi, Kenya",
+        "casablanca": "Casablanca, Maroc",
+        "addisAbaba": "Addis-Abeba, Éthiopie"
+      }
+    },
+    "stats": {
+      "title": "Statistiques des itinéraires",
+      "activeTrips": "Voyages actifs",
+      "avgPrice": "Prix moyen/kg",
+      "avgDuration": "Durée moyenne"
+    }
+  },
+  "faqPage": {
+    "title": "Questions fréquemment posées",
+    "description": "Trouvez des réponses aux questions courantes",
+    "search": "Rechercher des questions...",
+    "categories": {
+      "general": "Général",
+      "senders": "Pour les expéditeurs",
+      "travelers": "Pour les voyageurs",
+      "payments": "Paiements",
+      "safety": "Sûreté et sécurité"
+    },
+    "general": {
+      "q1": {
+        "question": "Qu'est-ce que LePaysExpressColis ?",
+        "answer": "LePaysExpressColis est une plateforme communautaire qui connecte les personnes qui ont besoin d'envoyer des colis entre la Russie et l'Afrique avec des voyageurs effectuant le même trajet."
+      },
+      "q2": {
+        "question": "Comment ça marche ?",
+        "answer": "Les voyageurs publient leurs voyages à venir avec la capacité de bagages disponible. Les expéditeurs recherchent des voyageurs allant à leur destination et demandent la livraison. Le paiement est conservé en séquestre jusqu'à ce que la livraison soit confirmée."
+      },
+      "q3": {
+        "question": "Est-ce légal ?",
+        "answer": "Oui, tant que les articles transportés sont légaux et conformes aux réglementations douanières des deux pays. Les utilisateurs sont responsables de s'assurer que leurs colis respectent toutes les exigences légales."
+      }
+    },
+    "senders": {
+      "q1": {
+        "question": "Combien ça coûte ?",
+        "answer": "Les prix varient selon l'itinéraire et le voyageur, mais se situent généralement entre 5 et 15 $ par kg. C'est jusqu'à 70% moins cher que les services d'expédition traditionnels."
+      },
+      "q2": {
+        "question": "Que puis-je envoyer ?",
+        "answer": "Vous pouvez envoyer la plupart des articles personnels, y compris des cadeaux, des documents, de l'électronique et des vêtements. Les articles interdits incluent les armes, les drogues, les matières dangereuses et tout ce qui est illégal dans l'un ou l'autre pays."
+      },
+      "q3": {
+        "question": "Combien de temps prend la livraison ?",
+        "answer": "Le délai de livraison dépend du calendrier du voyageur. La plupart des livraisons sont effectuées dans les 1 à 7 jours suivant l'arrivée du voyageur."
+      }
+    },
+    "travelers": {
+      "q1": {
+        "question": "Combien puis-je gagner ?",
+        "answer": "Les gains dépendent de votre itinéraire et de votre capacité. Les voyageurs gagnent généralement 50 à 200 $ par voyage en utilisant leur espace de bagages inutilisé."
+      },
+      "q2": {
+        "question": "Quelles sont mes responsabilités ?",
+        "answer": "Vous devez transporter le colis en toute sécurité, passer la douane si nécessaire et livrer à l'endroit convenu. Vous devez également communiquer avec l'expéditeur tout au long du voyage."
+      },
+      "q3": {
+        "question": "Que se passe-t-il si je ne peux pas terminer la livraison ?",
+        "answer": "Contactez immédiatement l'expéditeur et notre équipe d'assistance. Si la livraison ne peut pas être effectuée, le paiement sera remboursé à l'expéditeur."
+      }
+    },
+    "payments": {
+      "q1": {
+        "question": "Comment fonctionne le paiement séquestre ?",
+        "answer": "Lorsqu'un expéditeur paie, l'argent est conservé en toute sécurité par notre plateforme. Il n'est libéré au voyageur qu'après que l'expéditeur confirme la livraison réussie."
+      },
+      "q2": {
+        "question": "Quels modes de paiement sont acceptés ?",
+        "answer": "Nous acceptons les cartes de crédit, les cartes de débit et les virements bancaires. Tous les paiements sont traités en toute sécurité via nos partenaires de paiement."
+      },
+      "q3": {
+        "question": "Que se passe-t-il en cas de litige ?",
+        "answer": "Notre équipe d'assistance médiera les litiges entre les expéditeurs et les voyageurs. Nous examinons les preuves des deux parties et prenons une décision équitable."
+      }
+    },
+    "safety": {
+      "q1": {
+        "question": "Comment vérifiez-vous les utilisateurs ?",
+        "answer": "Tous les utilisateurs doivent compléter la vérification KYC en téléchargeant une pièce d'identité émise par le gouvernement. Nous vérifions l'authenticité des documents avant d'approuver les comptes."
+      },
+      "q2": {
+        "question": "Que se passe-t-il si mon colis est endommagé ?",
+        "answer": "Nous recommandons de souscrire une assurance pour les articles de valeur. En cas de dommage, notre équipe d'assistance enquêtera et aidera à résoudre le problème."
+      },
+      "q3": {
+        "question": "Puis-je faire confiance aux voyageurs ?",
+        "answer": "Tous les voyageurs sont vérifiés par KYC. Vous pouvez également consulter leurs notes, avis et historique de livraison avant de les choisir."
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": "Bon retour, {{name}} !",
+    "quickActions": "Actions rapides",
+    "publishTrip": "Publier un voyage",
+    "searchTrips": "Rechercher des voyages",
+    "createShipment": "Créer une expédition",
+    "activeTrips": "Voyages actifs",
+    "pendingShipments": "Expéditions en attente",
+    "recentMessages": "Messages récents",
+    "statistics": "Vos statistiques",
+    "noActiveTrips": "Aucun voyage actif",
+    "noPendingShipments": "Aucune expédition en attente",
+    "noRecentMessages": "Aucun message récent"
+  },
+  "trips": {
+    "publish": "Publier un voyage",
+    "search": "Rechercher des voyages",
+    "myTrips": "Mes voyages",
+    "departure": "Départ",
+    "arrival": "Arrivée",
+    "capacity": "Capacité disponible",
+    "pricePerKg": "Prix par kg",
+    "departureCity": "Ville de départ",
+    "departureCountry": "Pays de départ",
+    "departureDate": "Date de départ",
+    "arrivalCity": "Ville d'arrivée",
+    "arrivalCountry": "Pays d'arrivée",
+    "arrivalDate": "Date d'arrivée",
+    "availableCapacity": "Capacité disponible (kg)",
+    "price": "Prix par kg",
+    "status": "Statut",
+    "active": "Actif",
+    "completed": "Terminé",
+    "cancelled": "Annulé",
+    "publishSuccess": "Voyage publié avec succès !",
+    "publishError": "Échec de la publication du voyage",
+    "updateSuccess": "Voyage mis à jour avec succès !",
+    "updateError": "Échec de la mise à jour du voyage",
+    "cancelSuccess": "Voyage annulé avec succès !",
+    "cancelError": "Échec de l'annulation du voyage",
+    "noTripsFound": "Aucun voyage trouvé",
+    "filterResults": "Filtrer les résultats",
+    "sortBy": "Trier par",
+    "sortByDate": "Trier par date",
+    "sortByPrice": "Trier par prix",
+    "sortByRating": "Trier par note",
+    "travelerInfo": "Informations sur le voyageur",
+    "contactTraveler": "Contacter le voyageur",
+    "requestShipment": "Demander une expédition",
+    "selectCountryFirst": "Sélectionnez d'abord un pays",
+    "revenueBreakdown": "Répartition des revenus",
+    "totalRevenue": "Revenu total",
+    "yourEarnings": "Vos gains",
+    "platformFee": "Frais de plateforme",
+    "revenueNote": "Note : Les pourcentages sont indicatifs et seront confirmés lors de la validation.",
+    "travelProof": "Preuve de réservation de voyage (optionnel)",
+    "travelProofHelper": "Téléchargez votre billet d'avion, réservation de train ou tout document prouvant votre voyage",
+    "whyTravelProof": "Pourquoi fournir une preuve de voyage ?",
+    "travelProofBenefit": "Cela rassure les expéditeurs et augmente vos chances d'obtenir des demandes de livraison. Votre profil sera marqué comme 'Voyage vérifié'.",
+    "traveler": "Voyageur",
+    "travelerName": "Nom du voyageur",
+    "travelerNamePlaceholder": "Rechercher par nom de voyageur",
+    "packageDetails": "Détails des colis",
+    "acceptedPackageTypes": "Types de colis acceptés",
+    "packageTypes": {
+      "enveloppes": "Enveloppes",
+      "petitsColis": "Petits colis",
+      "moyensColis": "Moyens colis",
+      "grandsColis": "Grands colis"
+    },
+    "pickupAddress": "Adresse de ramassage des colis",
+    "pickupAddressPlaceholder": "Entrez l'adresse complète où vous récupérerez les colis...",
+    "pickupAddressHelper": "Indiquez l'adresse exacte où les expéditeurs pourront déposer leurs colis",
+    "deliveryAddress": "Adresse de livraison des colis",
+    "deliveryAddressPlaceholder": "Entrez l'adresse complète où vous livrerez les colis...",
+    "deliveryAddressHelper": "Indiquez l'adresse exacte où vous livrerez les colis à destination"
+  },
+  "shipments": {
+    "create": "Créer une expédition",
+    "myShipments": "Mes expéditions",
+    "description": "Description",
+    "weight": "Poids (kg)",
+    "dimensions": "Dimensions",
+    "length": "Longueur (cm)",
+    "width": "Largeur (cm)",
+    "height": "Hauteur (cm)",
+    "pickup": "Lieu de ramassage",
+    "delivery": "Lieu de livraison",
+    "pickupCity": "Ville de ramassage",
+    "pickupCountry": "Pays de ramassage",
+    "pickupAddress": "Adresse de ramassage",
+    "deliveryCity": "Ville de livraison",
+    "deliveryCountry": "Pays de livraison",
+    "deliveryAddress": "Adresse de livraison",
+    "currentLocation": "Où se trouve actuellement votre colis ?",
+    "currentLocationHelper": "Indiquez la ville et le pays où se trouve actuellement votre colis",
+    "currentCity": "Ville actuelle",
+    "currentCountry": "Pays actuel",
+    "currentCityPlaceholder": "Ex: Paris, Dakar, Abidjan...",
+    "currentCountryPlaceholder": "Ex: France, Sénégal, Côte d'Ivoire...",
+    "desiredDestination": "Où aimeriez-vous que le colis soit livré ?",
+    "desiredDestinationHelper": "Indiquez la ville et le pays de destination souhaitée",
+    "destinationCity": "Ville de destination",
+    "destinationCountry": "Pays de destination",
+    "destinationCityPlaceholder": "Ex: New York, Londres, Montréal...",
+    "destinationCountryPlaceholder": "Ex: États-Unis, Royaume-Uni, Canada...",
+    "status": "Statut",
+    "pending": "En attente",
+    "accepted": "Accepté",
+    "inTransit": "En transit",
+    "delivered": "Livré",
+    "cancelled": "Annulé",
+    "payment": "Paiement",
+    "paymentStatus": "Statut du paiement",
+    "paymentPending": "En attente",
+    "paymentEscrowed": "Séquestré",
+    "paymentReleased": "Libéré",
+    "paymentRefunded": "Remboursé",
+    "createSuccess": "Expédition créée avec succès !",
+    "createError": "Échec de la création de l'expédition",
+    "updateSuccess": "Expédition mise à jour avec succès !",
+    "updateError": "Échec de la mise à jour de l'expédition",
+    "cancelSuccess": "Expédition annulée avec succès !",
+    "cancelError": "Échec de l'annulation de l'expédition",
+    "noShipmentsFound": "Aucune expédition trouvée",
+    "packageDetails": "Détails du colis",
+    "locationDetails": "Détails de l'emplacement",
+    "matchedTraveler": "Voyageur associé",
+    "deliveryProgress": "Progression de la livraison",
+    "dimensionsHelper": "Les dimensions aident les voyageurs à évaluer l'espace nécessaire",
+    "prohibitedItemsTitle": "Articles interdits",
+    "prohibitedItemsWarning": "Pour la sécurité de tous, certains articles ne peuvent pas être expédiés via notre plateforme.",
+    "viewProhibitedList": "Voir la liste des articles interdits",
+    "hideProhibitedList": "Masquer la liste",
+    "prohibitedItemsListTitle": "Articles strictement interdits :",
+    "prohibitedItem1": "Drogues, stupéfiants et substances illicites",
+    "prohibitedItem2": "Armes, munitions et explosifs",
+    "prohibitedItem3": "Matières dangereuses (produits chimiques, toxiques, inflammables)",
+    "prohibitedItem4": "Contrefaçons et produits piratés",
+    "prohibitedItem5": "Argent liquide et instruments financiers non déclarés",
+    "prohibitedItem6": "Produits d'origine animale ou végétale non autorisés",
+    "prohibitedItem7": "Objets volés ou d'origine douteuse",
+    "prohibitedItem8": "Tout article illégal dans le pays de départ ou d'arrivée",
+    "prohibitedItemsConfirmation": "Je confirme que mon colis ne contient aucun article interdit et respecte les lois des deux pays.",
+    "prohibitedItemsRequired": "Vous devez confirmer que votre colis ne contient pas d'articles interdits"
+  },
+  "messages": {
+    "title": "Messages",
+    "newMessage": "Nouveau message",
+    "noMessages": "Aucun message",
+    "conversations": "Conversations",
+    "typeMessage": "Tapez un message...",
+    "send": "Envoyer",
+    "unread": "Non lu",
+    "unreadMessage": "message non lu",
+    "unreadMessages": "messages non lus",
+    "markAsRead": "Marquer comme lu",
+    "deleteConversation": "Supprimer la conversation",
+    "noConversations": "Aucune conversation pour le moment",
+    "startConversation": "Démarrer une conversation",
+    "startConversationHint": "Commencez à discuter avec d'autres utilisateurs depuis leurs profils ou vos expéditions",
+    "characterLimit": "{{current}}/{{max}} caractères",
+    "unknownUser": "Utilisateur inconnu",
+    "you": "Vous",
+    "noMessagesYet": "Aucun message pour le moment",
+    "messageSent": "Message envoyé",
+    "errorFetchingConversations": "Erreur lors du chargement des conversations",
+    "errorFetchingMessages": "Erreur lors du chargement des messages",
+    "errorSendingMessage": "Erreur lors de l'envoi du message",
+    "errorNoRecipient": "Impossible de trouver le destinataire"
+  },
+  "profile": {
+    "title": "Profil",
+    "edit": "Modifier le profil",
+    "editProfile": "Modifier le profil",
+    "rating": "Note",
+    "completedDeliveries": "Livraisons effectuées",
+    "recommended": "Recommandé",
+    "verified": "Vérifié",
+    "kycStatus": "Statut KYC",
+    "kycPending": "Vérification en attente",
+    "kycVerified": "Vérifié",
+    "kycApproved": "Vérifié",
+    "kycRejected": "Vérification rejetée",
+    "avatar": "Photo de profil",
+    "personalInfo": "Informations personnelles",
+    "contactInfo": "Informations de contact",
+    "updateSuccess": "Profil mis à jour avec succès !",
+    "updateError": "Échec de la mise à jour du profil",
+    "ratingsAndReviews": "Notes et avis",
+    "reviews": "avis",
+    "noReviews": "Aucun avis pour le moment",
+    "allReviews": "Tous les avis",
+    "noRatings": "Aucune note pour le moment",
+    "averageRating": "Note moyenne",
+    "totalRatings": "Total des notes"
+  },
+  "ratings": {
+    "title": "Évaluez votre expérience",
+    "rateUser": "Évaluer {{name}}",
+    "yourRating": "Votre note",
+    "comment": "Commentaire (optionnel)",
+    "submitRating": "Soumettre la note",
+    "submitSuccess": "Note soumise avec succès !",
+    "submitError": "Échec de la soumission de la note",
+    "stars": "{{count}} étoiles"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification",
+    "markAllRead": "Tout marquer comme lu",
+    "viewAll": "Voir toutes les notifications",
+    "shipmentAccepted": "Colis accepté",
+    "paymentReleased": "Paiement libéré",
+    "kycApproved": "KYC approuvé",
+    "messageReceived": "Nouveau message",
+    "tripUpdate": "Mise à jour du trajet"
+  },
+  "kyc": {
+    "title": "Vérification KYC",
+    "description": "Complétez votre vérification d'identité pour accéder à toutes les fonctionnalités",
+    "uploadDocument": "Télécharger un document",
+    "documentType": "Type de document",
+    "passport": "Passeport",
+    "idCard": "Carte d'identité",
+    "driversLicense": "Permis de conduire",
+    "status": "Statut de vérification",
+    "pending": "En cours d'examen",
+    "approved": "Approuvé",
+    "rejected": "Rejeté",
+    "rejectionReason": "Raison du rejet",
+    "resubmit": "Soumettre à nouveau les documents",
+    "submitSuccess": "Documents soumis avec succès !",
+    "submitError": "Échec de la soumission des documents",
+    "required": "Vérification KYC requise",
+    "requiredMessage": "Vous devez compléter la vérification KYC pour {{action}}",
+    "documentFile": "Fichier du document",
+    "idCardFront": "Carte d'identité (Recto)",
+    "idCardBack": "Carte d'identité (Verso)",
+    "selfie": "Photo selfie avec votre document",
+    "acceptedFormats": "Formats acceptés : JPEG, PNG, PDF (max 5MB)",
+    "selfieFormats": "Formats acceptés : JPEG, PNG (max 5MB)",
+    "selected": "Sélectionné",
+    "submitting": "Envoi en cours...",
+    "submitDocument": "Soumettre les documents",
+    "documentRequired": "Veuillez sélectionner un document à télécharger",
+    "idCardBackRequired": "Le verso de la carte d'identité est requis",
+    "selfieRequired": "La photo selfie est requise",
+    "invalidFileType": "Veuillez télécharger un fichier valide (JPEG, PNG ou PDF)",
+    "fileTooLarge": "La taille du fichier doit être inférieure à 5MB",
+    "selfieInstructions": "Prenez une photo de vous tenant votre document d'identité à côté de votre visage. Assurez-vous que votre visage et le document sont clairement visibles.",
+    "whyKycTitle": "Pourquoi la vérification KYC ?",
+    "whyKycDescription": "La vérification d'identité est essentielle pour garantir la sécurité de tous les utilisateurs de notre plateforme.",
+    "whyKycReason1": "Protège contre la fraude et les activités illégales",
+    "whyKycReason2": "Crée un environnement de confiance pour tous les utilisateurs",
+    "whyKycReason3": "Conforme aux réglementations internationales",
+    "whyKycReason4": "Permet des transactions sécurisées et traçables",
+    "importantInfo": "Informations importantes",
+    "info1": "Assurez-vous que votre document est clair et que toutes les informations sont visibles",
+    "info2": "Le document doit être valide et non expiré",
+    "info3": "Pour la CNI, le recto ET le verso sont obligatoires",
+    "info4": "La photo selfie doit montrer clairement votre visage et le document",
+    "info5": "La vérification prend généralement 1 à 2 jours ouvrables"
+  },
+  "errors": {
+    "required": "Ce champ est requis",
+    "invalidEmail": "Adresse email invalide",
+    "invalidPhone": "Numéro de téléphone invalide",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "invalidDate": "Date invalide",
+    "dateMustBeFuture": "La date doit être dans le futur",
+    "dateMustBeAfter": "La date d'arrivée doit être après la date de départ",
+    "mustBePositive": "Doit être un nombre positif",
+    "mustBeGreaterThanZero": "Doit être supérieur à zéro",
+    "selectAtLeastOne": "Sélectionnez au moins une option",
+    "addressTooShort": "L'adresse doit contenir au moins 5 caractères",
+    "networkError": "Erreur réseau. Veuillez réessayer.",
+    "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
+    "notFound": "Ressource non trouvée",
+    "unauthorized": "Vous n'êtes pas autorisé à effectuer cette action",
+    "forbidden": "Accès interdit",
+    "validationError": "Veuillez corriger les erreurs et réessayer"
+  },
+  "validation": {
+    "minLength": "Doit contenir au moins {{min}} caractères",
+    "maxLength": "Doit contenir au maximum {{max}} caractères",
+    "min": "Doit être au moins {{min}}",
+    "max": "Doit être au maximum {{max}}",
+    "email": "Doit être une adresse email valide",
+    "url": "Doit être une URL valide",
+    "phone": "Doit être un numéro de téléphone valide",
+    "date": "Doit être une date valide",
+    "number": "Doit être un nombre valide",
+    "integer": "Doit être un nombre entier",
+    "positive": "Doit être un nombre positif"
+  },
+  "payment": {
+    "checkout": {
+      "redirecting": "Redirection vers le paiement...",
+      "pleaseWait": "Veuillez patienter pendant que nous préparons votre session de paiement sécurisée.",
+      "error": "Erreur de paiement"
+    },
+    "success": {
+      "title": "Paiement réussi !",
+      "message": "Votre paiement a été traité avec succès. Les fonds sont maintenant bloqués en séquestre et seront libérés au voyageur après la livraison confirmée.",
+      "verifying": "Vérification du paiement...",
+      "pleaseWait": "Veuillez patienter pendant que nous vérifions votre paiement.",
+      "errorTitle": "Erreur de vérification",
+      "status": "Statut",
+      "amount": "Montant",
+      "transactionId": "ID de transaction",
+      "escrowInfo": "💡 Vos fonds sont sécurisés en séquestre et seront libérés au voyageur uniquement après que vous confirmiez la livraison.",
+      "viewShipment": "Voir l'expédition",
+      "backToDashboard": "Retour au tableau de bord"
+    },
+    "cancel": {
+      "title": "Paiement annulé",
+      "message": "Vous avez annulé le processus de paiement. Aucun montant n'a été débité.",
+      "info": "💡 Vous pouvez réessayer le paiement à tout moment. L'expédition restera en attente jusqu'à ce que le paiement soit effectué.",
+      "retryPayment": "Réessayer le paiement",
+      "viewShipment": "Voir l'expédition"
+    },
+    "status": {
+      "label": "Statut du paiement",
+      "pending": "En attente",
+      "held": "Bloqué en séquestre",
+      "released": "Libéré",
+      "refunded": "Remboursé",
+      "failed": "Échoué"
+    },
+    "escrow": {
+      "senderInfo": "💰 Vos fonds sont sécurisés en séquestre. Ils seront libérés au voyageur après que vous confirmiez la livraison.",
+      "travelerInfo": "💰 Les fonds sont bloqués en séquestre. Vous recevrez le paiement après que l'expéditeur confirme la livraison.",
+      "released": "✅ Le paiement a été libéré au voyageur.",
+      "refunded": "↩️ Le paiement a été remboursé à l'expéditeur."
+    },
+    "transactionId": "ID de transaction",
+    "errors": {
+      "missingShipmentId": "ID d'expédition manquant. Veuillez réessayer depuis la page d'expédition.",
+      "missingSessionId": "Session de paiement invalide. Veuillez réessayer.",
+      "shipmentNotFound": "Expédition non trouvée.",
+      "invalidShipment": "Expédition invalide ou déjà payée.",
+      "unauthorized": "Vous n'êtes pas autorisé à effectuer ce paiement.",
+      "checkoutFailed": "Échec de la création de la session de paiement. Veuillez réessayer.",
+      "verificationFailed": "Échec de la vérification du paiement. Veuillez contacter le support si le problème persiste."
+    }
+  },
+  "common": {
+    "retry": "Réessayer",
+    "total": "Total",
+    "backToDashboard": "Retour au tableau de bord"
+  }
+}
