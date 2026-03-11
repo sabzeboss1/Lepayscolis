@@ -51,18 +51,11 @@ export class ApiClient {
   }
 
   /**
-   * Get authentication token from cookies
+   * Get authentication token from cookies (single token for all roles)
    */
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') return null;
-    
-    // Check for admin token first (for admin routes)
-    const adminToken = localStorage.getItem('admin_token');
-    if (adminToken && window.location.pathname.startsWith('/admin')) {
-      return adminToken;
-    }
-    
-    // Otherwise use regular auth token from cookies
+
     const cookies = document.cookie.split(';');
     const authCookie = cookies.find(c => c.trim().startsWith('auth-token='));
     return authCookie ? authCookie.split('=')[1] : null;

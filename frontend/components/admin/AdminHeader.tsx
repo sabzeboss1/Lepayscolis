@@ -7,15 +7,15 @@ import { LogOut, User, Clock, AlertTriangle } from 'lucide-react';
 interface AdminHeaderProps {
   userName: string;
   userRole: 'admin' | 'super_admin';
-  sessionExpiresAt: string; // ISO 8601 datetime
+  sessionExpiresAt?: string; // ISO 8601 datetime (optional)
   onLogout: () => void;
 }
 
-export default function AdminHeader({ 
-  userName, 
-  userRole, 
+export default function AdminHeader({
+  userName,
+  userRole,
   sessionExpiresAt,
-  onLogout 
+  onLogout
 }: AdminHeaderProps) {
   const router = useRouter();
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -23,13 +23,15 @@ export default function AdminHeader({
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
+    if (!sessionExpiresAt) return;
+
     const calculateTimeRemaining = () => {
       const expiresAt = new Date(sessionExpiresAt).getTime();
       const now = Date.now();
       const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
-      
+
       setTimeRemaining(remaining);
-      
+
       // Show warning when 5 minutes or less remaining
       if (remaining <= 300 && remaining > 0) {
         setShowWarning(true);

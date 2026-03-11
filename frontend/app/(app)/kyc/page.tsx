@@ -182,15 +182,15 @@ export default function KYCVerificationPage() {
               <h2 className="text-xl font-semibold mb-4">{t('kyc.status')}</h2>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-gray-700">{t('profile.kycStatus')}:</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(user.kycStatus)}`}>
-                  {getStatusText(user.kycStatus)}
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(user.kyc_status)}`}>
+                  {getStatusText(user.kyc_status)}
                 </span>
               </div>
 
-              {kycDocument && kycDocument.status === 'rejected' && kycDocument.rejectionReason && (
+              {kycDocument && kycDocument.status === 'rejected' && kycDocument.rejection_reason && (
                 <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm font-medium text-red-800 mb-1">{t('kyc.rejectionReason')}:</p>
-                  <p className="text-sm text-red-700">{kycDocument.rejectionReason}</p>
+                  <p className="text-sm text-red-700">{kycDocument.rejection_reason}</p>
                 </div>
               )}
 

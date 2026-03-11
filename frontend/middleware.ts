@@ -3,14 +3,12 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token');
-  const adminToken = request.cookies.get('admin-token');
   const { pathname } = request.nextUrl;
 
   // Define route patterns
   const isAuthPage = pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register');
   const isAdminPage = pathname.startsWith('/admin');
-  const isAdminLoginPage = pathname === '/admin/login';
-  const isAppPage = 
+  const isAppPage =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/kyc') ||
     pathname.startsWith('/travel') ||
@@ -19,22 +17,19 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/shipments') ||
     pathname.startsWith('/messages') ||
     pathname.startsWith('/profile') ||
-    pathname.startsWith('/ratings');
+    pathname.startsWith('/ratings') ||
+    pathname.startsWith('/wallet') ||
+    pathname.startsWith('/payments') ||
+    pathname.startsWith('/notifications');
 
-  // Admin route protection
-  // NOTE: We let the admin layout handle authentication verification
-  // The middleware only redirects authenticated admins away from the login page
-  // This is because the cookie is httpOnly and the layout checks localStorage
-  
-  // Redirect authenticated admin from login page to dashboard
-  if (isAdminLoginPage && adminToken) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+  // Admin pages: require auth token (role check is done client-side by the layout)
+  if (isAdminPage && !token) {
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
-  
-  // For other admin pages, let the layout handle auth verification
-  // The layout will check localStorage and redirect to login if needed
 
-  // Redirect to login if accessing app pages without auth
+  // App pages: require auth token
   if (isAppPage && !token) {
     const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
@@ -51,14 +46,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files
-     */
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.webp).*)',
   ],
 };

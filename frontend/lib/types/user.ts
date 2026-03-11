@@ -2,12 +2,14 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  avatar: string;
   phone: string;
+  avatar: string | null;
   rating: number;
-  completedDeliveries: number;
-  isRecommended: boolean;
-  kycStatus: 'pending' | 'approved' | 'rejected';
-  createdAt: Date;
+  completed_deliveries: number;
+  is_recommended: boolean;
+  kyc_status: 'pending' | 'approved' | 'rejected' | 'not_submitted';
+  role: 'user' | 'admin' | 'super_admin';
   locale: 'fr' | 'en';
+  created_at: string;
+  updated_at: string;
 }

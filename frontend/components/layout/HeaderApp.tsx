@@ -225,7 +225,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                   <div className="px-4 py-3 border-b border-gray-200">
                     <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                     <p className="text-xs text-gray-600 truncate">{user.email}</p>
-                    {user.isRecommended && (
+                    {user.is_recommended && (
                       <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
                         <span role="img" aria-hidden="true">
                           ⭐
@@ -233,16 +233,16 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                         {t('profile.recommended')}
                       </span>
                     )}
-                    {user.kycStatus !== 'approved' && (
-                      <div className={`mt-2 px-2 py-1 rounded text-xs font-medium ${user.kycStatus === 'rejected'
+                    {user.kyc_status !== 'approved' && (
+                      <div className={`mt-2 px-2 py-1 rounded text-xs font-medium ${user.kyc_status === 'rejected'
                           ? 'bg-red-100 text-red-700'
-                          : user.kycStatus === 'pending'
+                          : user.kyc_status === 'pending'
                             ? 'bg-orange-100 text-orange-700'
                             : 'bg-blue-100 text-blue-700'
                         }`}>
-                        {user.kycStatus === 'rejected'
+                        {user.kyc_status === 'rejected'
                           ? '❌ KYC Rejected'
-                          : user.kycStatus === 'pending'
+                          : user.kyc_status === 'pending'
                             ? '⏳ KYC Pending'
                             : '🔒 KYC Required'}
                       </div>
@@ -257,15 +257,15 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                     {t('navigation.profile')}
                   </Link>
 
-                  {user.kycStatus !== 'approved' && (
+                  {user.kyc_status !== 'approved' && (
                     <Link
                       href="/kyc"
                       className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 focus:outline-none focus:bg-blue-50 font-medium"
                       role="menuitem"
                     >
-                      {user.kycStatus === 'rejected'
+                      {user.kyc_status === 'rejected'
                         ? 'Resubmit KYC Documents'
-                        : user.kycStatus === 'pending'
+                        : user.kyc_status === 'pending'
                           ? 'View KYC Status'
                           : 'Complete KYC Verification'}
                     </Link>

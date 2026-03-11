@@ -10,7 +10,8 @@ interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  isAdmin: boolean;
+  login: (email: string, password: string) => Promise<User>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
@@ -32,6 +33,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const isAdmin = !!user && (user.role === 'admin' || user.role === 'super_admin');
 
   // Check for existing auth token on mount and verify session
   useEffect(() => {
@@ -64,26 +67,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * 2. Send login request with credentials
    * 3. Store token and update user state
    */
-  const login = async (email: string, password: string) => {
-    try {
-      // Step 1: Get CSRF cookie from Laravel
-      await apiClient.get(API_ENDPOINTS.auth.csrf);
+  const login = async (email: string, password: string): Promise<User> => {
+    // Step 1: Get CSRF cookie from Laravel
+    await apiClient.get(API_ENDPOINTS.auth.csrf);
 
-      // Step 2: Send login request
-      const response = await apiClient.post<{ token: string; user: User }>(
-        API_ENDPOINTS.auth.login,
-        { email, password }
-      );
+    // Step 2: Send login request
+    const response = await apiClient.post<{ token: string; user: User }>(
+      API_ENDPOINTS.auth.login,
+      { email, password }
+    );
 
-      // Step 3: Store token in cookie (httpOnly would be better but requires server-side)
-      setCookie('auth-token', response.token, 7); // 7 days
+    // Step 3: Store token in cookie (7 days)
+    setCookie('auth-token', response.token, 7);
 
-      // Step 4: Update auth context
-      setUser(response.user);
-    } catch (error) {
-      // Re-throw error for component to handle
-      throw error;
+    // Step 4: Clean up any legacy admin localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
     }
+
+    // Step 5: Update auth context and return user for role-based redirect
+    setUser(response.user);
+    return response.user;
   };
 
   /**
@@ -91,31 +96,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Automatically logs in user after successful registration
    */
   const register = async (data: RegisterData) => {
-    try {
-      // Step 1: Get CSRF cookie
-      await apiClient.get(API_ENDPOINTS.auth.csrf);
+    await apiClient.get(API_ENDPOINTS.auth.csrf);
 
-      // Step 2: Prepare registration data with locale
-      const registrationData = {
+    const response = await apiClient.post<{ token: string; user: User }>(
+      API_ENDPOINTS.auth.register,
+      {
         name: data.name,
         email: data.email,
         phone: data.phone,
         password: data.password,
-        locale: data.locale || 'fr', // Default to French if not provided
-      };
+        password_confirmation: data.password_confirmation,
+        country: data.country,
+        locale: data.locale || 'fr',
+      }
+    );
 
-      // Step 3: Send registration request
-      const response = await apiClient.post<{ token: string; user: User }>(
-        API_ENDPOINTS.auth.register,
-        registrationData
-      );
-
-      // Step 4: Store token and update state (auto-login)
-      setCookie('auth-token', response.token, 7);
-      setUser(response.user);
-    } catch (error) {
-      throw error;
-    }
+    setCookie('auth-token', response.token, 7);
+    setUser(response.user);
   };
 
   /**
@@ -124,15 +121,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const logout = async () => {
     try {
-      // Revoke token on backend
       await apiClient.post(API_ENDPOINTS.auth.logout);
     } catch (error) {
-      // Log error but continue with local cleanup
       console.error('Logout request failed:', error);
     } finally {
-      // Clear auth state regardless of API response
       deleteCookie('auth-token');
       setUser(null);
+      // Clean up any legacy admin localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+      }
     }
   };
 
@@ -175,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: !!user,
     isLoading,
+    isAdmin,
     login,
     register,
     logout,

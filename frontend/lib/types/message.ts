@@ -1,22 +1,27 @@
+import { User } from './user';
+
 export interface Message {
   id: string;
-  conversationId: string;
-  senderId: string;
-  recipientId: string;
+  conversation_id: string;
+  sender_id: string;
+  recipient_id: string;
   content: string;
   read: boolean;
-  createdAt: Date;
+  read_at?: string;
+  created_at: string;
+  updated_at: string;
+  sender?: User;
+  recipient?: User;
 }
 
 export interface Conversation {
   id: string;
-  participants: [string, string]; // user IDs
-  lastMessage: Message;
-  unreadCount: number;
-  updatedAt: Date;
-  otherUser?: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
+  user1_id: string;
+  user2_id: string;
+  shipment_id?: string;
+  other_user?: User;
+  last_message?: Message;
+  unread_count: number;
+  created_at: string;
+  updated_at: string;
 }
