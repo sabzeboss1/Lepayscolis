@@ -135,4 +135,45 @@ class PlatformSetting extends Model
         }
         return 'string';
     }
+
+    /**
+     * Get the sender fee percentage.
+     */
+    public static function getSenderFeePercentage(): float
+    {
+        return (float) self::get('sender_fee_percentage', 5.0);
+    }
+
+    /**
+     * Get the traveler fee percentage.
+     */
+    public static function getTravelerFeePercentage(): float
+    {
+        return (float) self::get('traveler_fee_percentage', 10.0);
+    }
+
+    /**
+     * Calculate fees for a given base amount.
+     *
+     * @return array{sender_fee: float, traveler_fee: float, total_sender_pays: float, traveler_receives: float, platform_revenue: float}
+     */
+    public static function calculateFees(float $baseAmount): array
+    {
+        $senderFeePercent = self::getSenderFeePercentage();
+        $travelerFeePercent = self::getTravelerFeePercentage();
+
+        $senderFee = round($baseAmount * ($senderFeePercent / 100), 2);
+        $travelerFee = round($baseAmount * ($travelerFeePercent / 100), 2);
+
+        return [
+            'base_amount' => $baseAmount,
+            'sender_fee_percentage' => $senderFeePercent,
+            'traveler_fee_percentage' => $travelerFeePercent,
+            'sender_fee' => $senderFee,
+            'traveler_fee' => $travelerFee,
+            'total_sender_pays' => round($baseAmount + $senderFee, 2),
+            'traveler_receives' => round($baseAmount - $travelerFee, 2),
+            'platform_revenue' => round($senderFee + $travelerFee, 2),
+        ];
+    }
 }
