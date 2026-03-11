@@ -1,15 +1,15 @@
 export interface KYCDocument {
   id: string;
-  userId: string;
-  documentType: 'passport' | 'idCard' | 'driversLicense';
-  documentUrl: string;
+  user_id: string;
+  document_type: 'passport' | 'id_card' | 'driver_license';
+  document_url: string;
   status: 'pending' | 'approved' | 'rejected';
-  rejectionReason?: string;
-  submittedAt: Date;
-  reviewedAt?: Date;
+  rejection_reason?: string;
+  submitted_at: string;
+  reviewed_at?: string;
 }
 
 export interface KYCSubmission {
-  documentType: 'passport' | 'idCard' | 'driversLicense';
-  documentFile: File;
+  document_type: 'passport' | 'id_card' | 'driver_license';
+  document_file: File;
 }

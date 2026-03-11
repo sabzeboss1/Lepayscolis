@@ -70,7 +70,7 @@ export default function ProfilePage() {
         totalEarnings: 1250.50,
         successRate: 98.5,
         responseTime: '< 2h',
-        memberSince: user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR', { 
+        memberSince: user?.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR', { 
           year: 'numeric', 
           month: 'long' 
         }) : 'N/A'
@@ -109,7 +109,7 @@ export default function ProfilePage() {
   const totalRatings = ratings.length;
 
   const getKYCStatusInfo = () => {
-    switch (user.kycStatus) {
+    switch (user.kyc_status) {
       case 'approved':
         return {
           icon: CheckCircle,
@@ -165,7 +165,7 @@ export default function ProfilePage() {
                 alt={user.name}
                 className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
               />
-              {user.kycStatus === 'approved' && (
+              {user.kyc_status === 'approved' && (
                 <div className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 border-2 border-white">
                   <CheckCircle className="w-6 h-6" />
                 </div>
@@ -187,7 +187,7 @@ export default function ProfilePage() {
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
-                  {user.isRecommended && (
+                  {user.is_recommended && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
                       <Award className="w-4 h-4 mr-1" />
                       Recommandé
@@ -215,7 +215,7 @@ export default function ProfilePage() {
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <MapPin className="w-5 h-5 text-gray-400" />
-                <span className="text-sm">{user.address || 'Non renseigné'}</span>
+                <span className="text-sm">{'Non renseigné'}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <Calendar className="w-5 h-5 text-gray-400" />
@@ -257,19 +257,19 @@ export default function ProfilePage() {
               <h3 className={`text-lg font-semibold ${kycStatus.color}`}>
                 Statut KYC: {kycStatus.label}
               </h3>
-              {user.kycStatus !== 'approved' && (
+              {user.kyc_status !== 'approved' && (
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={() => router.push('/kyc')}
                 >
-                  {user.kycStatus === 'rejected' ? 'Soumettre à nouveau' : 'Compléter KYC'}
+                  {user.kyc_status === 'rejected' ? 'Soumettre à nouveau' : 'Compléter KYC'}
                 </Button>
               )}
             </div>
             <p className="text-gray-700 text-sm mb-3">{kycStatus.description}</p>
             
-            {user.kycStatus === 'approved' && (
+            {user.kyc_status === 'approved' && (
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center px-2 py-1 bg-white rounded text-xs font-medium text-gray-700">
                   <CheckCircle className="w-3 h-3 mr-1 text-green-600" />
@@ -415,7 +415,7 @@ export default function ProfilePage() {
               Badges et réalisations
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              {user.isRecommended && (
+              {user.is_recommended && (
                 <div className="p-4 bg-orange-50 rounded-lg border border-orange-200 text-center">
                   <Award className="w-8 h-8 text-orange-600 mx-auto mb-2" />
                   <div className="text-sm font-medium text-gray-900">Recommandé</div>
@@ -423,7 +423,7 @@ export default function ProfilePage() {
                 </div>
               )}
               
-              {user.kycStatus === 'approved' && (
+              {user.kyc_status === 'approved' && (
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 text-center">
                   <Shield className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                   <div className="text-sm font-medium text-gray-900">Vérifié</div>
@@ -561,7 +561,7 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-3 mb-2">
                           <RatingStars rating={rating.rating} size="sm" />
                           <span className="text-sm text-gray-500">
-                            {new Date(rating.createdAt).toLocaleDateString('fr-FR', {
+                            {new Date(rating.created_at).toLocaleDateString('fr-FR', {
                               year: 'numeric',
                               month: 'long',
                               day: 'numeric'

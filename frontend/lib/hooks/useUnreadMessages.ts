@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
-import { usePusher } from '@/lib/websocket/PusherContext';
+import { usePrivateChannelEvent } from '@/lib/websocket/hooks';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { Conversation } from '@/lib/types/api';
 
 export function useUnreadMessages() {
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
-  const { subscribe } = usePusher();
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     try {
       if (!user) return;
 
@@ -19,39 +18,33 @@ export function useUnreadMessages() {
       );
 
       const conversations = response.data || [];
-      
+
       // Calculate total unread count
       const total = conversations.reduce(
         (sum, conv) => sum + (conv.unread_count || 0),
         0
       );
-      
+
       setUnreadCount(total);
     } catch (error) {
       console.error('Error fetching unread count:', error);
     }
-  };
+  }, [user]);
 
+  // Fetch on mount
   useEffect(() => {
     if (!user) return;
-
-    // Fetch immediately
     fetchUnreadCount();
+  }, [user?.id, fetchUnreadCount]);
 
-    // Subscribe to real-time message events
-    const unsubscribe = subscribe(
-      `private-user.${user.id}`,
-      'message.sent',
-      () => {
-        // Refresh unread count when new message arrives
-        fetchUnreadCount();
-      }
-    );
-
-    return () => {
-      unsubscribe();
-    };
-  }, [user?.id]);
+  // Subscribe to real-time message events
+  usePrivateChannelEvent(
+    user ? `user.${user.id}` : null,
+    'message.sent',
+    () => {
+      fetchUnreadCount();
+    }
+  );
 
   return { unreadCount, refreshUnreadCount: fetchUnreadCount };
 }

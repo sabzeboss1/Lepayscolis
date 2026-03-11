@@ -5,7 +5,7 @@ import { Card } from './Card';
 import { Button } from './Button';
 
 export interface UserCardProps {
-  user: Pick<User, 'id' | 'name' | 'avatar' | 'rating' | 'completedDeliveries' | 'isRecommended' | 'kycStatus'>;
+  user: Pick<User, 'id' | 'name' | 'avatar' | 'rating' | 'completed_deliveries' | 'is_recommended' | 'kyc_status'>;
   onClick?: () => void;
   showContactButton?: boolean;
   onContactClick?: () => void;
@@ -28,7 +28,7 @@ export const UserCard: React.FC<UserCardProps> = ({
           alt={`${user.name}'s avatar`}
           className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
         />
-        {user.kycStatus === 'approved' && (
+        {user.kyc_status === 'approved' && (
           <div
             className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1"
             aria-label="KYC Verified"
@@ -54,7 +54,7 @@ export const UserCard: React.FC<UserCardProps> = ({
       {/* Name and Recommended badge */}
       <div className="space-y-1">
         <h3 className="font-semibold text-lg text-gray-900">{user.name}</h3>
-        {user.isRecommended && (
+        {user.is_recommended && (
           <span
             className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full"
             aria-label="Recommended user"
@@ -81,7 +81,7 @@ export const UserCard: React.FC<UserCardProps> = ({
       <div className="flex flex-col items-center gap-1">
         <RatingStars rating={Number(user.rating) || 0} size="sm" />
         <span className="text-sm text-gray-600">
-          {(Number(user.rating) || 0).toFixed(1)} ({user.completedDeliveries} {user.completedDeliveries === 1 ? 'delivery' : 'deliveries'})
+          {(Number(user.rating) || 0).toFixed(1)} ({user.completed_deliveries} {user.completed_deliveries === 1 ? 'delivery' : 'deliveries'})
         </span>
       </div>
 

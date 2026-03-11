@@ -3,9 +3,9 @@ import { useAuth } from '@/lib/auth';
 export function useKYCCheck() {
   const { user } = useAuth();
 
-  const isKYCApproved = user?.kycStatus === 'approved';
-  const isKYCPending = user?.kycStatus === 'pending';
-  const isKYCRejected = user?.kycStatus === 'rejected';
+  const isKYCApproved = user?.kyc_status === 'approved';
+  const isKYCPending = user?.kyc_status === 'pending';
+  const isKYCRejected = user?.kyc_status === 'rejected';
   const needsKYC = !isKYCApproved;
 
   return {
@@ -13,6 +13,6 @@ export function useKYCCheck() {
     isKYCPending,
     isKYCRejected,
     needsKYC,
-    kycStatus: user?.kycStatus,
+    kyc_status: user?.kyc_status,
   };
 }

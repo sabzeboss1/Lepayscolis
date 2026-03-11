@@ -32,6 +32,7 @@ class UserResource extends JsonResource
             'completed_deliveries' => $this->completed_deliveries,
             'is_recommended' => $this->is_recommended,
             'kyc_status' => $this->kyc_status,
+            'role' => $this->role,
             'locale' => $this->locale,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -43,9 +44,18 @@ export default function LoginPage() {
     setStatusMessage('Signing in...');
 
     try {
-      await login(data.email, data.password);
-      setStatusMessage('Login successful! Redirecting to dashboard...');
-      router.push('/dashboard');
+      const user = await login(data.email, data.password);
+      setStatusMessage('Login successful! Redirecting...');
+
+      // Role-based redirect
+      const redirectTo = searchParams.get('redirect');
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else if (user.role === 'admin' || user.role === 'super_admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       // Handle API errors with field-level validation
       if (err instanceof ApiError && err.status === 422 && err.errors) {

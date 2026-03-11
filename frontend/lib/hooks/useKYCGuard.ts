@@ -16,7 +16,7 @@ export function useKYCGuard() {
       return false;
     }
 
-    if (user.kycStatus !== 'approved') {
+    if (user.kyc_status !== 'approved') {
       if (showPrompt) {
         router.push('/kyc');
       }
@@ -27,10 +27,10 @@ export function useKYCGuard() {
     return true;
   }, [user, router]);
 
-  const isKYCApproved = user?.kycStatus === 'approved';
-  const isKYCPending = user?.kycStatus === 'pending';
-  const isKYCRejected = user?.kycStatus === 'rejected';
-  const needsKYC = !user || user.kycStatus !== 'approved';
+  const isKYCApproved = user?.kyc_status === 'approved';
+  const isKYCPending = user?.kyc_status === 'pending';
+  const isKYCRejected = user?.kyc_status === 'rejected';
+  const needsKYC = !user || user.kyc_status !== 'approved';
 
   return {
     requireKYC,
@@ -38,6 +38,6 @@ export function useKYCGuard() {
     isKYCPending,
     isKYCRejected,
     needsKYC,
-    kycStatus: user?.kycStatus || 'not_submitted'
+    kyc_status: user?.kyc_status || 'not_submitted'
   };
 }
