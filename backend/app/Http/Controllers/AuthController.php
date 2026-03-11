@@ -50,7 +50,7 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Registration successful',
+                'message' => __('messages.auth.register_success'),
                 'token' => $token,
                 'user' => new UserResource($user),
             ], 201);
@@ -64,7 +64,7 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Registration failed',
+                'message' => __('messages.auth.register_failed'),
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -94,7 +94,7 @@ class AuthController extends Controller
                 ]);
 
                 throw ValidationException::withMessages([
-                    'email' => ['The provided credentials are incorrect.'],
+                    'email' => [__('validation.auth.invalid_credentials')],
                 ]);
             }
 
@@ -110,7 +110,7 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Login successful',
+                'message' => __('messages.auth.login_success'),
                 'token' => $token,
                 'user' => new UserResource($user),
             ], 200);
@@ -126,7 +126,7 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Login failed',
+                'message' => __('messages.auth.login_failed'),
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -168,7 +168,7 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Logout successful',
+            'message' => __('messages.auth.logout_success'),
         ], 200);
     }
 }

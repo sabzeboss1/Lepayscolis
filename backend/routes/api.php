@@ -28,6 +28,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
+// Public utility routes
+Route::get('/languages', [UserController::class, 'supportedLanguages']);
+
 // Webhook routes (public, no authentication required)
 Route::prefix('webhooks')->group(function () {
     Route::post('/stripe', [WebhookController::class, 'handleStripeWebhook']);

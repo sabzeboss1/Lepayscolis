@@ -64,19 +64,19 @@ class CreateWithdrawalRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'amount.required' => 'Withdrawal amount is required',
-            'amount.numeric' => 'Amount must be a valid number',
-            'amount.min' => 'Minimum withdrawal amount is 10 EUR',
-            'amount.max' => 'Amount cannot exceed your available balance',
-            'country_code.required' => 'Country code is required',
-            'country_code.size' => 'Country code must be 2 characters',
-            'country_code.regex' => 'Country code must be in ISO 3166-1 alpha-2 format',
-            'currency.required' => 'Currency is required',
-            'currency.size' => 'Currency must be 3 characters',
-            'currency.regex' => 'Currency must be in ISO 4217 format',
-            'payment_method.required' => 'Payment method is required',
-            'payment_details.required' => 'Payment details are required',
-            'payment_details.array' => 'Payment details must be an array',
+            'amount.required' => __('validation.withdrawal.amount_required'),
+            'amount.numeric' => __('validation.withdrawal.amount_numeric'),
+            'amount.min' => __('validation.withdrawal.amount_min'),
+            'amount.max' => __('validation.withdrawal.amount_max'),
+            'country_code.required' => __('validation.withdrawal.country_code_required'),
+            'country_code.size' => __('validation.withdrawal.country_code_size'),
+            'country_code.regex' => __('validation.withdrawal.country_code_regex'),
+            'currency.required' => __('validation.withdrawal.currency_required'),
+            'currency.size' => __('validation.withdrawal.currency_size'),
+            'currency.regex' => __('validation.withdrawal.currency_regex'),
+            'payment_method.required' => __('validation.withdrawal.payment_method_required'),
+            'payment_details.required' => __('validation.withdrawal.payment_details_required'),
+            'payment_details.array' => __('validation.withdrawal.payment_details_array'),
         ];
     }
 

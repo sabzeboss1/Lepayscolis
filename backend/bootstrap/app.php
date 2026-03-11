@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
+        // Apply locale detection to all API requests
+        $middleware->api(append: [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
+
         // Configure rate limiting for API
         $middleware->throttleApi();
 
