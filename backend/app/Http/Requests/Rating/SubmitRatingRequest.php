@@ -41,7 +41,7 @@ class SubmitRatingRequest extends FormRequest
             // Validate shipment is delivered
             $shipment = Shipment::find($this->shipment_id);
             if ($shipment && $shipment->status !== 'delivered') {
-                $validator->errors()->add('shipment_id', 'Shipment must be delivered before rating.');
+                $validator->errors()->add('shipment_id', __('validation.rating.shipment_not_delivered'));
             }
 
             // Validate user hasn't already rated this shipment
@@ -51,7 +51,7 @@ class SubmitRatingRequest extends FormRequest
                 ->first();
 
             if ($existingRating) {
-                $validator->errors()->add('shipment_id', 'You have already rated this shipment.');
+                $validator->errors()->add('shipment_id', __('validation.rating.already_rated'));
             }
 
             // Validate user is involved in the shipment
@@ -59,9 +59,9 @@ class SubmitRatingRequest extends FormRequest
                 $userId = (int) $this->user()->id;
                 $senderId = (int) $shipment->sender_id;
                 $travelerId = $shipment->traveler_id ? (int) $shipment->traveler_id : null;
-                
+
                 if ($senderId !== $userId && $travelerId !== $userId) {
-                    $validator->errors()->add('shipment_id', 'You must be involved in this shipment to rate it.');
+                    $validator->errors()->add('shipment_id', __('validation.rating.not_involved'));
                 }
             }
         });
@@ -73,15 +73,15 @@ class SubmitRatingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'to_user_id.required' => 'The user to rate is required.',
-            'to_user_id.exists' => 'The user to rate does not exist.',
-            'shipment_id.required' => 'The shipment is required.',
-            'shipment_id.exists' => 'The shipment does not exist.',
-            'rating.required' => 'The rating is required.',
-            'rating.integer' => 'The rating must be a number.',
-            'rating.min' => 'The rating must be at least 1.',
-            'rating.max' => 'The rating must not exceed 5.',
-            'comment.max' => 'The comment must not exceed 500 characters.',
+            'to_user_id.required' => __('validation.rating.to_user_required'),
+            'to_user_id.exists' => __('validation.rating.to_user_exists'),
+            'shipment_id.required' => __('validation.rating.shipment_required'),
+            'shipment_id.exists' => __('validation.rating.shipment_exists'),
+            'rating.required' => __('validation.rating.rating_required'),
+            'rating.integer' => __('validation.rating.rating_integer'),
+            'rating.min' => __('validation.rating.rating_min'),
+            'rating.max' => __('validation.rating.rating_max'),
+            'comment.max' => __('validation.rating.comment_max'),
         ];
     }
 }

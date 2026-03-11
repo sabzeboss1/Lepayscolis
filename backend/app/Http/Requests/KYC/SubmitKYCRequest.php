@@ -57,20 +57,20 @@ class SubmitKYCRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'document_type.required' => 'The document type is required.',
-            'document_type.in' => 'The document type must be one of: passport, idCard, driversLicense.',
-            'document_front.required' => 'The front of the document is required.',
-            'document_front.file' => 'The document front must be a valid file.',
-            'document_front.mimes' => 'The document front must be a file of type: jpg, jpeg, png, pdf.',
-            'document_front.max' => 'The document front must not exceed 5MB.',
-            'document_back.required' => 'The back of the document is required for ID cards.',
-            'document_back.file' => 'The document back must be a valid file.',
-            'document_back.mimes' => 'The document back must be a file of type: jpg, jpeg, png, pdf.',
-            'document_back.max' => 'The document back must not exceed 5MB.',
-            'selfie.required' => 'A selfie is required.',
-            'selfie.file' => 'The selfie must be a valid file.',
-            'selfie.mimes' => 'The selfie must be a file of type: jpg, jpeg, png, pdf.',
-            'selfie.max' => 'The selfie must not exceed 5MB.',
+            'document_type.required' => __('validation.kyc.document_type_required'),
+            'document_type.in' => __('validation.kyc.document_type_in'),
+            'document_front.required' => __('validation.kyc.document_front_required'),
+            'document_front.file' => __('validation.kyc.document_front_file'),
+            'document_front.mimes' => __('validation.kyc.document_front_mimes'),
+            'document_front.max' => __('validation.kyc.document_front_max'),
+            'document_back.required' => __('validation.kyc.document_back_required'),
+            'document_back.file' => __('validation.kyc.document_back_file'),
+            'document_back.mimes' => __('validation.kyc.document_back_mimes'),
+            'document_back.max' => __('validation.kyc.document_back_max'),
+            'selfie.required' => __('validation.kyc.selfie_required'),
+            'selfie.file' => __('validation.kyc.selfie_file'),
+            'selfie.mimes' => __('validation.kyc.selfie_mimes'),
+            'selfie.max' => __('validation.kyc.selfie_max'),
         ];
     }
 }

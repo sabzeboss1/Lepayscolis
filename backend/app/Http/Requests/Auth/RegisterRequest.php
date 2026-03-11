@@ -61,17 +61,17 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'The email address is required.',
-            'email.email' => 'Please provide a valid email address.',
-            'email.unique' => 'This email address is already registered.',
-            'password.required' => 'The password is required.',
-            'password.min' => 'The password must be at least 8 characters.',
-            'name.required' => 'The name is required.',
-            'phone.required' => 'The phone number is required.',
-            'phone.unique' => 'This phone number is already registered.',
-            'phone.regex' => 'The phone number must be in international format (e.g., +33612345678).',
-            'locale.required' => 'The locale is required.',
-            'locale.in' => 'The locale must be either fr or en.',
+            'email.required' => __('validation.auth.email_required'),
+            'email.email' => __('validation.auth.email_email'),
+            'email.unique' => __('validation.auth.email_unique'),
+            'password.required' => __('validation.auth.password_required'),
+            'password.min' => __('validation.auth.password_min'),
+            'name.required' => __('validation.auth.name_required'),
+            'phone.required' => __('validation.auth.phone_required'),
+            'phone.unique' => __('validation.auth.phone_unique'),
+            'phone.regex' => __('validation.auth.phone_regex'),
+            'locale.required' => __('validation.auth.locale_required'),
+            'locale.in' => __('validation.auth.locale_in'),
         ];
     }
 }

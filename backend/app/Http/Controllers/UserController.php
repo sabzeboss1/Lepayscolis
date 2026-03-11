@@ -78,6 +78,7 @@ class UserController extends Controller
                 'max:20',
                 Rule::unique('users', 'phone')->ignore($user->id),
             ],
+            'locale' => 'sometimes|string|in:fr,en',
             'avatar' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048', // 2MB max
         ]);
         
@@ -108,7 +109,7 @@ class UserController extends Controller
                 ]);
                 
                 return response()->json([
-                    'message' => 'Failed to upload avatar',
+                    'message' => __('messages.profile.avatar_failed'),
                     'error' => $e->getMessage(),
                 ], 500);
             }
@@ -126,7 +127,7 @@ class UserController extends Controller
         ]);
         
         return response()->json([
-            'message' => 'Profile updated successfully',
+            'message' => __('messages.profile.updated'),
             'user' => new UserResource($user->fresh()),
         ]);
     }
@@ -170,7 +171,7 @@ class UserController extends Controller
             ]);
             
             return response()->json([
-                'message' => 'Avatar uploaded successfully',
+                'message' => __('messages.profile.avatar_uploaded'),
                 'avatar_url' => $avatarUrl,
                 'user' => new UserResource($user),
             ]);
@@ -181,7 +182,7 @@ class UserController extends Controller
             ]);
             
             return response()->json([
-                'message' => 'Failed to upload avatar',
+                'message' => __('messages.profile.avatar_failed'),
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -210,12 +211,25 @@ class UserController extends Controller
         ]);
         
         return response()->json([
-            'message' => 'FCM token updated successfully',
+            'message' => __('messages.profile.fcm_updated'),
         ]);
     }
 
     /**
-     * Delete old avatar from S3
+     * Get the list of supported languages.
+     */
+    public function supportedLanguages(): JsonResponse
+    {
+        return response()->json([
+            'languages' => [
+                ['code' => 'fr', 'name' => 'Français'],
+                ['code' => 'en', 'name' => 'English'],
+            ],
+        ]);
+    }
+
+    /**
+     * Delete old avatar from storage.
      * Extract path from URL and delete
      * 
      * @param string $avatarUrl

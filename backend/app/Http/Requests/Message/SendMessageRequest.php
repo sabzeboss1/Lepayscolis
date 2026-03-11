@@ -46,8 +46,8 @@ class SendMessageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'recipient_id.not_in' => 'You cannot send a message to yourself.',
-            'content.max' => 'Message content cannot exceed 1000 characters.',
+            'recipient_id.not_in' => __('validation.message.recipient_not_self'),
+            'content.max' => __('validation.message.content_max'),
         ];
     }
 }

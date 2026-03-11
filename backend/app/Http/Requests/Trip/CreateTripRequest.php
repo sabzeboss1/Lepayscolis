@@ -61,21 +61,21 @@ class CreateTripRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'departure_date.after' => 'The departure date must be after today.',
-            'arrival_date.after' => 'The arrival date must be after the departure date.',
-            'available_capacity.min' => 'The available capacity must be at least 0.1 kg.',
-            'available_capacity.max' => 'The available capacity must not exceed 100 kg.',
-            'price_per_kg.min' => 'The price per kg must be at least 1.',
-            'price_per_kg.max' => 'The price per kg must not exceed 1000.',
-            'accepted_package_types.required' => 'Please select at least one package type.',
-            'accepted_package_types.min' => 'Please select at least one package type.',
-            'accepted_package_types.*.in' => 'Invalid package type selected.',
-            'pickup_address.required' => 'The pickup address is required.',
-            'pickup_address.min' => 'The pickup address must be at least 5 characters.',
-            'delivery_address.required' => 'The delivery address is required.',
-            'delivery_address.min' => 'The delivery address must be at least 5 characters.',
-            'travel_proof.mimes' => 'The travel proof must be a file of type: pdf, jpg, jpeg, png.',
-            'travel_proof.max' => 'The travel proof must not exceed 5MB.',
+            'departure_date.after' => __('validation.trip.departure_date_after'),
+            'arrival_date.after' => __('validation.trip.arrival_date_after'),
+            'available_capacity.min' => __('validation.trip.capacity_min'),
+            'available_capacity.max' => __('validation.trip.capacity_max'),
+            'price_per_kg.min' => __('validation.trip.price_min'),
+            'price_per_kg.max' => __('validation.trip.price_max'),
+            'accepted_package_types.required' => __('validation.trip.package_types_required'),
+            'accepted_package_types.min' => __('validation.trip.package_types_min'),
+            'accepted_package_types.*.in' => __('validation.trip.package_types_in'),
+            'pickup_address.required' => __('validation.trip.pickup_address_required'),
+            'pickup_address.min' => __('validation.trip.pickup_address_min'),
+            'delivery_address.required' => __('validation.trip.delivery_address_required'),
+            'delivery_address.min' => __('validation.trip.delivery_address_min'),
+            'travel_proof.mimes' => __('validation.trip.travel_proof_mimes'),
+            'travel_proof.max' => __('validation.trip.travel_proof_max'),
         ];
     }
 }
