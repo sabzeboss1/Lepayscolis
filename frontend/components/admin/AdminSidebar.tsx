@@ -23,16 +23,17 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface MenuItem {
-  label: string;
+  labelKey: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   superAdminOnly?: boolean;
 }
 
 interface MenuSection {
-  title: string;
+  titleKey: string;
   items: MenuItem[];
 }
 
@@ -44,51 +45,52 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   const menuSections: MenuSection[] = [
     {
-      title: 'Overview',
+      titleKey: 'admin.sidebar.overview',
       items: [
-        { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard }
+        { labelKey: 'admin.sidebar.dashboard', href: '/admin/dashboard', icon: LayoutDashboard }
       ]
     },
     {
-      title: 'Management',
+      titleKey: 'admin.sidebar.management',
       items: [
-        { label: 'Users', href: '/admin/users', icon: Users },
-        { label: 'KYC Verification', href: '/admin/kyc', icon: FileCheck },
-        { label: 'Trips', href: '/admin/trips', icon: Plane },
-        { label: 'Shipments', href: '/admin/shipments', icon: Package }
+        { labelKey: 'admin.sidebar.users', href: '/admin/users', icon: Users },
+        { labelKey: 'admin.sidebar.kycVerification', href: '/admin/kyc', icon: FileCheck },
+        { labelKey: 'admin.sidebar.trips', href: '/admin/trips', icon: Plane },
+        { labelKey: 'admin.sidebar.shipments', href: '/admin/shipments', icon: Package }
       ]
     },
     {
-      title: 'Financial',
+      titleKey: 'admin.sidebar.financial',
       items: [
-        { label: 'Wallets', href: '/admin/wallets', icon: Wallet },
-        { label: 'Withdrawals', href: '/admin/withdrawals', icon: CreditCard },
-        { label: 'Payments', href: '/admin/payments', icon: CreditCard }
+        { labelKey: 'admin.sidebar.wallets', href: '/admin/wallets', icon: Wallet },
+        { labelKey: 'admin.sidebar.withdrawals', href: '/admin/withdrawals', icon: CreditCard },
+        { labelKey: 'admin.sidebar.payments', href: '/admin/payments', icon: CreditCard }
       ]
     },
     {
-      title: 'Content',
+      titleKey: 'admin.sidebar.content',
       items: [
-        { label: 'Messages', href: '/admin/messages', icon: MessageSquare },
-        { label: 'Ratings', href: '/admin/ratings', icon: Star }
+        { labelKey: 'admin.sidebar.messages', href: '/admin/messages', icon: MessageSquare },
+        { labelKey: 'admin.sidebar.ratings', href: '/admin/ratings', icon: Star }
       ]
     },
     {
-      title: 'System',
+      titleKey: 'admin.sidebar.system',
       items: [
-        { label: 'Settings', href: '/admin/settings', icon: Settings },
-        { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-        { label: 'Audit Logs', href: '/admin/audit-logs', icon: FileText }
+        { labelKey: 'admin.sidebar.settings', href: '/admin/settings', icon: Settings, superAdminOnly: true },
+        { labelKey: 'admin.sidebar.analytics', href: '/admin/analytics', icon: BarChart3 },
+        { labelKey: 'admin.sidebar.auditLogs', href: '/admin/audit-logs', icon: FileText }
       ]
     },
     {
-      title: 'Super Admin',
+      titleKey: 'admin.sidebar.superAdmin',
       items: [
-        { label: 'Admin Users', href: '/admin/admins', icon: Shield, superAdminOnly: true },
-        { label: 'Notifications', href: '/admin/notifications', icon: Bell, superAdminOnly: true }
+        { labelKey: 'admin.sidebar.adminUsers', href: '/admin/admins', icon: Shield, superAdminOnly: true },
+        { labelKey: 'admin.sidebar.notifications', href: '/admin/notifications', icon: Bell, superAdminOnly: true }
       ]
     }
   ];
@@ -102,7 +104,7 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
 
   const filteredSections = menuSections.map(section => ({
     ...section,
-    items: section.items.filter(item => 
+    items: section.items.filter(item =>
       !item.superAdminOnly || userRole === 'super_admin'
     )
   })).filter(section => section.items.length > 0);
@@ -135,6 +137,7 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
       <aside
         className={`
           fixed top-0 left-0 h-screen bg-white border-r border-gray-200 z-40
+          flex flex-col
           transition-all duration-300 ease-in-out
           ${isCollapsed ? 'w-20' : 'w-64'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -167,19 +170,20 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4">
+        <nav className="flex-1 min-h-0 overflow-y-auto py-4">
           {filteredSections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="mb-6">
               {!isCollapsed && (
                 <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  {section.title}
+                  {t(section.titleKey)}
                 </h3>
               )}
               <ul className="space-y-1 px-2">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
-                  
+                  const label = t(item.labelKey);
+
                   return (
                     <li key={item.href}>
                       <Link
@@ -187,17 +191,17 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
                         onClick={() => setIsMobileOpen(false)}
                         className={`
                           flex items-center px-3 py-2 rounded-lg transition-colors
-                          ${active 
-                            ? 'bg-blue-50 text-blue-700' 
+                          ${active
+                            ? 'bg-blue-50 text-blue-700'
                             : 'text-gray-700 hover:bg-gray-100'
                           }
                           ${isCollapsed ? 'justify-center' : 'space-x-3'}
                         `}
-                        title={isCollapsed ? item.label : undefined}
+                        title={isCollapsed ? label : undefined}
                       >
                         <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-700' : 'text-gray-500'}`} />
                         {!isCollapsed && (
-                          <span className="font-medium">{item.label}</span>
+                          <span className="font-medium">{label}</span>
                         )}
                       </Link>
                     </li>
@@ -212,8 +216,8 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
         <div className="border-t border-gray-200 p-4">
           {!isCollapsed ? (
             <div className="text-xs text-gray-500 text-center">
-              <p>Admin Dashboard v1.0</p>
-              <p className="mt-1">© 2026 Le Pays Express Colis</p>
+              <p>{t('admin.sidebar.version')}</p>
+              <p className="mt-1">&copy; 2026 Le Pays Express Colis</p>
             </div>
           ) : (
             <div className="flex justify-center">

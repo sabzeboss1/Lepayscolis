@@ -74,8 +74,8 @@ export default function PieChart({
   // Calculate angles for each slice
   let currentAngle = -90; // Start from top
   const slices = data.map((point, index) => {
-    const percentage = (point.value / total) * 100;
-    const angle = (point.value / total) * 360;
+    const percentage = total > 0 ? (point.value / total) * 100 : 0;
+    const angle = total > 0 ? (point.value / total) * 360 : 0;
     const startAngle = currentAngle;
     const endAngle = currentAngle + angle;
     currentAngle = endAngle;
@@ -129,15 +129,26 @@ export default function PieChart({
     <div className="bg-white rounded-lg shadow p-6">
       {title && <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>}
       
-      <div className={`flex ${showLegend ? 'flex-col lg:flex-row' : 'justify-center'} items-center gap-8`}>
+      <div className={`flex flex-col ${showLegend ? '' : 'justify-center'} items-center gap-4`}>
         {/* Chart */}
-        <div className="relative flex-shrink-0">
+        <div className="relative w-full flex justify-center">
           <svg
-            width={size}
-            height={size}
             viewBox={`0 0 ${size} ${size}`}
             className="transform transition-transform"
+            style={{ width: '100%', maxWidth: `${size}px`, height: 'auto' }}
           >
+            {/* Empty state circle when total is 0 */}
+            {total === 0 && (
+              <circle
+                cx={center}
+                cy={center}
+                r={radius}
+                fill="none"
+                stroke="#E5E7EB"
+                strokeWidth={donut ? donutWidth : 2}
+              />
+            )}
+
             {slices.map((slice, index) => {
               const isHovered = hoveredIndex === index;
               const scale = isHovered ? 1.05 : 1;
@@ -232,8 +243,8 @@ export default function PieChart({
 
         {/* Legend */}
         {showLegend && (
-          <div className="flex-1 min-w-0">
-            <div className="space-y-2">
+          <div className="w-full">
+            <div className="space-y-1">
               {slices.map((slice, index) => {
                 const isHovered = hoveredIndex === index;
                 return (
