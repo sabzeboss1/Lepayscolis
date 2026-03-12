@@ -8,20 +8,23 @@ import { AlertBanners, Alert } from '@/components/admin/AlertBanner';
 import LineChart from '@/components/admin/LineChart';
 import BarChart from '@/components/admin/BarChart';
 import PieChart from '@/components/admin/PieChart';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface DashboardMetrics {
   total_users: number;
   active_trips: number;
   pending_shipments: number;
   revenue_30_days: number;
+  revenue_30_days_formatted: string;
   pending_kyc: number;
   pending_withdrawals: number;
-  trends: {
-    users: { value: number; direction: 'up' | 'down' | 'neutral' };
-    trips: { value: number; direction: 'up' | 'down' | 'neutral' };
-    shipments: { value: number; direction: 'up' | 'down' | 'neutral' };
-    revenue: { value: number; direction: 'up' | 'down' | 'neutral' };
-  };
+  alerts: Array<{
+    type: string;
+    message: string;
+    link: string;
+  }>;
 }
 
 interface ChartData {
@@ -31,79 +34,75 @@ interface ChartData {
   top_routes: Array<{ route: string; count: number }>;
 }
 
+interface ActivityItem {
+  type: string;
+  description: string;
+  timestamp: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  link: string;
+}
+
 export default function AdminDashboardPage() {
+  const { t, locale } = useTranslation();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch metrics from Next.js API routes
-      const metricsResponse = await fetch('/api/admin/dashboard/metrics');
-      const metricsData = await metricsResponse.json();
-      setMetrics(metricsData.data);
+      setError(null);
 
-      // Fetch chart data from Next.js API routes
-      const chartsResponse = await fetch('/api/admin/dashboard/charts');
-      const chartsData = await chartsResponse.json();
-      setChartData(chartsData.data);
+      // Fetch all dashboard data in parallel from backend API
+      const [metricsRes, chartsRes, activityRes] = await Promise.all([
+        apiClient.get<{ data: DashboardMetrics }>(API_ENDPOINTS.admin.dashboard.metrics),
+        apiClient.get<{ data: ChartData }>(API_ENDPOINTS.admin.dashboard.charts),
+        apiClient.get<{ data: ActivityItem[] }>(API_ENDPOINTS.admin.dashboard.activity, {
+          params: { limit: 20 },
+        }),
+      ]);
 
-      // Fetch activity feed from Next.js API routes
-      const activityResponse = await fetch('/api/admin/dashboard/activity');
-      const activityData = await activityResponse.json();
-      setActivities(activityData.data);
+      setMetrics(metricsRes.data);
+      setChartData(chartsRes.data);
 
-      // Generate alerts based on metrics
-      const newAlerts: Alert[] = [];
-      
-      if (metricsData.data.pending_kyc > 10) {
-        newAlerts.push({
-          id: 'kyc-pending',
-          type: 'warning',
-          title: 'KYC Submissions Pending',
-          message: `There are ${metricsData.data.pending_kyc} KYC submissions waiting for review.`,
-          action: {
-            label: 'Review KYC Submissions',
-            href: '/admin/kyc'
-          },
-          dismissible: true
-        });
+      // Map backend activity to ActivityFeed component format
+      setActivities(
+        activityRes.data.map((item) => ({
+          id: `${item.type}-${item.timestamp}`,
+          type: item.type as Activity['type'],
+          description: item.description,
+          timestamp: item.timestamp,
+          user: item.user,
+          link: item.link,
+        }))
+      );
+
+      // Map backend alerts to AlertBanner component format
+      if (metricsRes.data.alerts && metricsRes.data.alerts.length > 0) {
+        setAlerts(
+          metricsRes.data.alerts.map((alert, index) => ({
+            id: `alert-${index}`,
+            type: alert.type as Alert['type'],
+            title: alert.message.split('.')[0],
+            message: alert.message,
+            action: {
+              label: t('common.view'),
+              href: alert.link,
+            },
+            dismissible: true,
+          }))
+        );
       }
 
-      if (metricsData.data.pending_withdrawals > 5) {
-        newAlerts.push({
-          id: 'withdrawals-pending',
-          type: 'info',
-          title: 'Withdrawal Requests Pending',
-          message: `${metricsData.data.pending_withdrawals} withdrawal requests require your attention.`,
-          action: {
-            label: 'Review Withdrawals',
-            href: '/admin/withdrawals'
-          },
-          dismissible: true
-        });
-      }
-
-      if (metricsData.data.pending_shipments > 20) {
-        newAlerts.push({
-          id: 'shipments-pending',
-          type: 'info',
-          title: 'High Volume of Pending Shipments',
-          message: `There are ${metricsData.data.pending_shipments} shipments awaiting acceptance.`,
-          action: {
-            label: 'View Shipments',
-            href: '/admin/shipments'
-          },
-          dismissible: true
-        });
-      }
-
-      setAlerts(newAlerts);
       setLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
+    } catch (err: any) {
+      console.error('Failed to fetch dashboard data:', err);
+      setError(err.message || t('admin.dashboard.noData'));
       setLoading(false);
     }
   };
@@ -123,8 +122,10 @@ export default function AdminDashboardPage() {
     setAlerts(alerts.filter(alert => alert.id !== id));
   };
 
+  const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US';
+
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(dateLocale, {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 0,
@@ -136,11 +137,24 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
         <p className="text-sm text-gray-600 mt-1">
-          Overview of platform activity and key metrics
+          {t('admin.dashboard.subtitle')}
         </p>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <p>{error}</p>
+          <button
+            onClick={fetchDashboardData}
+            className="text-sm font-medium text-red-700 hover:text-red-900 underline"
+          >
+            {t('admin.dashboard.retry')}
+          </button>
+        </div>
+      )}
 
       {/* Alert Banners */}
       <AlertBanners alerts={alerts} onDismiss={handleDismissAlert} />
@@ -148,14 +162,9 @@ export default function AdminDashboardPage() {
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <MetricCard
-          title="Total Users"
+          title={t('admin.dashboard.totalUsers')}
           value={metrics?.total_users.toLocaleString() || '0'}
           icon={Users}
-          trend={metrics ? {
-            value: metrics.trends.users.value,
-            direction: metrics.trends.users.direction,
-            label: 'vs last month'
-          } : undefined}
           href="/admin/users"
           loading={loading}
           iconColor="text-blue-600"
@@ -163,14 +172,9 @@ export default function AdminDashboardPage() {
         />
 
         <MetricCard
-          title="Active Trips"
+          title={t('admin.dashboard.activeTrips')}
           value={metrics?.active_trips.toLocaleString() || '0'}
           icon={Plane}
-          trend={metrics ? {
-            value: metrics.trends.trips.value,
-            direction: metrics.trends.trips.direction,
-            label: 'vs last month'
-          } : undefined}
           href="/admin/trips"
           loading={loading}
           iconColor="text-purple-600"
@@ -178,14 +182,9 @@ export default function AdminDashboardPage() {
         />
 
         <MetricCard
-          title="Pending Shipments"
+          title={t('admin.dashboard.pendingShipments')}
           value={metrics?.pending_shipments.toLocaleString() || '0'}
           icon={Package}
-          trend={metrics ? {
-            value: metrics.trends.shipments.value,
-            direction: metrics.trends.shipments.direction,
-            label: 'vs last month'
-          } : undefined}
           href="/admin/shipments"
           loading={loading}
           iconColor="text-green-600"
@@ -193,14 +192,9 @@ export default function AdminDashboardPage() {
         />
 
         <MetricCard
-          title="Revenue (30 days)"
-          value={metrics ? formatCurrency(metrics.revenue_30_days) : '€0'}
+          title={t('admin.dashboard.revenue30Days')}
+          value={metrics ? formatCurrency(metrics.revenue_30_days) : '0 €'}
           icon={DollarSign}
-          trend={metrics ? {
-            value: metrics.trends.revenue.value,
-            direction: metrics.trends.revenue.direction,
-            label: 'vs previous period'
-          } : undefined}
           href="/admin/payments"
           loading={loading}
           iconColor="text-yellow-600"
@@ -208,7 +202,7 @@ export default function AdminDashboardPage() {
         />
 
         <MetricCard
-          title="Pending KYC"
+          title={t('admin.dashboard.pendingKyc')}
           value={metrics?.pending_kyc.toLocaleString() || '0'}
           icon={FileCheck}
           href="/admin/kyc"
@@ -218,7 +212,7 @@ export default function AdminDashboardPage() {
         />
 
         <MetricCard
-          title="Pending Withdrawals"
+          title={t('admin.dashboard.pendingWithdrawals')}
           value={metrics?.pending_withdrawals.toLocaleString() || '0'}
           icon={Wallet}
           href="/admin/withdrawals"
@@ -234,11 +228,11 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* User Growth Chart */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">User Growth (Last 30 Days)</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.dashboard.userGrowth')}</h2>
             {chartData && chartData.user_growth.length > 0 ? (
               <LineChart
                 data={chartData.user_growth.map(item => ({
-                  label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  label: new Date(item.date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' }),
                   value: item.count
                 }))}
                 height={300}
@@ -246,18 +240,18 @@ export default function AdminDashboardPage() {
               />
             ) : (
               <div className="h-[300px] flex items-center justify-center text-gray-400">
-                {loading ? 'Loading...' : 'No data available'}
+                {loading ? t('admin.dashboard.loading') : t('admin.dashboard.noData')}
               </div>
             )}
           </div>
 
           {/* Revenue Chart */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend (Last 30 Days)</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.dashboard.revenueTrend')}</h2>
             {chartData && chartData.revenue_data.length > 0 ? (
               <LineChart
                 data={chartData.revenue_data.map(item => ({
-                  label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  label: new Date(item.date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' }),
                   value: item.amount
                 }))}
                 height={300}
@@ -265,14 +259,14 @@ export default function AdminDashboardPage() {
               />
             ) : (
               <div className="h-[300px] flex items-center justify-center text-gray-400">
-                {loading ? 'Loading...' : 'No data available'}
+                {loading ? t('admin.dashboard.loading') : t('admin.dashboard.noData')}
               </div>
             )}
           </div>
 
           {/* Top Routes Bar Chart */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Routes</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.dashboard.topRoutes')}</h2>
             {chartData && chartData.top_routes.length > 0 ? (
               <BarChart
                 data={chartData.top_routes.map(item => ({
@@ -283,7 +277,7 @@ export default function AdminDashboardPage() {
               />
             ) : (
               <div className="h-[300px] flex items-center justify-center text-gray-400">
-                {loading ? 'Loading...' : 'No data available'}
+                {loading ? t('admin.dashboard.loading') : t('admin.dashboard.noData')}
               </div>
             )}
           </div>
@@ -293,7 +287,7 @@ export default function AdminDashboardPage() {
         <div className="space-y-6">
           {/* Shipment Status Pie Chart */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipment Status</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.dashboard.shipmentStatus')}</h2>
             {chartData && chartData.shipment_status.length > 0 ? (
               <PieChart
                 data={chartData.shipment_status.map(item => ({
@@ -305,7 +299,7 @@ export default function AdminDashboardPage() {
               />
             ) : (
               <div className="h-[250px] flex items-center justify-center text-gray-400">
-                {loading ? 'Loading...' : 'No data available'}
+                {loading ? t('admin.dashboard.loading') : t('admin.dashboard.noData')}
               </div>
             )}
           </div>

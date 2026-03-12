@@ -29,7 +29,10 @@
     "learnMore": "En savoir plus",
     "select": "Sélectionner",
     "uploaded": "Téléchargé",
-    "optional": "optionnel"
+    "optional": "optionnel",
+    "retry": "Réessayer",
+    "total": "Total",
+    "backToDashboard": "Retour au tableau de bord"
   },
   "navigation": {
     "home": "Accueil",
@@ -697,9 +700,94 @@
       "verificationFailed": "Échec de la vérification du paiement. Veuillez contacter le support si le problème persiste."
     }
   },
-  "common": {
-    "retry": "Réessayer",
-    "total": "Total",
-    "backToDashboard": "Retour au tableau de bord"
+  "admin": {
+    "layout": {
+      "verifyingAccess": "Vérification de l'accès admin..."
+    },
+    "sidebar": {
+      "overview": "Aperçu",
+      "dashboard": "Tableau de bord",
+      "management": "Gestion",
+      "users": "Utilisateurs",
+      "kycVerification": "Vérification KYC",
+      "trips": "Voyages",
+      "shipments": "Expéditions",
+      "financial": "Finances",
+      "wallets": "Portefeuilles",
+      "withdrawals": "Retraits",
+      "payments": "Paiements",
+      "content": "Contenu",
+      "messages": "Messages",
+      "ratings": "Évaluations",
+      "system": "Système",
+      "settings": "Paramètres",
+      "analytics": "Analytique",
+      "auditLogs": "Journaux d'audit",
+      "superAdmin": "Super Admin",
+      "adminUsers": "Administrateurs",
+      "notifications": "Notifications",
+      "version": "Admin Dashboard v1.0"
+    },
+    "dashboard": {
+      "title": "Tableau de bord",
+      "subtitle": "Aperçu de l'activité de la plateforme et des indicateurs clés",
+      "retry": "Réessayer",
+      "totalUsers": "Total utilisateurs",
+      "activeTrips": "Voyages actifs",
+      "pendingShipments": "Expéditions en attente",
+      "revenue30Days": "Revenus (30 jours)",
+      "pendingKyc": "KYC en attente",
+      "pendingWithdrawals": "Retraits en attente",
+      "userGrowth": "Croissance utilisateurs (30 derniers jours)",
+      "revenueTrend": "Tendance des revenus (30 derniers jours)",
+      "topRoutes": "Routes populaires",
+      "shipmentStatus": "Statut des expéditions",
+      "loading": "Chargement...",
+      "noData": "Aucune donnée disponible"
+    },
+    "profile": {
+      "title": "Mon profil",
+      "subtitle": "Gérez vos informations personnelles et votre sécurité",
+      "editProfile": "Modifier le profil",
+      "cancel": "Annuler",
+      "saving": "Enregistrement...",
+      "save": "Enregistrer",
+      "personalInfo": "Informations personnelles",
+      "fullName": "Nom complet",
+      "email": "Email",
+      "phone": "Téléphone",
+      "phonePlaceholder": "+33 6 12 34 56 78",
+      "notProvided": "Non renseigné",
+      "memberSince": "Membre depuis",
+      "preferences": "Préférences",
+      "interfaceLanguage": "Langue de l'interface",
+      "languageHint": "Ce paramètre affecte la langue de l'interface et les communications avec l'API.",
+      "security": "Sécurité",
+      "changePassword": "Changer le mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "currentPasswordPlaceholder": "Entrez votre mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "newPasswordPlaceholder": "Min. 8 caractères",
+      "confirmPassword": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Retapez le mot de passe",
+      "passwordHint": "Laissez vide si vous ne souhaitez pas changer votre mot de passe.",
+      "passwordChangeHint": "Cliquez sur \"Modifier le profil\" pour changer votre mot de passe",
+      "loadingProfile": "Impossible de charger le profil",
+      "avatarChangeTitle": "Changer l'avatar",
+      "errors": {
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "currentPasswordRequired": "Mot de passe actuel requis",
+        "passwordTooShort": "Le nouveau mot de passe doit contenir au moins 8 caractères",
+        "noChanges": "Aucune modification détectée",
+        "invalidFormat": "Format invalide. Utilisez JPG, PNG ou WebP.",
+        "fileTooLarge": "Image trop volumineuse. Maximum 2 Mo.",
+        "uploadFailed": "Erreur lors de l'upload de l'avatar",
+        "updateFailed": "Erreur lors de la mise à jour"
+      },
+      "success": {
+        "avatarUpdated": "Avatar mis à jour avec succès",
+        "profileUpdated": "Profil mis à jour avec succès"
+      }
+    }
   }
 }

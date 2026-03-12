@@ -29,7 +29,10 @@
     "learnMore": "Learn More",
     "select": "Select",
     "uploaded": "Uploaded",
-    "optional": "optional"
+    "optional": "optional",
+    "retry": "Retry",
+    "total": "Total",
+    "backToDashboard": "Back to Dashboard"
   },
   "navigation": {
     "home": "Home",
@@ -697,9 +700,94 @@
       "verificationFailed": "Failed to verify payment. Please contact support if the issue persists."
     }
   },
-  "common": {
-    "retry": "Retry",
-    "total": "Total",
-    "backToDashboard": "Back to Dashboard"
+  "admin": {
+    "layout": {
+      "verifyingAccess": "Verifying admin access..."
+    },
+    "sidebar": {
+      "overview": "Overview",
+      "dashboard": "Dashboard",
+      "management": "Management",
+      "users": "Users",
+      "kycVerification": "KYC Verification",
+      "trips": "Trips",
+      "shipments": "Shipments",
+      "financial": "Financial",
+      "wallets": "Wallets",
+      "withdrawals": "Withdrawals",
+      "payments": "Payments",
+      "content": "Content",
+      "messages": "Messages",
+      "ratings": "Ratings",
+      "system": "System",
+      "settings": "Settings",
+      "analytics": "Analytics",
+      "auditLogs": "Audit Logs",
+      "superAdmin": "Super Admin",
+      "adminUsers": "Admin Users",
+      "notifications": "Notifications",
+      "version": "Admin Dashboard v1.0"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Overview of platform activity and key metrics",
+      "retry": "Retry",
+      "totalUsers": "Total Users",
+      "activeTrips": "Active Trips",
+      "pendingShipments": "Pending Shipments",
+      "revenue30Days": "Revenue (30 days)",
+      "pendingKyc": "Pending KYC",
+      "pendingWithdrawals": "Pending Withdrawals",
+      "userGrowth": "User Growth (Last 30 Days)",
+      "revenueTrend": "Revenue Trend (Last 30 Days)",
+      "topRoutes": "Top Routes",
+      "shipmentStatus": "Shipment Status",
+      "loading": "Loading...",
+      "noData": "No data available"
+    },
+    "profile": {
+      "title": "My Profile",
+      "subtitle": "Manage your personal information and security",
+      "editProfile": "Edit Profile",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "save": "Save",
+      "personalInfo": "Personal Information",
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone",
+      "phonePlaceholder": "+33 6 12 34 56 78",
+      "notProvided": "Not provided",
+      "memberSince": "Member since",
+      "preferences": "Preferences",
+      "interfaceLanguage": "Interface language",
+      "languageHint": "This setting affects the interface language and API communications.",
+      "security": "Security",
+      "changePassword": "Change password",
+      "currentPassword": "Current password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New password",
+      "newPasswordPlaceholder": "Min. 8 characters",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Retype the password",
+      "passwordHint": "Leave empty if you don't want to change your password.",
+      "passwordChangeHint": "Click \"Edit Profile\" to change your password",
+      "loadingProfile": "Unable to load profile",
+      "avatarChangeTitle": "Change avatar",
+      "errors": {
+        "passwordMismatch": "Passwords do not match",
+        "currentPasswordRequired": "Current password is required",
+        "passwordTooShort": "New password must be at least 8 characters",
+        "noChanges": "No changes detected",
+        "invalidFormat": "Invalid format. Use JPG, PNG or WebP.",
+        "fileTooLarge": "Image too large. Maximum 2 MB.",
+        "uploadFailed": "Failed to upload avatar",
+        "updateFailed": "Failed to update profile"
+      },
+      "success": {
+        "avatarUpdated": "Avatar updated successfully",
+        "profileUpdated": "Profile updated successfully"
+      }
+    }
   }
 }

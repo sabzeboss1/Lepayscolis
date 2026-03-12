@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
     logout: '/api/auth/logout',
     me: '/api/auth/me',
     updateProfile: '/api/user',
+    uploadAvatar: '/api/avatar',
   },
 
   // ============================================================================
@@ -107,8 +108,12 @@ export const API_ENDPOINTS = {
   // Admin Endpoints
   // ============================================================================
   admin: {
-    login: '/api/admin/login',
-    dashboard: '/api/admin/dashboard',
+    me: '/api/admin/me',
+    dashboard: {
+      metrics: '/api/admin/dashboard/metrics',
+      charts: '/api/admin/dashboard/charts',
+      activity: '/api/admin/dashboard/activity',
+    },
     
     users: {
       list: '/api/admin/users',

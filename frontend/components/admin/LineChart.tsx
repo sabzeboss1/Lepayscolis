@@ -52,7 +52,7 @@ export default function LineChart({
     );
   }
 
-  const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+  const padding = { top: 50, right: 20, bottom: 40, left: 60 };
   const chartWidth = 800;
   const chartHeight = height;
   const innerWidth = chartWidth - padding.left - padding.right;

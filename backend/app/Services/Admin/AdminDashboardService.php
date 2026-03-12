@@ -82,7 +82,7 @@ class AdminDashboardService
             foreach ($recentTrips as $trip) {
                 $activities[] = [
                     'type' => 'trip_created',
-                    'description' => "New trip: {$trip->origin} → {$trip->destination}",
+                    'description' => "New trip: {$trip->departure_city} → {$trip->arrival_city}",
                     'timestamp' => $trip->created_at,
                     'user' => [
                         'name' => $trip->traveler->name,
@@ -101,7 +101,7 @@ class AdminDashboardService
             foreach ($recentShipments as $shipment) {
                 $activities[] = [
                     'type' => 'shipment_created',
-                    'description' => "New shipment: {$shipment->origin} → {$shipment->destination}",
+                    'description' => "New shipment: {$shipment->pickup_city} → {$shipment->delivery_city}",
                     'timestamp' => $shipment->created_at,
                     'user' => [
                         'name' => $shipment->sender->name,
@@ -246,18 +246,15 @@ class AdminDashboardService
     protected function getTopRoutes(): array
     {
         $routes = DB::table('shipments')
-            ->select(
-                DB::raw("CONCAT(origin, ' → ', destination) as route"),
-                DB::raw('COUNT(*) as count')
-            )
-            ->groupBy('origin', 'destination')
+            ->select('pickup_city', 'delivery_city', DB::raw('COUNT(*) as count'))
+            ->groupBy('pickup_city', 'delivery_city')
             ->orderByDesc('count')
             ->limit(5)
             ->get();
 
         return $routes->map(function ($route) {
             return [
-                'route' => $route->route,
+                'route' => $route->pickup_city . ' → ' . $route->delivery_city,
                 'count' => $route->count,
             ];
         })->toArray();

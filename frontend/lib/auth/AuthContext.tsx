@@ -5,6 +5,7 @@ import { User } from '@/lib/types';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
+import type { Locale } from '@/lib/i18n/config';
 
 interface AuthContextValue {
   user: User | null;
@@ -30,11 +31,24 @@ export interface RegisterData {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+interface AuthProviderProps {
+  children: ReactNode;
+  onUserLoaded?: (locale: Locale) => void;
+}
+
+export function AuthProvider({ children, onUserLoaded }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const isAdmin = !!user && (user.role === 'admin' || user.role === 'super_admin');
+
+  // Sync user locale when user is loaded
+  const setUserAndSyncLocale = (loadedUser: User) => {
+    setUser(loadedUser);
+    if (loadedUser.locale && onUserLoaded) {
+      onUserLoaded(loadedUser.locale);
+    }
+  };
 
   // Check for existing auth token on mount and verify session
   useEffect(() => {
@@ -44,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (token) {
           // Fetch user data from backend to verify token
           const response = await apiClient.get<{ user: User }>(API_ENDPOINTS.auth.me);
-          setUser(response.user);
+          setUserAndSyncLocale(response.user);
         }
       } catch (error) {
         // Token invalid or expired, clear it
@@ -86,8 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('admin_user');
     }
 
-    // Step 5: Update auth context and return user for role-based redirect
-    setUser(response.user);
+    // Step 5: Update auth context, sync locale, and return user for role-based redirect
+    setUserAndSyncLocale(response.user);
     return response.user;
   };
 
@@ -112,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     setCookie('auth-token', response.token, 7);
-    setUser(response.user);
+    setUserAndSyncLocale(response.user);
   };
 
   /**
@@ -160,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const response = await apiClient.get<{ user: User }>(API_ENDPOINTS.auth.me);
-      setUser(response.user);
+      setUserAndSyncLocale(response.user);
     } catch (error) {
       // If refresh fails due to auth error, logout
       if (ErrorHandler.isAuthError(error)) {
