@@ -11,6 +11,7 @@ import {
   Package,
   Wallet,
   CreditCard,
+  Coins,
   MessageSquare,
   Star,
   Settings,
@@ -68,7 +69,8 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
       items: [
         { labelKey: 'admin.sidebar.wallets', href: '/admin/wallets', icon: Wallet },
         { labelKey: 'admin.sidebar.withdrawals', href: '/admin/withdrawals', icon: CreditCard },
-        { labelKey: 'admin.sidebar.payments', href: '/admin/payments', icon: CreditCard }
+        { labelKey: 'admin.sidebar.payments', href: '/admin/payments', icon: CreditCard },
+        { labelKey: 'admin.sidebar.currencies', href: '/admin/currencies', icon: Coins }
       ]
     },
     {

@@ -41,6 +41,10 @@ class WalletTransaction extends Model
         'reference_type',
         'reference_id',
         'balance_after',
+        'currency_code',
+        'original_amount',
+        'original_currency_code',
+        'exchange_rate_used',
     ];
 
     /**
@@ -53,6 +57,8 @@ class WalletTransaction extends Model
         return [
             'amount' => 'decimal:2',
             'balance_after' => 'decimal:2',
+            'original_amount' => 'decimal:2',
+            'exchange_rate_used' => 'decimal:6',
         ];
     }
 

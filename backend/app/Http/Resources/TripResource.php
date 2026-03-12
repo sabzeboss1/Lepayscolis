@@ -35,6 +35,7 @@ class TripResource extends JsonResource
             'arrival_date' => $this->arrival_date?->toISOString(),
             'available_capacity' => $this->available_capacity,
             'price_per_kg' => $this->price_per_kg,
+            'currency_code' => $this->currency_code,
             'accepted_package_types' => $this->accepted_package_types,
             'pickup_address' => $this->pickup_address,
             'delivery_address' => $this->delivery_address,

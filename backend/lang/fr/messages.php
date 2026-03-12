@@ -52,4 +52,21 @@ return [
     'payment' => [
         'refund_success' => 'Remboursement effectué avec succès.',
     ],
+
+    'currency' => [
+        'not_found' => 'Devise :code introuvable.',
+        'cannot_update_base_rate' => 'Impossible de modifier le taux de change de la devise de base.',
+        'cannot_deactivate_base' => 'Impossible de désactiver la devise de base.',
+        'cannot_delete_base' => 'Impossible de supprimer la devise de base.',
+        'rate_must_be_positive' => 'Le taux de change doit être un nombre positif.',
+        'code_format' => 'Le code devise doit être composé de 3 lettres majuscules (ISO 4217).',
+        'code_unique' => 'Ce code devise existe déjà.',
+        'in_use' => 'Impossible de supprimer cette devise. Elle est utilisée par :count enregistrements.',
+        'created' => 'Devise créée avec succès.',
+        'updated' => 'Devise mise à jour avec succès.',
+        'rate_updated' => 'Taux de change mis à jour avec succès.',
+        'activated' => 'Devise activée avec succès.',
+        'deactivated' => 'Devise désactivée avec succès.',
+        'deleted' => 'Devise supprimée avec succès.',
+    ],
 ];

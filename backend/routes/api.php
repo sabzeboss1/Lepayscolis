@@ -30,6 +30,10 @@ Route::prefix('auth')->group(function () {
 
 // Public utility routes
 Route::get('/languages', [UserController::class, 'supportedLanguages']);
+Route::get('/currencies', function () {
+    $currencies = app(\App\Services\CurrencyService::class)->getActiveCurrencies();
+    return response()->json(['data' => $currencies]);
+});
 
 // Webhook routes (public, no authentication required)
 Route::prefix('webhooks')->group(function () {
@@ -186,6 +190,7 @@ use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AdminExportController;
 use App\Http\Controllers\Admin\AdminUserManagementController;
+use App\Http\Controllers\Admin\AdminCurrencyController;
 
 // Admin authentication routes (public)
 Route::prefix('admin')->group(function () {
@@ -291,6 +296,16 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::prefix('settings')->group(function () {
         Route::get('/', [AdminSettingsController::class, 'index'])->middleware('throttle:60,1');
         Route::put('/', [AdminSettingsController::class, 'update'])->middleware('throttle:30,1');
+    });
+
+    // Currency Management
+    Route::prefix('currencies')->group(function () {
+        Route::get('/', [AdminCurrencyController::class, 'index'])->middleware('throttle:60,1');
+        Route::post('/', [AdminCurrencyController::class, 'store'])->middleware('throttle:30,1');
+        Route::put('/{code}', [AdminCurrencyController::class, 'update'])->middleware('throttle:30,1');
+        Route::put('/{code}/rate', [AdminCurrencyController::class, 'updateRate'])->middleware('throttle:30,1');
+        Route::post('/{code}/toggle', [AdminCurrencyController::class, 'toggle'])->middleware('throttle:30,1');
+        Route::delete('/{code}', [AdminCurrencyController::class, 'destroy'])->middleware('throttle:30,1');
     });
     
     // Analytics

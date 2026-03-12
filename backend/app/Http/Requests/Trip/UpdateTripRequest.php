@@ -38,6 +38,7 @@ class UpdateTripRequest extends FormRequest
             'arrival_date' => ['sometimes', 'date', 'after:departure_date'],
             'available_capacity' => ['sometimes', 'numeric', 'min:0.1', 'max:100'],
             'price_per_kg' => ['sometimes', 'numeric', 'min:1', 'max:1000'],
+            'currency_code' => ['sometimes', 'string', 'size:3', 'exists:currencies,code'],
             'accepted_package_types' => ['sometimes', 'array', 'min:1'],
             'accepted_package_types.*' => ['required', 'string', 'in:enveloppes,petits_colis,moyens_colis,grands_colis'],
             'pickup_address' => ['sometimes', 'string', 'min:5', 'max:1000'],

@@ -31,6 +31,7 @@ class Trip extends Model
         'accepted_package_types',
         'pickup_address',
         'delivery_address',
+        'currency_code',
         'status',
         'travel_proof_url',
     ];
@@ -48,6 +49,7 @@ class Trip extends Model
             'available_capacity' => 'decimal:2',
             'price_per_kg' => 'decimal:2',
             'accepted_package_types' => 'array',
+            'currency_code' => 'string',
             'status' => 'string',
         ];
     }
@@ -58,6 +60,14 @@ class Trip extends Model
     public function traveler(): BelongsTo
     {
         return $this->belongsTo(User::class, 'traveler_id');
+    }
+
+    /**
+     * Get the currency of the trip's price.
+     */
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'currency_code', 'code');
     }
 
     /**

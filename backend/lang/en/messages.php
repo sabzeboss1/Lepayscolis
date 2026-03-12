@@ -52,4 +52,21 @@ return [
     'payment' => [
         'refund_success' => 'Refund processed successfully.',
     ],
+
+    'currency' => [
+        'not_found' => 'Currency :code not found.',
+        'cannot_update_base_rate' => 'Cannot update the exchange rate of the base currency.',
+        'cannot_deactivate_base' => 'Cannot deactivate the base currency.',
+        'cannot_delete_base' => 'Cannot delete the base currency.',
+        'rate_must_be_positive' => 'The exchange rate must be a positive number.',
+        'code_format' => 'The currency code must be 3 uppercase letters (ISO 4217).',
+        'code_unique' => 'This currency code already exists.',
+        'in_use' => 'Cannot delete this currency. It is used by :count records.',
+        'created' => 'Currency created successfully.',
+        'updated' => 'Currency updated successfully.',
+        'rate_updated' => 'Exchange rate updated successfully.',
+        'activated' => 'Currency activated successfully.',
+        'deactivated' => 'Currency deactivated successfully.',
+        'deleted' => 'Currency deleted successfully.',
+    ],
 ];

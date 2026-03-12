@@ -726,7 +726,8 @@
       "superAdmin": "Super Admin",
       "adminUsers": "Admin Users",
       "notifications": "Notifications",
-      "version": "Admin Dashboard v1.0"
+      "version": "Admin Dashboard v1.0",
+      "currencies": "Currencies"
     },
     "dashboard": {
       "title": "Dashboard",
@@ -787,6 +788,58 @@
       "success": {
         "avatarUpdated": "Avatar updated successfully",
         "profileUpdated": "Profile updated successfully"
+      }
+    },
+    "currencies": {
+      "title": "Currency Management",
+      "subtitle": "Manage supported currencies and exchange rates",
+      "code": "Code",
+      "symbol": "Symbol",
+      "name": "Name",
+      "exchangeRate": "Exchange Rate",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "base": "Base",
+      "actions": "Actions",
+      "addCurrency": "Add Currency",
+      "editRate": "Edit Rate",
+      "newRate": "New rate",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "deleteCurrency": "Delete",
+      "confirmDelete": "Are you sure you want to delete the currency {{code}}?",
+      "confirmDeleteDescription": "This action cannot be undone. The currency must not be in use by any user, trip, payment, or wallet.",
+      "createTitle": "Add New Currency",
+      "codePlaceholder": "e.g. USD",
+      "codeHelp": "3-letter ISO 4217 code (uppercase)",
+      "symbolPlaceholder": "e.g. $",
+      "namePlaceholder": "e.g. US Dollar",
+      "ratePlaceholder": "e.g. 1.08",
+      "rateHelp": "Rate relative to base currency (EUR = 1.0)",
+      "activeOnCreate": "Active on creation",
+      "creating": "Creating...",
+      "create": "Create",
+      "saving": "Saving...",
+      "save": "Save",
+      "totalCurrencies": "Total Currencies",
+      "activeCurrencies": "Active Currencies",
+      "baseCurrency": "Base Currency",
+      "lastUpdated": "Last updated",
+      "noCurrencies": "No currencies found",
+      "errors": {
+        "loadFailed": "Failed to load currencies",
+        "createFailed": "Failed to create currency",
+        "updateFailed": "Failed to update exchange rate",
+        "toggleFailed": "Failed to update currency status",
+        "deleteFailed": "Failed to delete currency"
+      },
+      "success": {
+        "created": "Currency created successfully",
+        "rateUpdated": "Exchange rate updated successfully",
+        "activated": "Currency activated successfully",
+        "deactivated": "Currency deactivated successfully",
+        "deleted": "Currency deleted successfully"
       }
     }
   }

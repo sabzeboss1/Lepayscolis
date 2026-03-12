@@ -43,15 +43,15 @@
 
 ### 2. Système multi-devises (multi-currency)
 
-- [ ] Créer une table `currencies` (code ISO 4217, symbole, nom, taux de change, active)
-- [ ] Créer une migration pour ajouter la table `currencies`
-- [ ] Ajouter une devise par défaut à la plateforme (configurable via `platform_settings`)
-- [ ] Ajouter un champ `currency_code` au modèle `User` (devise préférée)
-- [ ] Ajouter un champ `currency_code` au modèle `Trip` (devise du prix fixé par le voyageur)
-- [ ] Ajouter un champ `currency_code` aux modèles `Payment`, `Wallet`, `WalletTransaction`, `WithdrawalRequest`
-- [ ] Créer un `CurrencyService` pour la conversion entre devises
-- [ ] Permettre à l'admin de gérer les devises actives et les taux de change
-- [ ] Afficher les montants dans la devise de l'utilisateur connecté côté API
+- [x] Créer une table `currencies` (code ISO 4217, symbole, nom, taux de change, active)
+- [x] Créer une migration pour ajouter la table `currencies`
+- [x] Ajouter une devise par défaut à la plateforme (configurable via `platform_settings`)
+- [x] Ajouter un champ `currency_code` au modèle `User` (devise préférée)
+- [x] Ajouter un champ `currency_code` au modèle `Trip` (devise du prix fixé par le voyageur)
+- [x] Ajouter un champ `currency_code` aux modèles `Payment`, `Wallet`, `WalletTransaction`, `WithdrawalRequest`
+- [x] Créer un `CurrencyService` pour la conversion entre devises
+- [x] Permettre à l'admin de gérer les devises actives et les taux de change
+- [x] Afficher les montants dans la devise de l'utilisateur connecté côté API
 
 ### 3. Gestion des pays et villes
 

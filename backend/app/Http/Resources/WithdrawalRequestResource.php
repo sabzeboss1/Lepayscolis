@@ -42,20 +42,11 @@ class WithdrawalRequestResource extends JsonResource
     }
 
     /**
-     * Format currency based on the withdrawal's currency
+     * Format currency using CurrencyService for consistency.
      */
     private function formatCurrency(float $amount): string
     {
-        $currencySymbols = [
-            'EUR' => '€',
-            'XAF' => 'FCFA',
-            'XOF' => 'FCFA',
-            'RUB' => '₽',
-            'CAD' => '$',
-        ];
-
-        $symbol = $currencySymbols[$this->currency] ?? $this->currency;
-        return number_format($amount, 2) . ' ' . $symbol;
+        return app(\App\Services\CurrencyService::class)->format($amount, $this->currency ?? 'EUR');
     }
 
     /**

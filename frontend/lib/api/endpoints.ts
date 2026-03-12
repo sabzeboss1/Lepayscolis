@@ -105,6 +105,13 @@ export const API_ENDPOINTS = {
   },
 
   // ============================================================================
+  // Currency Endpoints (public)
+  // ============================================================================
+  currencies: {
+    list: '/api/currencies',
+  },
+
+  // ============================================================================
   // Admin Endpoints
   // ============================================================================
   admin: {
@@ -177,6 +184,15 @@ export const API_ENDPOINTS = {
     
     auditLogs: {
       list: '/api/admin/audit-logs',
+    },
+
+    currencies: {
+      list: '/api/admin/currencies',
+      store: '/api/admin/currencies',
+      update: (code: string) => `/api/admin/currencies/${code}`,
+      updateRate: (code: string) => `/api/admin/currencies/${code}/rate`,
+      toggle: (code: string) => `/api/admin/currencies/${code}/toggle`,
+      delete: (code: string) => `/api/admin/currencies/${code}`,
     },
   },
 } as const;

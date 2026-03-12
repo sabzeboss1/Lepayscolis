@@ -726,7 +726,8 @@
       "superAdmin": "Super Admin",
       "adminUsers": "Administrateurs",
       "notifications": "Notifications",
-      "version": "Admin Dashboard v1.0"
+      "version": "Admin Dashboard v1.0",
+      "currencies": "Devises"
     },
     "dashboard": {
       "title": "Tableau de bord",
@@ -787,6 +788,58 @@
       "success": {
         "avatarUpdated": "Avatar mis à jour avec succès",
         "profileUpdated": "Profil mis à jour avec succès"
+      }
+    },
+    "currencies": {
+      "title": "Gestion des devises",
+      "subtitle": "Gérez les devises supportées et les taux de change",
+      "code": "Code",
+      "symbol": "Symbole",
+      "name": "Nom",
+      "exchangeRate": "Taux de change",
+      "status": "Statut",
+      "active": "Active",
+      "inactive": "Inactive",
+      "base": "Base",
+      "actions": "Actions",
+      "addCurrency": "Ajouter une devise",
+      "editRate": "Modifier le taux",
+      "newRate": "Nouveau taux",
+      "activate": "Activer",
+      "deactivate": "Désactiver",
+      "deleteCurrency": "Supprimer",
+      "confirmDelete": "Êtes-vous sûr de vouloir supprimer la devise {{code}} ?",
+      "confirmDeleteDescription": "Cette action est irréversible. La devise ne doit être utilisée par aucun utilisateur, voyage, paiement ou portefeuille.",
+      "createTitle": "Ajouter une nouvelle devise",
+      "codePlaceholder": "ex. USD",
+      "codeHelp": "Code ISO 4217 à 3 lettres (majuscules)",
+      "symbolPlaceholder": "ex. $",
+      "namePlaceholder": "ex. Dollar américain",
+      "ratePlaceholder": "ex. 1.08",
+      "rateHelp": "Taux relatif à la devise de base (EUR = 1.0)",
+      "activeOnCreate": "Active à la création",
+      "creating": "Création...",
+      "create": "Créer",
+      "saving": "Enregistrement...",
+      "save": "Enregistrer",
+      "totalCurrencies": "Total devises",
+      "activeCurrencies": "Devises actives",
+      "baseCurrency": "Devise de base",
+      "lastUpdated": "Dernière mise à jour",
+      "noCurrencies": "Aucune devise trouvée",
+      "errors": {
+        "loadFailed": "Échec du chargement des devises",
+        "createFailed": "Échec de la création de la devise",
+        "updateFailed": "Échec de la mise à jour du taux de change",
+        "toggleFailed": "Échec de la mise à jour du statut de la devise",
+        "deleteFailed": "Échec de la suppression de la devise"
+      },
+      "success": {
+        "created": "Devise créée avec succès",
+        "rateUpdated": "Taux de change mis à jour avec succès",
+        "activated": "Devise activée avec succès",
+        "deactivated": "Devise désactivée avec succès",
+        "deleted": "Devise supprimée avec succès"
       }
     }
   }

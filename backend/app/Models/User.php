@@ -32,6 +32,7 @@ class User extends Authenticatable
         'is_recommended',
         'kyc_status',
         'locale',
+        'currency_code',
         'fcm_token',
         'role',
         'messaging_banned',
@@ -63,6 +64,7 @@ class User extends Authenticatable
             'is_recommended' => 'boolean',
             'kyc_status' => 'string',
             'locale' => 'string',
+            'currency_code' => 'string',
             'messaging_banned' => 'boolean',
         ];
     }
@@ -194,6 +196,14 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';
+    }
+
+    /**
+     * Get the user's preferred currency.
+     */
+    public function preferredCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'currency_code', 'code');
     }
 
     /**

@@ -24,10 +24,11 @@ class UserObserver
      */
     public function created(User $user): void
     {
-        // Create wallet with initial balance of 0.00
+        // Create wallet with initial balance of 0.00 in user's preferred currency
         Wallet::create([
             'user_id' => $user->id,
             'balance' => 0.00,
+            'currency_code' => $user->currency_code ?? 'EUR',
         ]);
     }
 }

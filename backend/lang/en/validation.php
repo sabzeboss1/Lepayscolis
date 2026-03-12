@@ -42,6 +42,8 @@ return [
         'delivery_address_min' => 'The delivery address must be at least 5 characters.',
         'travel_proof_mimes' => 'The travel proof must be a file of type: pdf, jpg, jpeg, png.',
         'travel_proof_max' => 'The travel proof must not exceed 5MB.',
+        'currency_required' => 'The currency is required.',
+        'currency_invalid' => 'The selected currency is not valid.',
     ],
 
     /*

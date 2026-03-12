@@ -45,6 +45,7 @@ class CreateTripRequest extends FormRequest
             'arrival_date' => ['required', 'date', 'after:departure_date'],
             'available_capacity' => ['required', 'numeric', 'min:0.1', 'max:100'],
             'price_per_kg' => ['required', 'numeric', 'min:1', 'max:1000'],
+            'currency_code' => ['required', 'string', 'size:3', 'exists:currencies,code'],
             'accepted_package_types' => ['required', 'array', 'min:1'],
             'accepted_package_types.*' => ['required', 'string', 'in:enveloppes,petits_colis,moyens_colis,grands_colis'],
             'pickup_address' => ['required', 'string', 'min:5', 'max:1000'],
@@ -74,6 +75,8 @@ class CreateTripRequest extends FormRequest
             'pickup_address.min' => __('validation.trip.pickup_address_min'),
             'delivery_address.required' => __('validation.trip.delivery_address_required'),
             'delivery_address.min' => __('validation.trip.delivery_address_min'),
+            'currency_code.required' => __('validation.trip.currency_required'),
+            'currency_code.exists' => __('validation.trip.currency_invalid'),
             'travel_proof.mimes' => __('validation.trip.travel_proof_mimes'),
             'travel_proof.max' => __('validation.trip.travel_proof_max'),
         ];
