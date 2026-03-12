@@ -53,6 +53,26 @@ return [
         'refund_success' => 'Remboursement effectué avec succès.',
     ],
 
+    'country' => [
+        'created' => 'Pays créé avec succès.',
+        'updated' => 'Pays mis à jour avec succès.',
+        'activated' => 'Pays activé avec succès.',
+        'deactivated' => 'Pays désactivé avec succès.',
+        'deleted' => 'Pays supprimé avec succès.',
+        'in_use' => 'Impossible de supprimer ce pays. Il est utilisé par :count enregistrements.',
+        'not_found' => 'Pays introuvable.',
+    ],
+
+    'city' => [
+        'created' => 'Ville créée avec succès.',
+        'updated' => 'Ville mise à jour avec succès.',
+        'activated' => 'Ville activée avec succès.',
+        'deactivated' => 'Ville désactivée avec succès.',
+        'deleted' => 'Ville supprimée avec succès.',
+        'in_use' => 'Impossible de supprimer cette ville. Elle est utilisée par :count enregistrements.',
+        'not_found' => 'Ville introuvable.',
+    ],
+
     'currency' => [
         'not_found' => 'Devise :code introuvable.',
         'cannot_update_base_rate' => 'Impossible de modifier le taux de change de la devise de base.',

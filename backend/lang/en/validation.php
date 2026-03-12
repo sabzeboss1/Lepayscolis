@@ -44,6 +44,11 @@ return [
         'travel_proof_max' => 'The travel proof must not exceed 5MB.',
         'currency_required' => 'The currency is required.',
         'currency_invalid' => 'The selected currency is not valid.',
+        'country_required' => 'The country is required.',
+        'country_invalid' => 'The selected country is not valid.',
+        'city_required' => 'The city is required.',
+        'city_invalid' => 'The selected city is not valid.',
+        'city_country_mismatch' => 'The selected city does not belong to the selected country.',
     ],
 
     /*
@@ -66,6 +71,7 @@ return [
         'height_max' => 'Package height must not exceed 500 cm.',
         'pickup_address_max' => 'Pickup address must not exceed 500 characters.',
         'delivery_address_max' => 'Delivery address must not exceed 500 characters.',
+        'city_country_mismatch' => 'The selected city does not belong to the selected country.',
     ],
 
     /*

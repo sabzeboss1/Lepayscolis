@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Shipment;
 
+use App\Models\City;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -48,11 +49,11 @@ class CreateShipmentRequest extends FormRequest
             'package_length' => ['required', 'integer', 'min:1', 'max:500'],
             'package_width' => ['required', 'integer', 'min:1', 'max:500'],
             'package_height' => ['required', 'integer', 'min:1', 'max:500'],
-            'pickup_city' => ['required', 'string', 'max:255'],
-            'pickup_country' => ['required', 'string', 'max:255'],
+            'pickup_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'pickup_city_id' => ['required', 'integer', 'exists:cities,id'],
             'pickup_address' => ['required', 'string', 'max:500'],
-            'delivery_city' => ['required', 'string', 'max:255'],
-            'delivery_country' => ['required', 'string', 'max:255'],
+            'delivery_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'delivery_city_id' => ['required', 'integer', 'exists:cities,id'],
             'delivery_address' => ['required', 'string', 'max:500'],
         ];
     }
@@ -64,7 +65,7 @@ class CreateShipmentRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $description = strtolower($this->package_description ?? '');
-            
+
             foreach (self::PROHIBITED_KEYWORDS as $keyword) {
                 if (str_contains($description, $keyword)) {
                     $validator->errors()->add(
@@ -74,7 +75,23 @@ class CreateShipmentRequest extends FormRequest
                     break;
                 }
             }
+
+            $this->validateCityBelongsToCountry($validator, 'pickup_city_id', 'pickup_country_id');
+            $this->validateCityBelongsToCountry($validator, 'delivery_city_id', 'delivery_country_id');
         });
+    }
+
+    private function validateCityBelongsToCountry($validator, string $cityField, string $countryField): void
+    {
+        $cityId = $this->input($cityField);
+        $countryId = $this->input($countryField);
+
+        if ($cityId && $countryId) {
+            $city = City::find($cityId);
+            if ($city && $city->country_id !== (int) $countryId) {
+                $validator->errors()->add($cityField, __('validation.shipment.city_country_mismatch'));
+            }
+        }
     }
 
     /**

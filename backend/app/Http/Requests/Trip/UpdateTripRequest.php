@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Trip;
 
+use App\Models\City;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -30,11 +31,11 @@ class UpdateTripRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'departure_city' => ['sometimes', 'string', 'max:255'],
-            'departure_country' => ['sometimes', 'string', 'max:255'],
+            'departure_country_id' => ['sometimes', 'integer', 'exists:countries,id'],
+            'departure_city_id' => ['sometimes', 'integer', 'exists:cities,id'],
             'departure_date' => ['sometimes', 'date', 'after:today'],
-            'arrival_city' => ['sometimes', 'string', 'max:255'],
-            'arrival_country' => ['sometimes', 'string', 'max:255'],
+            'arrival_country_id' => ['sometimes', 'integer', 'exists:countries,id'],
+            'arrival_city_id' => ['sometimes', 'integer', 'exists:cities,id'],
             'arrival_date' => ['sometimes', 'date', 'after:departure_date'],
             'available_capacity' => ['sometimes', 'numeric', 'min:0.1', 'max:100'],
             'price_per_kg' => ['sometimes', 'numeric', 'min:1', 'max:1000'],
@@ -70,5 +71,26 @@ class UpdateTripRequest extends FormRequest
             'travel_proof.mimes' => 'The travel proof must be a file of type: pdf, jpg, jpeg, png.',
             'travel_proof.max' => 'The travel proof must not exceed 5MB.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $this->validateCityBelongsToCountry($validator, 'departure_city_id', 'departure_country_id');
+            $this->validateCityBelongsToCountry($validator, 'arrival_city_id', 'arrival_country_id');
+        });
+    }
+
+    private function validateCityBelongsToCountry($validator, string $cityField, string $countryField): void
+    {
+        $cityId = $this->input($cityField);
+        $countryId = $this->input($countryField);
+
+        if ($cityId && $countryId) {
+            $city = City::find($cityId);
+            if ($city && $city->country_id !== (int) $countryId) {
+                $validator->errors()->add($cityField, __('validation.trip.city_country_mismatch'));
+            }
+        }
     }
 }

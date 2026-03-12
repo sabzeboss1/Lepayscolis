@@ -53,6 +53,26 @@ return [
         'refund_success' => 'Refund processed successfully.',
     ],
 
+    'country' => [
+        'created' => 'Country created successfully.',
+        'updated' => 'Country updated successfully.',
+        'activated' => 'Country activated successfully.',
+        'deactivated' => 'Country deactivated successfully.',
+        'deleted' => 'Country deleted successfully.',
+        'in_use' => 'Cannot delete this country. It is used by :count records.',
+        'not_found' => 'Country not found.',
+    ],
+
+    'city' => [
+        'created' => 'City created successfully.',
+        'updated' => 'City updated successfully.',
+        'activated' => 'City activated successfully.',
+        'deactivated' => 'City deactivated successfully.',
+        'deleted' => 'City deleted successfully.',
+        'in_use' => 'Cannot delete this city. It is used by :count records.',
+        'not_found' => 'City not found.',
+    ],
+
     'currency' => [
         'not_found' => 'Currency :code not found.',
         'cannot_update_base_rate' => 'Cannot update the exchange rate of the base currency.',

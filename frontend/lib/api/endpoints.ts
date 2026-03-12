@@ -112,6 +112,14 @@ export const API_ENDPOINTS = {
   },
 
   // ============================================================================
+  // Country & City Endpoints (public)
+  // ============================================================================
+  countries: {
+    list: '/api/countries',
+    cities: (id: number) => `/api/countries/${id}/cities`,
+  },
+
+  // ============================================================================
   // Admin Endpoints
   // ============================================================================
   admin: {
@@ -193,6 +201,22 @@ export const API_ENDPOINTS = {
       updateRate: (code: string) => `/api/admin/currencies/${code}/rate`,
       toggle: (code: string) => `/api/admin/currencies/${code}/toggle`,
       delete: (code: string) => `/api/admin/currencies/${code}`,
+    },
+
+    countries: {
+      list: '/api/admin/countries',
+      store: '/api/admin/countries',
+      update: (id: number) => `/api/admin/countries/${id}`,
+      toggle: (id: number) => `/api/admin/countries/${id}/toggle`,
+      delete: (id: number) => `/api/admin/countries/${id}`,
+    },
+
+    cities: {
+      list: '/api/admin/cities',
+      store: '/api/admin/cities',
+      update: (id: number) => `/api/admin/cities/${id}`,
+      toggle: (id: number) => `/api/admin/cities/${id}/toggle`,
+      delete: (id: number) => `/api/admin/cities/${id}`,
     },
   },
 } as const;

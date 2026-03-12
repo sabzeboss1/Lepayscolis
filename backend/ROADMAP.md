@@ -57,15 +57,15 @@
 
 > Actuellement les pays/villes sont des champs texte libres dans `Trip` et `Shipment`. On les remplace par des tables référentielles.
 
-- [ ] Créer une table `countries` (code ISO 3166, nom, indicatif téléphonique, devise par défaut, langue par défaut, active)
-- [ ] Créer une table `cities` (nom, `country_id`, active)
-- [ ] Seeder les pays et principales villes
-- [ ] Remplacer les champs texte `departure_country`, `arrival_country`, `departure_city`, `arrival_city` de `Trip` par des clés étrangères (`departure_country_id`, `arrival_country_id`, `departure_city_id`, `arrival_city_id`)
-- [ ] Remplacer les champs texte `pickup_country`, `delivery_country`, `pickup_city`, `delivery_city` de `Shipment` par des clés étrangères
-- [ ] Mettre à jour les modèles `Trip` et `Shipment` avec les relations `belongsTo`
-- [ ] Créer les endpoints API pour lister les pays et villes disponibles
-- [ ] Permettre à l'admin d'activer/désactiver des pays et de gérer les villes
-- [ ] Mettre à jour les contrôleurs et validations pour utiliser les IDs au lieu des textes
+- [x] Créer une table `countries` (code ISO 3166, nom, indicatif téléphonique, devise par défaut, langue par défaut, active)
+- [x] Créer une table `cities` (nom, `country_id`, active)
+- [x] Seeder les pays et principales villes
+- [x] Remplacer les champs texte `departure_country`, `arrival_country`, `departure_city`, `arrival_city` de `Trip` par des clés étrangères (`departure_country_id`, `arrival_country_id`, `departure_city_id`, `arrival_city_id`)
+- [x] Remplacer les champs texte `pickup_country`, `delivery_country`, `pickup_city`, `delivery_city` de `Shipment` par des clés étrangères
+- [x] Mettre à jour les modèles `Trip` et `Shipment` avec les relations `belongsTo`
+- [x] Créer les endpoints API pour lister les pays et villes disponibles
+- [x] Permettre à l'admin d'activer/désactiver des pays et de gérer les villes
+- [x] Mettre à jour les contrôleurs et validations pour utiliser les IDs au lieu des textes
 
 ### 4. Multi-colis par voyageur
 

@@ -167,6 +167,8 @@
 - [x] `admin/notifications/page.tsx` : Envoi notifications via `/api/admin/notifications` + historique
 - [ ] `admin/audit-logs/page.tsx` : Logs d'audit via `/api/admin/audit-logs` (⚠️ utilise encore des données mock)
 - [x] `admin/currencies/page.tsx` : Gestion des devises via `/api/admin/currencies` (CRUD complet, taux de change, activation)
+- [x] `admin/countries/page.tsx` : Gestion des pays via `/api/admin/countries` (CRUD complet, activation, devise/locale par défaut)
+- [x] `admin/cities/page.tsx` : Gestion des villes via `/api/admin/cities` (CRUD complet, activation, filtre par pays)
 - [ ] Supprimer toutes les données mock admin (`lib/api/adminMockData.ts`) — reste audit-logs à connecter
 - [ ] Migrer les pages utilisant `fetch` direct vers `apiClient` pour uniformiser (users, kyc, trips, shipments, payments, wallets, withdrawals, ratings, messages, settings)
 
@@ -211,8 +213,13 @@
 
 ### 15. Support pays/villes (frontend)
 
-> Remplacer les champs texte par des sélecteurs de pays/villes depuis l'API.
+> Remplacer les champs texte par des sélecteurs de pays/villes depuis l'API. Le backend pays/villes est entièrement implémenté (tables `countries`/`cities`, endpoints publics et admin, seeder avec 22 pays et 42 villes).
 
+- [x] Page admin de gestion des pays (`admin/countries`) : CRUD, activation, devise/locale par défaut
+- [x] Page admin de gestion des villes (`admin/cities`) : CRUD, activation, filtre par pays
+- [x] Endpoints API frontend définis (`countries.list`, `countries.cities(id)`, `admin.countries.*`, `admin.cities.*`)
+- [x] Traductions FR/EN pour la gestion des pays et villes admin
+- [x] Menu sidebar admin avec liens vers pays et villes (icônes Globe, MapPin)
 - [ ] Créer un composant `CountrySelect` qui charge les pays depuis `/api/countries`
 - [ ] Créer un composant `CitySelect` dynamique (filtre par pays sélectionné) depuis `/api/countries/{id}/cities`
 - [ ] Remplacer les inputs texte dans le formulaire de création de trip par `CountrySelect` + `CitySelect`
