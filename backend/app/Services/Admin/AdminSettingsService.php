@@ -26,7 +26,8 @@ class AdminSettingsService
             'platform_url' => 'https://lepaysexpresscolis.com',
             'support_email' => 'support@lepaysexpresscolis.com',
             'support_phone' => '+33 1 23 45 67 89',
-            'platform_fee_percentage' => 10.0,
+            'sender_fee_percentage' => 5.0,
+            'traveler_fee_percentage' => 10.0,
             
             // SMTP
             'smtp_host' => 'smtp.gmail.com',
@@ -108,11 +109,19 @@ class AdminSettingsService
 
     protected function validateSettings(array $data): void
     {
-        // Validate platform_fee_percentage (0-100)
-        if (isset($data['platform_fee_percentage'])) {
-            $fee = $data['platform_fee_percentage'];
+        // Validate sender_fee_percentage (0-100)
+        if (isset($data['sender_fee_percentage'])) {
+            $fee = $data['sender_fee_percentage'];
             if ($fee < 0 || $fee > 100) {
-                throw new \InvalidArgumentException('Platform fee percentage must be between 0 and 100.');
+                throw new \InvalidArgumentException('Sender fee percentage must be between 0 and 100.');
+            }
+        }
+
+        // Validate traveler_fee_percentage (0-100)
+        if (isset($data['traveler_fee_percentage'])) {
+            $fee = $data['traveler_fee_percentage'];
+            if ($fee < 0 || $fee > 100) {
+                throw new \InvalidArgumentException('Traveler fee percentage must be between 0 and 100.');
             }
         }
 

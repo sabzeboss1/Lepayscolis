@@ -40,17 +40,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Platform Fee Percentage
-    |--------------------------------------------------------------------------
-    |
-    | The percentage of shipment payments deducted as platform fee
-    | before crediting to traveler's wallet (default: 15%).
-    |
-    */
-    'platform_fee_percentage' => env('WALLET_PLATFORM_FEE', 15),
-
-    /*
-    |--------------------------------------------------------------------------
     | Cache TTL Settings
     |--------------------------------------------------------------------------
     |

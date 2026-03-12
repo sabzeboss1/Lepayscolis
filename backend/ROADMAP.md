@@ -99,16 +99,16 @@
 
 > Actuellement une commission unique de 15% est prélevée sur le montant total et déduite de la part du voyageur. On la remplace par deux commissions distinctes : une appliquée à l'expéditeur (ajoutée au montant qu'il paie) et une appliquée au voyageur (déduite de ce qu'il reçoit).
 
-- [ ] Ajouter dans `platform_settings` (ou table dédiée) les taux configurables : `sender_fee_percentage` et `traveler_fee_percentage`
-- [ ] Modifier le modèle `Payment` : remplacer `platform_fee` par `sender_fee` et `traveler_fee`
-- [ ] Créer une migration pour ajouter les colonnes `sender_fee` et `traveler_fee` à la table `payments` (et supprimer `platform_fee`)
-- [ ] Modifier le `PaymentService::createPaymentIntent()` : le montant facturé à l'expéditeur = `prix de base + sender_fee`, le montant reçu par le voyageur = `prix de base - traveler_fee`
-- [ ] Mettre à jour `PaymentService::releasePayment()` pour créditer le wallet avec le montant net (après déduction de la `traveler_fee`)
-- [ ] Mettre à jour `PaymentService::refundPayment()` pour rembourser le montant total payé par l'expéditeur (base + sender_fee)
-- [ ] Permettre à l'admin de modifier les taux de commission depuis le dashboard
-- [ ] Afficher le détail des frais à l'expéditeur avant paiement (prix de base, frais de service, total)
-- [ ] Afficher le détail des frais au voyageur (prix de base, commission plateforme, montant net)
-- [ ] Mettre à jour les analytics admin pour distinguer les revenus issus des deux commissions
+- [x] Ajouter dans `platform_settings` (ou table dédiée) les taux configurables : `sender_fee_percentage` et `traveler_fee_percentage`
+- [x] Modifier le modèle `Payment` : ajouter `base_amount`, `sender_fee` et `traveler_fee` (garder `platform_fee` = sender_fee + traveler_fee)
+- [x] Créer une migration pour ajouter les colonnes `base_amount`, `sender_fee` et `traveler_fee` à la table `payments` (backfill existant)
+- [x] Modifier le `PaymentService::createPaymentIntent()` : le montant facturé à l'expéditeur = `prix de base + sender_fee`, le montant reçu par le voyageur = `prix de base - traveler_fee`
+- [x] Mettre à jour `PaymentService::releasePayment()` pour créditer le wallet avec le montant net (après déduction de la `traveler_fee`)
+- [x] Mettre à jour `PaymentService::refundPayment()` pour rembourser le montant total payé par l'expéditeur (base + sender_fee)
+- [x] Permettre à l'admin de modifier les taux de commission depuis le dashboard
+- [x] Afficher le détail des frais à l'expéditeur avant paiement (prix de base, frais de service, total)
+- [x] Afficher le détail des frais au voyageur (prix de base, commission plateforme, montant net)
+- [x] Mettre à jour les analytics admin pour distinguer les revenus issus des deux commissions
 
 ### 7. Preuve de voyage obligatoire + validation admin
 

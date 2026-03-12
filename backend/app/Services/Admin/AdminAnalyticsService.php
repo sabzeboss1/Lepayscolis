@@ -51,7 +51,9 @@ class AdminAnalyticsService
                 'users' => $usersQuery->count(),
                 'trips' => $tripsQuery->count(),
                 'shipments' => $shipmentsQuery->count(),
-                'revenue' => (float) $revenueQuery->sum('amount'),
+                'revenue' => (float) $revenueQuery->sum('platform_fee'),
+                'revenue_from_sender_fees' => (float) (clone $revenueQuery)->sum('sender_fee'),
+                'revenue_from_traveler_fees' => (float) (clone $revenueQuery)->sum('traveler_fee'),
             ];
         });
     }
@@ -139,7 +141,7 @@ class AdminAnalyticsService
         $cacheKey = "admin:analytics:revenue:{$dateFrom}:{$dateTo}";
         
         return Cache::remember($cacheKey, self::ANALYTICS_CACHE_TTL, function () use ($dateFrom, $dateTo) {
-            $query = Payment::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(amount) as total')
+            $query = Payment::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(platform_fee) as total')
                 ->where('status', 'completed');
             
             if ($dateFrom) {

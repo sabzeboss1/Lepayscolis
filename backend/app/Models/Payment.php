@@ -16,6 +16,9 @@ class Payment extends Model
         'payer_id',
         'payee_id',
         'amount',
+        'base_amount',
+        'sender_fee',
+        'traveler_fee',
         'platform_fee',
         'traveler_amount',
         'payment_method',
@@ -28,6 +31,9 @@ class Payment extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'base_amount' => 'decimal:2',
+        'sender_fee' => 'decimal:2',
+        'traveler_fee' => 'decimal:2',
         'platform_fee' => 'decimal:2',
         'traveler_amount' => 'decimal:2',
         'status' => 'string',

@@ -53,16 +53,4 @@ return [
 
     'currency' => 'eur',
 
-    /*
-    |--------------------------------------------------------------------------
-    | Platform Fee Percentage
-    |--------------------------------------------------------------------------
-    |
-    | The percentage of each transaction that the platform takes as a fee.
-    | Default is 15% as per requirements.
-    |
-    */
-
-    'platform_fee_percentage' => 15,
-
 ];
