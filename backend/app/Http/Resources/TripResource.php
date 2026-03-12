@@ -55,9 +55,14 @@ class TripResource extends JsonResource
             'delivery_address' => $this->delivery_address,
             'status' => $this->status,
             'travel_proof_url' => $this->travel_proof_url,
+            'remaining_capacity' => $this->remainingCapacity(),
+            'accepted_shipments_count' => $this->when(
+                $this->relationLoaded('shipments'),
+                fn() => $this->shipments->whereIn('status', ['accepted', 'in_transit', 'delivered'])->count()
+            ),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-            
+
             // Include traveler data when loaded
             'traveler' => PublicUserResource::make($this->whenLoaded('traveler')),
         ];

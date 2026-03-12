@@ -103,6 +103,46 @@ class Trip extends Model
     }
 
     /**
+     * Get the accepted (non-cancelled, non-pending) shipments for this trip.
+     */
+    public function acceptedShipments()
+    {
+        return $this->shipments()->whereIn('status', ['accepted', 'in_transit', 'delivered']);
+    }
+
+    /**
+     * Get the remaining capacity for this trip.
+     */
+    public function remainingCapacity(): float
+    {
+        return (float) $this->available_capacity;
+    }
+
+    /**
+     * Get the total weight of accepted shipments.
+     */
+    public function acceptedShipmentsWeight(): float
+    {
+        return (float) $this->acceptedShipments()->sum('package_weight');
+    }
+
+    /**
+     * Get the count of accepted shipments.
+     */
+    public function acceptedShipmentsCount(): int
+    {
+        return $this->acceptedShipments()->count();
+    }
+
+    /**
+     * Check if the trip has capacity for the given weight.
+     */
+    public function hasCapacityFor(float $weight): bool
+    {
+        return $this->remainingCapacity() >= $weight;
+    }
+
+    /**
      * Scope a query to only include active trips.
      */
     public function scopeActive($query)

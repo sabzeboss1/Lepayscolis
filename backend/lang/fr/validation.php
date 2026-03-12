@@ -72,6 +72,9 @@ return [
         'pickup_address_max' => 'L\'adresse de collecte ne doit pas dépasser 500 caractères.',
         'delivery_address_max' => 'L\'adresse de livraison ne doit pas dépasser 500 caractères.',
         'city_country_mismatch' => 'La ville sélectionnée n\'appartient pas au pays sélectionné.',
+        'insufficient_capacity' => 'Le voyage sélectionné n\'a pas assez de capacité pour cette expédition.',
+        'not_trip_owner' => 'Vous ne pouvez accepter que les expéditions pour vos propres voyages.',
+        'not_pending' => 'Seules les expéditions en attente peuvent être acceptées.',
     ],
 
     /*

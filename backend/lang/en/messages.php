@@ -21,6 +21,7 @@ return [
         'created' => 'Trip created successfully.',
         'updated' => 'Trip updated successfully.',
         'deleted' => 'Trip deleted successfully.',
+        'unauthorized' => 'You are not authorized to access this trip.',
     ],
 
     'shipment' => [
@@ -28,6 +29,9 @@ return [
         'updated' => 'Shipment updated successfully.',
         'accepted' => 'Shipment accepted successfully.',
         'delivered' => 'Delivery confirmed successfully.',
+        'rejected' => 'Shipment request rejected.',
+        'reject_unauthorized' => 'You are not authorized to reject this shipment.',
+        'cannot_reject' => 'This shipment cannot be rejected in its current state.',
     ],
 
     'kyc' => [

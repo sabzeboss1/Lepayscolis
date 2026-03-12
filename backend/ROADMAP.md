@@ -71,14 +71,16 @@
 
 > Un voyageur doit pouvoir transporter plusieurs colis de différents expéditeurs sur un même trajet.
 
-- [ ] Vérifier que la relation `Trip → hasMany → Shipment` existe bien (déjà en place)
-- [ ] Ajouter un suivi dynamique de la capacité restante (`available_capacity` - somme des poids des colis acceptés)
-- [ ] Créer une méthode `remainingCapacity()` sur le modèle `Trip`
-- [ ] Valider automatiquement qu'un nouveau colis ne dépasse pas la capacité restante avant acceptation
-- [ ] Permettre au voyageur de voir la liste de tous les colis acceptés pour un trajet
-- [ ] Adapter le système de paiement : un paiement distinct par colis (pas par trajet)
-- [ ] Mettre à jour les notifications pour informer le voyageur de chaque nouvelle demande de colis
-- [ ] Ajouter un endpoint pour que le voyageur gère ses colis par trajet (liste, accepter, refuser)
+- [x] Vérifier que la relation `Trip → hasMany → Shipment` existe bien (déjà en place)
+- [x] Ajouter un suivi dynamique de la capacité restante (`available_capacity` - somme des poids des colis acceptés)
+- [x] Créer une méthode `remainingCapacity()` sur le modèle `Trip`
+- [x] Valider automatiquement qu'un nouveau colis ne dépasse pas la capacité restante avant acceptation
+- [x] Permettre au voyageur de voir la liste de tous les colis acceptés pour un trajet (`GET /api/trips/{id}/shipments`)
+- [x] Adapter le système de paiement : un paiement distinct par colis (déjà en place — `Shipment` HasOne `Payment`)
+- [ ] Mettre à jour les notifications pour informer le voyageur de chaque nouvelle demande de colis (en attente du système de notifications)
+- [x] Ajouter un endpoint pour que le voyageur gère ses colis par trajet (liste, accepter, refuser via `POST /api/shipments/{id}/reject`)
+- [x] Restaurer la capacité du voyage lors de l'annulation d'un colis accepté
+- [x] Ajouter les traductions (messages + validation) en français et anglais
 
 ### 5. Stockage fichiers en local (remplacer S3)
 
