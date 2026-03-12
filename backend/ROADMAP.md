@@ -84,15 +84,16 @@
 
 ### 5. Stockage fichiers en local (remplacer S3)
 
-- [ ] Configurer `FILESYSTEM_DISK=public` dans `.env`
-- [ ] Mettre à jour `config/filesystems.php` pour utiliser le driver `local` / `public`
-- [ ] Mettre à jour le `FileUploadService` pour stocker en local au lieu de S3
-- [ ] Exécuter `php artisan storage:link` pour créer le lien symbolique
-- [ ] Mettre à jour les URLs retournées par l'API (utiliser `Storage::url()`)
-- [ ] Adapter l'upload KYC pour le stockage local
-- [ ] Adapter l'upload d'avatars pour le stockage local
-- [ ] Adapter l'upload de preuve de voyage pour le stockage local
-- [ ] Supprimer la dépendance AWS S3 (`composer remove league/flysystem-aws-s3-v3` si présente)
+- [x] Configurer `FILESYSTEM_DISK=public` dans `.env`
+- [x] Mettre à jour `config/filesystems.php` pour utiliser le driver `local` / `public` (supprimé `s3-public` et `s3-private`)
+- [x] Mettre à jour le `FileUploadService` pour stocker en local au lieu de S3
+- [x] Exécuter `php artisan storage:link` pour créer le lien symbolique
+- [x] Mettre à jour les URLs retournées par l'API (utiliser `Storage::url()`)
+- [x] Adapter l'upload KYC pour le stockage local (disk `local` avec `serve => true`)
+- [x] Adapter l'upload d'avatars pour le stockage local (disk `public` via symlink)
+- [x] Adapter l'upload de preuve de voyage pour le stockage local (disk `local` avec `serve => true`)
+- [x] Supprimer la dépendance AWS S3 (`composer remove aws/aws-sdk-php`)
+- [x] Mettre à jour `deleteOldAvatar()` dans `UserController` pour le format d'URL local
 
 ### 6. Double commission (voyageur + expéditeur)
 
