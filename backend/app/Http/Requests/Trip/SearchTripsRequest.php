@@ -33,6 +33,10 @@ class SearchTripsRequest extends FormRequest
         return [
             'departure' => ['nullable', 'string', 'max:255'],
             'arrival' => ['nullable', 'string', 'max:255'],
+            'departure_country_id' => ['nullable', 'integer', 'exists:countries,id'],
+            'departure_city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'arrival_country_id' => ['nullable', 'integer', 'exists:countries,id'],
+            'arrival_city_id' => ['nullable', 'integer', 'exists:cities,id'],
             'dateFrom' => ['nullable', 'date'],
             'dateTo' => ['nullable', 'date', 'after_or_equal:dateFrom'],
             'minCapacity' => ['nullable', 'numeric', 'min:0.1', 'max:100'],

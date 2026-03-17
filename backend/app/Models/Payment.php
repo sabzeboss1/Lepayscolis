@@ -20,6 +20,7 @@ class Payment extends Model
         'traveler_amount',
         'payment_method',
         'transaction_id',
+        'currency_code',
         'status',
         'escrowed_at',
         'released_at',

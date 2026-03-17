@@ -21,14 +21,15 @@ class AdminShipmentService
 
     public function getShipments(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Shipment::with(['sender', 'traveler', 'trip']);
+        $query = Shipment::with(['sender', 'traveler', 'trip', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity']);
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('tracking_number', 'like', "%{$search}%")
-                    ->orWhereHas('sender', fn($q) => $q->where('name', 'like', "%{$search}%"))
-                    ->orWhere('recipient_name', 'like', "%{$search}%");
+                $q->where('package_description', 'like', "%{$search}%")
+                    ->orWhere('pickup_city', 'like', "%{$search}%")
+                    ->orWhere('delivery_city', 'like', "%{$search}%")
+                    ->orWhereHas('sender', fn($q) => $q->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -116,9 +117,9 @@ class AdminShipmentService
 
     protected function calculateAverageDeliveryTime(): float
     {
+        // Compatible with both SQLite and MySQL
         $avg = Shipment::where('status', 'delivered')
-            ->whereNotNull('delivered_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(DAY, created_at, delivered_at)) as avg_days')
+            ->selectRaw('AVG(CAST((julianday(updated_at) - julianday(created_at)) AS REAL)) as avg_days')
             ->value('avg_days');
 
         return round($avg ?? 0, 1);

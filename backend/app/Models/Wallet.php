@@ -20,6 +20,7 @@ class Wallet extends Model
     protected $fillable = [
         'user_id',
         'balance',
+        'currency_code',
     ];
 
     /**
@@ -40,6 +41,14 @@ class Wallet extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the wallet's operating currency.
+     */
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'currency_code', 'code');
     }
 
     /**

@@ -6,6 +6,8 @@ use App\Http\Requests\Shipment\AcceptShipmentRequest;
 use App\Http\Requests\Shipment\CreateShipmentRequest;
 use App\Http\Requests\Shipment\UpdateShipmentRequest;
 use App\Http\Resources\ShipmentResource;
+use App\Models\City;
+use App\Models\Country;
 use App\Models\Shipment;
 use App\Models\Trip;
 use Illuminate\Http\JsonResponse;
@@ -35,7 +37,7 @@ class ShipmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Shipment::with(['sender', 'traveler', 'trip']);
+        $query = Shipment::with(['sender', 'traveler', 'trip', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity']);
 
         // Filter by status
         if ($request->has('status')) {
@@ -66,15 +68,21 @@ class ShipmentController extends Controller
     public function store(CreateShipmentRequest $request): JsonResponse
     {
         return DB::transaction(function () use ($request) {
-            $shipment = new Shipment($request->validated());
+            $data = $request->validated();
+
+            // Auto-populate text fields from country/city IDs
+            $data = $this->resolveLocationNames($data, 'pickup');
+            $data = $this->resolveLocationNames($data, 'delivery');
+
+            $shipment = new Shipment($data);
             $shipment->sender_id = auth()->id();
             $shipment->status = 'pending';
             $shipment->payment_status = 'pending';
-            
+
             // Payment amount will be calculated when shipment is accepted
             // For now, set to 0
             $shipment->payment_amount = 0;
-            
+
             $shipment->save();
 
             return response()->json([
@@ -91,7 +99,7 @@ class ShipmentController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $shipment = Shipment::with(['sender', 'traveler', 'trip.traveler'])
+        $shipment = Shipment::with(['sender', 'traveler', 'trip.traveler', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity'])
             ->findOrFail($id);
 
         return response()->json([
@@ -109,7 +117,7 @@ class ShipmentController extends Controller
     {
         $userId = auth()->id();
 
-        $query = Shipment::with(['sender', 'traveler', 'trip'])
+        $query = Shipment::with(['sender', 'traveler', 'trip', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity'])
             ->where(function ($q) use ($userId) {
                 $q->where('sender_id', $userId)
                   ->orWhere('traveler_id', $userId);
@@ -215,5 +223,30 @@ class ShipmentController extends Controller
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });
+    }
+
+    /**
+     * Resolve country/city names from IDs and populate text fields.
+     */
+    private function resolveLocationNames(array $data, string $prefix): array
+    {
+        $countryKey = "{$prefix}_country_id";
+        $cityKey = "{$prefix}_city_id";
+
+        if (isset($data[$countryKey])) {
+            $country = Country::find($data[$countryKey]);
+            if ($country) {
+                $data["{$prefix}_country"] = $country->name_en;
+            }
+        }
+
+        if (isset($data[$cityKey])) {
+            $city = City::find($data[$cityKey]);
+            if ($city) {
+                $data["{$prefix}_city"] = $city->name_en;
+            }
+        }
+
+        return $data;
     }
 }

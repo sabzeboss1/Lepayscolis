@@ -79,6 +79,7 @@ class UserController extends Controller
                 Rule::unique('users', 'phone')->ignore($user->id),
             ],
             'locale' => 'sometimes|string|in:fr,en',
+            'currency_code' => 'sometimes|string|size:3|exists:currencies,code',
             'avatar' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048', // 2MB max
         ]);
         

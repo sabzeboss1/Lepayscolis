@@ -22,15 +22,20 @@ class Trip extends Model
         'traveler_id',
         'departure_city',
         'departure_country',
+        'departure_country_id',
+        'departure_city_id',
         'departure_date',
         'arrival_city',
         'arrival_country',
+        'arrival_country_id',
+        'arrival_city_id',
         'arrival_date',
         'available_capacity',
         'price_per_kg',
         'accepted_package_types',
         'pickup_address',
         'delivery_address',
+        'currency_code',
         'status',
         'travel_proof_url',
     ];
@@ -48,6 +53,7 @@ class Trip extends Model
             'available_capacity' => 'decimal:2',
             'price_per_kg' => 'decimal:2',
             'accepted_package_types' => 'array',
+            'currency_code' => 'string',
             'status' => 'string',
         ];
     }
@@ -58,6 +64,34 @@ class Trip extends Model
     public function traveler(): BelongsTo
     {
         return $this->belongsTo(User::class, 'traveler_id');
+    }
+
+    /**
+     * Get the currency of the trip's price.
+     */
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'currency_code', 'code');
+    }
+
+    public function departureCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'departure_country_id');
+    }
+
+    public function departureCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'departure_city_id');
+    }
+
+    public function arrivalCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'arrival_country_id');
+    }
+
+    public function arrivalCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'arrival_city_id');
     }
 
     /**
@@ -87,9 +121,27 @@ class Trip extends Model
     /**
      * Scope a query to filter trips by route.
      */
-    public function scopeByRoute($query, $departure, $arrival)
+    public function scopeByRoute($query, $departure = null, $arrival = null, $departureCountryId = null, $departureCityId = null, $arrivalCountryId = null, $arrivalCityId = null)
     {
-        return $query->where('departure_city', 'like', "%{$departure}%")
-                     ->where('arrival_city', 'like', "%{$arrival}%");
+        if ($departureCountryId) {
+            $query->where('departure_country_id', $departureCountryId);
+        }
+        if ($departureCityId) {
+            $query->where('departure_city_id', $departureCityId);
+        }
+        if ($arrivalCountryId) {
+            $query->where('arrival_country_id', $arrivalCountryId);
+        }
+        if ($arrivalCityId) {
+            $query->where('arrival_city_id', $arrivalCityId);
+        }
+        if ($departure) {
+            $query->where('departure_city', 'like', "%{$departure}%");
+        }
+        if ($arrival) {
+            $query->where('arrival_city', 'like', "%{$arrival}%");
+        }
+
+        return $query;
     }
 }

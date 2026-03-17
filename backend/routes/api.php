@@ -7,6 +7,7 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ShipmentController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CountryController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,12 @@ Route::prefix('auth')->group(function () {
 
 // Public utility routes
 Route::get('/languages', [UserController::class, 'supportedLanguages']);
+Route::get('/currencies', function () {
+    $currencies = app(\App\Services\CurrencyService::class)->getActiveCurrencies();
+    return response()->json(['data' => $currencies]);
+});
+Route::get('/countries', [CountryController::class, 'index']);
+Route::get('/countries/{id}/cities', [CountryController::class, 'cities']);
 
 // Webhook routes (public, no authentication required)
 Route::prefix('webhooks')->group(function () {
@@ -186,6 +193,9 @@ use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AdminExportController;
 use App\Http\Controllers\Admin\AdminUserManagementController;
+use App\Http\Controllers\Admin\AdminCurrencyController;
+use App\Http\Controllers\Admin\AdminCountryController;
+use App\Http\Controllers\Admin\AdminCityController;
 
 // Admin authentication routes (public)
 Route::prefix('admin')->group(function () {
@@ -291,6 +301,34 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::prefix('settings')->group(function () {
         Route::get('/', [AdminSettingsController::class, 'index'])->middleware('throttle:60,1');
         Route::put('/', [AdminSettingsController::class, 'update'])->middleware('throttle:30,1');
+    });
+
+    // Country Management
+    Route::prefix('countries')->group(function () {
+        Route::get('/', [AdminCountryController::class, 'index'])->middleware('throttle:60,1');
+        Route::post('/', [AdminCountryController::class, 'store'])->middleware('throttle:30,1');
+        Route::put('/{id}', [AdminCountryController::class, 'update'])->middleware('throttle:30,1');
+        Route::post('/{id}/toggle', [AdminCountryController::class, 'toggle'])->middleware('throttle:30,1');
+        Route::delete('/{id}', [AdminCountryController::class, 'destroy'])->middleware('throttle:30,1');
+    });
+
+    // City Management
+    Route::prefix('cities')->group(function () {
+        Route::get('/', [AdminCityController::class, 'index'])->middleware('throttle:60,1');
+        Route::post('/', [AdminCityController::class, 'store'])->middleware('throttle:30,1');
+        Route::put('/{id}', [AdminCityController::class, 'update'])->middleware('throttle:30,1');
+        Route::post('/{id}/toggle', [AdminCityController::class, 'toggle'])->middleware('throttle:30,1');
+        Route::delete('/{id}', [AdminCityController::class, 'destroy'])->middleware('throttle:30,1');
+    });
+
+    // Currency Management
+    Route::prefix('currencies')->group(function () {
+        Route::get('/', [AdminCurrencyController::class, 'index'])->middleware('throttle:60,1');
+        Route::post('/', [AdminCurrencyController::class, 'store'])->middleware('throttle:30,1');
+        Route::put('/{code}', [AdminCurrencyController::class, 'update'])->middleware('throttle:30,1');
+        Route::put('/{code}/rate', [AdminCurrencyController::class, 'updateRate'])->middleware('throttle:30,1');
+        Route::post('/{code}/toggle', [AdminCurrencyController::class, 'toggle'])->middleware('throttle:30,1');
+        Route::delete('/{code}', [AdminCurrencyController::class, 'destroy'])->middleware('throttle:30,1');
     });
     
     // Analytics

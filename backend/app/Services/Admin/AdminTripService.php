@@ -33,16 +33,16 @@ class AdminTripService
      */
     public function getTrips(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Trip::with(['traveler', 'shipments']);
+        $query = Trip::with(['traveler', 'shipments', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity']);
 
-        // Search by origin, destination, or traveler name
+        // Search by departure/arrival city/country or traveler name
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('origin_city', 'like', "%{$search}%")
-                    ->orWhere('origin_country', 'like', "%{$search}%")
-                    ->orWhere('destination_city', 'like', "%{$search}%")
-                    ->orWhere('destination_country', 'like', "%{$search}%")
+                $q->where('departure_city', 'like', "%{$search}%")
+                    ->orWhere('departure_country', 'like', "%{$search}%")
+                    ->orWhere('arrival_city', 'like', "%{$search}%")
+                    ->orWhere('arrival_country', 'like', "%{$search}%")
                     ->orWhereHas('traveler', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     });
@@ -96,11 +96,11 @@ class AdminTripService
     {
         $trip = Trip::findOrFail($tripId);
 
-        $before = $trip->only(['departure_date', 'available_space', 'price_per_kg']);
+        $before = $trip->only(['departure_date', 'available_capacity', 'price_per_kg']);
 
         $trip->update($data);
 
-        $after = $trip->only(['departure_date', 'available_space', 'price_per_kg']);
+        $after = $trip->only(['departure_date', 'available_capacity', 'price_per_kg']);
 
         // Create audit log
         AuditLog::log($admin, 'update', 'trip', $tripId, $before, $after);
@@ -172,11 +172,20 @@ class AdminTripService
             $completionRate = $totalTrips > 0 ? ($completedTrips / $totalTrips) * 100 : 0;
 
             // Popular routes
-            $popularRoutes = Trip::select('origin', 'destination', DB::raw('count(*) as count'))
-                ->groupBy('origin', 'destination')
+            $popularRoutes = Trip::select(
+                    'departure_city', 'departure_country',
+                    'arrival_city', 'arrival_country',
+                    DB::raw('count(*) as count')
+                )
+                ->groupBy('departure_city', 'departure_country', 'arrival_city', 'arrival_country')
                 ->orderBy('count', 'desc')
                 ->take(10)
-                ->get();
+                ->get()
+                ->map(fn($r) => [
+                    'origin' => "{$r->departure_city}, {$r->departure_country}",
+                    'destination' => "{$r->arrival_city}, {$r->arrival_country}",
+                    'count' => $r->count,
+                ]);
 
             return [
                 'total_trips' => $totalTrips,

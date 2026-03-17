@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminUserSeeder::class,
             PlatformSettingsSeeder::class,
+            CurrencySeeder::class,
+            CountrySeeder::class,
         ]);
 
         // Create test user

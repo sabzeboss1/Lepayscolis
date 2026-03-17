@@ -11,6 +11,9 @@ import {
   Package,
   Wallet,
   CreditCard,
+  Coins,
+  Globe,
+  MapPin,
   MessageSquare,
   Star,
   Settings,
@@ -60,7 +63,9 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
         { labelKey: 'admin.sidebar.users', href: '/admin/users', icon: Users },
         { labelKey: 'admin.sidebar.kycVerification', href: '/admin/kyc', icon: FileCheck },
         { labelKey: 'admin.sidebar.trips', href: '/admin/trips', icon: Plane },
-        { labelKey: 'admin.sidebar.shipments', href: '/admin/shipments', icon: Package }
+        { labelKey: 'admin.sidebar.shipments', href: '/admin/shipments', icon: Package },
+        { labelKey: 'admin.sidebar.countries', href: '/admin/countries', icon: Globe },
+        { labelKey: 'admin.sidebar.cities', href: '/admin/cities', icon: MapPin }
       ]
     },
     {
@@ -68,7 +73,8 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
       items: [
         { labelKey: 'admin.sidebar.wallets', href: '/admin/wallets', icon: Wallet },
         { labelKey: 'admin.sidebar.withdrawals', href: '/admin/withdrawals', icon: CreditCard },
-        { labelKey: 'admin.sidebar.payments', href: '/admin/payments', icon: CreditCard }
+        { labelKey: 'admin.sidebar.payments', href: '/admin/payments', icon: CreditCard },
+        { labelKey: 'admin.sidebar.currencies', href: '/admin/currencies', icon: Coins }
       ]
     },
     {
