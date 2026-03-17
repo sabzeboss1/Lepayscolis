@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, AlertCircle, Loader2, User, Mail, Phone, Lock, Shield } from 'lucide-react';
+import { X, AlertCircle, Loader2, User, Mail, Phone, Lock } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface CreateUserFormData {
   name: string;
@@ -10,7 +11,6 @@ interface CreateUserFormData {
   phone: string;
   password: string;
   confirmPassword: string;
-  role: 'user' | 'admin' | 'super_admin';
 }
 
 interface CreateUserModalProps {
@@ -20,6 +20,7 @@ interface CreateUserModalProps {
 }
 
 export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalProps) {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,14 +36,12 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
       email: '',
       phone: '',
       password: '',
-      confirmPassword: '',
-      role: 'user'
+      confirmPassword: ''
     }
   });
 
   const password = watch('password');
 
-  // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
       reset();
@@ -50,7 +49,6 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
     }
   }, [isOpen, reset]);
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -77,20 +75,18 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
           email: data.email,
           phone: data.phone,
           password: data.password,
-          role: data.role,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create user');
+        throw new Error(errorData.message || t('admin.users.createModal.errors.createFailed'));
       }
 
-      // Success - close modal and refresh data
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('admin.users.createModal.errors.createFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -101,8 +97,8 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
@@ -113,10 +109,10 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
           <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <div>
               <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
-                Create New User
+                {t('admin.users.createModal.title')}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                Add a new user to the platform
+                {t('admin.users.createModal.subtitle')}
               </p>
             </div>
             <button
@@ -147,7 +143,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
               {/* Name Field */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name <span className="text-red-500">*</span>
+                  {t('admin.users.createModal.fullName')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -157,14 +153,14 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                     id="name"
                     type="text"
                     {...register('name', {
-                      required: 'Name is required',
+                      required: t('admin.users.createModal.errors.nameRequired'),
                       minLength: {
                         value: 2,
-                        message: 'Name must be at least 2 characters'
+                        message: t('admin.users.createModal.errors.nameMin')
                       },
                       maxLength: {
                         value: 255,
-                        message: 'Name must not exceed 255 characters'
+                        message: t('admin.users.createModal.errors.nameMax')
                       }
                     })}
                     className={`
@@ -188,7 +184,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address <span className="text-red-500">*</span>
+                  {t('admin.users.createModal.email')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -198,10 +194,10 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                     id="email"
                     type="email"
                     {...register('email', {
-                      required: 'Email is required',
+                      required: t('admin.users.createModal.errors.emailRequired'),
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address'
+                        message: t('admin.users.createModal.errors.emailInvalid')
                       }
                     })}
                     className={`
@@ -225,7 +221,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
               {/* Phone Field */}
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number <span className="text-red-500">*</span>
+                  {t('admin.users.createModal.phone')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -235,10 +231,10 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                     id="phone"
                     type="tel"
                     {...register('phone', {
-                      required: 'Phone number is required',
+                      required: t('admin.users.createModal.errors.phoneRequired'),
                       pattern: {
                         value: /^\+?[1-9]\d{1,14}$/,
-                        message: 'Invalid phone number (use international format, e.g., +33612345678)'
+                        message: t('admin.users.createModal.errors.phoneInvalid')
                       }
                     })}
                     className={`
@@ -258,14 +254,14 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                   </p>
                 )}
                 <p className="mt-1 text-xs text-gray-500">
-                  Use international format with country code
+                  {t('admin.users.createModal.phoneHint')}
                 </p>
               </div>
 
               {/* Password Field */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password <span className="text-red-500">*</span>
+                  {t('admin.users.createModal.password')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -275,10 +271,10 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                     id="password"
                     type="password"
                     {...register('password', {
-                      required: 'Password is required',
+                      required: t('admin.users.createModal.errors.passwordRequired'),
                       minLength: {
                         value: 8,
-                        message: 'Password must be at least 8 characters'
+                        message: t('admin.users.createModal.errors.passwordMin')
                       }
                     })}
                     className={`
@@ -302,7 +298,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
               {/* Confirm Password Field */}
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password <span className="text-red-500">*</span>
+                  {t('admin.users.createModal.confirmPassword')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -312,8 +308,8 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                     id="confirmPassword"
                     type="password"
                     {...register('confirmPassword', {
-                      required: 'Please confirm your password',
-                      validate: (value) => value === password || 'Passwords do not match'
+                      required: t('admin.users.createModal.errors.confirmRequired'),
+                      validate: (value) => value === password || t('admin.users.createModal.errors.passwordMismatch')
                     })}
                     className={`
                       block w-full pl-10 pr-3 py-2 border rounded-lg
@@ -332,39 +328,6 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                   </p>
                 )}
               </div>
-
-              {/* Role Field */}
-              <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                  Role <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Shield className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <select
-                    id="role"
-                    {...register('role', { required: 'Role is required' })}
-                    className={`
-                      block w-full pl-10 pr-3 py-2 border rounded-lg
-                      focus:outline-none focus:ring-2 focus:ring-blue-500
-                      disabled:bg-gray-100 disabled:cursor-not-allowed
-                      ${errors.role ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'}
-                    `}
-                    disabled={isSubmitting}
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                    <option value="super_admin">Super Admin</option>
-                  </select>
-                </div>
-                {errors.role && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {errors.role.message}
-                  </p>
-                )}
-              </div>
             </div>
 
             {/* Footer Actions */}
@@ -380,7 +343,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                   transition-colors
                 "
               >
-                Cancel
+                {t('admin.users.createModal.cancel')}
               </button>
               <button
                 type="submit"
@@ -393,7 +356,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                 "
               >
                 {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {isSubmitting ? 'Creating...' : 'Create User'}
+                {isSubmitting ? t('admin.users.createModal.creating') : t('admin.users.createModal.create')}
               </button>
             </div>
           </form>

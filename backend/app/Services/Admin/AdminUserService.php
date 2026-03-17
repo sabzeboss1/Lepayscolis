@@ -241,6 +241,52 @@ class AdminUserService
     }
 
     /**
+     * Bulk suspend users.
+     *
+     * @param array $userIds
+     * @param User $admin
+     * @return int Number of users suspended
+     */
+    public function bulkSuspend(array $userIds, User $admin): int
+    {
+        $count = 0;
+        $users = User::whereIn('id', $userIds)->where('role', 'user')->get();
+
+        foreach ($users as $user) {
+            if (!$user->trashed()) {
+                $user->delete();
+                AuditLog::log($admin, 'suspend', 'user', $user->id, ['status' => 'active'], ['status' => 'suspended', 'reason' => 'Bulk action']);
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Bulk activate users.
+     *
+     * @param array $userIds
+     * @param User $admin
+     * @return int Number of users activated
+     */
+    public function bulkActivate(array $userIds, User $admin): int
+    {
+        $count = 0;
+        $users = User::withTrashed()->whereIn('id', $userIds)->where('role', 'user')->get();
+
+        foreach ($users as $user) {
+            if ($user->trashed()) {
+                $user->restore();
+                AuditLog::log($admin, 'activate', 'user', $user->id, ['status' => 'suspended'], ['status' => 'active']);
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
      * Delete user and anonymize data.
      *
      * @param int $userId

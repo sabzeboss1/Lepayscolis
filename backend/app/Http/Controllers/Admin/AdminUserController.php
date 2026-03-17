@@ -151,6 +151,42 @@ class AdminUserController extends Controller
     }
 
     /**
+     * Bulk suspend users
+     */
+    public function bulkSuspend(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $count = $this->userService->bulkSuspend($request->user_ids, $request->user());
+
+        return response()->json([
+            'message' => "{$count} user(s) suspended successfully",
+            'count' => $count,
+        ], 200);
+    }
+
+    /**
+     * Bulk activate users
+     */
+    public function bulkActivate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $count = $this->userService->bulkActivate($request->user_ids, $request->user());
+
+        return response()->json([
+            'message' => "{$count} user(s) activated successfully",
+            'count' => $count,
+        ], 200);
+    }
+
+    /**
      * Ban user from messaging
      */
     public function banMessaging(BanMessagingRequest $request, int $id): JsonResponse

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { X, AlertTriangle, AlertCircle } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 type Variant = 'default' | 'danger';
 
@@ -23,13 +24,17 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
   loading = false
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  const resolvedConfirmLabel = confirmLabel || t('common.confirm');
+  const resolvedCancelLabel = cancelLabel || t('common.cancel');
 
   // Focus trap
   useEffect(() => {
@@ -38,10 +43,8 @@ export default function ConfirmDialog({
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    // Focus the cancel button when dialog opens
     cancelButtonRef.current?.focus();
 
-    // Get all focusable elements
     const focusableElements = dialog.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
@@ -52,13 +55,11 @@ export default function ConfirmDialog({
       if (e.key !== 'Tab') return;
 
       if (e.shiftKey) {
-        // Shift + Tab
         if (document.activeElement === firstElement) {
           e.preventDefault();
           lastElement?.focus();
         }
       } else {
-        // Tab
         if (document.activeElement === lastElement) {
           e.preventDefault();
           firstElement?.focus();
@@ -123,7 +124,7 @@ export default function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fadeIn"
       onClick={(e) => {
         if (e.target === e.currentTarget && !loading) {
           onClose();
@@ -154,7 +155,7 @@ export default function ConfirmDialog({
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close dialog"
+              aria-label={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -184,7 +185,7 @@ export default function ConfirmDialog({
               transition-colors
             "
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             onClick={onConfirm}
@@ -219,10 +220,10 @@ export default function ConfirmDialog({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Processing...
+                {t('common.processing')}
               </span>
             ) : (
-              confirmLabel
+              resolvedConfirmLabel
             )}
           </button>
         </div>
