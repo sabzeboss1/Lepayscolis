@@ -17,14 +17,7 @@ import {
   Loader2,
   Eye,
 } from 'lucide-react';
-
-interface KYCDocument {
-  id: string;
-  type: 'idCard' | 'passport' | 'driversLicense';
-  front_url: string;
-  back_url?: string;
-  selfie_url: string;
-}
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface KYCSubmission {
   id: string;
@@ -36,47 +29,18 @@ interface KYCSubmission {
   };
   document_type: 'idCard' | 'passport' | 'driversLicense';
   document_number: string;
+  document_front_url: string | null;
+  document_back_url: string | null;
+  selfie_url: string | null;
   submitted_at: string;
   status: 'pending' | 'approved' | 'rejected';
-  documents: KYCDocument[];
   rejection_reason?: string;
   reviewed_at?: string;
-  reviewed_by?: { id: string; name: string };
 }
-
-const getDocumentTypeLabel = (type: string) => {
-  switch (type) {
-    case 'idCard':
-      return "Carte d'Identité Nationale (CNI)";
-    case 'passport':
-      return 'Passeport';
-    case 'driversLicense':
-      return 'Permis de Conduire';
-    default:
-      return type;
-  }
-};
-
-const getStatusBadge = (status: string) => {
-  const styles: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-  };
-  return (
-    <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${styles[status] || 'bg-gray-100 text-gray-800'}`}
-    >
-      {status === 'approved' && <CheckCircle className="w-4 h-4 mr-1.5" />}
-      {status === 'rejected' && <XCircle className="w-4 h-4 mr-1.5" />}
-      {status === 'pending' && <Eye className="w-4 h-4 mr-1.5" />}
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  );
-};
 
 export default function KYCDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [kycId, setKycId] = useState<string | null>(null);
   const [submission, setSubmission] = useState<KYCSubmission | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,12 +71,12 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
       const response = await fetch(`/api/admin/kyc/${kycId}`);
       const result = await response.json();
       if (!response.ok) {
-        setError(result.message || 'KYC submission not found');
+        setError(result.message || t('admin.kyc.detail.notFound'));
         return;
       }
       setSubmission(result.data);
     } catch {
-      setError('Failed to load KYC submission');
+      setError(t('admin.kyc.detail.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -171,25 +135,49 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
     }
   };
 
-  // Build document images list
+  // Build document images from flat fields
   const documentImages: { label: string; url: string }[] = [];
-  if (submission?.documents) {
-    submission.documents.forEach((doc) => {
+  if (submission) {
+    if (submission.document_front_url) {
       if (submission.document_type === 'idCard') {
-        documentImages.push({ label: 'CNI - Recto', url: doc.front_url });
-        if (doc.back_url) {
-          documentImages.push({ label: 'CNI - Verso', url: doc.back_url });
-        }
+        documentImages.push({ label: t('admin.kyc.review.idFront'), url: submission.document_front_url });
       } else if (submission.document_type === 'passport') {
-        documentImages.push({ label: 'Passeport - Première page', url: doc.front_url });
+        documentImages.push({ label: t('admin.kyc.review.passportPage'), url: submission.document_front_url });
       } else if (submission.document_type === 'driversLicense') {
-        documentImages.push({ label: 'Permis de conduire', url: doc.front_url });
+        documentImages.push({ label: t('admin.kyc.review.driverLicense'), url: submission.document_front_url });
       }
-      if (doc.selfie_url) {
-        documentImages.push({ label: 'Selfie avec document', url: doc.selfie_url });
+    }
+
+    if (submission.document_back_url) {
+      if (submission.document_type === 'idCard') {
+        documentImages.push({ label: t('admin.kyc.review.idBack'), url: submission.document_back_url });
+      } else {
+        documentImages.push({ label: t('admin.kyc.review.documentBack'), url: submission.document_back_url });
       }
-    });
+    }
+
+    if (submission.selfie_url) {
+      documentImages.push({ label: t('admin.kyc.review.selfieWithDoc'), url: submission.selfie_url });
+    }
   }
+
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+    };
+    return (
+      <span
+        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${styles[status] || 'bg-gray-100 text-gray-800'}`}
+      >
+        {status === 'approved' && <CheckCircle className="w-4 h-4 mr-1.5" />}
+        {status === 'rejected' && <XCircle className="w-4 h-4 mr-1.5" />}
+        {status === 'pending' && <Eye className="w-4 h-4 mr-1.5" />}
+        {t(`admin.kyc.statuses.${status}`)}
+      </span>
+    );
+  };
 
   if (loading) {
     return (
@@ -207,10 +195,10 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
-          Back
+          {t('common.back')}
         </button>
         <div className="text-center py-12">
-          <p className="text-gray-500">{error || 'KYC submission not found'}</p>
+          <p className="text-gray-500">{error || t('admin.kyc.detail.notFound')}</p>
         </div>
       </div>
     );
@@ -228,9 +216,9 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">KYC Review</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('admin.kyc.review.title')}</h1>
             <p className="text-sm text-gray-600 mt-1">
-              {submission.user.name} &mdash; {getDocumentTypeLabel(submission.document_type)}
+              {submission.user.name} &mdash; {t(`admin.kyc.documentTypes.${submission.document_type}`)}
             </p>
           </div>
         </div>
@@ -246,7 +234,7 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
                 className="inline-flex items-center px-4 py-2 bg-white border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
               >
                 <XCircle className="w-4 h-4 mr-2" />
-                Reject
+                {t('admin.kyc.review.reject')}
               </button>
               <button
                 onClick={handleApprove}
@@ -258,7 +246,7 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
                 ) : (
                   <CheckCircle className="w-4 h-4 mr-2" />
                 )}
-                Approve
+                {t('admin.kyc.review.approve')}
               </button>
             </>
           )}
@@ -268,11 +256,11 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
       {/* Reject Form */}
       {showRejectForm && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h3 className="text-sm font-semibold text-red-900 mb-3">Rejection Reason</h3>
+          <h3 className="text-sm font-semibold text-red-900 mb-3">{t('admin.kyc.review.rejectionReason')}</h3>
           <textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="Please provide a detailed reason for rejection (minimum 10 characters)..."
+            placeholder={t('admin.kyc.review.rejectionPlaceholder')}
             rows={3}
             disabled={isSubmitting}
             className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 resize-none"
@@ -290,7 +278,7 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
                 disabled={isSubmitting}
                 className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleReject}
@@ -298,7 +286,7 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
                 className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {isSubmitting && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-                Confirm Rejection
+                {t('admin.kyc.review.confirmRejection')}
               </button>
             </div>
           </div>
@@ -310,21 +298,21 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
         <div className="space-y-6">
           {/* User Information */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">User Information</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.kyc.review.userInfo')}</h2>
             <div className="space-y-3">
               <div className="flex items-center text-sm">
                 <User className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-20">Name:</span>
+                <span className="text-gray-600 w-20">{t('admin.kyc.review.name')}:</span>
                 <span className="text-gray-900 font-medium">{submission.user.name}</span>
               </div>
               <div className="flex items-center text-sm">
                 <Mail className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-20">Email:</span>
+                <span className="text-gray-600 w-20">{t('admin.kyc.review.email')}:</span>
                 <span className="text-gray-900">{submission.user.email}</span>
               </div>
               <div className="flex items-center text-sm">
                 <Phone className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-20">Phone:</span>
+                <span className="text-gray-600 w-20">{t('admin.kyc.review.phone')}:</span>
                 <span className="text-gray-900">{submission.user.phone}</span>
               </div>
             </div>
@@ -332,25 +320,25 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
 
           {/* Document Information */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Information</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.kyc.review.documentInfo')}</h2>
             <div className="space-y-3">
               <div className="flex items-center text-sm">
                 <FileText className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-20">Type:</span>
+                <span className="text-gray-600 w-20">{t('admin.kyc.review.type')}:</span>
                 <span className="text-gray-900 font-medium">
-                  {getDocumentTypeLabel(submission.document_type)}
+                  {t(`admin.kyc.documentTypes.${submission.document_type}`)}
                 </span>
               </div>
               <div className="flex items-center text-sm">
                 <FileText className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-20">Number:</span>
+                <span className="text-gray-600 w-20">{t('admin.kyc.review.number')}:</span>
                 <span className="text-gray-900 font-mono">{submission.document_number}</span>
               </div>
               <div className="flex items-center text-sm">
                 <Calendar className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-20">Submitted:</span>
+                <span className="text-gray-600 w-20">{t('admin.kyc.review.submitted')}:</span>
                 <span className="text-gray-900">
-                  {new Date(submission.submitted_at).toLocaleDateString('en-US', {
+                  {new Date(submission.submitted_at).toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
@@ -364,17 +352,17 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
 
           {/* Review Status */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Review Status</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.kyc.detail.reviewStatus')}</h2>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-gray-500">Status</label>
+                <label className="text-xs font-medium text-gray-500">{t('admin.kyc.columns.status')}</label>
                 <div className="mt-1">{getStatusBadge(submission.status)}</div>
               </div>
               {submission.reviewed_at && (
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Reviewed At</label>
+                  <label className="text-xs font-medium text-gray-500">{t('admin.kyc.detail.reviewedAt')}</label>
                   <div className="mt-1 text-sm text-gray-900">
-                    {new Date(submission.reviewed_at).toLocaleDateString('en-US', {
+                    {new Date(submission.reviewed_at).toLocaleDateString(undefined, {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -384,17 +372,11 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
                   </div>
                 </div>
               )}
-              {submission.reviewed_by && (
-                <div>
-                  <label className="text-xs font-medium text-gray-500">Reviewed By</label>
-                  <div className="mt-1 text-sm text-gray-900">{submission.reviewed_by.name}</div>
-                </div>
-              )}
             </div>
 
             {submission.status === 'rejected' && submission.rejection_reason && (
               <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm font-medium text-red-900">Rejection Reason</p>
+                <p className="text-sm font-medium text-red-900">{t('admin.kyc.review.rejectionReason')}</p>
                 <p className="text-sm text-red-700 mt-1">{submission.rejection_reason}</p>
               </div>
             )}
@@ -477,7 +459,7 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
           ) : (
             <div className="bg-white rounded-lg shadow p-12 text-center">
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No documents available</p>
+              <p className="text-gray-500">{t('admin.kyc.review.noDocuments')}</p>
             </div>
           )}
         </div>

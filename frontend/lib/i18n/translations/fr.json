@@ -1077,6 +1077,73 @@
         "deleted": "Ville supprimée avec succès"
       }
     },
+    "kyc": {
+      "title": "Vérification KYC",
+      "subtitle": "Examiner et vérifier les documents d'identité des utilisateurs",
+      "noSubmissions": "Aucune soumission KYC trouvée",
+      "sortBy": "Trier par",
+      "sortNewest": "Plus récents",
+      "sortOldest": "Plus anciens",
+      "columns": {
+        "user": "Utilisateur",
+        "documentType": "Type de document",
+        "documentNumber": "Numéro de document",
+        "status": "Statut",
+        "submitted": "Soumis le"
+      },
+      "filters": {
+        "status": "Statut"
+      },
+      "statuses": {
+        "pending": "En attente",
+        "approved": "Approuvé",
+        "rejected": "Rejeté"
+      },
+      "documentTypes": {
+        "idCard": "Carte d'Identité Nationale (CNI)",
+        "passport": "Passeport",
+        "driversLicense": "Permis de Conduire"
+      },
+      "bulk": {
+        "approveSelected": "Approuver la sélection",
+        "rejectSelected": "Rejeter la sélection"
+      },
+      "review": {
+        "title": "Examen KYC",
+        "userInfo": "Informations utilisateur",
+        "documentInfo": "Informations du document",
+        "name": "Nom",
+        "email": "Email",
+        "phone": "Téléphone",
+        "type": "Type",
+        "number": "Numéro",
+        "submitted": "Soumis le",
+        "idFront": "CNI - Recto",
+        "idBack": "CNI - Verso",
+        "passportPage": "Passeport - Première page",
+        "driverLicense": "Permis de conduire",
+        "documentBack": "Document - Verso",
+        "selfieWithDoc": "Selfie avec document",
+        "noDocuments": "Aucun document disponible",
+        "view": "Voir",
+        "zoomIn": "Zoom avant",
+        "zoomOut": "Zoom arrière",
+        "download": "Télécharger l'image",
+        "rejectionReason": "Motif de rejet",
+        "rejectionPlaceholder": "Veuillez fournir un motif détaillé pour le rejet (minimum 10 caractères)...",
+        "confirmRejection": "Confirmer le rejet",
+        "reject": "Rejeter",
+        "approve": "Approuver",
+        "statusApproved": "Cette soumission KYC a été approuvée",
+        "statusRejected": "Cette soumission KYC a été rejetée"
+      },
+      "detail": {
+        "notFound": "Soumission KYC introuvable",
+        "loadFailed": "Échec du chargement de la soumission KYC",
+        "reviewStatus": "Statut de l'examen",
+        "reviewedAt": "Examiné le"
+      }
+    },
     "users": {
       "title": "Utilisateurs",
       "subtitle": "Gérez les utilisateurs de la plateforme et leurs comptes",

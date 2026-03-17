@@ -1077,6 +1077,73 @@
         "deleted": "City deleted successfully"
       }
     },
+    "kyc": {
+      "title": "KYC Verification",
+      "subtitle": "Review and verify user identity documents",
+      "noSubmissions": "No KYC submissions found",
+      "sortBy": "Sort by",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "columns": {
+        "user": "User",
+        "documentType": "Document Type",
+        "documentNumber": "Document Number",
+        "status": "Status",
+        "submitted": "Submitted"
+      },
+      "filters": {
+        "status": "Status"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "documentTypes": {
+        "idCard": "National ID Card (CNI)",
+        "passport": "Passport",
+        "driversLicense": "Driver's License"
+      },
+      "bulk": {
+        "approveSelected": "Approve Selected",
+        "rejectSelected": "Reject Selected"
+      },
+      "review": {
+        "title": "KYC Review",
+        "userInfo": "User Information",
+        "documentInfo": "Document Information",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "type": "Type",
+        "number": "Number",
+        "submitted": "Submitted",
+        "idFront": "ID Card - Front",
+        "idBack": "ID Card - Back",
+        "passportPage": "Passport - Main page",
+        "driverLicense": "Driver's License",
+        "documentBack": "Document - Back",
+        "selfieWithDoc": "Selfie with document",
+        "noDocuments": "No documents available",
+        "view": "View",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "download": "Download image",
+        "rejectionReason": "Rejection Reason",
+        "rejectionPlaceholder": "Please provide a detailed reason for rejection (minimum 10 characters)...",
+        "confirmRejection": "Confirm Rejection",
+        "reject": "Reject",
+        "approve": "Approve",
+        "statusApproved": "This KYC submission has been approved",
+        "statusRejected": "This KYC submission has been rejected"
+      },
+      "detail": {
+        "notFound": "KYC submission not found",
+        "loadFailed": "Failed to load KYC submission",
+        "reviewStatus": "Review Status",
+        "reviewedAt": "Reviewed At"
+      }
+    },
     "users": {
       "title": "Users",
       "subtitle": "Manage platform users and their accounts",
