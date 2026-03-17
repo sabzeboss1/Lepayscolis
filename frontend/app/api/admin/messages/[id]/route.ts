@@ -1,33 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminMessages } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const params = await context.params;
-  const message = mockAdminMessages.find(m => m.id === params.id);
+  try {
+    const params = await context.params;
 
-  if (!message) {
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/messages/${params.id}`,
+      { method: 'GET' }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
     return NextResponse.json(
-      { error: 'Message not found' },
-      { status: 404 }
+      { message: error.message || 'Message not found' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 404 }
     );
   }
-
-  // Transform to snake_case for frontend
-  const transformed = {
-    id: message.id,
-    conversation_id: message.conversationId,
-    sender_id: message.senderId,
-    sender_name: message.senderName,
-    recipient_id: message.recipientId,
-    recipient_name: message.recipientName,
-    content: message.content,
-    read: message.read,
-    flagged: message.flagged,
-    created_at: message.createdAt.toISOString()
-  };
-
-  return NextResponse.json({ data: transformed });
 }

@@ -222,6 +222,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::prefix('users')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->middleware('throttle:60,1');
         Route::post('/', [AdminUserController::class, 'store'])->middleware('throttle:30,1');
+        Route::post('/bulk-suspend', [AdminUserController::class, 'bulkSuspend'])->middleware('throttle:30,1');
+        Route::post('/bulk-activate', [AdminUserController::class, 'bulkActivate'])->middleware('throttle:30,1');
         Route::get('/{id}', [AdminUserController::class, 'show'])->middleware('throttle:60,1');
         Route::put('/{id}', [AdminUserController::class, 'update'])->middleware('throttle:30,1');
         Route::post('/{id}/suspend', [AdminUserController::class, 'suspend'])->middleware('throttle:30,1');

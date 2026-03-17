@@ -19,12 +19,7 @@ class DatabaseSeeder extends Seeder
             PlatformSettingsSeeder::class,
             CurrencySeeder::class,
             CountrySeeder::class,
-        ]);
-
-        // Create test user
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            DemoUserSeeder::class,
         ]);
     }
 }

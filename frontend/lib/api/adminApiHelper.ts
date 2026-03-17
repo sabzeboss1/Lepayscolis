@@ -12,7 +12,7 @@ export async function makeAdminRequest(
   options: RequestInit = {}
 ): Promise<Response> {
   // Get admin token from cookies
-  const adminToken = request.cookies.get('admin-token')?.value;
+  const adminToken = request.cookies.get('auth-token')?.value;
   
   if (!adminToken) {
     throw new Error('Unauthorized - No admin token found');
@@ -39,5 +39,5 @@ export async function makeAdminRequest(
  * Extract admin token from request cookies
  */
 export function getAdminToken(request: NextRequest): string | null {
-  return request.cookies.get('admin-token')?.value || null;
+  return request.cookies.get('auth-token')?.value || null;
 }

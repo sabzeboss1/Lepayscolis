@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
@@ -16,7 +17,7 @@ interface User {
   phone: string;
   role: 'user' | 'admin' | 'super_admin';
   status: 'active' | 'suspended';
-  kyc_status: 'pending' | 'approved' | 'rejected' | 'not_submitted';
+  kyc_status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   last_login?: string;
 }
@@ -25,12 +26,12 @@ interface UserFilterValues {
   [key: string]: string;
   search: string;
   status: string;
-  role: string;
   kyc_status: string;
 }
 
 export default function UsersPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -42,7 +43,6 @@ export default function UsersPage() {
   const [filters, setFilters] = useState<UserFilterValues>({
     search: '',
     status: '',
-    role: '',
     kyc_status: ''
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -57,25 +57,23 @@ export default function UsersPage() {
         sort_direction: sortDirection,
         ...(filters.search && { search: filters.search }),
         ...(filters.status && { status: filters.status }),
-        ...(filters.role && { role: filters.role }),
         ...(filters.kyc_status && { kyc_status: filters.kyc_status })
       });
 
       const response = await fetch(`/api/admin/users?${params}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
-      // Add null checks for data structure
+
       if (data && data.data && Array.isArray(data.data)) {
         setUsers(data.data);
       } else {
         setUsers([]);
       }
-      
+
       if (data && data.meta && typeof data.meta.total === 'number') {
         setTotal(data.meta.total);
       } else {
@@ -101,7 +99,7 @@ export default function UsersPage() {
 
   const handleFilterChange = (newFilters: { [key: string]: string | { from: string; to: string } }) => {
     setFilters(newFilters as UserFilterValues);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   };
 
   const handleSelectRow = (id: string) => {
@@ -124,25 +122,22 @@ export default function UsersPage() {
 
   const handleBulkAction = async (actionKey: string) => {
     const selectedIds = Array.from(selectedRows);
-    
+
     try {
       if (actionKey === 'suspend') {
-        // Bulk suspend users
         await fetch('/api/admin/users/bulk-suspend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_ids: selectedIds })
         });
       } else if (actionKey === 'activate') {
-        // Bulk activate users
         await fetch('/api/admin/users/bulk-activate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_ids: selectedIds })
         });
       }
-      
-      // Refresh data and clear selection
+
       fetchUsers();
       setSelectedRows(new Set());
     } catch (error) {
@@ -157,7 +152,7 @@ export default function UsersPage() {
     };
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[status as keyof typeof badges]}`}>
-        {status}
+        {t(`admin.users.statuses.${status}`)}
       </span>
     );
   };
@@ -166,18 +161,11 @@ export default function UsersPage() {
     const badges = {
       approved: 'bg-green-100 text-green-800',
       pending: 'bg-yellow-100 text-yellow-800',
-      rejected: 'bg-red-100 text-red-800',
-      not_submitted: 'bg-gray-100 text-gray-800'
-    };
-    const labels = {
-      approved: 'Approved',
-      pending: 'Pending',
-      rejected: 'Rejected',
-      not_submitted: 'Not Submitted'
+      rejected: 'bg-red-100 text-red-800'
     };
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[status as keyof typeof badges]}`}>
-        {labels[status as keyof typeof labels]}
+        {t(`admin.users.kycStatuses.${status}`)}
       </span>
     );
   };
@@ -188,14 +176,9 @@ export default function UsersPage() {
       admin: 'bg-purple-100 text-purple-800',
       super_admin: 'bg-pink-100 text-pink-800'
     };
-    const labels = {
-      user: 'User',
-      admin: 'Admin',
-      super_admin: 'Super Admin'
-    };
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[role as keyof typeof badges]}`}>
-        {labels[role as keyof typeof labels]}
+        {t(`admin.users.roles.${role}`)}
       </span>
     );
   };
@@ -203,7 +186,7 @@ export default function UsersPage() {
   const columns: Column<User>[] = [
     {
       key: 'name',
-      label: 'Name',
+      label: t('admin.users.columns.name'),
       sortable: true,
       render: (user) => (
         <div>
@@ -214,34 +197,34 @@ export default function UsersPage() {
     },
     {
       key: 'phone',
-      label: 'Phone',
+      label: t('admin.users.columns.phone'),
       render: (user) => <span className="text-sm text-gray-900">{user.phone}</span>
     },
     {
       key: 'role',
-      label: 'Role',
+      label: t('admin.users.columns.role'),
       sortable: true,
       render: (user) => getRoleBadge(user.role)
     },
     {
       key: 'status',
-      label: 'Status',
+      label: t('admin.users.columns.status'),
       sortable: true,
       render: (user) => getStatusBadge(user.status)
     },
     {
       key: 'kyc_status',
-      label: 'KYC Status',
+      label: t('admin.users.columns.kycStatus'),
       sortable: true,
       render: (user) => getKYCBadge(user.kyc_status)
     },
     {
       key: 'created_at',
-      label: 'Joined',
+      label: t('admin.users.columns.joined'),
       sortable: true,
       render: (user) => (
         <span className="text-sm text-gray-900">
-          {new Date(user.created_at).toLocaleDateString('en-US', {
+          {new Date(user.created_at).toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -255,47 +238,33 @@ export default function UsersPage() {
     {
       key: 'search',
       type: 'text' as const,
-      label: 'Search',
-      placeholder: 'Search by name, email, or phone...'
+      label: t('admin.users.filters.search'),
+      placeholder: t('admin.users.filters.searchPlaceholder')
     },
     {
       key: 'status',
       type: 'select' as const,
-      label: 'Status',
+      label: t('admin.users.filters.status'),
       options: [
-        { value: '', label: 'All Statuses' },
-        { value: 'active', label: 'Active' },
-        { value: 'suspended', label: 'Suspended' }
-      ]
-    },
-    {
-      key: 'role',
-      type: 'select' as const,
-      label: 'Role',
-      options: [
-        { value: '', label: 'All Roles' },
-        { value: 'user', label: 'User' },
-        { value: 'admin', label: 'Admin' },
-        { value: 'super_admin', label: 'Super Admin' }
+        { value: 'active', label: t('admin.users.statuses.active') },
+        { value: 'suspended', label: t('admin.users.statuses.suspended') }
       ]
     },
     {
       key: 'kyc_status',
       type: 'select' as const,
-      label: 'KYC Status',
+      label: t('admin.users.filters.kycStatus'),
       options: [
-        { value: '', label: 'All KYC Statuses' },
-        { value: 'approved', label: 'Approved' },
-        { value: 'pending', label: 'Pending' },
-        { value: 'rejected', label: 'Rejected' },
-        { value: 'not_submitted', label: 'Not Submitted' }
+        { value: 'pending', label: t('admin.users.kycStatuses.pending') },
+        { value: 'approved', label: t('admin.users.kycStatuses.approved') },
+        { value: 'rejected', label: t('admin.users.kycStatuses.rejected') }
       ]
     }
   ];
 
   const bulkActions: BulkAction[] = [
-    { key: 'suspend', label: 'Suspend Selected', variant: 'danger' as const },
-    { key: 'activate', label: 'Activate Selected', variant: 'default' as const }
+    { key: 'suspend', label: t('admin.users.bulk.suspendSelected'), variant: 'danger' as const },
+    { key: 'activate', label: t('admin.users.bulk.activateSelected'), variant: 'default' as const }
   ];
 
   return (
@@ -303,9 +272,9 @@ export default function UsersPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.users.title')}</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Manage platform users and their accounts
+            {t('admin.users.subtitle')}
           </p>
         </div>
         <button
@@ -313,7 +282,7 @@ export default function UsersPage() {
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
         >
           <UserPlus className="w-4 h-4 mr-2" />
-          Add User
+          {t('admin.users.addUser')}
         </button>
       </div>
 
@@ -322,7 +291,7 @@ export default function UsersPage() {
         filters={filterConfig}
         values={filters}
         onChange={handleFilterChange}
-        onReset={() => setFilters({ search: '', status: '', role: '', kyc_status: '' })}
+        onReset={() => setFilters({ search: '', status: '', kyc_status: '' })}
       />
 
       {/* Bulk Actions */}
@@ -340,7 +309,7 @@ export default function UsersPage() {
         columns={columns}
         data={users}
         loading={loading}
-        emptyMessage="No users found"
+        emptyMessage={t('admin.users.noUsers')}
         onSort={handleSort}
         onRowClick={(user) => router.push(`/admin/users/${user.id}`)}
         selectedRows={selectedRows}
@@ -368,7 +337,7 @@ export default function UsersPage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={() => {
-          fetchUsers(); // Refresh the user list
+          fetchUsers();
         }}
       />
     </div>

@@ -17,6 +17,7 @@ class UserDetailResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
             'email' => $this->email,
             'phone' => $this->phone,
             'role' => $this->role,

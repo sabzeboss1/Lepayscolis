@@ -1,33 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminTrips } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const params = await context.params;
-  const body = await request.json();
-  const { reason } = body;
+  try {
+    const params = await context.params;
+    const body = await request.json();
 
-  const trip = mockAdminTrips.find(t => t.id === params.id);
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/trips/${params.id}/cancel`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
+    );
 
-  if (!trip) {
-    return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
-  }
+    const data = await response.json();
 
-  if (!reason || reason.length < 10) {
-    return NextResponse.json({ error: 'Reason must be at least 10 characters' }, { status: 400 });
-  }
-
-  // Update trip status (in mock data)
-  trip.status = 'cancelled';
-
-  return NextResponse.json({
-    message: 'Trip cancelled successfully',
-    data: {
-      trip_id: trip.id,
-      status: 'cancelled',
-      reason
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
     }
-  });
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || 'Failed to cancel trip' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+    );
+  }
 }

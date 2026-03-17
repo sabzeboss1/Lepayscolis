@@ -16,6 +16,7 @@
     "next": "Suivant",
     "previous": "Précédent",
     "confirm": "Confirmer",
+    "processing": "Traitement...",
     "close": "Fermer",
     "yes": "Oui",
     "no": "Non",
@@ -28,6 +29,8 @@
     "getStarted": "Commencer",
     "learnMore": "En savoir plus",
     "select": "Sélectionner",
+    "selectCountry": "Sélectionner un pays",
+    "selectCity": "Sélectionner une ville",
     "uploaded": "Téléchargé",
     "optional": "optionnel",
     "retry": "Réessayer",
@@ -58,20 +61,37 @@
     "legal": "Mentions légales"
   },
   "auth": {
+    "welcome": "Bienvenue",
     "loginTitle": "Connectez-vous à votre compte",
+    "loginSubtitle": "Connectez-vous pour accéder à votre tableau de bord",
     "registerTitle": "Créez votre compte",
     "email": "Email",
+    "emailPlaceholder": "votre@email.com",
     "password": "Mot de passe",
+    "passwordPlaceholder": "Entrez votre mot de passe",
     "confirmPassword": "Confirmer le mot de passe",
     "name": "Nom complet",
     "phone": "Numéro de téléphone",
     "forgotPassword": "Mot de passe oublié ?",
     "noAccount": "Vous n'avez pas de compte ?",
     "hasAccount": "Vous avez déjà un compte ?",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion en cours...",
+    "registerHere": "Inscrivez-vous ici",
     "loginSuccess": "Connexion réussie !",
+    "loginRedirect": "Connexion réussie ! Redirection...",
     "registerSuccess": "Inscription réussie !",
     "loginError": "Email ou mot de passe invalide",
-    "registerError": "L'inscription a échoué. Veuillez réessayer."
+    "registerError": "L'inscription a échoué. Veuillez réessayer.",
+    "correctErrors": "Veuillez corriger les erreurs ci-dessous.",
+    "invalidEmail": "Adresse email invalide",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
+    "registerSubtitle": "Rejoignez notre communauté",
+    "createAccount": "Créer un compte",
+    "creatingAccount": "Création du compte...",
+    "namePlaceholder": "Jean Dupont",
+    "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
+    "passwordRequirements": "Min. 8 car., 1 majuscule, 1 minuscule, 1 chiffre"
   },
   "home": {
     "hero": {
@@ -1055,6 +1075,177 @@
         "activated": "Ville activée avec succès",
         "deactivated": "Ville désactivée avec succès",
         "deleted": "Ville supprimée avec succès"
+      }
+    },
+    "kyc": {
+      "title": "Vérification KYC",
+      "subtitle": "Examiner et vérifier les documents d'identité des utilisateurs",
+      "noSubmissions": "Aucune soumission KYC trouvée",
+      "sortBy": "Trier par",
+      "sortNewest": "Plus récents",
+      "sortOldest": "Plus anciens",
+      "columns": {
+        "user": "Utilisateur",
+        "documentType": "Type de document",
+        "documentNumber": "Numéro de document",
+        "status": "Statut",
+        "submitted": "Soumis le"
+      },
+      "filters": {
+        "status": "Statut"
+      },
+      "statuses": {
+        "pending": "En attente",
+        "approved": "Approuvé",
+        "rejected": "Rejeté"
+      },
+      "documentTypes": {
+        "idCard": "Carte d'Identité Nationale (CNI)",
+        "passport": "Passeport",
+        "driversLicense": "Permis de Conduire"
+      },
+      "bulk": {
+        "approveSelected": "Approuver la sélection",
+        "rejectSelected": "Rejeter la sélection"
+      },
+      "review": {
+        "title": "Examen KYC",
+        "userInfo": "Informations utilisateur",
+        "documentInfo": "Informations du document",
+        "name": "Nom",
+        "email": "Email",
+        "phone": "Téléphone",
+        "type": "Type",
+        "number": "Numéro",
+        "submitted": "Soumis le",
+        "idFront": "CNI - Recto",
+        "idBack": "CNI - Verso",
+        "passportPage": "Passeport - Première page",
+        "driverLicense": "Permis de conduire",
+        "documentBack": "Document - Verso",
+        "selfieWithDoc": "Selfie avec document",
+        "noDocuments": "Aucun document disponible",
+        "view": "Voir",
+        "zoomIn": "Zoom avant",
+        "zoomOut": "Zoom arrière",
+        "download": "Télécharger l'image",
+        "rejectionReason": "Motif de rejet",
+        "rejectionPlaceholder": "Veuillez fournir un motif détaillé pour le rejet (minimum 10 caractères)...",
+        "confirmRejection": "Confirmer le rejet",
+        "reject": "Rejeter",
+        "approve": "Approuver",
+        "statusApproved": "Cette soumission KYC a été approuvée",
+        "statusRejected": "Cette soumission KYC a été rejetée"
+      },
+      "detail": {
+        "notFound": "Soumission KYC introuvable",
+        "loadFailed": "Échec du chargement de la soumission KYC",
+        "reviewStatus": "Statut de l'examen",
+        "reviewedAt": "Examiné le"
+      }
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "subtitle": "Gérez les utilisateurs de la plateforme et leurs comptes",
+      "addUser": "Ajouter un utilisateur",
+      "noUsers": "Aucun utilisateur trouvé",
+      "columns": {
+        "name": "Nom",
+        "phone": "Téléphone",
+        "role": "Rôle",
+        "status": "Statut",
+        "kycStatus": "Statut KYC",
+        "joined": "Inscription"
+      },
+      "filters": {
+        "search": "Rechercher",
+        "searchPlaceholder": "Rechercher par nom, email ou téléphone...",
+        "status": "Statut",
+        "allStatuses": "Tous les statuts",
+        "kycStatus": "Statut KYC",
+        "allKycStatuses": "Tous les statuts KYC"
+      },
+      "statuses": {
+        "active": "Actif",
+        "suspended": "Suspendu"
+      },
+      "kycStatuses": {
+        "pending": "En attente",
+        "approved": "Approuvé",
+        "rejected": "Rejeté"
+      },
+      "roles": {
+        "user": "Utilisateur",
+        "admin": "Admin",
+        "super_admin": "Super Admin"
+      },
+      "bulk": {
+        "suspendSelected": "Suspendre la sélection",
+        "activateSelected": "Activer la sélection"
+      },
+      "detail": {
+        "userNotFound": "Utilisateur introuvable",
+        "edit": "Modifier",
+        "suspend": "Suspendre",
+        "activate": "Activer",
+        "assignAdmin": "Assigner Admin",
+        "delete": "Supprimer",
+        "editUser": "Modifier l'utilisateur",
+        "saveChanges": "Enregistrer",
+        "userInfo": "Informations utilisateur",
+        "email": "Email",
+        "phone": "Téléphone",
+        "joined": "Inscription",
+        "lastLogin": "Dernière connexion",
+        "suspensionReason": "Raison de la suspension",
+        "activityHistory": "Historique d'activité",
+        "noActivity": "Aucune activité enregistrée",
+        "trips": "Voyages",
+        "shipmentsSender": "Colis (expéditeur)",
+        "shipmentsTraveler": "Colis (transporteur)",
+        "ratingsReceived": "Avis reçus",
+        "ratingsGiven": "Avis donnés",
+        "statusSection": "Statut",
+        "accountStatus": "Statut du compte",
+        "role": "Rôle",
+        "kycStatus": "Statut KYC",
+        "ratings": "Évaluations",
+        "averageRating": "Note moyenne",
+        "review": "avis",
+        "reviews": "avis",
+        "confirmSuspend": "Suspendre l'utilisateur",
+        "confirmSuspendMessage": "Êtes-vous sûr de vouloir suspendre {{name}} ? Il ne pourra plus créer de voyages ni d'expéditions.",
+        "confirmDelete": "Supprimer l'utilisateur",
+        "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer {{name}} ? Cette action est irréversible. Les données personnelles seront anonymisées mais les transactions seront conservées.",
+        "confirmAssignAdmin": "Assigner le rôle Admin",
+        "confirmAssignAdminMessage": "Êtes-vous sûr de vouloir assigner le rôle admin à {{name}} ? Il aura accès au tableau de bord admin."
+      },
+      "createModal": {
+        "title": "Créer un utilisateur",
+        "subtitle": "Ajouter un nouvel utilisateur à la plateforme",
+        "fullName": "Nom complet",
+        "email": "Adresse email",
+        "phone": "Numéro de téléphone",
+        "phoneHint": "Utilisez le format international avec indicatif pays",
+        "password": "Mot de passe",
+        "confirmPassword": "Confirmer le mot de passe",
+        "cancel": "Annuler",
+        "create": "Créer l'utilisateur",
+        "creating": "Création...",
+        "errors": {
+          "nameRequired": "Le nom est requis",
+          "nameMin": "Le nom doit contenir au moins 2 caractères",
+          "nameMax": "Le nom ne doit pas dépasser 255 caractères",
+          "emailRequired": "L'email est requis",
+          "emailInvalid": "Adresse email invalide",
+          "phoneRequired": "Le numéro de téléphone est requis",
+          "phoneInvalid": "Numéro de téléphone invalide (format international, ex. +33612345678)",
+          "passwordRequired": "Le mot de passe est requis",
+          "passwordMin": "Le mot de passe doit contenir au moins 8 caractères",
+          "confirmRequired": "Veuillez confirmer votre mot de passe",
+          "passwordMismatch": "Les mots de passe ne correspondent pas",
+          "createFailed": "Échec de la création de l'utilisateur"
+        }
       }
     }
   }

@@ -16,6 +16,7 @@
     "next": "Next",
     "previous": "Previous",
     "confirm": "Confirm",
+    "processing": "Processing...",
     "close": "Close",
     "yes": "Yes",
     "no": "No",
@@ -28,6 +29,8 @@
     "getStarted": "Get Started",
     "learnMore": "Learn More",
     "select": "Select",
+    "selectCountry": "Select a country",
+    "selectCity": "Select a city",
     "uploaded": "Uploaded",
     "optional": "optional",
     "retry": "Retry",
@@ -58,20 +61,37 @@
     "legal": "Legal"
   },
   "auth": {
+    "welcome": "Welcome back",
     "loginTitle": "Login to your account",
+    "loginSubtitle": "Sign in to access your dashboard",
     "registerTitle": "Create your account",
     "email": "Email",
+    "emailPlaceholder": "your@email.com",
     "password": "Password",
+    "passwordPlaceholder": "Enter your password",
     "confirmPassword": "Confirm Password",
     "name": "Full Name",
     "phone": "Phone Number",
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "registerHere": "Register here",
     "loginSuccess": "Login successful!",
+    "loginRedirect": "Login successful! Redirecting...",
     "registerSuccess": "Registration successful!",
     "loginError": "Invalid email or password",
-    "registerError": "Registration failed. Please try again."
+    "registerError": "Registration failed. Please try again.",
+    "correctErrors": "Please correct the errors below.",
+    "invalidEmail": "Invalid email address",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "registerSubtitle": "Join our community today",
+    "createAccount": "Create Account",
+    "creatingAccount": "Creating account...",
+    "namePlaceholder": "John Doe",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "passwordRequirements": "Min. 8 chars, 1 uppercase, 1 lowercase, 1 number"
   },
   "home": {
     "hero": {
@@ -1055,6 +1075,177 @@
         "activated": "City activated successfully",
         "deactivated": "City deactivated successfully",
         "deleted": "City deleted successfully"
+      }
+    },
+    "kyc": {
+      "title": "KYC Verification",
+      "subtitle": "Review and verify user identity documents",
+      "noSubmissions": "No KYC submissions found",
+      "sortBy": "Sort by",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "columns": {
+        "user": "User",
+        "documentType": "Document Type",
+        "documentNumber": "Document Number",
+        "status": "Status",
+        "submitted": "Submitted"
+      },
+      "filters": {
+        "status": "Status"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "documentTypes": {
+        "idCard": "National ID Card (CNI)",
+        "passport": "Passport",
+        "driversLicense": "Driver's License"
+      },
+      "bulk": {
+        "approveSelected": "Approve Selected",
+        "rejectSelected": "Reject Selected"
+      },
+      "review": {
+        "title": "KYC Review",
+        "userInfo": "User Information",
+        "documentInfo": "Document Information",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "type": "Type",
+        "number": "Number",
+        "submitted": "Submitted",
+        "idFront": "ID Card - Front",
+        "idBack": "ID Card - Back",
+        "passportPage": "Passport - Main page",
+        "driverLicense": "Driver's License",
+        "documentBack": "Document - Back",
+        "selfieWithDoc": "Selfie with document",
+        "noDocuments": "No documents available",
+        "view": "View",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "download": "Download image",
+        "rejectionReason": "Rejection Reason",
+        "rejectionPlaceholder": "Please provide a detailed reason for rejection (minimum 10 characters)...",
+        "confirmRejection": "Confirm Rejection",
+        "reject": "Reject",
+        "approve": "Approve",
+        "statusApproved": "This KYC submission has been approved",
+        "statusRejected": "This KYC submission has been rejected"
+      },
+      "detail": {
+        "notFound": "KYC submission not found",
+        "loadFailed": "Failed to load KYC submission",
+        "reviewStatus": "Review Status",
+        "reviewedAt": "Reviewed At"
+      }
+    },
+    "users": {
+      "title": "Users",
+      "subtitle": "Manage platform users and their accounts",
+      "addUser": "Add User",
+      "noUsers": "No users found",
+      "columns": {
+        "name": "Name",
+        "phone": "Phone",
+        "role": "Role",
+        "status": "Status",
+        "kycStatus": "KYC Status",
+        "joined": "Joined"
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Search by name, email, or phone...",
+        "status": "Status",
+        "allStatuses": "All Statuses",
+        "kycStatus": "KYC Status",
+        "allKycStatuses": "All KYC Statuses"
+      },
+      "statuses": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "kycStatuses": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "roles": {
+        "user": "User",
+        "admin": "Admin",
+        "super_admin": "Super Admin"
+      },
+      "bulk": {
+        "suspendSelected": "Suspend Selected",
+        "activateSelected": "Activate Selected"
+      },
+      "detail": {
+        "userNotFound": "User not found",
+        "edit": "Edit",
+        "suspend": "Suspend",
+        "activate": "Activate",
+        "assignAdmin": "Assign Admin",
+        "delete": "Delete",
+        "editUser": "Edit User",
+        "saveChanges": "Save Changes",
+        "userInfo": "User Information",
+        "email": "Email",
+        "phone": "Phone",
+        "joined": "Joined",
+        "lastLogin": "Last Login",
+        "suspensionReason": "Suspension Reason",
+        "activityHistory": "Activity History",
+        "noActivity": "No activity recorded",
+        "trips": "Trips",
+        "shipmentsSender": "Shipments (sender)",
+        "shipmentsTraveler": "Shipments (traveler)",
+        "ratingsReceived": "Ratings received",
+        "ratingsGiven": "Ratings given",
+        "statusSection": "Status",
+        "accountStatus": "Account Status",
+        "role": "Role",
+        "kycStatus": "KYC Status",
+        "ratings": "Ratings",
+        "averageRating": "Average rating",
+        "review": "review",
+        "reviews": "reviews",
+        "confirmSuspend": "Suspend User",
+        "confirmSuspendMessage": "Are you sure you want to suspend {{name}}? They will not be able to create new trips or shipments.",
+        "confirmDelete": "Delete User",
+        "confirmDeleteMessage": "Are you sure you want to delete {{name}}? This action cannot be undone. Personal data will be anonymized but transaction records will be preserved.",
+        "confirmAssignAdmin": "Assign Admin Role",
+        "confirmAssignAdminMessage": "Are you sure you want to assign admin role to {{name}}? They will have access to the admin dashboard."
+      },
+      "createModal": {
+        "title": "Create New User",
+        "subtitle": "Add a new user to the platform",
+        "fullName": "Full Name",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "phoneHint": "Use international format with country code",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "cancel": "Cancel",
+        "create": "Create User",
+        "creating": "Creating...",
+        "errors": {
+          "nameRequired": "Name is required",
+          "nameMin": "Name must be at least 2 characters",
+          "nameMax": "Name must not exceed 255 characters",
+          "emailRequired": "Email is required",
+          "emailInvalid": "Invalid email address",
+          "phoneRequired": "Phone number is required",
+          "phoneInvalid": "Invalid phone number (use international format, e.g., +33612345678)",
+          "passwordRequired": "Password is required",
+          "passwordMin": "Password must be at least 8 characters",
+          "confirmRequired": "Please confirm your password",
+          "passwordMismatch": "Passwords do not match",
+          "createFailed": "Failed to create user"
+        }
       }
     }
   }

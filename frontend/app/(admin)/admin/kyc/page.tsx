@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Filter } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
@@ -18,25 +18,21 @@ interface KYCSubmission {
   };
   document_type: 'idCard' | 'passport' | 'driversLicense';
   document_number: string;
+  document_front_url: string | null;
+  document_back_url: string | null;
+  selfie_url: string | null;
   submitted_at: string;
   status: 'pending' | 'approved' | 'rejected';
-  documents: Array<{
-    id: string;
-    type: 'idCard' | 'passport' | 'driversLicense';
-    front_url: string;
-    back_url?: string;
-    selfie_url: string;
-  }>;
   rejection_reason?: string;
 }
 
 interface KYCFilterValues {
   [key: string]: string;
   status: string;
-  sort_by: string;
 }
 
 export default function KYCPage() {
+  const { t } = useTranslation();
   const [submissions, setSubmissions] = useState<KYCSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -45,9 +41,9 @@ export default function KYCPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
   const [total, setTotal] = useState(0);
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [filters, setFilters] = useState<KYCFilterValues>({
-    status: '',
-    sort_by: 'newest'
+    status: ''
   });
 
   const fetchSubmissions = async () => {
@@ -56,17 +52,28 @@ export default function KYCPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         per_page: perPage.toString(),
-        ...(filters.status && { status: filters.status }),
-        ...(filters.sort_by && { sort_by: filters.sort_by })
+        sort_by: sortBy,
+        ...(filters.status && { status: filters.status })
       });
 
       const response = await fetch(`/api/admin/kyc?${params}`);
       const data = await response.json();
-      
-      setSubmissions(data.data);
-      setTotal(data.meta.total);
+
+      if (data && data.data && Array.isArray(data.data)) {
+        setSubmissions(data.data);
+      } else {
+        setSubmissions([]);
+      }
+
+      if (data && data.meta && typeof data.meta.total === 'number') {
+        setTotal(data.meta.total);
+      } else {
+        setTotal(0);
+      }
     } catch (error) {
       console.error('Failed to fetch KYC submissions:', error);
+      setSubmissions([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -74,7 +81,7 @@ export default function KYCPage() {
 
   useEffect(() => {
     fetchSubmissions();
-  }, [currentPage, perPage, filters]);
+  }, [currentPage, perPage, sortBy, filters]);
 
   const handleFilterChange = (newFilters: { [key: string]: string | { from: string; to: string } }) => {
     setFilters(newFilters as KYCFilterValues);
@@ -96,19 +103,6 @@ export default function KYCPage() {
       setSelectedRows(new Set(submissions.map(sub => sub.id)));
     } else {
       setSelectedRows(new Set());
-    }
-  };
-
-  const getDocumentTypeLabel = (type: string) => {
-    switch (type) {
-      case 'idCard':
-        return 'Carte d\'Identité Nationale (CNI)';
-      case 'passport':
-        return 'Passeport';
-      case 'driversLicense':
-        return 'Permis de Conduire';
-      default:
-        return type;
     }
   };
 
@@ -143,7 +137,7 @@ export default function KYCPage() {
 
   const handleBulkAction = async (actionKey: string) => {
     const selectedIds = Array.from(selectedRows);
-    
+
     try {
       if (actionKey === 'approve') {
         await fetch('/api/admin/kyc/bulk-approve', {
@@ -158,7 +152,7 @@ export default function KYCPage() {
           body: JSON.stringify({ ids: selectedIds, reason: 'Bulk rejection by admin' })
         });
       }
-      
+
       fetchSubmissions();
       setSelectedRows(new Set());
     } catch (error) {
@@ -174,7 +168,7 @@ export default function KYCPage() {
     };
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[status as keyof typeof badges]}`}>
-        {status}
+        {t(`admin.kyc.statuses.${status}`)}
       </span>
     );
   };
@@ -182,7 +176,7 @@ export default function KYCPage() {
   const columns: Column<KYCSubmission>[] = [
     {
       key: 'user',
-      label: 'User',
+      label: t('admin.kyc.columns.user'),
       render: (submission) => (
         <div>
           <div className="font-medium text-gray-900">{submission.user.name}</div>
@@ -192,33 +186,33 @@ export default function KYCPage() {
     },
     {
       key: 'document_type',
-      label: 'Type de Document',
+      label: t('admin.kyc.columns.documentType'),
       render: (submission) => (
         <span className="text-sm text-gray-900">
-          {getDocumentTypeLabel(submission.document_type)}
+          {t(`admin.kyc.documentTypes.${submission.document_type}`)}
         </span>
       )
     },
     {
       key: 'document_number',
-      label: 'Document Number',
+      label: t('admin.kyc.columns.documentNumber'),
       render: (submission) => (
         <span className="text-sm text-gray-900 font-mono">{submission.document_number}</span>
       )
     },
     {
       key: 'status',
-      label: 'Status',
+      label: t('admin.kyc.columns.status'),
       sortable: true,
       render: (submission) => getStatusBadge(submission.status)
     },
     {
       key: 'submitted_at',
-      label: 'Submitted',
+      label: t('admin.kyc.columns.submitted'),
       sortable: true,
       render: (submission) => (
         <span className="text-sm text-gray-900">
-          {new Date(submission.submitted_at).toLocaleDateString('en-US', {
+          {new Date(submission.submitted_at).toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -234,38 +228,49 @@ export default function KYCPage() {
     {
       key: 'status',
       type: 'select' as const,
-      label: 'Status',
+      label: t('admin.kyc.filters.status'),
       options: [
-        { value: '', label: 'All Statuses' },
-        { value: 'pending', label: 'Pending' },
-        { value: 'approved', label: 'Approved' },
-        { value: 'rejected', label: 'Rejected' }
-      ]
-    },
-    {
-      key: 'sort_by',
-      type: 'select' as const,
-      label: 'Sort By',
-      options: [
-        { value: 'newest', label: 'Newest First' },
-        { value: 'oldest', label: 'Oldest First' }
+        { value: 'pending', label: t('admin.kyc.statuses.pending') },
+        { value: 'approved', label: t('admin.kyc.statuses.approved') },
+        { value: 'rejected', label: t('admin.kyc.statuses.rejected') }
       ]
     }
   ];
 
   const bulkActions: BulkAction[] = [
-    { key: 'approve', label: 'Approve Selected', variant: 'default' as const },
-    { key: 'reject', label: 'Reject Selected', variant: 'danger' as const }
+    { key: 'approve', label: t('admin.kyc.bulk.approveSelected'), variant: 'default' as const },
+    { key: 'reject', label: t('admin.kyc.bulk.rejectSelected'), variant: 'danger' as const }
   ];
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">KYC Verification</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Review and verify user identity documents
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.kyc.title')}</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            {t('admin.kyc.subtitle')}
+          </p>
+        </div>
+
+        {/* Sort selector */}
+        <div className="flex items-center space-x-2">
+          <label htmlFor="sort-by" className="text-sm font-medium text-gray-700">
+            {t('admin.kyc.sortBy')}:
+          </label>
+          <select
+            id="sort-by"
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value as 'newest' | 'oldest');
+              setCurrentPage(1);
+            }}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="newest">{t('admin.kyc.sortNewest')}</option>
+            <option value="oldest">{t('admin.kyc.sortOldest')}</option>
+          </select>
+        </div>
       </div>
 
       {/* Filters */}
@@ -273,7 +278,7 @@ export default function KYCPage() {
         filters={filterConfig}
         values={filters}
         onChange={handleFilterChange}
-        onReset={() => setFilters({ status: '', sort_by: 'newest' })}
+        onReset={() => setFilters({ status: '' })}
       />
 
       {/* Bulk Actions */}
@@ -291,7 +296,7 @@ export default function KYCPage() {
         columns={columns}
         data={submissions}
         loading={loading}
-        emptyMessage="No KYC submissions found"
+        emptyMessage={t('admin.kyc.noSubmissions')}
         onRowClick={handleRowClick}
         selectedRows={selectedRows}
         onSelectRow={handleSelectRow}

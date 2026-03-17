@@ -31,7 +31,7 @@ class AdminDashboardService
     {
         return Cache::remember('admin_dashboard_metrics', self::METRICS_CACHE_TTL, function () {
             return [
-                'total_users' => User::count(),
+                'total_users' => User::where('role', 'user')->count(),
                 'active_trips' => Trip::whereIn('status', ['upcoming', 'in_progress'])->count(),
                 'pending_shipments' => Shipment::where('status', 'pending')->count(),
                 'revenue_30_days' => $this->getRevenue30Days(),
@@ -181,7 +181,7 @@ class AdminDashboardService
 
         for ($i = 0; $i < 30; $i++) {
             $date = $startDate->copy()->addDays($i);
-            $count = User::whereDate('created_at', $date->toDateString())->count();
+            $count = User::where('role', 'user')->whereDate('created_at', $date->toDateString())->count();
             
             $data[] = [
                 'date' => $date->toDateString(),

@@ -1,34 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAuditLogs } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '20');
-  const resource = searchParams.get('resource') || '';
-  const action = searchParams.get('action') || '';
+  try {
+    const searchParams = request.nextUrl.searchParams.toString();
+    const queryString = searchParams ? `?${searchParams}` : '';
 
-  let filtered = [...mockAuditLogs];
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/audit-logs${queryString}`,
+      { method: 'GET' }
+    );
 
-  if (resource) {
-    filtered = filtered.filter(log => log.resource === resource);
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || 'Failed to fetch audit logs' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+    );
   }
-
-  if (action) {
-    filtered = filtered.filter(log => log.action.toLowerCase().includes(action.toLowerCase()));
-  }
-
-  const start = (page - 1) * limit;
-  const end = start + limit;
-  const paginated = filtered.slice(start, end);
-
-  return NextResponse.json({
-    data: paginated,
-    meta: {
-      total: filtered.length,
-      page,
-      limit,
-      totalPages: Math.ceil(filtered.length / limit),
-    },
-  });
 }

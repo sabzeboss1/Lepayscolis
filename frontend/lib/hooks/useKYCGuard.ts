@@ -16,7 +16,9 @@ export function useKYCGuard() {
       return false;
     }
 
-    if (user.kyc_status !== 'approved') {
+    // Admins bypass KYC verification
+    const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+    if (!isAdmin && user.kyc_status !== 'approved') {
       if (showPrompt) {
         router.push('/kyc');
       }
@@ -27,10 +29,11 @@ export function useKYCGuard() {
     return true;
   }, [user, router]);
 
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   const isKYCApproved = user?.kyc_status === 'approved';
   const isKYCPending = user?.kyc_status === 'pending';
   const isKYCRejected = user?.kyc_status === 'rejected';
-  const needsKYC = !user || user.kyc_status !== 'approved';
+  const needsKYC = !isAdmin && (!user || user.kyc_status !== 'approved');
 
   return {
     requireKYC,

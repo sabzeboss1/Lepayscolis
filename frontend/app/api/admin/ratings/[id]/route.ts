@@ -1,33 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminRatings } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const params = await context.params;
-  const rating = mockAdminRatings.find(r => r.id === params.id);
+  try {
+    const params = await context.params;
 
-  if (!rating) {
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/ratings/${params.id}`,
+      { method: 'GET' }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
     return NextResponse.json(
-      { error: 'Rating not found' },
-      { status: 404 }
+      { message: error.message || 'Rating not found' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 404 }
     );
   }
-
-  // Transform to snake_case for frontend
-  const transformed = {
-    id: rating.id,
-    from_user_id: rating.fromUserId,
-    from_user_name: rating.fromUserName,
-    to_user_id: rating.toUserId,
-    to_user_name: rating.toUserName,
-    shipment_id: rating.shipmentId,
-    rating: rating.rating,
-    comment: rating.comment,
-    flagged: rating.flagged,
-    created_at: rating.createdAt.toISOString()
-  };
-
-  return NextResponse.json({ data: transformed });
 }

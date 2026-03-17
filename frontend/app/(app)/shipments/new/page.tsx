@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { KYCBlocker } from '@/components/features/KYCBlocker';
+import { CountrySelect } from '@/components/ui/CountrySelect';
+import { CitySelect } from '@/components/ui/CitySelect';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { useFileUpload } from '@/lib/hooks/useFileUpload';
 import { DEFAULT_UPLOAD_OPTIONS } from '@/lib/services/FileUploadService';
@@ -24,11 +26,11 @@ const shipmentSchema = z.object({
   packageType: z.string().min(1, 'Package type is required'),
   recipientName: z.string().min(1, 'Recipient name is required'),
   recipientPhone: z.string().min(1, 'Recipient phone is required'),
-  pickupCity: z.string().min(1, 'Pickup city is required'),
-  pickupCountry: z.string().min(1, 'Pickup country is required'),
+  pickupCountryId: z.number().positive('Pickup country is required'),
+  pickupCityId: z.number().positive('Pickup city is required'),
   pickupAddress: z.string().min(1, 'Pickup address is required'),
-  deliveryCity: z.string().min(1, 'Delivery city is required'),
-  deliveryCountry: z.string().min(1, 'Delivery country is required'),
+  deliveryCountryId: z.number().positive('Delivery country is required'),
+  deliveryCityId: z.number().positive('Delivery city is required'),
   deliveryAddress: z.string().min(1, 'Delivery address is required'),
 });
 
@@ -56,11 +58,11 @@ export default function NewShipmentPage() {
     packageType: '',
     recipientName: '',
     recipientPhone: '',
-    pickupCity: '',
-    pickupCountry: '',
+    pickupCountryId: undefined,
+    pickupCityId: undefined,
     pickupAddress: '',
-    deliveryCity: '',
-    deliveryCountry: '',
+    deliveryCountryId: undefined,
+    deliveryCityId: undefined,
     deliveryAddress: '',
   });
 
@@ -68,7 +70,7 @@ export default function NewShipmentPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showProhibitedItems, setShowProhibitedItems] = useState(false);
 
-  const handleInputChange = (field: keyof ShipmentFormData, value: string | number) => {
+  const handleInputChange = (field: keyof ShipmentFormData, value: string | number | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error for this field
     if (errors[field]) {
@@ -127,11 +129,11 @@ export default function NewShipmentPage() {
 
       // Create shipment via API
       const response = await apiClient.post<{ data: any }>(API_ENDPOINTS.shipments.create, {
-        pickup_country: formData.pickupCountry,
-        pickup_city: formData.pickupCity,
+        pickup_country_id: formData.pickupCountryId,
+        pickup_city_id: formData.pickupCityId,
         pickup_address: formData.pickupAddress,
-        delivery_country: formData.deliveryCountry,
-        delivery_city: formData.deliveryCity,
+        delivery_country_id: formData.deliveryCountryId,
+        delivery_city_id: formData.deliveryCityId,
         delivery_address: formData.deliveryAddress,
         recipient_name: formData.recipientName,
         recipient_phone: formData.recipientPhone,
@@ -262,23 +264,20 @@ export default function NewShipmentPage() {
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="text"
-                label={t('shipments.pickupCity')}
-                value={formData.pickupCity || ''}
-                onChange={(e) => handleInputChange('pickupCity', e.target.value)}
-                error={errors.pickupCity}
-                required
-                placeholder={t('shipments.pickupCityPlaceholder')}
-              />
-              <Input
-                type="text"
+              <CountrySelect
                 label={t('shipments.pickupCountry')}
-                value={formData.pickupCountry || ''}
-                onChange={(e) => handleInputChange('pickupCountry', e.target.value)}
-                error={errors.pickupCountry}
+                value={formData.pickupCountryId}
+                onChange={(id) => handleInputChange('pickupCountryId', id ?? undefined)}
+                error={errors.pickupCountryId}
                 required
-                placeholder={t('shipments.pickupCountryPlaceholder')}
+              />
+              <CitySelect
+                label={t('shipments.pickupCity')}
+                countryId={formData.pickupCountryId}
+                value={formData.pickupCityId}
+                onChange={(id) => handleInputChange('pickupCityId', id ?? undefined)}
+                error={errors.pickupCityId}
+                required
               />
             </div>
             <Input
@@ -299,26 +298,23 @@ export default function NewShipmentPage() {
             <h2 className="text-xl font-semibold">{t('shipments.deliveryLocation')}</h2>
           </div>
           <p className="text-sm text-gray-600 mb-4">{t('shipments.deliveryLocationHelper')}</p>
-          
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="text"
-                label={t('shipments.deliveryCity')}
-                value={formData.deliveryCity || ''}
-                onChange={(e) => handleInputChange('deliveryCity', e.target.value)}
-                error={errors.deliveryCity}
-                required
-                placeholder={t('shipments.deliveryCityPlaceholder')}
-              />
-              <Input
-                type="text"
+              <CountrySelect
                 label={t('shipments.deliveryCountry')}
-                value={formData.deliveryCountry || ''}
-                onChange={(e) => handleInputChange('deliveryCountry', e.target.value)}
-                error={errors.deliveryCountry}
+                value={formData.deliveryCountryId}
+                onChange={(id) => handleInputChange('deliveryCountryId', id ?? undefined)}
+                error={errors.deliveryCountryId}
                 required
-                placeholder={t('shipments.deliveryCountryPlaceholder')}
+              />
+              <CitySelect
+                label={t('shipments.deliveryCity')}
+                countryId={formData.deliveryCountryId}
+                value={formData.deliveryCityId}
+                onChange={(id) => handleInputChange('deliveryCityId', id ?? undefined)}
+                error={errors.deliveryCityId}
+                required
               />
             </div>
             <Input

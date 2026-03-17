@@ -1,45 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminWithdrawals } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const params = await context.params;
-  const body = await request.json();
-  const { reason } = body;
+  try {
+    const params = await context.params;
+    const body = await request.json();
 
-  if (!reason) {
-    return NextResponse.json(
-      { error: 'Rejection reason is required' },
-      { status: 400 }
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/withdrawals/${params.id}/reject`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
     );
-  }
 
-  const withdrawal = mockAdminWithdrawals.find(w => w.id === params.id);
+    const data = await response.json();
 
-  if (!withdrawal) {
-    return NextResponse.json(
-      { error: 'Withdrawal not found' },
-      { status: 404 }
-    );
-  }
-
-  if (withdrawal.status !== 'pending') {
-    return NextResponse.json(
-      { error: 'Only pending withdrawals can be rejected' },
-      { status: 400 }
-    );
-  }
-
-  // In a real app, update the withdrawal status in the database
-  // For now, just return success
-  return NextResponse.json({ 
-    message: 'Withdrawal rejected successfully',
-    data: {
-      id: withdrawal.id,
-      status: 'rejected',
-      rejection_reason: reason
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
     }
-  });
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || 'Failed to reject withdrawal' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+    );
+  }
 }
