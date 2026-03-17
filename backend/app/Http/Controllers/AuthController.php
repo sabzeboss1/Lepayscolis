@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
+use App\Models\Country;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,13 +26,19 @@ class AuthController extends Controller
         $ipAddress = $request->ip();
         
         try {
+            // Resolve locale and currency from the selected country
+            $country = Country::findByCode($request->country);
+            $locale = $request->locale ?? ($country?->default_locale ?? 'fr');
+            $currencyCode = $country?->default_currency_code ?? 'EUR';
+
             // Create user with hashed password (bcrypt cost 10)
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => $request->password, // Will be auto-hashed by the model cast
                 'phone' => $request->phone,
-                'locale' => $request->locale,
+                'locale' => $locale,
+                'currency_code' => $currencyCode,
                 'kyc_status' => 'pending',
                 'rating' => 0,
                 'completed_deliveries' => 0,

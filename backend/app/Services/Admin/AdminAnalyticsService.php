@@ -28,7 +28,7 @@ class AdminAnalyticsService
         $cacheKey = "admin:analytics:totals:{$dateFrom}:{$dateTo}";
         
         return Cache::remember($cacheKey, self::ANALYTICS_CACHE_TTL, function () use ($dateFrom, $dateTo) {
-            $usersQuery = User::query();
+            $usersQuery = User::where('role', 'user');
             $tripsQuery = Trip::query();
             $shipmentsQuery = Shipment::query();
             $revenueQuery = Payment::where('status', 'completed');
@@ -104,7 +104,7 @@ class AdminAnalyticsService
         $cacheKey = "admin:analytics:user_growth:{$dateFrom}:{$dateTo}";
         
         return Cache::remember($cacheKey, self::ANALYTICS_CACHE_TTL, function () use ($dateFrom, $dateTo) {
-            $query = User::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count');
+            $query = User::where('role', 'user')->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count');
             
             if ($dateFrom) {
                 $query->where('created_at', '>=', $dateFrom);
@@ -275,8 +275,8 @@ class AdminAnalyticsService
         $cacheKey = "admin:analytics:engagement:{$dateFrom}:{$dateTo}";
         
         return Cache::remember($cacheKey, self::ANALYTICS_CACHE_TTL, function () use ($dateFrom, $dateTo) {
-            $totalUsers = User::count();
-            $activeUsers = User::where('last_login', '>=', now()->subDays(30))->count();
+            $totalUsers = User::where('role', 'user')->count();
+            $activeUsers = User::where('role', 'user')->where('last_login', '>=', now()->subDays(30))->count();
             
             $tripsQuery = Trip::query();
             $shipmentsQuery = Shipment::query();

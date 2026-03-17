@@ -18,7 +18,7 @@ class AdminUserService
      */
     public function getUsers(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = User::query();
+        $query = User::where('role', 'user');
 
         // Search by name, email, or phone
         if (!empty($filters['search'])) {
@@ -37,11 +37,6 @@ class AdminUserService
             } elseif ($filters['status'] === 'suspended') {
                 $query->whereNotNull('deleted_at');
             }
-        }
-
-        // Filter by role
-        if (!empty($filters['role'])) {
-            $query->where('role', $filters['role']);
         }
 
         // Filter by KYC status

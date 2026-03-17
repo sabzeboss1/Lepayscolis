@@ -45,8 +45,13 @@ class RegisterRequest extends FormRequest
                 'unique:users,phone',
                 'regex:/^\+[1-9]\d{1,14}$/', // E.164 international format
             ],
-            'locale' => [
+            'country' => [
                 'required',
+                'string',
+                'exists:countries,code',
+            ],
+            'locale' => [
+                'sometimes',
                 'string',
                 'in:fr,en',
             ],
@@ -70,7 +75,8 @@ class RegisterRequest extends FormRequest
             'phone.required' => __('validation.auth.phone_required'),
             'phone.unique' => __('validation.auth.phone_unique'),
             'phone.regex' => __('validation.auth.phone_regex'),
-            'locale.required' => __('validation.auth.locale_required'),
+            'country.required' => __('validation.auth.country_required'),
+            'country.exists' => __('validation.auth.country_exists'),
             'locale.in' => __('validation.auth.locale_in'),
         ];
     }

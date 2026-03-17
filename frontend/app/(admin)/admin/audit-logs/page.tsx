@@ -43,25 +43,25 @@ export default function AuditLogsPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with actual API call
-      const mockLogs: AuditLog[] = Array.from({ length: 50 }, (_, i) => ({
-        id: `log-${i + 1}`,
-        admin: {
-          id: `admin-${(i % 3) + 1}`,
-          name: ['John Admin', 'Jane Super', 'Bob Manager'][i % 3],
-          email: ['john@admin.com', 'jane@super.com', 'bob@manager.com'][i % 3]
-        },
-        action: ['create', 'update', 'delete', 'approve', 'reject', 'suspend', 'activate'][i % 7],
-        resource_type: ['user', 'trip', 'shipment', 'payment', 'kyc', 'withdrawal', 'settings'][i % 7],
-        resource_id: `resource-${i + 1}`,
-        ip_address: `192.168.1.${(i % 255) + 1}`,
-        before: i % 2 === 0 ? { status: 'pending' } : null,
-        after: i % 2 === 0 ? { status: 'approved' } : null,
-        created_at: new Date(Date.now() - i * 3600000).toISOString()
-      }));
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+        ...(filterValues.action && typeof filterValues.action === 'string' && { action: filterValues.action }),
+        ...(filterValues.resource && typeof filterValues.resource === 'string' && { resource: filterValues.resource }),
+        ...(filterValues.search && typeof filterValues.search === 'string' && { search: filterValues.search }),
+      });
 
-      setLogs(mockLogs);
-      setTotalLogs(mockLogs.length);
+      const dateRange = filterValues.dateRange;
+      if (dateRange && typeof dateRange === 'object' && 'from' in dateRange) {
+        if (dateRange.from) params.append('date_from', dateRange.from);
+        if (dateRange.to) params.append('date_to', dateRange.to);
+      }
+
+      const response = await fetch(`/api/admin/audit-logs?${params}`);
+      const result = await response.json();
+
+      setLogs(result.data || []);
+      setTotalLogs(result.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);
     } finally {
@@ -91,7 +91,6 @@ export default function AuditLogsPage() {
   const handleExport = async () => {
     setExportLoading(true);
     try {
-      // Mock CSV export - replace with actual API call
       const csvContent = [
         ['Admin', 'Email', 'Action', 'Resource Type', 'Resource ID', 'IP Address', 'Date'],
         ...logs.map(log => [

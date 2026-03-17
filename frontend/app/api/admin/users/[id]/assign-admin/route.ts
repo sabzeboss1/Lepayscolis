@@ -1,25 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminUsers } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const params = await context.params;
-  const user = mockAdminUsers.find(u => u.id === params.id);
+  try {
+    const params = await context.params;
 
-  if (!user) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 });
-  }
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/users/${params.id}/assign-admin`,
+      { method: 'POST' }
+    );
 
-  // Update user role (in mock data)
-  user.role = user.role === 'admin' ? 'user' : 'admin';
+    const data = await response.json();
 
-  return NextResponse.json({
-    message: `User role updated to ${user.role} successfully`,
-    data: {
-      user_id: user.id,
-      role: user.role
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
     }
-  });
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || 'Failed to update user role' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+    );
+  }
 }
