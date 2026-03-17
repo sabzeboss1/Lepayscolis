@@ -114,17 +114,17 @@
 
 > Lors de la création d'un trip, le voyageur doit soumettre une preuve (document ou image). Le trip n'est visible par les expéditeurs qu'après validation par un admin.
 
-- [ ] Ajouter une migration : champs `verification_status` (enum: `pending`, `verified`, `rejected`), `rejection_reason`, `verified_by`, `verified_at` à la table `trips`
-- [ ] Rendre le champ `travel_proof_url` obligatoire lors de la création d'un trip
-- [ ] Mettre à jour le modèle `Trip` : valeur par défaut `verification_status = 'pending'`
-- [ ] Modifier les requêtes de listing des trips : seuls les trips `verified` sont visibles par les expéditeurs
-- [ ] Les trips `pending` et `rejected` ne sont visibles que par leur créateur et les admins
-- [ ] Créer un endpoint admin `GET /admin/trips/pending` pour lister les trips en attente de vérification
-- [ ] Créer un endpoint admin `POST /admin/trips/{id}/verify` pour approuver un trip
-- [ ] Créer un endpoint admin `POST /admin/trips/{id}/reject` pour rejeter un trip avec motif
-- [ ] Notifier le voyageur du résultat de la vérification (approuvé/rejeté avec motif)
-- [ ] Ajouter la vérification en masse (bulk approve/reject) pour les admins
-- [ ] Ajouter un filtre par `verification_status` dans la liste admin des trips
+- [x] Ajouter une migration : champs `verification_status` (enum: `pending`, `verified`, `rejected`), `rejection_reason`, `verified_by`, `verified_at` à la table `trips`
+- [x] Rendre le champ `travel_proof_url` obligatoire lors de la création d'un trip
+- [x] Mettre à jour le modèle `Trip` : valeur par défaut `verification_status = 'pending'`
+- [x] Modifier les requêtes de listing des trips : seuls les trips `verified` sont visibles par les expéditeurs
+- [x] Les trips `pending` et `rejected` ne sont visibles que par leur créateur et les admins
+- [x] Créer un endpoint admin `GET /admin/trips/pending` pour lister les trips en attente de vérification
+- [x] Créer un endpoint admin `POST /admin/trips/{id}/verify` pour approuver un trip
+- [x] Créer un endpoint admin `POST /admin/trips/{id}/reject` pour rejeter un trip avec motif
+- [x] Notifier le voyageur du résultat de la vérification (approuvé/rejeté avec motif)
+- [x] Ajouter la vérification en masse (bulk approve/reject) pour les admins
+- [x] Ajouter un filtre par `verification_status` dans la liste admin des trips
 
 ---
 

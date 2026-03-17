@@ -52,7 +52,8 @@ class TripController extends Controller
     {
         $query = Trip::query()
             ->with(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity'])
-            ->active();
+            ->active()
+            ->verified();
 
         // Apply ID-based filters
         if ($request->filled('departure_country_id')) {
@@ -124,6 +125,7 @@ class TripController extends Controller
             $data = $request->validated();
             $data['traveler_id'] = $request->user()->id;
             $data['status'] = 'active';
+            $data['verification_status'] = 'pending';
 
             // Auto-populate text fields from country/city IDs
             $data = $this->resolveLocationNames($data, 'departure');
@@ -205,6 +207,16 @@ class TripController extends Controller
             return response()->json([
                 'message' => 'Trip not found'
             ], 404);
+        }
+
+        // Non-verified trips are only visible to their owner or admins
+        if ($trip->verification_status !== 'verified') {
+            $user = auth('sanctum')->user();
+            if (!$user || ($trip->traveler_id !== $user->id && !$user->isAdmin())) {
+                return response()->json([
+                    'message' => 'Trip not found'
+                ], 404);
+            }
         }
 
         return response()->json([

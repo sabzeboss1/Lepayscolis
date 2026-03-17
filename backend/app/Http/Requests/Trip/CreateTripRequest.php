@@ -16,7 +16,7 @@ use Illuminate\Foundation\Http\FormRequest;
  * - Accepted package types (enveloppes, petits_colis, moyens_colis, grands_colis)
  * - Pickup address (min 5 chars)
  * - Delivery address (min 5 chars)
- * - Travel proof file (optional)
+ * - Travel proof file (required)
  * 
  * Validates Requirements: 3.3-3.7
  */
@@ -51,7 +51,7 @@ class CreateTripRequest extends FormRequest
             'accepted_package_types.*' => ['required', 'string', 'in:enveloppes,petits_colis,moyens_colis,grands_colis'],
             'pickup_address' => ['required', 'string', 'min:5', 'max:1000'],
             'delivery_address' => ['required', 'string', 'min:5', 'max:1000'],
-            'travel_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // 5MB
+            'travel_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // 5MB
         ];
     }
 
@@ -78,6 +78,7 @@ class CreateTripRequest extends FormRequest
             'delivery_address.min' => __('validation.trip.delivery_address_min'),
             'currency_code.required' => __('validation.trip.currency_required'),
             'currency_code.exists' => __('validation.trip.currency_invalid'),
+            'travel_proof.required' => __('validation.trip.travel_proof_required'),
             'travel_proof.mimes' => __('validation.trip.travel_proof_mimes'),
             'travel_proof.max' => __('validation.trip.travel_proof_max'),
             'departure_country_id.required' => __('validation.trip.country_required'),

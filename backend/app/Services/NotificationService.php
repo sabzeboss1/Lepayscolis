@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\SendEmailNotification;
 use App\Jobs\SendPushNotification;
 use App\Models\Notification;
+use App\Models\Trip;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -115,5 +116,141 @@ class NotificationService
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Notify traveler that their trip has been verified.
+     */
+    public function sendTripVerifiedNotification(Trip $trip): void
+    {
+        $traveler = $trip->traveler;
+        $locale = $traveler->locale ?? 'fr';
+
+        $title = __('notifications.trip_verified.title', [], $locale);
+        $body = __('notifications.trip_verified.body', [
+            'departure' => $trip->departure_city,
+            'arrival' => $trip->arrival_city,
+        ], $locale);
+
+        $this->createNotification($traveler, 'trip_verified', $title, $body, [
+            'trip_id' => $trip->id,
+        ]);
+
+        $this->sendPush($traveler, $title, $body, [
+            'type' => 'trip_verified',
+            'trip_id' => $trip->id,
+        ]);
+    }
+
+    /**
+     * Notify traveler that their trip has been rejected.
+     */
+    public function sendTripRejectedNotification(Trip $trip, string $reason): void
+    {
+        $traveler = $trip->traveler;
+        $locale = $traveler->locale ?? 'fr';
+
+        $title = __('notifications.trip_rejected.title', [], $locale);
+        $body = __('notifications.trip_rejected.body', [
+            'departure' => $trip->departure_city,
+            'arrival' => $trip->arrival_city,
+            'reason' => $reason,
+        ], $locale);
+
+        $this->createNotification($traveler, 'trip_rejected', $title, $body, [
+            'trip_id' => $trip->id,
+            'reason' => $reason,
+        ]);
+
+        $this->sendPush($traveler, $title, $body, [
+            'type' => 'trip_rejected',
+            'trip_id' => $trip->id,
+        ]);
+    }
+
+    /**
+     * Notify traveler that their trip has been cancelled by admin.
+     */
+    public function sendTripCancelledNotification(Trip $trip, string $reason): void
+    {
+        $traveler = $trip->traveler;
+        $locale = $traveler->locale ?? 'fr';
+
+        $title = __('notifications.trip_cancelled.title', [], $locale);
+        $body = __('notifications.trip_cancelled.body', [
+            'departure' => $trip->departure_city,
+            'arrival' => $trip->arrival_city,
+            'reason' => $reason,
+        ], $locale);
+
+        $this->createNotification($traveler, 'trip_cancelled', $title, $body, [
+            'trip_id' => $trip->id,
+            'reason' => $reason,
+        ]);
+
+        $this->sendPush($traveler, $title, $body, [
+            'type' => 'trip_cancelled',
+            'trip_id' => $trip->id,
+        ]);
+    }
+
+    /**
+     * Notify sender that their shipment has been cancelled.
+     */
+    public function sendShipmentCancelledNotification($shipment, string $reason): void
+    {
+        $sender = $shipment->sender;
+        $locale = $sender->locale ?? 'fr';
+
+        $title = __('notifications.shipment_cancelled.title', [], $locale);
+        $body = __('notifications.shipment_cancelled.body', [
+            'reason' => $reason,
+        ], $locale);
+
+        $this->createNotification($sender, 'shipment_cancelled', $title, $body, [
+            'shipment_id' => $shipment->id,
+            'reason' => $reason,
+        ]);
+
+        $this->sendPush($sender, $title, $body, [
+            'type' => 'shipment_cancelled',
+            'shipment_id' => $shipment->id,
+        ]);
+    }
+
+    /**
+     * Notify user that their KYC has been approved.
+     */
+    public function sendKYCApprovedNotification(User $user): void
+    {
+        $locale = $user->locale ?? 'fr';
+
+        $title = __('notifications.kyc_approved', [], $locale);
+        $body = __('notifications.kyc_approved_body', [], $locale);
+
+        $this->createNotification($user, 'kyc_approved', $title, $body);
+
+        $this->sendPush($user, $title, $body, [
+            'type' => 'kyc_approved',
+        ]);
+    }
+
+    /**
+     * Notify user that their KYC has been rejected.
+     */
+    public function sendKYCRejectedNotification(User $user, string $reason): void
+    {
+        $locale = $user->locale ?? 'fr';
+
+        $title = __('notifications.kyc_rejected', [], $locale);
+        $body = __('notifications.kyc_rejected_body', ['reason' => $reason], $locale);
+
+        $this->createNotification($user, 'kyc_rejected', $title, $body, [
+            'reason' => $reason,
+        ]);
+
+        $this->sendPush($user, $title, $body, [
+            'type' => 'kyc_rejected',
+        ]);
     }
 }

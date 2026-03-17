@@ -38,6 +38,10 @@ class Trip extends Model
         'currency_code',
         'status',
         'travel_proof_url',
+        'verification_status',
+        'rejection_reason',
+        'verified_by',
+        'verified_at',
     ];
 
     /**
@@ -55,6 +59,8 @@ class Trip extends Model
             'accepted_package_types' => 'array',
             'currency_code' => 'string',
             'status' => 'string',
+            'verification_status' => 'string',
+            'verified_at' => 'datetime',
         ];
     }
 
@@ -92,6 +98,14 @@ class Trip extends Model
     public function arrivalCity(): BelongsTo
     {
         return $this->belongsTo(City::class, 'arrival_city_id');
+    }
+
+    /**
+     * Get the admin who verified the trip.
+     */
+    public function verifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 
     /**
@@ -148,6 +162,22 @@ class Trip extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope a query to only include verified trips.
+     */
+    public function scopeVerified($query)
+    {
+        return $query->where('verification_status', 'verified');
+    }
+
+    /**
+     * Scope a query to only include trips pending verification.
+     */
+    public function scopePendingVerification($query)
+    {
+        return $query->where('verification_status', 'pending');
     }
 
     /**

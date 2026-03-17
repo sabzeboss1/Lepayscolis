@@ -40,6 +40,7 @@ return [
         'pickup_address_min' => 'The pickup address must be at least 5 characters.',
         'delivery_address_required' => 'The delivery address is required.',
         'delivery_address_min' => 'The delivery address must be at least 5 characters.',
+        'travel_proof_required' => 'A travel proof document is required.',
         'travel_proof_mimes' => 'The travel proof must be a file of type: pdf, jpg, jpeg, png.',
         'travel_proof_max' => 'The travel proof must not exceed 5MB.',
         'currency_required' => 'The currency is required.',

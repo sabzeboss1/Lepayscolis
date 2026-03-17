@@ -54,6 +54,9 @@ class TripResource extends JsonResource
             'pickup_address' => $this->pickup_address,
             'delivery_address' => $this->delivery_address,
             'status' => $this->status,
+            'verification_status' => $this->verification_status,
+            'rejection_reason' => $this->when($this->verification_status === 'rejected', $this->rejection_reason),
+            'verified_at' => $this->when($this->verified_at, fn() => $this->verified_at?->toISOString()),
             'travel_proof_url' => $this->travel_proof_url,
             'remaining_capacity' => $this->remainingCapacity(),
             'accepted_shipments_count' => $this->when(
