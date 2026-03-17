@@ -1,18 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Settings as SettingsIcon, 
-  Save, 
-  Mail, 
-  CreditCard, 
+import {
+  Settings as SettingsIcon,
+  Save,
+  Mail,
+  CreditCard,
   Image as ImageIcon,
   DollarSign,
-  Globe,
   Shield,
   Bell,
   Package
 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 type TabType = 'general' | 'smtp' | 'payment' | 'branding' | 'currency' | 'security' | 'notifications' | 'shipping';
 
@@ -22,8 +24,9 @@ interface PlatformSettings {
   platform_url: string;
   support_email: string;
   support_phone: string;
-  platform_fee_percentage: number;
-  
+  sender_fee_percentage: number;
+  traveler_fee_percentage: number;
+
   // SMTP
   smtp_host: string;
   smtp_port: number;
@@ -32,57 +35,57 @@ interface PlatformSettings {
   smtp_encryption: string;
   smtp_from_address: string;
   smtp_from_name: string;
-  
+
   // Payment - Stripe
   stripe_public_key: string;
   stripe_secret_key: string;
   stripe_webhook_secret: string;
   payment_currency: string;
-  
+
   // Payment - Orange Money
   orange_money_api_key?: string;
   orange_money_merchant_id?: string;
   orange_money_enabled?: boolean;
-  
+
   // Payment - MTN Money
   mtn_money_api_key?: string;
   mtn_money_subscription_key?: string;
   mtn_money_enabled?: boolean;
-  
+
   // Payment - Bank Transfer
   bank_name?: string;
   bank_iban?: string;
   bank_bic?: string;
   bank_transfer_enabled?: boolean;
-  
+
   // Payment - Cash
   cash_payment_enabled?: boolean;
-  
+
   // Withdrawal
   withdrawal_fee: number;
   min_withdrawal_amount: number;
   max_withdrawal_amount: number;
-  
+
   // Shipment
   min_shipment_price: number;
   max_shipment_price: number;
-  
+
   // Branding
   logo_url: string;
   favicon_url: string;
   primary_color: string;
   secondary_color: string;
-  
+
   // Currency
   default_currency: string;
   supported_currencies: string[];
-  
+
   // Security
   kyc_required: boolean;
   two_factor_enabled: boolean;
   session_timeout: number;
   max_login_attempts: number;
-  
+
   // Notifications
   email_notifications_enabled: boolean;
   push_notifications_enabled: boolean;
@@ -90,6 +93,7 @@ interface PlatformSettings {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('general');
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,9 +107,8 @@ export default function SettingsPage() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/settings');
-      const data = await response.json();
-      setSettings(data.settings || getDefaultSettings());
+      const response = await apiClient.get<{ data: PlatformSettings }>(API_ENDPOINTS.admin.settings.get);
+      setSettings(response.data || getDefaultSettings());
     } catch (error) {
       console.error('Failed to fetch settings:', error);
       setSettings(getDefaultSettings());
@@ -119,8 +122,9 @@ export default function SettingsPage() {
     platform_url: 'https://lepaysexpresscolis.com',
     support_email: 'support@lepaysexpresscolis.com',
     support_phone: '+33 1 23 45 67 89',
-    platform_fee_percentage: 10.0,
-    
+    sender_fee_percentage: 5.0,
+    traveler_fee_percentage: 10.0,
+
     smtp_host: 'smtp.gmail.com',
     smtp_port: 587,
     smtp_username: '',
@@ -128,47 +132,47 @@ export default function SettingsPage() {
     smtp_encryption: 'tls',
     smtp_from_address: 'noreply@lepaysexpresscolis.com',
     smtp_from_name: 'Le Pays Express Colis',
-    
+
     stripe_public_key: '',
     stripe_secret_key: '',
     stripe_webhook_secret: '',
     payment_currency: 'EUR',
-    
+
     orange_money_api_key: '',
     orange_money_merchant_id: '',
     orange_money_enabled: false,
-    
+
     mtn_money_api_key: '',
     mtn_money_subscription_key: '',
     mtn_money_enabled: false,
-    
+
     bank_name: '',
     bank_iban: '',
     bank_bic: '',
     bank_transfer_enabled: false,
-    
+
     cash_payment_enabled: false,
-    
+
     withdrawal_fee: 2.50,
     min_withdrawal_amount: 20.00,
     max_withdrawal_amount: 5000.00,
-    
+
     min_shipment_price: 10.00,
     max_shipment_price: 1000.00,
-    
+
     logo_url: '/logo.png',
     favicon_url: '/favicon.ico',
     primary_color: '#3B82F6',
     secondary_color: '#F97316',
-    
+
     default_currency: 'EUR',
     supported_currencies: ['EUR', 'USD', 'GBP', 'XAF', 'XOF', 'RUB', 'CAD'],
-    
+
     kyc_required: true,
     two_factor_enabled: false,
     session_timeout: 3600,
     max_login_attempts: 5,
-    
+
     email_notifications_enabled: true,
     push_notifications_enabled: true,
     sms_notifications_enabled: false,
@@ -176,24 +180,17 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     if (!settings) return;
-    
+
     setSaving(true);
     setMessage(null);
-    
+
     try {
-      const response = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
-      });
-      
-      if (!response.ok) throw new Error('Failed to save settings');
-      
-      setMessage({ type: 'success', text: 'Paramètres enregistrés avec succès' });
+      await apiClient.put(API_ENDPOINTS.admin.settings.update, settings);
+      setMessage({ type: 'success', text: t('admin.settings.success') });
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
       console.error('Failed to save settings:', error);
-      setMessage({ type: 'error', text: 'Erreur lors de l\'enregistrement' });
+      setMessage({ type: 'error', text: t('admin.settings.error') });
     } finally {
       setSaving(false);
     }
@@ -205,14 +202,14 @@ export default function SettingsPage() {
   };
 
   const tabs = [
-    { id: 'general' as TabType, label: 'Général', icon: SettingsIcon },
-    { id: 'smtp' as TabType, label: 'SMTP / Email', icon: Mail },
-    { id: 'payment' as TabType, label: 'Paiement', icon: CreditCard },
-    { id: 'branding' as TabType, label: 'Branding', icon: ImageIcon },
-    { id: 'currency' as TabType, label: 'Devises', icon: DollarSign },
-    { id: 'security' as TabType, label: 'Sécurité', icon: Shield },
-    { id: 'notifications' as TabType, label: 'Notifications', icon: Bell },
-    { id: 'shipping' as TabType, label: 'Expédition', icon: Package },
+    { id: 'general' as TabType, label: t('admin.settings.tabs.general'), icon: SettingsIcon },
+    { id: 'smtp' as TabType, label: t('admin.settings.tabs.smtp'), icon: Mail },
+    { id: 'payment' as TabType, label: t('admin.settings.tabs.payment'), icon: CreditCard },
+    { id: 'branding' as TabType, label: t('admin.settings.tabs.branding'), icon: ImageIcon },
+    { id: 'currency' as TabType, label: t('admin.settings.tabs.currency'), icon: DollarSign },
+    { id: 'security' as TabType, label: t('admin.settings.tabs.security'), icon: Shield },
+    { id: 'notifications' as TabType, label: t('admin.settings.tabs.notifications'), icon: Bell },
+    { id: 'shipping' as TabType, label: t('admin.settings.tabs.shipping'), icon: Package },
   ];
 
   if (loading) {
@@ -226,7 +223,7 @@ export default function SettingsPage() {
   if (!settings) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Impossible de charger les paramètres</p>
+        <p className="text-gray-500">{t('admin.settings.loadFailed')}</p>
       </div>
     );
   }
@@ -238,20 +235,20 @@ export default function SettingsPage() {
         <div className="flex items-center space-x-3">
           <SettingsIcon className="w-8 h-8 text-gray-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Paramètres de la plateforme</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('admin.settings.title')}</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Configurez tous les paramètres de votre plateforme
+              {t('admin.settings.subtitle')}
             </p>
           </div>
         </div>
-        
+
         <button
           onClick={handleSave}
           disabled={saving}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          {saving ? 'Enregistrement...' : 'Enregistrer'}
+          {saving ? t('admin.settings.saving') : t('admin.settings.save')}
         </button>
       </div>
 
@@ -291,12 +288,12 @@ export default function SettingsPage() {
           {/* General Tab */}
           {activeTab === 'general' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Paramètres généraux</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.general.title')}</h2>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom de la plateforme
+                    {t('admin.settings.general.platformName')}
                   </label>
                   <input
                     type="text"
@@ -305,10 +302,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL de la plateforme
+                    {t('admin.settings.general.platformUrl')}
                   </label>
                   <input
                     type="url"
@@ -317,10 +314,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email de support
+                    {t('admin.settings.general.supportEmail')}
                   </label>
                   <input
                     type="email"
@@ -329,10 +326,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Téléphone de support
+                    {t('admin.settings.general.supportPhone')}
                   </label>
                   <input
                     type="tel"
@@ -341,18 +338,37 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Frais de plateforme (%)
+                    {t('admin.settings.general.senderFee')}
                   </label>
                   <input
                     type="number"
                     step="0.01"
-                    value={settings.platform_fee_percentage}
-                    onChange={(e) => updateSetting('platform_fee_percentage', parseFloat(e.target.value))}
+                    min="0"
+                    max="100"
+                    value={settings.sender_fee_percentage}
+                    onChange={(e) => updateSetting('sender_fee_percentage', parseFloat(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  <p className="text-xs text-gray-500 mt-1">{t('admin.settings.general.senderFeeHelp')}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('admin.settings.general.travelerFee')}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={settings.traveler_fee_percentage}
+                    onChange={(e) => updateSetting('traveler_fee_percentage', parseFloat(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{t('admin.settings.general.travelerFeeHelp')}</p>
                 </div>
               </div>
             </div>
@@ -361,12 +377,12 @@ export default function SettingsPage() {
           {/* SMTP Tab */}
           {activeTab === 'smtp' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Configuration SMTP</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.smtp.title')}</h2>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Hôte SMTP
+                    {t('admin.settings.smtp.host')}
                   </label>
                   <input
                     type="text"
@@ -376,10 +392,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Port SMTP
+                    {t('admin.settings.smtp.port')}
                   </label>
                   <input
                     type="number"
@@ -389,10 +405,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom d'utilisateur SMTP
+                    {t('admin.settings.smtp.username')}
                   </label>
                   <input
                     type="text"
@@ -401,10 +417,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mot de passe SMTP
+                    {t('admin.settings.smtp.password')}
                   </label>
                   <input
                     type="password"
@@ -413,10 +429,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Chiffrement
+                    {t('admin.settings.smtp.encryption')}
                   </label>
                   <select
                     value={settings.smtp_encryption}
@@ -425,13 +441,13 @@ export default function SettingsPage() {
                   >
                     <option value="tls">TLS</option>
                     <option value="ssl">SSL</option>
-                    <option value="none">Aucun</option>
+                    <option value="none">{t('admin.settings.smtp.encryptionNone')}</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adresse d'expéditeur
+                    {t('admin.settings.smtp.fromAddress')}
                   </label>
                   <input
                     type="email"
@@ -440,10 +456,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom d'expéditeur
+                    {t('admin.settings.smtp.fromName')}
                   </label>
                   <input
                     type="text"
@@ -453,10 +469,10 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> Pour Gmail, vous devez activer "Accès moins sécurisé" ou utiliser un mot de passe d'application.
+                  <strong>Note:</strong> {t('admin.settings.smtp.gmailNote')}
                 </p>
               </div>
             </div>
@@ -465,19 +481,19 @@ export default function SettingsPage() {
           {/* Payment Tab */}
           {activeTab === 'payment' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Configuration des paiements</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.payment.title')}</h2>
+
               <div className="space-y-6">
                 {/* Stripe */}
                 <div className="border-b pb-6">
                   <div className="flex items-center gap-2 mb-4">
                     <CreditCard className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-md font-medium text-gray-900">Stripe (Cartes bancaires)</h3>
+                    <h3 className="text-md font-medium text-gray-900">{t('admin.settings.payment.stripeTitle')}</h3>
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Clé publique Stripe
+                        {t('admin.settings.payment.stripePublicKey')}
                       </label>
                       <input
                         type="text"
@@ -487,10 +503,10 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Clé secrète Stripe
+                        {t('admin.settings.payment.stripeSecretKey')}
                       </label>
                       <input
                         type="password"
@@ -500,10 +516,10 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Secret Webhook Stripe
+                        {t('admin.settings.payment.stripeWebhookSecret')}
                       </label>
                       <input
                         type="password"
@@ -520,35 +536,33 @@ export default function SettingsPage() {
                 <div className="border-b pb-6">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-5 h-5 bg-orange-500 rounded-full" />
-                    <h3 className="text-md font-medium text-gray-900">Orange Money</h3>
+                    <h3 className="text-md font-medium text-gray-900">{t('admin.settings.payment.orangeMoneyTitle')}</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        API Key Orange Money
+                        {t('admin.settings.payment.orangeMoneyApiKey')}
                       </label>
                       <input
                         type="password"
                         value={settings.orange_money_api_key || ''}
                         onChange={(e) => updateSetting('orange_money_api_key', e.target.value)}
-                        placeholder="Clé API Orange Money"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Merchant ID
+                        {t('admin.settings.payment.orangeMoneyMerchantId')}
                       </label>
                       <input
                         type="text"
                         value={settings.orange_money_merchant_id || ''}
                         onChange={(e) => updateSetting('orange_money_merchant_id', e.target.value)}
-                        placeholder="ID Marchand"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div className="md:col-span-2">
                       <label className="flex items-center gap-2">
                         <input
@@ -557,7 +571,7 @@ export default function SettingsPage() {
                           onChange={(e) => updateSetting('orange_money_enabled', e.target.checked)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">Activer Orange Money</span>
+                        <span className="text-sm text-gray-700">{t('admin.settings.payment.enableOrangeMoney')}</span>
                       </label>
                     </div>
                   </div>
@@ -567,35 +581,33 @@ export default function SettingsPage() {
                 <div className="border-b pb-6">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-5 h-5 bg-yellow-500 rounded-full" />
-                    <h3 className="text-md font-medium text-gray-900">MTN Money</h3>
+                    <h3 className="text-md font-medium text-gray-900">{t('admin.settings.payment.mtnMoneyTitle')}</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        API Key MTN Money
+                        {t('admin.settings.payment.mtnMoneyApiKey')}
                       </label>
                       <input
                         type="password"
                         value={settings.mtn_money_api_key || ''}
                         onChange={(e) => updateSetting('mtn_money_api_key', e.target.value)}
-                        placeholder="Clé API MTN Money"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Subscription Key
+                        {t('admin.settings.payment.mtnSubscriptionKey')}
                       </label>
                       <input
                         type="password"
                         value={settings.mtn_money_subscription_key || ''}
                         onChange={(e) => updateSetting('mtn_money_subscription_key', e.target.value)}
-                        placeholder="Clé d'abonnement"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div className="md:col-span-2">
                       <label className="flex items-center gap-2">
                         <input
@@ -604,22 +616,22 @@ export default function SettingsPage() {
                           onChange={(e) => updateSetting('mtn_money_enabled', e.target.checked)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">Activer MTN Money</span>
+                        <span className="text-sm text-gray-700">{t('admin.settings.payment.enableMtnMoney')}</span>
                       </label>
                     </div>
                   </div>
                 </div>
 
-                {/* Virement bancaire */}
+                {/* Bank Transfer */}
                 <div className="border-b pb-6">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-5 h-5 bg-green-600 rounded" />
-                    <h3 className="text-md font-medium text-gray-900">Virement bancaire</h3>
+                    <h3 className="text-md font-medium text-gray-900">{t('admin.settings.payment.bankTransferTitle')}</h3>
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nom de la banque
+                        {t('admin.settings.payment.bankName')}
                       </label>
                       <input
                         type="text"
@@ -629,11 +641,11 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          IBAN
+                          {t('admin.settings.payment.bankIban')}
                         </label>
                         <input
                           type="text"
@@ -643,10 +655,10 @@ export default function SettingsPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          BIC/SWIFT
+                          {t('admin.settings.payment.bankBic')}
                         </label>
                         <input
                           type="text"
@@ -657,7 +669,7 @@ export default function SettingsPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="flex items-center gap-2">
                         <input
@@ -666,7 +678,7 @@ export default function SettingsPage() {
                           onChange={(e) => updateSetting('bank_transfer_enabled', e.target.checked)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">Activer les virements bancaires</span>
+                        <span className="text-sm text-gray-700">{t('admin.settings.payment.enableBankTransfer')}</span>
                       </label>
                     </div>
                   </div>
@@ -676,7 +688,7 @@ export default function SettingsPage() {
                 <div className="border-b pb-6">
                   <div className="flex items-center gap-2 mb-4">
                     <DollarSign className="w-5 h-5 text-green-600" />
-                    <h3 className="text-md font-medium text-gray-900">Paiement en espèces</h3>
+                    <h3 className="text-md font-medium text-gray-900">{t('admin.settings.payment.cashTitle')}</h3>
                   </div>
                   <div className="space-y-4">
                     <div>
@@ -687,25 +699,25 @@ export default function SettingsPage() {
                           onChange={(e) => updateSetting('cash_payment_enabled', e.target.checked)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">Autoriser les paiements en espèces</span>
+                        <span className="text-sm text-gray-700">{t('admin.settings.payment.enableCash')}</span>
                       </label>
                     </div>
-                    
+
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                       <p className="text-sm text-yellow-800">
-                        <strong>Note:</strong> Les paiements en espèces doivent être effectués en personne lors de la remise du colis. Assurez-vous que les utilisateurs comprennent les risques.
+                        <strong>Note:</strong> {t('admin.settings.payment.cashNote')}
                       </p>
                     </div>
                   </div>
                 </div>
-                
-                {/* Retraits */}
+
+                {/* Withdrawals */}
                 <div>
-                  <h3 className="text-md font-medium text-gray-900 mb-4">Paramètres de retrait</h3>
+                  <h3 className="text-md font-medium text-gray-900 mb-4">{t('admin.settings.payment.withdrawalTitle')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Frais de retrait (€)
+                        {t('admin.settings.payment.withdrawalFee')}
                       </label>
                       <input
                         type="number"
@@ -715,10 +727,10 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Retrait minimum (€)
+                        {t('admin.settings.payment.minWithdrawal')}
                       </label>
                       <input
                         type="number"
@@ -728,10 +740,10 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Retrait maximum (€)
+                        {t('admin.settings.payment.maxWithdrawal')}
                       </label>
                       <input
                         type="number"
@@ -750,12 +762,12 @@ export default function SettingsPage() {
           {/* Branding Tab */}
           {activeTab === 'branding' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Branding et apparence</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.branding.title')}</h2>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL du logo
+                    {t('admin.settings.branding.logoUrl')}
                   </label>
                   <input
                     type="text"
@@ -770,10 +782,10 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL du favicon
+                    {t('admin.settings.branding.faviconUrl')}
                   </label>
                   <input
                     type="text"
@@ -783,10 +795,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Couleur primaire
+                    {t('admin.settings.branding.primaryColor')}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -803,10 +815,10 @@ export default function SettingsPage() {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Couleur secondaire
+                    {t('admin.settings.branding.secondaryColor')}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -830,12 +842,12 @@ export default function SettingsPage() {
           {/* Currency Tab */}
           {activeTab === 'currency' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Gestion des devises</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.currency.title')}</h2>
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Devise par défaut
+                    {t('admin.settings.currency.defaultCurrency')}
                   </label>
                   <select
                     value={settings.default_currency}
@@ -843,18 +855,18 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="EUR">EUR - Euro</option>
-                    <option value="USD">USD - Dollar américain</option>
-                    <option value="GBP">GBP - Livre sterling</option>
+                    <option value="USD">USD - Dollar</option>
+                    <option value="GBP">GBP - Pound</option>
                     <option value="XAF">XAF - Franc CFA (CEMAC)</option>
                     <option value="XOF">XOF - Franc CFA (UEMOA)</option>
-                    <option value="RUB">RUB - Rouble russe</option>
+                    <option value="RUB">RUB - Rouble</option>
                     <option value="CAD">CAD - Dollar canadien</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Devises supportées
+                    {t('admin.settings.currency.supportedCurrencies')}
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {['EUR', 'USD', 'GBP', 'XAF', 'XOF', 'RUB', 'CAD', 'CHF'].map((currency) => (
@@ -882,13 +894,13 @@ export default function SettingsPage() {
           {/* Security Tab */}
           {activeTab === 'security' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Paramètres de sécurité</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.security.title')}</h2>
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900">KYC obligatoire</h3>
-                    <p className="text-sm text-gray-500">Exiger la vérification KYC pour tous les utilisateurs</p>
+                    <h3 className="text-sm font-medium text-gray-900">{t('admin.settings.security.kycRequired')}</h3>
+                    <p className="text-sm text-gray-500">{t('admin.settings.security.kycRequiredDesc')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -900,11 +912,11 @@ export default function SettingsPage() {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900">Authentification à deux facteurs</h3>
-                    <p className="text-sm text-gray-500">Activer 2FA pour les administrateurs</p>
+                    <h3 className="text-sm font-medium text-gray-900">{t('admin.settings.security.twoFactor')}</h3>
+                    <p className="text-sm text-gray-500">{t('admin.settings.security.twoFactorDesc')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -916,11 +928,11 @@ export default function SettingsPage() {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Timeout de session (secondes)
+                      {t('admin.settings.security.sessionTimeout')}
                     </label>
                     <input
                       type="number"
@@ -928,12 +940,12 @@ export default function SettingsPage() {
                       onChange={(e) => updateSetting('session_timeout', parseInt(e.target.value))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <p className="text-xs text-gray-500 mt-1">3600 = 1 heure</p>
+                    <p className="text-xs text-gray-500 mt-1">{t('admin.settings.security.sessionTimeoutHint')}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tentatives de connexion max
+                      {t('admin.settings.security.maxLoginAttempts')}
                     </label>
                     <input
                       type="number"
@@ -950,13 +962,13 @@ export default function SettingsPage() {
           {/* Notifications Tab */}
           {activeTab === 'notifications' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Paramètres de notifications</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.notifications.title')}</h2>
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900">Notifications par email</h3>
-                    <p className="text-sm text-gray-500">Envoyer des notifications par email aux utilisateurs</p>
+                    <h3 className="text-sm font-medium text-gray-900">{t('admin.settings.notifications.email')}</h3>
+                    <p className="text-sm text-gray-500">{t('admin.settings.notifications.emailDesc')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -968,11 +980,11 @@ export default function SettingsPage() {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900">Notifications push</h3>
-                    <p className="text-sm text-gray-500">Envoyer des notifications push aux applications mobiles</p>
+                    <h3 className="text-sm font-medium text-gray-900">{t('admin.settings.notifications.push')}</h3>
+                    <p className="text-sm text-gray-500">{t('admin.settings.notifications.pushDesc')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -984,11 +996,11 @@ export default function SettingsPage() {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900">Notifications SMS</h3>
-                    <p className="text-sm text-gray-500">Envoyer des notifications par SMS (nécessite un service SMS)</p>
+                    <h3 className="text-sm font-medium text-gray-900">{t('admin.settings.notifications.sms')}</h3>
+                    <p className="text-sm text-gray-500">{t('admin.settings.notifications.smsDesc')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -1007,12 +1019,12 @@ export default function SettingsPage() {
           {/* Shipping Tab */}
           {activeTab === 'shipping' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Paramètres d'expédition</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.shipping.title')}</h2>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prix minimum d'expédition (€)
+                    {t('admin.settings.shipping.minPrice')}
                   </label>
                   <input
                     type="number"
@@ -1022,10 +1034,10 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prix maximum d'expédition (€)
+                    {t('admin.settings.shipping.maxPrice')}
                   </label>
                   <input
                     type="number"
@@ -1036,10 +1048,10 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Ces limites s'appliquent aux prix par kilogramme définis par les voyageurs.
+                  <strong>Note:</strong> {t('admin.settings.shipping.priceNote')}
                 </p>
               </div>
             </div>
@@ -1049,13 +1061,13 @@ export default function SettingsPage() {
 
       {/* Info Box */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">Notes importantes</h3>
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">{t('admin.settings.notes.title')}</h3>
         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-          <li>Les modifications prennent effet immédiatement sur toute la plateforme</li>
-          <li>Toutes les modifications sont enregistrées dans le journal d'audit</li>
-          <li>Assurez-vous de tester les paramètres SMTP avant de les activer en production</li>
-          <li>Les clés API Stripe doivent être gardées confidentielles</li>
-          <li>Sauvegardez régulièrement vos paramètres</li>
+          <li>{t('admin.settings.notes.immediate')}</li>
+          <li>{t('admin.settings.notes.audit')}</li>
+          <li>{t('admin.settings.notes.testSmtp')}</li>
+          <li>{t('admin.settings.notes.stripeKeys')}</li>
+          <li>{t('admin.settings.notes.backup')}</li>
         </ul>
       </div>
     </div>

@@ -897,6 +897,120 @@
         "deleted": "Country deleted successfully"
       }
     },
+    "settings": {
+      "title": "Platform Settings",
+      "subtitle": "Configure all platform parameters",
+      "saving": "Saving...",
+      "save": "Save",
+      "tabs": {
+        "general": "General",
+        "smtp": "SMTP / Email",
+        "payment": "Payment",
+        "branding": "Branding",
+        "currency": "Currencies",
+        "security": "Security",
+        "notifications": "Notifications",
+        "shipping": "Shipping"
+      },
+      "general": {
+        "title": "General Settings",
+        "platformName": "Platform name",
+        "platformUrl": "Platform URL",
+        "supportEmail": "Support email",
+        "supportPhone": "Support phone",
+        "senderFee": "Sender fee (%)",
+        "senderFeeHelp": "Commission added to the base price, charged to the sender",
+        "travelerFee": "Traveler fee (%)",
+        "travelerFeeHelp": "Commission deducted from the base price, charged to the traveler"
+      },
+      "smtp": {
+        "title": "SMTP Configuration",
+        "host": "SMTP Host",
+        "port": "SMTP Port",
+        "username": "SMTP Username",
+        "password": "SMTP Password",
+        "encryption": "Encryption",
+        "encryptionNone": "None",
+        "fromAddress": "Sender address",
+        "fromName": "Sender name",
+        "gmailNote": "For Gmail, you need to enable \"Less secure access\" or use an app password."
+      },
+      "payment": {
+        "title": "Payment Configuration",
+        "stripeTitle": "Stripe (Bank cards)",
+        "stripePublicKey": "Stripe public key",
+        "stripeSecretKey": "Stripe secret key",
+        "stripeWebhookSecret": "Stripe webhook secret",
+        "orangeMoneyTitle": "Orange Money",
+        "orangeMoneyApiKey": "Orange Money API Key",
+        "orangeMoneyMerchantId": "Merchant ID",
+        "enableOrangeMoney": "Enable Orange Money",
+        "mtnMoneyTitle": "MTN Money",
+        "mtnMoneyApiKey": "MTN Money API Key",
+        "mtnSubscriptionKey": "Subscription Key",
+        "enableMtnMoney": "Enable MTN Money",
+        "bankTransferTitle": "Bank Transfer",
+        "bankName": "Bank name",
+        "bankIban": "IBAN",
+        "bankBic": "BIC/SWIFT",
+        "enableBankTransfer": "Enable bank transfers",
+        "cashTitle": "Cash Payment",
+        "enableCash": "Allow cash payments",
+        "cashNote": "Cash payments must be made in person when handing over the parcel. Make sure users understand the risks.",
+        "withdrawalTitle": "Withdrawal Settings",
+        "withdrawalFee": "Withdrawal fee",
+        "minWithdrawal": "Minimum withdrawal",
+        "maxWithdrawal": "Maximum withdrawal"
+      },
+      "branding": {
+        "title": "Branding & Appearance",
+        "logoUrl": "Logo URL",
+        "faviconUrl": "Favicon URL",
+        "primaryColor": "Primary color",
+        "secondaryColor": "Secondary color"
+      },
+      "currency": {
+        "title": "Currency Management",
+        "defaultCurrency": "Default currency",
+        "supportedCurrencies": "Supported currencies"
+      },
+      "security": {
+        "title": "Security Settings",
+        "kycRequired": "Mandatory KYC",
+        "kycRequiredDesc": "Require KYC verification for all users",
+        "twoFactor": "Two-factor authentication",
+        "twoFactorDesc": "Enable 2FA for administrators",
+        "sessionTimeout": "Session timeout (seconds)",
+        "sessionTimeoutHint": "3600 = 1 hour",
+        "maxLoginAttempts": "Max login attempts"
+      },
+      "notifications": {
+        "title": "Notification Settings",
+        "email": "Email notifications",
+        "emailDesc": "Send email notifications to users",
+        "push": "Push notifications",
+        "pushDesc": "Send push notifications to mobile apps",
+        "sms": "SMS notifications",
+        "smsDesc": "Send notifications via SMS (requires SMS service)"
+      },
+      "shipping": {
+        "title": "Shipping Settings",
+        "minPrice": "Minimum shipping price",
+        "maxPrice": "Maximum shipping price",
+        "priceNote": "These limits apply to the per-kilogram prices set by travelers."
+      },
+      "notes": {
+        "title": "Important notes",
+        "immediate": "Changes take effect immediately across the entire platform",
+        "audit": "All changes are recorded in the audit log",
+        "testSmtp": "Make sure to test SMTP settings before enabling in production",
+        "stripeKeys": "Stripe API keys must be kept confidential",
+        "backup": "Regularly back up your settings"
+      },
+      "loadFailed": "Unable to load settings",
+      "success": "Settings saved successfully",
+      "error": "Error saving settings"
+    },
     "cities": {
       "title": "City Management",
       "subtitle": "Manage cities for each country",

@@ -20,7 +20,8 @@ class UpdateSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'platform_fee_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'sender_fee_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'traveler_fee_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
             'withdrawal_fee' => ['sometimes', 'numeric', 'min:0'],
             'min_withdrawal_amount' => ['sometimes', 'numeric', 'min:0'],
             'max_withdrawal_amount' => ['sometimes', 'numeric', 'gt:min_withdrawal_amount'],
@@ -35,8 +36,10 @@ class UpdateSettingsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'platform_fee_percentage.min' => 'Platform fee percentage cannot be negative',
-            'platform_fee_percentage.max' => 'Platform fee percentage cannot exceed 100',
+            'sender_fee_percentage.min' => 'Sender fee percentage cannot be negative',
+            'sender_fee_percentage.max' => 'Sender fee percentage cannot exceed 100',
+            'traveler_fee_percentage.min' => 'Traveler fee percentage cannot be negative',
+            'traveler_fee_percentage.max' => 'Traveler fee percentage cannot exceed 100',
             'withdrawal_fee.min' => 'Withdrawal fee cannot be negative',
             'min_withdrawal_amount.min' => 'Minimum withdrawal amount cannot be negative',
             'max_withdrawal_amount.gt' => 'Maximum withdrawal amount must be greater than minimum',

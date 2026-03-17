@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Models\PlatformSetting;
 use App\Models\Shipment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,16 +31,14 @@ class PaymentService
      */
     public function createPaymentIntent(Shipment $shipment): Payment
     {
-        // Calculate fees
-        $amount = $shipment->payment_amount;
+        // Calculate fees using double commission model
+        $baseAmount = $shipment->payment_amount;
         $currencyCode = $shipment->trip->currency_code ?? config('stripe.currency', 'eur');
-        $platformFeePercentage = config('stripe.platform_fee_percentage', 15);
-        $platformFee = round($amount * ($platformFeePercentage / 100), 2);
-        $travelerAmount = round($amount - $platformFee, 2);
+        $fees = PlatformSetting::calculateFees($baseAmount);
 
-        // Create Stripe PaymentIntent (amount in smallest currency unit)
+        // Create Stripe PaymentIntent — charge sender the full amount (base + sender_fee)
         $paymentIntent = PaymentIntent::create([
-            'amount' => $this->currencyService->getStripeAmount($amount, $currencyCode),
+            'amount' => $this->currencyService->getStripeAmount($fees['total_sender_pays'], $currencyCode),
             'currency' => strtolower($currencyCode),
             'metadata' => [
                 'shipment_id' => $shipment->id,
@@ -50,14 +49,12 @@ class PaymentService
             'description' => "Payment for shipment {$shipment->id}",
         ]);
 
-        // Create Payment record
+        // Create Payment record — observer will compute fees from base_amount
         $payment = Payment::create([
             'shipment_id' => $shipment->id,
             'payer_id' => $shipment->sender_id,
             'payee_id' => $shipment->traveler_id,
-            'amount' => $amount,
-            'platform_fee' => $platformFee,
-            'traveler_amount' => $travelerAmount,
+            'base_amount' => $baseAmount,
             'currency_code' => strtoupper($currencyCode),
             'payment_method' => 'card',
             'transaction_id' => $paymentIntent->id,
@@ -70,7 +67,10 @@ class PaymentService
         Log::info('Payment intent created', [
             'payment_id' => $payment->id,
             'shipment_id' => $shipment->id,
-            'amount' => $amount,
+            'base_amount' => $baseAmount,
+            'total_charged' => $payment->amount,
+            'sender_fee' => $payment->sender_fee,
+            'traveler_fee' => $payment->traveler_fee,
             'transaction_id' => $paymentIntent->id,
         ]);
 
@@ -115,9 +115,8 @@ class PaymentService
         
         try {
             DB::transaction(function () use ($payment) {
-                // Calculate amounts (15% platform fee, 85% to traveler)
-                $platformFee = $payment->amount * 0.15;
-                $travelerAmount = $payment->amount * 0.85;
+                // Use stored values from double commission model
+                $travelerAmount = (float) $payment->traveler_amount;
                 $paymentCurrency = $payment->currency_code ?? 'EUR';
 
                 $wallet = $payment->payee->wallet;
@@ -126,8 +125,11 @@ class PaymentService
                 Log::info('Payment release initiated', [
                     'payment_id' => $payment->id,
                     'shipment_id' => $payment->shipment_id,
+                    'base_amount' => $payment->base_amount,
                     'total_amount' => $payment->amount,
-                    'platform_fee' => $platformFee,
+                    'sender_fee' => $payment->sender_fee,
+                    'traveler_fee' => $payment->traveler_fee,
+                    'platform_fee' => $payment->platform_fee,
                     'traveler_amount' => $travelerAmount,
                     'payment_currency' => $paymentCurrency,
                     'wallet_currency' => $walletCurrency,

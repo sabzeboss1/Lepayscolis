@@ -897,6 +897,120 @@
         "deleted": "Pays supprimé avec succès"
       }
     },
+    "settings": {
+      "title": "Paramètres de la plateforme",
+      "subtitle": "Configurez tous les paramètres de votre plateforme",
+      "saving": "Enregistrement...",
+      "save": "Enregistrer",
+      "tabs": {
+        "general": "Général",
+        "smtp": "SMTP / Email",
+        "payment": "Paiement",
+        "branding": "Branding",
+        "currency": "Devises",
+        "security": "Sécurité",
+        "notifications": "Notifications",
+        "shipping": "Expédition"
+      },
+      "general": {
+        "title": "Paramètres généraux",
+        "platformName": "Nom de la plateforme",
+        "platformUrl": "URL de la plateforme",
+        "supportEmail": "Email de support",
+        "supportPhone": "Téléphone de support",
+        "senderFee": "Frais expéditeur (%)",
+        "senderFeeHelp": "Commission ajoutée au prix de base, facturée à l'expéditeur",
+        "travelerFee": "Frais voyageur (%)",
+        "travelerFeeHelp": "Commission déduite du prix de base, facturée au voyageur"
+      },
+      "smtp": {
+        "title": "Configuration SMTP",
+        "host": "Hôte SMTP",
+        "port": "Port SMTP",
+        "username": "Nom d'utilisateur SMTP",
+        "password": "Mot de passe SMTP",
+        "encryption": "Chiffrement",
+        "encryptionNone": "Aucun",
+        "fromAddress": "Adresse d'expéditeur",
+        "fromName": "Nom d'expéditeur",
+        "gmailNote": "Pour Gmail, vous devez activer \"Accès moins sécurisé\" ou utiliser un mot de passe d'application."
+      },
+      "payment": {
+        "title": "Configuration des paiements",
+        "stripeTitle": "Stripe (Cartes bancaires)",
+        "stripePublicKey": "Clé publique Stripe",
+        "stripeSecretKey": "Clé secrète Stripe",
+        "stripeWebhookSecret": "Secret Webhook Stripe",
+        "orangeMoneyTitle": "Orange Money",
+        "orangeMoneyApiKey": "API Key Orange Money",
+        "orangeMoneyMerchantId": "Merchant ID",
+        "enableOrangeMoney": "Activer Orange Money",
+        "mtnMoneyTitle": "MTN Money",
+        "mtnMoneyApiKey": "API Key MTN Money",
+        "mtnSubscriptionKey": "Clé d'abonnement",
+        "enableMtnMoney": "Activer MTN Money",
+        "bankTransferTitle": "Virement bancaire",
+        "bankName": "Nom de la banque",
+        "bankIban": "IBAN",
+        "bankBic": "BIC/SWIFT",
+        "enableBankTransfer": "Activer les virements bancaires",
+        "cashTitle": "Paiement en espèces",
+        "enableCash": "Autoriser les paiements en espèces",
+        "cashNote": "Les paiements en espèces doivent être effectués en personne lors de la remise du colis. Assurez-vous que les utilisateurs comprennent les risques.",
+        "withdrawalTitle": "Paramètres de retrait",
+        "withdrawalFee": "Frais de retrait",
+        "minWithdrawal": "Retrait minimum",
+        "maxWithdrawal": "Retrait maximum"
+      },
+      "branding": {
+        "title": "Branding et apparence",
+        "logoUrl": "URL du logo",
+        "faviconUrl": "URL du favicon",
+        "primaryColor": "Couleur primaire",
+        "secondaryColor": "Couleur secondaire"
+      },
+      "currency": {
+        "title": "Gestion des devises",
+        "defaultCurrency": "Devise par défaut",
+        "supportedCurrencies": "Devises supportées"
+      },
+      "security": {
+        "title": "Paramètres de sécurité",
+        "kycRequired": "KYC obligatoire",
+        "kycRequiredDesc": "Exiger la vérification KYC pour tous les utilisateurs",
+        "twoFactor": "Authentification à deux facteurs",
+        "twoFactorDesc": "Activer 2FA pour les administrateurs",
+        "sessionTimeout": "Timeout de session (secondes)",
+        "sessionTimeoutHint": "3600 = 1 heure",
+        "maxLoginAttempts": "Tentatives de connexion max"
+      },
+      "notifications": {
+        "title": "Paramètres de notifications",
+        "email": "Notifications par email",
+        "emailDesc": "Envoyer des notifications par email aux utilisateurs",
+        "push": "Notifications push",
+        "pushDesc": "Envoyer des notifications push aux applications mobiles",
+        "sms": "Notifications SMS",
+        "smsDesc": "Envoyer des notifications par SMS (nécessite un service SMS)"
+      },
+      "shipping": {
+        "title": "Paramètres d'expédition",
+        "minPrice": "Prix minimum d'expédition",
+        "maxPrice": "Prix maximum d'expédition",
+        "priceNote": "Ces limites s'appliquent aux prix par kilogramme définis par les voyageurs."
+      },
+      "notes": {
+        "title": "Notes importantes",
+        "immediate": "Les modifications prennent effet immédiatement sur toute la plateforme",
+        "audit": "Toutes les modifications sont enregistrées dans le journal d'audit",
+        "testSmtp": "Assurez-vous de tester les paramètres SMTP avant de les activer en production",
+        "stripeKeys": "Les clés API Stripe doivent être gardées confidentielles",
+        "backup": "Sauvegardez régulièrement vos paramètres"
+      },
+      "loadFailed": "Impossible de charger les paramètres",
+      "success": "Paramètres enregistrés avec succès",
+      "error": "Erreur lors de l'enregistrement"
+    },
     "cities": {
       "title": "Gestion des villes",
       "subtitle": "Gérez les villes pour chaque pays",
