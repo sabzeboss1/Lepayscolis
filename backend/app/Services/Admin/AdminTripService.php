@@ -54,6 +54,11 @@ class AdminTripService
             $query->where('status', $filters['status']);
         }
 
+        // Filter by verification status
+        if (!empty($filters['verification_status'])) {
+            $query->where('verification_status', $filters['verification_status']);
+        }
+
         // Sort
         $sortBy = $filters['sort_by'] ?? 'newest';
         if ($sortBy === 'departure') {
@@ -160,6 +165,113 @@ class AdminTripService
     }
 
     /**
+     * Get paginated trips pending verification.
+     */
+    public function getPendingTrips(int $perPage = 50): LengthAwarePaginator
+    {
+        return Trip::with(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity'])
+            ->pendingVerification()
+            ->latest('created_at')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Verify (approve) a trip.
+     */
+    public function verifyTrip(string $tripId, User $admin): Trip
+    {
+        $trip = Trip::findOrFail($tripId);
+
+        $before = ['verification_status' => $trip->verification_status];
+
+        $trip->update([
+            'verification_status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+            'rejection_reason' => null,
+        ]);
+
+        $after = ['verification_status' => 'verified'];
+
+        AuditLog::log($admin, 'verify', 'trip', $trip->id, $before, $after);
+
+        $this->notificationService->sendTripVerifiedNotification($trip);
+
+        return $trip->fresh();
+    }
+
+    /**
+     * Reject a trip with reason.
+     */
+    public function rejectTrip(string $tripId, string $reason, User $admin): Trip
+    {
+        $trip = Trip::findOrFail($tripId);
+
+        $before = ['verification_status' => $trip->verification_status];
+
+        $trip->update([
+            'verification_status' => 'rejected',
+            'rejection_reason' => $reason,
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+
+        $after = ['verification_status' => 'rejected', 'reason' => $reason];
+
+        AuditLog::log($admin, 'reject', 'trip', $trip->id, $before, $after);
+
+        $this->notificationService->sendTripRejectedNotification($trip, $reason);
+
+        return $trip->fresh();
+    }
+
+    /**
+     * Bulk verify trips.
+     */
+    public function bulkVerifyTrips(array $tripIds, User $admin): array
+    {
+        $verified = [];
+        $failed = [];
+
+        foreach ($tripIds as $tripId) {
+            try {
+                $this->verifyTrip($tripId, $admin);
+                $verified[] = $tripId;
+            } catch (\Exception $e) {
+                $failed[] = $tripId;
+            }
+        }
+
+        return [
+            'verified' => $verified,
+            'failed' => $failed,
+        ];
+    }
+
+    /**
+     * Bulk reject trips.
+     */
+    public function bulkRejectTrips(array $tripIds, string $reason, User $admin): array
+    {
+        $rejected = [];
+        $failed = [];
+
+        foreach ($tripIds as $tripId) {
+            try {
+                $this->rejectTrip($tripId, $reason, $admin);
+                $rejected[] = $tripId;
+            } catch (\Exception $e) {
+                $failed[] = $tripId;
+            }
+        }
+
+        return [
+            'rejected' => $rejected,
+            'failed' => $failed,
+        ];
+    }
+
+    /**
      * Get trip analytics.
      *
      * @return array
@@ -207,6 +319,12 @@ class AdminTripService
         $timeline = [
             ['event' => 'Trip created', 'date' => $trip->created_at],
         ];
+
+        if ($trip->verification_status === 'verified' && $trip->verified_at) {
+            $timeline[] = ['event' => 'Trip verified', 'date' => $trip->verified_at];
+        } elseif ($trip->verification_status === 'rejected' && $trip->verified_at) {
+            $timeline[] = ['event' => 'Trip rejected', 'date' => $trip->verified_at];
+        }
 
         if ($trip->status === 'completed') {
             $timeline[] = ['event' => 'Trip completed', 'date' => $trip->updated_at];

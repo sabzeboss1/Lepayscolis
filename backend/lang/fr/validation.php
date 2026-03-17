@@ -40,6 +40,7 @@ return [
         'pickup_address_min' => 'L\'adresse de collecte doit contenir au moins 5 caractères.',
         'delivery_address_required' => 'L\'adresse de livraison est obligatoire.',
         'delivery_address_min' => 'L\'adresse de livraison doit contenir au moins 5 caractères.',
+        'travel_proof_required' => 'Une preuve de voyage est obligatoire.',
         'travel_proof_mimes' => 'La preuve de voyage doit être un fichier de type : pdf, jpg, jpeg, png.',
         'travel_proof_max' => 'La preuve de voyage ne doit pas dépasser 5 Mo.',
         'currency_required' => 'La devise est obligatoire.',

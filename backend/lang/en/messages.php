@@ -22,6 +22,11 @@ return [
         'updated' => 'Trip updated successfully.',
         'deleted' => 'Trip deleted successfully.',
         'unauthorized' => 'You are not authorized to access this trip.',
+        'verified' => 'Trip verified successfully.',
+        'rejected' => 'Trip rejected successfully.',
+        'bulk_verified' => ':count trip(s) verified successfully.',
+        'bulk_rejected' => ':count trip(s) rejected successfully.',
+        'not_pending' => 'This trip is not pending verification.',
     ],
 
     'shipment' => [

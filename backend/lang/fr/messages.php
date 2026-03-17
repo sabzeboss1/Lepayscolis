@@ -22,6 +22,11 @@ return [
         'updated' => 'Voyage mis à jour avec succès.',
         'deleted' => 'Voyage supprimé avec succès.',
         'unauthorized' => 'Vous n\'êtes pas autorisé à accéder à ce voyage.',
+        'verified' => 'Voyage vérifié avec succès.',
+        'rejected' => 'Voyage rejeté avec succès.',
+        'bulk_verified' => ':count voyage(s) vérifié(s) avec succès.',
+        'bulk_rejected' => ':count voyage(s) rejeté(s) avec succès.',
+        'not_pending' => 'Ce voyage n\'est pas en attente de vérification.',
     ],
 
     'shipment' => [
