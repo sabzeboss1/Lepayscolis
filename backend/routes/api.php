@@ -72,7 +72,8 @@ Route::prefix('trips')->group(function () {
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/my', [TripController::class, 'myTrips']);
-        
+        Route::get('/{id}/shipments', [TripController::class, 'shipments']);
+
         // Routes requiring KYC verification
         Route::middleware('kyc.verified')->group(function () {
             Route::post('/', [TripController::class, 'store']);
@@ -105,6 +106,7 @@ Route::prefix('shipments')->group(function () {
             Route::put('/{id}', [ShipmentController::class, 'update']);
             Route::post('/{id}/confirm-delivery', [ShipmentController::class, 'confirmDelivery']);
             Route::post('/{id}/accept', [ShipmentController::class, 'accept']);
+            Route::post('/{id}/reject', [ShipmentController::class, 'reject']);
         });
     });
     

@@ -72,6 +72,9 @@ return [
         'pickup_address_max' => 'Pickup address must not exceed 500 characters.',
         'delivery_address_max' => 'Delivery address must not exceed 500 characters.',
         'city_country_mismatch' => 'The selected city does not belong to the selected country.',
+        'insufficient_capacity' => 'The selected trip does not have sufficient capacity for this shipment.',
+        'not_trip_owner' => 'You can only accept shipments for your own trips.',
+        'not_pending' => 'Only pending shipments can be accepted.',
     ],
 
     /*

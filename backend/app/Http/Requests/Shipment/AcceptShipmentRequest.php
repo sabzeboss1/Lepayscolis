@@ -48,21 +48,28 @@ class AcceptShipmentRequest extends FormRequest
             if ($tripId && $shipmentId) {
                 $trip = Trip::find($tripId);
                 $shipment = \App\Models\Shipment::find($shipmentId);
-                
+
+                if ($shipment && $shipment->status !== 'pending') {
+                    $validator->errors()->add(
+                        'shipment',
+                        __('validation.shipment.not_pending')
+                    );
+                }
+
                 if ($trip && $shipment) {
                     // Check if trip has sufficient capacity
-                    if ($trip->available_capacity < $shipment->package_weight) {
+                    if (!$trip->hasCapacityFor((float) $shipment->package_weight)) {
                         $validator->errors()->add(
                             'trip_id',
-                            'The selected trip does not have sufficient capacity for this shipment.'
+                            __('validation.shipment.insufficient_capacity')
                         );
                     }
-                    
+
                     // Check if trip belongs to the authenticated user
                     if ($trip->traveler_id !== auth()->id()) {
                         $validator->errors()->add(
                             'trip_id',
-                            'You can only accept shipments for your own trips.'
+                            __('validation.shipment.not_trip_owner')
                         );
                     }
                 }

@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
  * - GET /api/shipments/my: get user's shipments
  * - PUT /api/shipments/{id}: update shipment status
  * - POST /api/shipments/{id}/accept: traveler accepts shipment
+ * - POST /api/shipments/{id}/reject: traveler rejects shipment
  * - POST /api/shipments/{id}/confirm-delivery: confirm delivery
  * 
  * Validates Requirements: 4.1-4.19
@@ -153,11 +154,18 @@ class ShipmentController extends Controller
         return DB::transaction(function () use ($request, $id) {
             $shipment = Shipment::findOrFail($id);
 
+            // Restore trip capacity if transitioning from accepted to cancelled
+            if ($request->status === 'cancelled' && $shipment->status === 'accepted' && $shipment->trip_id) {
+                $trip = $shipment->trip;
+                $trip->available_capacity += $shipment->package_weight;
+                $trip->save();
+            }
+
             $shipment->status = $request->status;
             $shipment->save();
 
             return response()->json([
-                'message' => 'Shipment status updated successfully.',
+                'message' => __('messages.shipment.updated'),
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });
@@ -220,6 +228,55 @@ class ShipmentController extends Controller
 
             return response()->json([
                 'message' => 'Delivery confirmed successfully.',
+                'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
+            ]);
+        });
+    }
+
+    /**
+     * Traveler rejects a shipment request.
+     *
+     * POST /api/shipments/{id}/reject
+     * Requires: auth:sanctum
+     */
+    public function reject(string $id): JsonResponse
+    {
+        return DB::transaction(function () use ($id) {
+            $shipment = Shipment::findOrFail($id);
+            $user = auth()->user();
+
+            // Must be the traveler assigned to this shipment or the trip owner
+            $authorized = false;
+            if ($shipment->traveler_id === $user->id) {
+                $authorized = true;
+            } elseif ($shipment->trip_id && $shipment->trip->traveler_id === $user->id) {
+                $authorized = true;
+            }
+
+            if (!$authorized) {
+                return response()->json([
+                    'message' => __('messages.shipment.reject_unauthorized'),
+                ], 403);
+            }
+
+            if (!$shipment->canTransitionTo('cancelled')) {
+                return response()->json([
+                    'message' => __('messages.shipment.cannot_reject'),
+                ], 422);
+            }
+
+            // Restore capacity if shipment was accepted
+            if ($shipment->status === 'accepted' && $shipment->trip_id) {
+                $trip = $shipment->trip;
+                $trip->available_capacity += $shipment->package_weight;
+                $trip->save();
+            }
+
+            $shipment->status = 'cancelled';
+            $shipment->save();
+
+            return response()->json([
+                'message' => __('messages.shipment.rejected'),
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });

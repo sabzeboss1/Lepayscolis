@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Trip\CreateTripRequest;
 use App\Http\Requests\Trip\SearchTripsRequest;
 use App\Http\Requests\Trip\UpdateTripRequest;
+use App\Http\Resources\ShipmentResource;
 use App\Http\Resources\TripResource;
 use App\Models\City;
 use App\Models\Country;
@@ -25,7 +26,8 @@ use Illuminate\Support\Facades\Log;
  * - GET /api/trips/my: get authenticated user's trips
  * - PUT /api/trips/{id}: update trip (owner only)
  * - DELETE /api/trips/{id}: soft delete trip (owner only)
- * 
+ * - GET /api/trips/{id}/shipments: list trip's shipments (owner only)
+ *
  * Validates Requirements: 3.1-3.16
  */
 class TripController extends Controller
@@ -347,6 +349,47 @@ class TripController extends Controller
 
         return response()->json([
             'message' => 'Trip deleted successfully'
+        ]);
+    }
+
+    /**
+     * List shipments for a trip (trip owner only).
+     *
+     * GET /api/trips/{id}/shipments
+     * Requires: auth:sanctum
+     */
+    public function shipments(Request $request, string $id): JsonResponse
+    {
+        $trip = Trip::findOrFail($id);
+
+        // Only trip owner can see all shipments
+        if ($trip->traveler_id !== auth()->id()) {
+            return response()->json([
+                'message' => __('messages.trip.unauthorized'),
+            ], 403);
+        }
+
+        $query = $trip->shipments()->with(['sender', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity']);
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $shipments = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return response()->json([
+            'data' => ShipmentResource::collection($shipments->items()),
+            'meta' => [
+                'current_page' => $shipments->currentPage(),
+                'last_page' => $shipments->lastPage(),
+                'per_page' => $shipments->perPage(),
+                'total' => $shipments->total(),
+            ],
+            'summary' => [
+                'remaining_capacity' => $trip->remainingCapacity(),
+                'accepted_weight' => $trip->acceptedShipmentsWeight(),
+                'accepted_count' => $trip->acceptedShipmentsCount(),
+            ],
         ]);
     }
 

@@ -21,6 +21,7 @@ return [
         'created' => 'Voyage créé avec succès.',
         'updated' => 'Voyage mis à jour avec succès.',
         'deleted' => 'Voyage supprimé avec succès.',
+        'unauthorized' => 'Vous n\'êtes pas autorisé à accéder à ce voyage.',
     ],
 
     'shipment' => [
@@ -28,6 +29,9 @@ return [
         'updated' => 'Expédition mise à jour avec succès.',
         'accepted' => 'Expédition acceptée avec succès.',
         'delivered' => 'Livraison confirmée avec succès.',
+        'rejected' => 'Demande d\'expédition refusée.',
+        'reject_unauthorized' => 'Vous n\'êtes pas autorisé à refuser cette expédition.',
+        'cannot_reject' => 'Cette expédition ne peut pas être refusée dans son état actuel.',
     ],
 
     'kyc' => [
