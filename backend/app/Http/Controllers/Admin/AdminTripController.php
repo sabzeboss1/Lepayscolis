@@ -39,14 +39,14 @@ class AdminTripController extends Controller
         ], 200);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $trip = $this->tripService->getTripDetails($id);
 
         return response()->json(['data' => $trip], 200);
     }
 
-    public function update(UpdateTripRequest $request, int $id): JsonResponse
+    public function update(UpdateTripRequest $request, string $id): JsonResponse
     {
         $trip = $this->tripService->updateTrip($id, $request->validated(), $request->user());
 
@@ -56,7 +56,7 @@ class AdminTripController extends Controller
         ], 200);
     }
 
-    public function cancel(CancelTripRequest $request, int $id): JsonResponse
+    public function cancel(CancelTripRequest $request, string $id): JsonResponse
     {
         $trip = $this->tripService->cancelTrip($id, $request->reason, $request->user());
 

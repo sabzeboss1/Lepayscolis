@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('search')) params.set('search', searchParams.get('search')!);
     if (searchParams.get('status')) params.set('status', searchParams.get('status')!);
     if (searchParams.get('sort_by')) params.set('sort_by', searchParams.get('sort_by')!);
+    if (searchParams.get('verification_status')) params.set('verification_status', searchParams.get('verification_status')!);
 
     // Make authenticated request to Laravel backend
     const response = await makeAdminRequest(
@@ -42,9 +43,11 @@ export async function GET(request: NextRequest) {
         destination: trip.destination,
         departure_date: trip.departure_date,
         arrival_date: trip.arrival_date,
-        available_space: trip.available_space,
+        available_space: trip.available_capacity ?? trip.available_space,
         price_per_kg: trip.price_per_kg,
+        currency_code: trip.currency_code,
         status: trip.status,
+        verification_status: trip.verification_status ?? 'verified',
         shipments_count: trip.shipments_count || 0,
         created_at: trip.created_at
       })),

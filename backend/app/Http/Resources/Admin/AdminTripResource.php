@@ -20,6 +20,7 @@ class AdminTripResource extends JsonResource
                 'id' => $this->traveler->id,
                 'name' => $this->traveler->name,
                 'email' => $this->traveler->email,
+                'phone' => $this->traveler->phone,
                 'average_rating' => $this->traveler->average_rating ? round($this->traveler->average_rating, 2) : null,
             ],
             'origin' => "{$this->departure_city}, {$this->departure_country}",
@@ -48,8 +49,9 @@ class AdminTripResource extends JsonResource
             'price_per_kg' => $this->price_per_kg,
             'currency_code' => $this->currency_code,
             'status' => $this->status,
+            'cancellation_reason' => $this->status === 'cancelled' ? $this->rejection_reason : null,
             'verification_status' => $this->verification_status,
-            'rejection_reason' => $this->rejection_reason,
+            'rejection_reason' => $this->verification_status === 'rejected' ? $this->rejection_reason : null,
             'verified_by' => $this->when($this->verified_by, fn() => [
                 'id' => $this->verifiedBy?->id,
                 'name' => $this->verifiedBy?->name,

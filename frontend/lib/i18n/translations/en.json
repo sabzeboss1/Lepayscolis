@@ -1077,6 +1077,102 @@
         "deleted": "City deleted successfully"
       }
     },
+    "trips": {
+      "title": "Trips",
+      "subtitle": "Manage platform trips and routes",
+      "noTrips": "No trips found",
+      "sortBy": "Sort by",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "sortDeparture": "Departure date",
+      "columns": {
+        "traveler": "Traveler",
+        "route": "Route",
+        "departure": "Departure",
+        "space": "Space",
+        "pricePerKg": "Price/kg",
+        "shipments": "Shipments",
+        "status": "Status",
+        "verificationStatus": "Verification"
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Search by origin, destination, or traveler...",
+        "status": "Status",
+        "allStatuses": "All Statuses",
+        "verificationStatus": "Verification",
+        "allVerifications": "All"
+      },
+      "statuses": {
+        "upcoming": "Upcoming",
+        "in_progress": "In Progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "active": "Active"
+      },
+      "verificationStatuses": {
+        "pending": "Pending",
+        "verified": "Verified",
+        "rejected": "Rejected"
+      },
+      "bulk": {
+        "verifySelected": "Verify Selected",
+        "rejectSelected": "Reject Selected"
+      },
+      "detail": {
+        "tripNotFound": "Trip not found",
+        "tripId": "Trip ID",
+        "cancelTrip": "Cancel Trip",
+        "verifyTrip": "Verify",
+        "rejectTrip": "Reject",
+        "tripInfo": "Trip Information",
+        "origin": "Origin",
+        "destination": "Destination",
+        "departureDate": "Departure Date",
+        "arrivalDate": "Arrival Date",
+        "availableSpace": "Available Space",
+        "pricePerKg": "Price per kg",
+        "cancellationReason": "Cancellation Reason",
+        "rejectionReason": "Rejection Reason",
+        "travelerInfo": "Traveler Information",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "shipments": "Associated Shipments",
+        "noShipments": "No shipments associated with this trip",
+        "shipmentTracking": "Tracking",
+        "shipmentSender": "Sender",
+        "shipmentRecipient": "Recipient",
+        "shipmentWeight": "Weight",
+        "shipmentStatus": "Status",
+        "shipmentPrice": "Price",
+        "statusSection": "Status",
+        "tripStatus": "Trip Status",
+        "verificationStatusLabel": "Verification",
+        "verifiedBy": "Verified by",
+        "verifiedAt": "Verified at",
+        "created": "Created",
+        "analytics": "Analytics",
+        "totalShipments": "Total Shipments",
+        "totalRevenue": "Total Revenue",
+        "completionRate": "Completion Rate",
+        "averageRating": "Average Rating",
+        "cancelDialog": {
+          "title": "Cancel Trip",
+          "description": "Cancelling this trip will also cancel all associated shipments and process refunds. Please provide a reason:",
+          "placeholder": "Reason for cancellation (minimum 10 characters)...",
+          "confirm": "Confirm Cancellation",
+          "cancel": "Keep Trip"
+        },
+        "rejectDialog": {
+          "title": "Reject Trip",
+          "description": "Provide a reason why this trip is being rejected:",
+          "placeholder": "Reason for rejection (minimum 10 characters)...",
+          "confirm": "Confirm Rejection",
+          "cancel": "Cancel"
+        }
+      }
+    },
     "kyc": {
       "title": "KYC Verification",
       "subtitle": "Review and verify user identity documents",

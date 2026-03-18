@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
+import BulkActions, { BulkAction } from '@/components/admin/BulkActions';
 
 interface Trip {
   id: string;
@@ -15,27 +17,39 @@ interface Trip {
   arrival_date: string;
   available_space: number;
   price_per_kg: number;
-  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
+  currency_code: string;
+  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled' | 'active';
+  verification_status: 'pending' | 'verified' | 'rejected';
   shipments_count: number;
   created_at: string;
 }
 
+interface TripFilterValues {
+  [key: string]: string;
+  search: string;
+  status: string;
+  verification_status: string;
+}
+
 export default function TripsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
   const [total, setTotal] = useState(0);
-  const [filters, setFilters] = useState({
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'departure'>('newest');
+  const [filters, setFilters] = useState<TripFilterValues>({
     search: '',
     status: '',
-    sort_by: 'newest'
+    verification_status: ''
   });
 
   useEffect(() => {
     fetchTrips();
-  }, [currentPage, perPage, filters]);
+  }, [currentPage, perPage, sortBy, filters]);
 
   const fetchTrips = async () => {
     setLoading(true);
@@ -43,40 +57,92 @@ export default function TripsPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         per_page: perPage.toString(),
+        sort_by: sortBy,
         ...(filters.search && { search: filters.search }),
         ...(filters.status && { status: filters.status }),
-        ...(filters.sort_by && { sort_by: filters.sort_by })
+        ...(filters.verification_status && { verification_status: filters.verification_status })
       });
       const response = await fetch(`/api/admin/trips?${params}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
       const data = await response.json();
-      
-      // Ensure data.data is an array
       setTrips(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch trips:', error);
-      setTrips([]); // Set empty array on error
+      setTrips([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSelectRow = (id: string) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(id)) newSelected.delete(id);
+    else newSelected.add(id);
+    setSelectedRows(newSelected);
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    setSelectedRows(selected ? new Set(trips.map(t => t.id)) : new Set());
+  };
+
+  const handleBulkAction = async (actionKey: string) => {
+    const selectedIds = Array.from(selectedRows);
+    try {
+      if (actionKey === 'verify') {
+        await Promise.all(
+          selectedIds.map(id =>
+            fetch(`/api/admin/trips/${id}/verify`, { method: 'POST' })
+          )
+        );
+      } else if (actionKey === 'reject') {
+        const reason = prompt(t('admin.trips.detail.rejectDialog.placeholder'));
+        if (!reason || reason.length < 10) return;
+        await Promise.all(
+          selectedIds.map(id =>
+            fetch(`/api/admin/trips/${id}/reject`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reason })
+            })
+          )
+        );
+      }
+      fetchTrips();
+      setSelectedRows(new Set());
+    } catch (error) {
+      console.error('Bulk action failed:', error);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
-    const badges = {
+    const badges: Record<string, string> = {
       upcoming: 'bg-blue-100 text-blue-800',
       in_progress: 'bg-yellow-100 text-yellow-800',
       completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
+      cancelled: 'bg-red-100 text-red-800',
+      active: 'bg-blue-100 text-blue-800'
+    };
+    const key = status as keyof typeof badges;
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[key] || 'bg-gray-100 text-gray-800'}`}>
+        {t(`admin.trips.statuses.${status}`) || status}
+      </span>
+    );
+  };
+
+  const getVerificationBadge = (status: string) => {
+    const badges: Record<string, string> = {
+      pending: 'bg-orange-100 text-orange-800',
+      verified: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800'
     };
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[status as keyof typeof badges]}`}>
-        {status.replace('_', ' ')}
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${badges[status] || 'bg-gray-100 text-gray-800'}`}>
+        {t(`admin.trips.verificationStatuses.${status}`) || status}
       </span>
     );
   };
@@ -84,7 +150,7 @@ export default function TripsPage() {
   const columns: Column<Trip>[] = [
     {
       key: 'traveler',
-      label: 'Traveler',
+      label: t('admin.trips.columns.traveler'),
       render: (trip) => (
         <div>
           <div className="font-medium text-gray-900">{trip.traveler.name}</div>
@@ -94,7 +160,7 @@ export default function TripsPage() {
     },
     {
       key: 'route',
-      label: 'Route',
+      label: t('admin.trips.columns.route'),
       render: (trip) => (
         <div className="text-sm text-gray-900">
           {trip.origin} → {trip.destination}
@@ -103,38 +169,41 @@ export default function TripsPage() {
     },
     {
       key: 'departure_date',
-      label: 'Departure',
+      label: t('admin.trips.columns.departure'),
       sortable: true,
       render: (trip) => (
         <span className="text-sm text-gray-900">
-          {new Date(trip.departure_date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
+          {new Date(trip.departure_date).toLocaleDateString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric'
           })}
         </span>
       )
     },
     {
       key: 'available_space',
-      label: 'Space',
+      label: t('admin.trips.columns.space'),
       render: (trip) => <span className="text-sm text-gray-900">{trip.available_space} kg</span>
     },
     {
       key: 'price_per_kg',
-      label: 'Price/kg',
-      render: (trip) => <span className="text-sm text-gray-900">€{trip.price_per_kg}</span>
+      label: t('admin.trips.columns.pricePerKg'),
+      render: (trip) => <span className="text-sm text-gray-900">{trip.price_per_kg} {trip.currency_code || '€'}</span>
     },
     {
       key: 'shipments_count',
-      label: 'Shipments',
+      label: t('admin.trips.columns.shipments'),
       render: (trip) => <span className="text-sm text-gray-900">{trip.shipments_count}</span>
     },
     {
       key: 'status',
-      label: 'Status',
+      label: t('admin.trips.columns.status'),
       sortable: true,
-      render: (trip) => getStatusBadge(trip.status)
+      render: (trip) => (
+        <div className="flex flex-col gap-1">
+          {getStatusBadge(trip.status)}
+          {getVerificationBadge(trip.verification_status)}
+        </div>
+      )
     }
   ];
 
@@ -142,59 +211,103 @@ export default function TripsPage() {
     {
       type: 'text' as const,
       key: 'search',
-      label: 'Search',
-      placeholder: 'Search by origin, destination, or traveler...'
+      label: t('admin.trips.filters.search'),
+      placeholder: t('admin.trips.filters.searchPlaceholder')
     },
     {
       type: 'select' as const,
       key: 'status',
-      label: 'Status',
+      label: t('admin.trips.filters.status'),
       options: [
-        { value: '', label: 'All Statuses' },
-        { value: 'upcoming', label: 'Upcoming' },
-        { value: 'in_progress', label: 'In Progress' },
-        { value: 'completed', label: 'Completed' },
-        { value: 'cancelled', label: 'Cancelled' }
+        { value: 'upcoming', label: t('admin.trips.statuses.upcoming') },
+        { value: 'in_progress', label: t('admin.trips.statuses.in_progress') },
+        { value: 'completed', label: t('admin.trips.statuses.completed') },
+        { value: 'cancelled', label: t('admin.trips.statuses.cancelled') }
       ]
     },
     {
       type: 'select' as const,
-      key: 'sort_by',
-      label: 'Sort By',
+      key: 'verification_status',
+      label: t('admin.trips.filters.verificationStatus'),
       options: [
-        { value: 'newest', label: 'Newest First' },
-        { value: 'oldest', label: 'Oldest First' },
-        { value: 'departure', label: 'Departure Date' }
+        { value: 'pending', label: t('admin.trips.verificationStatuses.pending') },
+        { value: 'verified', label: t('admin.trips.verificationStatuses.verified') },
+        { value: 'rejected', label: t('admin.trips.verificationStatuses.rejected') }
       ]
     }
   ];
 
+  const bulkActions: BulkAction[] = [
+    { key: 'verify', label: t('admin.trips.bulk.verifySelected'), variant: 'default' as const },
+    { key: 'reject', label: t('admin.trips.bulk.rejectSelected'), variant: 'danger' as const }
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Trips</h1>
-        <p className="text-sm text-gray-600 mt-1">Manage platform trips and routes</p>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.trips.title')}</h1>
+          <p className="text-sm text-gray-600 mt-1">{t('admin.trips.subtitle')}</p>
+        </div>
+
+        {/* Sort selector */}
+        <div className="flex items-center space-x-2">
+          <label htmlFor="sort-by" className="text-sm font-medium text-gray-700">
+            {t('admin.trips.sortBy')}:
+          </label>
+          <select
+            id="sort-by"
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value as typeof sortBy);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="newest">{t('admin.trips.sortNewest')}</option>
+            <option value="oldest">{t('admin.trips.sortOldest')}</option>
+            <option value="departure">{t('admin.trips.sortDeparture')}</option>
+          </select>
+        </div>
       </div>
 
+      {/* Filters */}
       <TableFilters
         filters={filterConfig}
         values={filters}
         onChange={(newFilters) => {
-          setFilters(newFilters as typeof filters);
+          setFilters(newFilters as TripFilterValues);
           setCurrentPage(1);
         }}
-        onReset={() => setFilters({ search: '', status: '', sort_by: 'newest' })}
+        onReset={() => setFilters({ search: '', status: '', verification_status: '' })}
       />
 
+      {/* Bulk Actions */}
+      {selectedRows.size > 0 && (
+        <BulkActions
+          selectedCount={selectedRows.size}
+          actions={bulkActions}
+          onAction={handleBulkAction}
+          onClearSelection={() => setSelectedRows(new Set())}
+        />
+      )}
+
+      {/* Data Table */}
       <DataTable
         columns={columns}
         data={trips}
         loading={loading}
-        emptyMessage="No trips found"
+        emptyMessage={t('admin.trips.noTrips')}
         onRowClick={(trip) => router.push(`/admin/trips/${trip.id}`)}
         getRowId={(trip) => trip.id}
+        selectedRows={selectedRows}
+        onSelectRow={handleSelectRow}
+        onSelectAll={handleSelectAll}
+        selectable={true}
       />
 
+      {/* Pagination */}
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}

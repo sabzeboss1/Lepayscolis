@@ -1077,6 +1077,102 @@
         "deleted": "Ville supprimée avec succès"
       }
     },
+    "trips": {
+      "title": "Voyages",
+      "subtitle": "Gérer les voyages et routes de la plateforme",
+      "noTrips": "Aucun voyage trouvé",
+      "sortBy": "Trier par",
+      "sortNewest": "Plus récents",
+      "sortOldest": "Plus anciens",
+      "sortDeparture": "Date de départ",
+      "columns": {
+        "traveler": "Voyageur",
+        "route": "Trajet",
+        "departure": "Départ",
+        "space": "Espace",
+        "pricePerKg": "Prix/kg",
+        "shipments": "Colis",
+        "status": "Statut",
+        "verificationStatus": "Vérification"
+      },
+      "filters": {
+        "search": "Rechercher",
+        "searchPlaceholder": "Rechercher par origine, destination ou voyageur...",
+        "status": "Statut",
+        "allStatuses": "Tous les statuts",
+        "verificationStatus": "Vérification",
+        "allVerifications": "Tous"
+      },
+      "statuses": {
+        "upcoming": "À venir",
+        "in_progress": "En cours",
+        "completed": "Terminé",
+        "cancelled": "Annulé",
+        "active": "Actif"
+      },
+      "verificationStatuses": {
+        "pending": "En attente",
+        "verified": "Vérifié",
+        "rejected": "Rejeté"
+      },
+      "bulk": {
+        "verifySelected": "Vérifier la sélection",
+        "rejectSelected": "Rejeter la sélection"
+      },
+      "detail": {
+        "tripNotFound": "Voyage introuvable",
+        "tripId": "ID du voyage",
+        "cancelTrip": "Annuler le voyage",
+        "verifyTrip": "Vérifier",
+        "rejectTrip": "Rejeter",
+        "tripInfo": "Informations du voyage",
+        "origin": "Origine",
+        "destination": "Destination",
+        "departureDate": "Date de départ",
+        "arrivalDate": "Date d'arrivée",
+        "availableSpace": "Espace disponible",
+        "pricePerKg": "Prix par kg",
+        "cancellationReason": "Motif d'annulation",
+        "rejectionReason": "Motif de rejet",
+        "travelerInfo": "Informations du voyageur",
+        "name": "Nom",
+        "email": "Email",
+        "phone": "Téléphone",
+        "shipments": "Colis associés",
+        "noShipments": "Aucun colis associé à ce voyage",
+        "shipmentTracking": "Suivi",
+        "shipmentSender": "Expéditeur",
+        "shipmentRecipient": "Destinataire",
+        "shipmentWeight": "Poids",
+        "shipmentStatus": "Statut",
+        "shipmentPrice": "Prix",
+        "statusSection": "Statut",
+        "tripStatus": "Statut du voyage",
+        "verificationStatusLabel": "Vérification",
+        "verifiedBy": "Vérifié par",
+        "verifiedAt": "Vérifié le",
+        "created": "Créé le",
+        "analytics": "Analytiques",
+        "totalShipments": "Total colis",
+        "totalRevenue": "Revenus totaux",
+        "completionRate": "Taux de réalisation",
+        "averageRating": "Note moyenne",
+        "cancelDialog": {
+          "title": "Annuler le voyage",
+          "description": "L'annulation de ce voyage annulera également tous les colis associés et traitera les remboursements. Veuillez fournir une raison :",
+          "placeholder": "Motif d'annulation (minimum 10 caractères)...",
+          "confirm": "Confirmer l'annulation",
+          "cancel": "Conserver le voyage"
+        },
+        "rejectDialog": {
+          "title": "Rejeter le voyage",
+          "description": "Fournissez une raison pour laquelle ce voyage est rejeté :",
+          "placeholder": "Motif de rejet (minimum 10 caractères)...",
+          "confirm": "Confirmer le rejet",
+          "cancel": "Annuler"
+        }
+      }
+    },
     "kyc": {
       "title": "Vérification KYC",
       "subtitle": "Examiner et vérifier les documents d'identité des utilisateurs",
