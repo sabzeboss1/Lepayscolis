@@ -8,6 +8,7 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Locale } from '@/lib/i18n/config';
+import { useAuth } from '@/lib/auth';
 
 export interface HeaderPublicProps {
   locale: Locale;
@@ -19,6 +20,7 @@ export const HeaderPublic: React.FC<HeaderPublicProps> = ({ locale: initialLocal
   const [isSticky, setIsSticky] = useState(false);
   const { t } = useTranslation(locale);
   const pathname = usePathname();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
 
   // Handle scroll for sticky header
   useEffect(() => {
@@ -115,16 +117,28 @@ export const HeaderPublic: React.FC<HeaderPublicProps> = ({ locale: initialLocal
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-4">
             <LanguageSwitcher currentLocale={locale} onLocaleChange={handleLocaleChange} />
-            <Link href="/auth/login">
-              <Button variant="ghost" size="md">
-                {t('common.login')}
-              </Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button variant="primary" size="md">
-                {t('common.register')}
-              </Button>
-            </Link>
+            {!authLoading && (
+              user ? (
+                <Link href={isAdmin ? '/admin/dashboard' : '/dashboard'}>
+                  <Button variant="primary" size="md">
+                    {isAdmin ? t('navigation.adminDashboard') : t('navigation.dashboard')}
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/auth/login">
+                    <Button variant="ghost" size="md">
+                      {t('common.login')}
+                    </Button>
+                  </Link>
+                  <Link href="/auth/register">
+                    <Button variant="primary" size="md">
+                      {t('common.register')}
+                    </Button>
+                  </Link>
+                </>
+              )
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -205,17 +219,28 @@ export const HeaderPublic: React.FC<HeaderPublicProps> = ({ locale: initialLocal
                 />
               </div>
 
-              <Link href="/auth/login" className="block">
-                <Button variant="ghost" size="lg" fullWidth>
-                  {t('common.login')}
-                </Button>
-              </Link>
-
-              <Link href="/auth/register" className="block">
-                <Button variant="primary" size="lg" fullWidth>
-                  {t('common.register')}
-                </Button>
-              </Link>
+              {!authLoading && (
+                user ? (
+                  <Link href={isAdmin ? '/admin/dashboard' : '/dashboard'} className="block">
+                    <Button variant="primary" size="lg" fullWidth>
+                      {isAdmin ? t('navigation.adminDashboard') : t('navigation.dashboard')}
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/auth/login" className="block">
+                      <Button variant="ghost" size="lg" fullWidth>
+                        {t('common.login')}
+                      </Button>
+                    </Link>
+                    <Link href="/auth/register" className="block">
+                      <Button variant="primary" size="lg" fullWidth>
+                        {t('common.register')}
+                      </Button>
+                    </Link>
+                  </>
+                )
+              )}
             </div>
           </nav>
         </div>

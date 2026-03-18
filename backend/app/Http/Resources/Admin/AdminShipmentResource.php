@@ -16,10 +16,12 @@ class AdminShipmentResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'tracking_number' => strtoupper(substr(str_replace('-', '', $this->id), 0, 10)),
             'sender' => [
                 'id' => $this->sender->id,
                 'name' => $this->sender->name,
                 'email' => $this->sender->email,
+                'phone' => $this->sender->phone ?? null,
             ],
             'traveler' => $this->whenLoaded('traveler', fn() => [
                 'id' => $this->traveler->id,
@@ -28,8 +30,9 @@ class AdminShipmentResource extends JsonResource
             ]),
             'trip' => $this->whenLoaded('trip', fn() => [
                 'id' => $this->trip->id,
-                'departure_city' => $this->trip->departure_city,
-                'arrival_city' => $this->trip->arrival_city,
+                'origin' => "{$this->trip->departure_city}, {$this->trip->departure_country}",
+                'destination' => "{$this->trip->arrival_city}, {$this->trip->arrival_country}",
+                'traveler_name' => $this->trip->traveler?->name,
                 'departure_date' => $this->trip->departure_date,
             ]),
             'package_description' => $this->package_description,

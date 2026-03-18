@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Http\Resources\Admin\AdminTripResource;
 use App\Models\AuditLog;
 use App\Models\Trip;
 use App\Models\User;
@@ -75,17 +76,47 @@ class AdminTripService
     /**
      * Get detailed trip information.
      *
-     * @param int $tripId
+     * @param string $tripId
      * @return array
      */
-    public function getTripDetails(int $tripId): array
+    public function getTripDetails(string $tripId): array
     {
-        $trip = Trip::with(['traveler', 'shipments.sender'])->findOrFail($tripId);
+        $trip = Trip::with([
+            'traveler', 'shipments.sender',
+            'departureCountry', 'departureCity',
+            'arrivalCountry', 'arrivalCity',
+        ])->findOrFail($tripId);
+
+        // Format shipments with available fields
+        $formattedShipments = $trip->shipments->map(fn($s) => [
+            'id'                => $s->id,
+            'tracking_number'   => strtoupper(substr(str_replace('-', '', $s->id), 0, 10)),
+            'sender_name'       => $s->sender?->name ?? 'Unknown',
+            'recipient_city'    => $s->delivery_city,
+            'recipient_country' => $s->delivery_country,
+            'weight'            => (float) $s->package_weight,
+            'status'            => $s->status,
+            'price'             => (float) $s->payment_amount,
+        ])->values();
+
+        // Per-trip analytics
+        $totalShipments = $trip->shipments->count();
+        $totalRevenue   = (float) $trip->shipments->whereIn('payment_status', ['released'])->sum('payment_amount');
+        $delivered      = $trip->shipments->where('status', 'delivered')->count();
+        $completionRate = $totalShipments > 0 ? round(($delivered / $totalShipments) * 100, 1) : 0;
+
+        $analytics = [
+            'total_shipments' => $totalShipments,
+            'total_revenue'   => $totalRevenue,
+            'completion_rate' => $completionRate,
+            'average_rating'  => null,
+        ];
 
         return [
-            'trip' => $trip,
-            'shipments' => $trip->shipments,
-            'timeline' => $this->buildTripTimeline($trip),
+            'trip'      => new AdminTripResource($trip),
+            'shipments' => $formattedShipments,
+            'analytics' => $analytics,
+            'timeline'  => $this->buildTripTimeline($trip),
         ];
     }
 
@@ -97,7 +128,7 @@ class AdminTripService
      * @param User $admin
      * @return Trip
      */
-    public function updateTrip(int $tripId, array $data, User $admin): Trip
+    public function updateTrip(string $tripId, array $data, User $admin): Trip
     {
         $trip = Trip::findOrFail($tripId);
 
@@ -121,15 +152,15 @@ class AdminTripService
      * @param User $admin
      * @return Trip
      */
-    public function cancelTrip(int $tripId, string $reason, User $admin): Trip
+    public function cancelTrip(string $tripId, string $reason, User $admin): Trip
     {
         $trip = Trip::with('shipments')->findOrFail($tripId);
 
         DB::transaction(function () use ($trip, $reason, $admin) {
             $before = ['status' => $trip->status];
 
-            // Cancel trip
-            $trip->update(['status' => 'cancelled']);
+            // Cancel trip and store reason
+            $trip->update(['status' => 'cancelled', 'rejection_reason' => $reason]);
 
             // Cancel all associated shipments and process refunds
             foreach ($trip->shipments as $shipment) {
