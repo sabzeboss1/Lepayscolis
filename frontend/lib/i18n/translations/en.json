@@ -48,7 +48,8 @@
     "shipments": "Shipments",
     "wallet": "Wallet",
     "messages": "Messages",
-    "profile": "Profile"
+    "profile": "Profile",
+    "adminDashboard": "Admin Dashboard"
   },
   "footer": {
     "about": "About",
@@ -1170,6 +1171,70 @@
           "placeholder": "Reason for rejection (minimum 10 characters)...",
           "confirm": "Confirm Rejection",
           "cancel": "Cancel"
+        }
+      }
+    },
+    "shipments": {
+      "title": "Shipments",
+      "subtitle": "Manage and track all shipments on the platform",
+      "noShipments": "No shipments found",
+      "sortBy": "Sort by",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "columns": {
+        "tracking": "Tracking",
+        "sender": "Sender",
+        "destination": "Destination",
+        "weight": "Weight",
+        "price": "Price",
+        "status": "Status",
+        "created": "Created"
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Search by tracking, sender, or destination...",
+        "status": "Status",
+        "allStatuses": "All Statuses"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "in_transit": "In Transit",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled"
+      },
+      "detail": {
+        "title": "Shipment Details",
+        "notFound": "Shipment not found",
+        "cancelShipment": "Cancel Shipment",
+        "packageInfo": "Package Information",
+        "description": "Description",
+        "weight": "Weight",
+        "dimensions": "Dimensions",
+        "route": "Route",
+        "pickup": "Pickup",
+        "delivery": "Delivery",
+        "sender": "Sender",
+        "associatedTrip": "Associated Trip",
+        "traveler": "Traveler",
+        "statusHistory": "Status History",
+        "statusSection": "Status",
+        "currentStatus": "Current Status",
+        "created": "Created",
+        "delivered": "Delivered",
+        "payment": "Payment",
+        "paymentAmount": "Amount",
+        "paymentStatus": "Payment Status",
+        "analytics": "Analytics",
+        "deliveryTime": "Delivery Time",
+        "days": "days",
+        "onTimeDelivery": "On-Time Delivery",
+        "cancelDialog": {
+          "title": "Cancel Shipment",
+          "description": "Cancelling this shipment will process a refund. Please provide a reason:",
+          "placeholder": "Reason for cancellation (minimum 10 characters)...",
+          "confirm": "Confirm Cancellation",
+          "cancel": "Keep Shipment"
         }
       }
     },

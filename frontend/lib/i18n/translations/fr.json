@@ -48,7 +48,8 @@
     "shipments": "Expéditions",
     "wallet": "Portefeuille",
     "messages": "Messages",
-    "profile": "Profil"
+    "profile": "Profil",
+    "adminDashboard": "Admin"
   },
   "footer": {
     "about": "À propos",
@@ -1170,6 +1171,70 @@
           "placeholder": "Motif de rejet (minimum 10 caractères)...",
           "confirm": "Confirmer le rejet",
           "cancel": "Annuler"
+        }
+      }
+    },
+    "shipments": {
+      "title": "Expéditions",
+      "subtitle": "Gérer et suivre toutes les expéditions de la plateforme",
+      "noShipments": "Aucune expédition trouvée",
+      "sortBy": "Trier par",
+      "sortNewest": "Plus récentes",
+      "sortOldest": "Plus anciennes",
+      "columns": {
+        "tracking": "Suivi",
+        "sender": "Expéditeur",
+        "destination": "Destination",
+        "weight": "Poids",
+        "price": "Prix",
+        "status": "Statut",
+        "created": "Créé le"
+      },
+      "filters": {
+        "search": "Rechercher",
+        "searchPlaceholder": "Rechercher par suivi, expéditeur ou destination...",
+        "status": "Statut",
+        "allStatuses": "Tous les statuts"
+      },
+      "statuses": {
+        "pending": "En attente",
+        "accepted": "Accepté",
+        "in_transit": "En transit",
+        "delivered": "Livré",
+        "cancelled": "Annulé"
+      },
+      "detail": {
+        "title": "Détails de l'expédition",
+        "notFound": "Expédition introuvable",
+        "cancelShipment": "Annuler l'expédition",
+        "packageInfo": "Informations du colis",
+        "description": "Description",
+        "weight": "Poids",
+        "dimensions": "Dimensions",
+        "route": "Trajet",
+        "pickup": "Enlèvement",
+        "delivery": "Livraison",
+        "sender": "Expéditeur",
+        "associatedTrip": "Voyage associé",
+        "traveler": "Voyageur",
+        "statusHistory": "Historique des statuts",
+        "statusSection": "Statut",
+        "currentStatus": "Statut actuel",
+        "created": "Créé le",
+        "delivered": "Livré le",
+        "payment": "Paiement",
+        "paymentAmount": "Montant",
+        "paymentStatus": "Statut du paiement",
+        "analytics": "Analytiques",
+        "deliveryTime": "Délai de livraison",
+        "days": "jours",
+        "onTimeDelivery": "Livraison à temps",
+        "cancelDialog": {
+          "title": "Annuler l'expédition",
+          "description": "L'annulation de cette expédition entraînera un remboursement. Veuillez fournir une raison :",
+          "placeholder": "Motif d'annulation (minimum 10 caractères)...",
+          "confirm": "Confirmer l'annulation",
+          "cancel": "Conserver l'expédition"
         }
       }
     },

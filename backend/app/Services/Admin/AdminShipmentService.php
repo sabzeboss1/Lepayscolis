@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Http\Resources\Admin\AdminShipmentResource;
 use App\Models\AuditLog;
 use App\Models\Shipment;
 use App\Models\User;
@@ -40,39 +41,39 @@ class AdminShipmentService
         return $query->latest('created_at')->paginate($perPage);
     }
 
-    public function getShipmentDetails(int $shipmentId): array
+    public function getShipmentDetails(string $shipmentId): array
     {
-        $shipment = Shipment::with(['sender', 'traveler', 'trip', 'payment'])->findOrFail($shipmentId);
+        $shipment = Shipment::with([
+            'sender', 'traveler', 'trip.traveler',
+            'payment', 'pickupCountry', 'pickupCity',
+            'deliveryCountry', 'deliveryCity',
+        ])->findOrFail($shipmentId);
 
         return [
-            'shipment' => $shipment,
+            'shipment'       => new AdminShipmentResource($shipment),
             'status_history' => $this->getStatusHistory($shipment),
+            'analytics'      => $this->getSingleShipmentAnalytics($shipment),
         ];
     }
 
-    public function resolveDispute(int $shipmentId, string $resolutionNotes, ?float $refundAmount, User $admin): Shipment
+    public function resolveDispute(string $shipmentId, string $resolutionNotes, ?float $refundAmount, User $admin): Shipment
     {
         $shipment = Shipment::findOrFail($shipmentId);
 
         $before = ['status' => $shipment->status];
 
-        $shipment->update([
-            'dispute_resolved' => true,
-            'resolution_notes' => $resolutionNotes,
-        ]);
-
         if ($refundAmount && $shipment->payment) {
             $this->paymentService->refundPayment($shipment->payment->id, $resolutionNotes, $refundAmount);
         }
 
-        $after = ['dispute_resolved' => true, 'refund_amount' => $refundAmount];
+        $after = ['refund_amount' => $refundAmount, 'resolution_notes' => $resolutionNotes];
 
         AuditLog::log($admin, 'resolve_dispute', 'shipment', $shipmentId, $before, $after);
 
         return $shipment->fresh();
     }
 
-    public function cancelShipment(int $shipmentId, string $reason, User $admin): Shipment
+    public function cancelShipment(string $shipmentId, string $reason, User $admin): Shipment
     {
         $shipment = Shipment::with('payment')->findOrFail($shipmentId);
 
@@ -107,12 +108,34 @@ class AdminShipmentService
         });
     }
 
+    protected function getSingleShipmentAnalytics(Shipment $shipment): ?array
+    {
+        if ($shipment->status !== 'delivered') {
+            return null;
+        }
+
+        $days = round(
+            ($shipment->updated_at->timestamp - $shipment->created_at->timestamp) / 86400,
+            1
+        );
+
+        return [
+            'delivery_time_days' => $days,
+            'on_time_delivery'   => $days <= 7,
+        ];
+    }
+
     protected function getStatusHistory(Shipment $shipment): array
     {
-        return [
-            ['status' => 'pending', 'date' => $shipment->created_at],
-            ['status' => $shipment->status, 'date' => $shipment->updated_at],
+        $history = [
+            ['status' => 'pending', 'timestamp' => $shipment->created_at->toIso8601String()],
         ];
+
+        if ($shipment->status !== 'pending') {
+            $history[] = ['status' => $shipment->status, 'timestamp' => $shipment->updated_at->toIso8601String()];
+        }
+
+        return $history;
     }
 
     protected function calculateAverageDeliveryTime(): float

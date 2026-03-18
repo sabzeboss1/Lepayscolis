@@ -35,26 +35,23 @@ export async function GET(request: NextRequest) {
         id: shipment.id,
         tracking_number: shipment.tracking_number,
         sender: {
-          id: shipment.sender.id,
-          name: shipment.sender.name,
-          email: shipment.sender.email
+          id: shipment.sender?.id,
+          name: shipment.sender?.name,
+          email: shipment.sender?.email,
         },
-        recipient: {
-          name: shipment.recipient.name,
-          phone: shipment.recipient.phone
-        },
-        weight: shipment.package_weight,
-        price: shipment.price,
+        delivery_city: shipment.delivery_city,
+        delivery_country: shipment.delivery_country,
+        weight: parseFloat(shipment.package_weight ?? '0'),
+        price: parseFloat(shipment.payment_amount ?? '0'),
         status: shipment.status,
         created_at: shipment.created_at,
-        delivery_date: shipment.delivered_at || undefined
       })) : [],
       meta: {
         total: data.meta?.total || 0,
         page: data.meta?.current_page || 1,
         per_page: data.meta?.per_page || 50,
-        totalPages: data.meta?.last_page || 1
-      }
+        totalPages: data.meta?.last_page || 1,
+      },
     };
 
     return NextResponse.json(transformed);
