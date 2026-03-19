@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, User, Star, Trash2, Calendar } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 interface Rating {
   id: string;
@@ -10,21 +11,20 @@ interface Rating {
     id: string;
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
   };
   reviewed_user: {
     id: string;
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
     average_rating: number;
     total_ratings: number;
   };
   rating: number;
   comment?: string;
-  type: 'for_traveler' | 'for_sender';
   related_resource: {
-    type: 'trip' | 'shipment';
+    type: 'shipment';
     id: string;
     reference: string;
     details: string;
@@ -34,6 +34,7 @@ interface Rating {
 
 export default function RatingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [ratingId, setRatingId] = useState<string | null>(null);
   const [rating, setRating] = useState<Rating | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +53,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
 
   const fetchRatingDetails = async () => {
     if (!ratingId) return;
-    
+
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/ratings/${ratingId}`);
@@ -93,7 +94,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
   if (!rating) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Rating not found</p>
+        <p className="text-gray-500">{t('admin.ratings.ratingNotFound')}</p>
       </div>
     );
   }
@@ -114,22 +115,6 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
     );
   };
 
-  const getTypeBadge = (type: string) => {
-    const badges = {
-      for_traveler: 'bg-blue-100 text-blue-800',
-      for_sender: 'bg-purple-100 text-purple-800'
-    };
-    const labels = {
-      for_traveler: 'For Traveler',
-      for_sender: 'For Sender'
-    };
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[type as keyof typeof badges]}`}>
-        {labels[type as keyof typeof labels]}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -142,9 +127,9 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Rating Details</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('admin.ratings.detailTitle')}</h1>
             <p className="text-sm text-gray-600 mt-1">
-              {rating.reviewer.name} rated {rating.reviewed_user.name}
+              {rating.reviewer.name} {t('admin.ratings.rated')} {rating.reviewed_user.name}
             </p>
           </div>
         </div>
@@ -154,31 +139,29 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
           className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
         >
           <Trash2 className="w-4 h-4 mr-2" />
-          Remove Rating
+          {t('admin.ratings.removeRating')}
         </button>
       </div>
 
       {/* Rating Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Rating Value */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Rating</h2>
-            <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.ratings.rating')}</h2>
+            <div className="flex items-center">
               {renderStars(rating.rating)}
-              {getTypeBadge(rating.type)}
             </div>
             {rating.comment && (
               <div className="mt-4 pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Comment</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('admin.ratings.comment')}</h3>
                 <p className="text-sm text-gray-700">{rating.comment}</p>
               </div>
             )}
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="flex items-center text-sm text-gray-500">
                 <Calendar className="w-4 h-4 mr-2" />
-                Submitted on {new Date(rating.created_at).toLocaleDateString('en-US', {
+                {t('admin.ratings.submittedOn')} {new Date(rating.created_at).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -191,11 +174,11 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
 
           {/* Reviewer Info */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Reviewer</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.ratings.reviewer')}</h2>
             <div className="space-y-3">
               <div className="flex items-center text-sm">
                 <User className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-24">Name:</span>
+                <span className="text-gray-600 w-24">{t('admin.ratings.name')}:</span>
                 <button
                   onClick={() => router.push(`/admin/users/${rating.reviewer.id}`)}
                   className="text-blue-600 hover:text-blue-800 font-medium"
@@ -204,23 +187,25 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
                 </button>
               </div>
               <div className="flex items-center text-sm">
-                <span className="text-gray-600 w-24 ml-7">Email:</span>
+                <span className="text-gray-600 w-24 ml-7">{t('admin.ratings.email')}:</span>
                 <span className="text-gray-900">{rating.reviewer.email}</span>
               </div>
-              <div className="flex items-center text-sm">
-                <span className="text-gray-600 w-24 ml-7">Phone:</span>
-                <span className="text-gray-900">{rating.reviewer.phone}</span>
-              </div>
+              {rating.reviewer.phone && (
+                <div className="flex items-center text-sm">
+                  <span className="text-gray-600 w-24 ml-7">{t('admin.ratings.phone')}:</span>
+                  <span className="text-gray-900">{rating.reviewer.phone}</span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Reviewed User Info */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Reviewed User</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.ratings.reviewedUser')}</h2>
             <div className="space-y-3">
               <div className="flex items-center text-sm">
                 <User className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-24">Name:</span>
+                <span className="text-gray-600 w-24">{t('admin.ratings.name')}:</span>
                 <button
                   onClick={() => router.push(`/admin/users/${rating.reviewed_user.id}`)}
                   className="text-blue-600 hover:text-blue-800 font-medium"
@@ -229,28 +214,30 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
                 </button>
               </div>
               <div className="flex items-center text-sm">
-                <span className="text-gray-600 w-24 ml-7">Email:</span>
+                <span className="text-gray-600 w-24 ml-7">{t('admin.ratings.email')}:</span>
                 <span className="text-gray-900">{rating.reviewed_user.email}</span>
               </div>
-              <div className="flex items-center text-sm">
-                <span className="text-gray-600 w-24 ml-7">Phone:</span>
-                <span className="text-gray-900">{rating.reviewed_user.phone}</span>
-              </div>
+              {rating.reviewed_user.phone && (
+                <div className="flex items-center text-sm">
+                  <span className="text-gray-600 w-24 ml-7">{t('admin.ratings.phone')}:</span>
+                  <span className="text-gray-900">{rating.reviewed_user.phone}</span>
+                </div>
+              )}
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-gray-500">Average Rating</label>
+                    <label className="text-xs font-medium text-gray-500">{t('admin.ratings.averageRating')}</label>
                     <div className="mt-1 flex items-center">
                       <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
                       <span className="text-sm font-semibold text-gray-900">
-                        {rating.reviewed_user.average_rating.toFixed(1)}
+                        {Number(rating.reviewed_user.average_rating || 0).toFixed(1)}
                       </span>
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-500">Total Ratings</label>
+                    <label className="text-xs font-medium text-gray-500">{t('admin.ratings.totalRatings')}</label>
                     <div className="mt-1 text-sm font-semibold text-gray-900">
-                      {rating.reviewed_user.total_ratings}
+                      {rating.reviewed_user.total_ratings || 0}
                     </div>
                   </div>
                 </div>
@@ -259,42 +246,43 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Related Resource */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Related {rating.related_resource.type === 'trip' ? 'Trip' : 'Shipment'}</h2>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm">
-                <span className="text-gray-600 w-32">Reference:</span>
-                <button
-                  onClick={() => {
-                    const path = rating.related_resource.type === 'trip' ? 'trips' : 'shipments';
-                    router.push(`/admin/${path}/${rating.related_resource.id}`);
-                  }}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  {rating.related_resource.reference}
-                </button>
-              </div>
-              <div className="flex items-center text-sm">
-                <span className="text-gray-600 w-32">Details:</span>
-                <span className="text-gray-900">{rating.related_resource.details}</span>
+          {rating.related_resource.id && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.ratings.relatedShipment')}</h2>
+              <div className="space-y-3">
+                <div className="flex items-center text-sm">
+                  <span className="text-gray-600 w-32">{t('admin.ratings.reference')}:</span>
+                  <button
+                    onClick={() => router.push(`/admin/shipments/${rating.related_resource.id}`)}
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    {rating.related_resource.reference}
+                  </button>
+                </div>
+                {rating.related_resource.details && (
+                  <div className="flex items-center text-sm">
+                    <span className="text-gray-600 w-32">{t('admin.ratings.details')}:</span>
+                    <span className="text-gray-900">{rating.related_resource.details}</span>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Actions</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">{t('admin.ratings.actions')}</h3>
             <p className="text-xs text-gray-600 mb-4">
-              Removing this rating will recalculate the user's average rating immediately.
+              {t('admin.ratings.removeWarning')}
             </p>
             <button
               onClick={() => setShowDeleteDialog(true)}
               className="w-full inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Remove Rating
+              {t('admin.ratings.removeRating')}
             </button>
           </div>
         </div>
@@ -302,22 +290,22 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
 
       {/* Delete Dialog */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Remove Rating</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.ratings.removeRating')}</h3>
             <p className="text-sm text-gray-600 mb-4">
-              This rating will be permanently removed and the user's average rating will be recalculated. Please provide a reason:
+              {t('admin.ratings.removeDialogDescription')}
             </p>
             <textarea
               value={deleteReason}
               onChange={(e) => setDeleteReason(e.target.value)}
-              placeholder="Reason for removal (minimum 10 characters)..."
+              placeholder={t('admin.ratings.removeReasonPlaceholder')}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
             />
             <div className="flex items-center justify-between mt-4">
               <span className={`text-xs ${deleteReason.length < 10 ? 'text-red-600' : 'text-gray-500'}`}>
-                {deleteReason.length} / 10 minimum
+                {deleteReason.length} / 10 {t('admin.ratings.minimum')}
               </span>
               <div className="flex items-center space-x-2">
                 <button
@@ -327,14 +315,14 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
                   }}
                   className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleDeleteRating}
                   disabled={deleteReason.length < 10}
                   className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Remove Rating
+                  {t('admin.ratings.removeRating')}
                 </button>
               </div>
             </div>

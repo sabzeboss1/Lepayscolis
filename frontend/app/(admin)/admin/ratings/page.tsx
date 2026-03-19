@@ -6,6 +6,7 @@ import { Star } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
+import { useTranslation } from '@/lib/i18n';
 
 interface Rating {
   id: string;
@@ -21,9 +22,8 @@ interface Rating {
   };
   rating: number;
   comment?: string;
-  type: 'for_traveler' | 'for_sender';
   related_resource: {
-    type: 'trip' | 'shipment';
+    type: 'shipment';
     id: string;
     reference: string;
   };
@@ -32,6 +32,7 @@ interface Rating {
 
 export default function RatingsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,7 +43,6 @@ export default function RatingsPage() {
   const [filters, setFilters] = useState<Record<string, string | { from: string; to: string }>>({
     search: '',
     rating: '',
-    type: ''
   });
 
   const fetchRatings = async () => {
@@ -51,16 +51,13 @@ export default function RatingsPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         per_page: perPage.toString(),
-        sort_by: sortKey,
-        sort_direction: sortDirection,
         ...(filters.search && typeof filters.search === 'string' && { search: filters.search }),
         ...(filters.rating && typeof filters.rating === 'string' && { rating: filters.rating }),
-        ...(filters.type && typeof filters.type === 'string' && { type: filters.type })
       });
 
       const response = await fetch(`/api/admin/ratings?${params}`);
       const data = await response.json();
-      
+
       setRatings(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {
@@ -102,26 +99,10 @@ export default function RatingsPage() {
     );
   };
 
-  const getTypeBadge = (type: string) => {
-    const badges = {
-      for_traveler: 'bg-blue-100 text-blue-800',
-      for_sender: 'bg-purple-100 text-purple-800'
-    };
-    const labels = {
-      for_traveler: 'For Traveler',
-      for_sender: 'For Sender'
-    };
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[type as keyof typeof badges]}`}>
-        {labels[type as keyof typeof labels]}
-      </span>
-    );
-  };
-
   const columns: Column<Rating>[] = [
     {
       key: 'reviewer',
-      label: 'Reviewer',
+      label: t('admin.ratings.reviewer'),
       render: (rating) => (
         <div>
           <div className="font-medium text-gray-900">{rating.reviewer.name}</div>
@@ -131,7 +112,7 @@ export default function RatingsPage() {
     },
     {
       key: 'reviewed_user',
-      label: 'Reviewed User',
+      label: t('admin.ratings.reviewedUser'),
       render: (rating) => (
         <div>
           <div className="font-medium text-gray-900">{rating.reviewed_user.name}</div>
@@ -141,35 +122,28 @@ export default function RatingsPage() {
     },
     {
       key: 'rating',
-      label: 'Rating',
+      label: t('admin.ratings.rating'),
       sortable: true,
       render: (rating) => renderStars(rating.rating)
     },
     {
-      key: 'type',
-      label: 'Type',
-      sortable: true,
-      render: (rating) => getTypeBadge(rating.type)
-    },
-    {
       key: 'related_resource',
-      label: 'Related To',
+      label: t('admin.ratings.relatedTo'),
       render: (rating) => (
         <button
           onClick={(e) => {
             e.stopPropagation();
-            const path = rating.related_resource.type === 'trip' ? 'trips' : 'shipments';
-            router.push(`/admin/${path}/${rating.related_resource.id}`);
+            router.push(`/admin/shipments/${rating.related_resource.id}`);
           }}
           className="text-sm text-blue-600 hover:text-blue-800"
         >
-          {rating.related_resource.type === 'trip' ? 'Trip' : 'Shipment'}: {rating.related_resource.reference}
+          {t('admin.ratings.shipment')}: {rating.related_resource.reference}
         </button>
       )
     },
     {
       key: 'created_at',
-      label: 'Date',
+      label: t('admin.ratings.date'),
       sortable: true,
       render: (rating) => (
         <span className="text-sm text-gray-900">
@@ -187,64 +161,50 @@ export default function RatingsPage() {
     {
       type: 'text' as const,
       key: 'search',
-      label: 'Search',
-      placeholder: 'Search by reviewer or reviewed user...'
+      label: t('common.search'),
+      placeholder: t('admin.ratings.searchPlaceholder'),
     },
     {
       type: 'select' as const,
       key: 'rating',
-      label: 'Rating',
+      label: t('admin.ratings.rating'),
       options: [
-        { value: '', label: 'All Ratings' },
-        { value: '5', label: '5 Stars' },
-        { value: '4', label: '4 Stars' },
-        { value: '3', label: '3 Stars' },
-        { value: '2', label: '2 Stars' },
-        { value: '1', label: '1 Star' }
+        { value: '', label: t('admin.ratings.allRatings') },
+        { value: '5', label: t('admin.ratings.stars', { count: '5' }) },
+        { value: '4', label: t('admin.ratings.stars', { count: '4' }) },
+        { value: '3', label: t('admin.ratings.stars', { count: '3' }) },
+        { value: '2', label: t('admin.ratings.stars', { count: '2' }) },
+        { value: '1', label: t('admin.ratings.star', { count: '1' }) },
       ]
     },
-    {
-      type: 'select' as const,
-      key: 'type',
-      label: 'Type',
-      options: [
-        { value: '', label: 'All Types' },
-        { value: 'for_traveler', label: 'For Traveler' },
-        { value: 'for_sender', label: 'For Sender' }
-      ]
-    }
   ];
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Ratings</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('admin.ratings.title')}</h1>
         <p className="text-sm text-gray-600 mt-1">
-          View and manage user ratings and reviews
+          {t('admin.ratings.description')}
         </p>
       </div>
 
-      {/* Filters */}
       <TableFilters
         filters={filterConfig}
         values={filters}
         onChange={handleFilterChange}
-        onReset={() => setFilters({ search: '', rating: '', type: '' })}
+        onReset={() => setFilters({ search: '', rating: '' })}
       />
 
-      {/* Data Table */}
       <DataTable
         columns={columns}
         data={ratings}
         loading={loading}
-        emptyMessage="No ratings found"
+        emptyMessage={t('admin.ratings.noRatings')}
         onSort={handleSort}
         onRowClick={(rating) => router.push(`/admin/ratings/${rating.id}`)}
         getRowId={(rating) => rating.id}
       />
 
-      {/* Pagination */}
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(total / perPage)}
