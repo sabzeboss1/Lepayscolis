@@ -17,6 +17,11 @@ class WithdrawalRequestResource extends JsonResource
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
+            'user' => $this->when($this->relationLoaded('user') && $this->user, [
+                'id' => $this->user?->id,
+                'name' => $this->user?->name,
+                'email' => $this->user?->email,
+            ]),
             'amount' => (float) $this->amount,
             'formatted_amount' => $this->formatCurrency($this->amount),
             'fee' => (float) $this->fee,

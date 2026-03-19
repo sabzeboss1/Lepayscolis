@@ -36,14 +36,14 @@ class AdminPaymentController extends Controller
         ], 200);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $payment = $this->paymentService->getPaymentDetails($id);
 
         return response()->json(['data' => new PaymentTransactionResource($payment)], 200);
     }
 
-    public function refund(ProcessRefundRequest $request, int $id): JsonResponse
+    public function refund(ProcessRefundRequest $request, string $id): JsonResponse
     {
         $payment = $this->paymentService->processRefund(
             $id,

@@ -1238,6 +1238,182 @@
         }
       }
     },
+    "payments": {
+      "title": "Payment Transactions",
+      "subtitle": "View and manage all payment transactions on the platform",
+      "noPayments": "No payment transactions found",
+      "columns": {
+        "transactionId": "Transaction ID",
+        "user": "User",
+        "amount": "Amount",
+        "method": "Method",
+        "status": "Status",
+        "shipment": "Shipment",
+        "date": "Date"
+      },
+      "filters": {
+        "status": "Status",
+        "method": "Method",
+        "dateFrom": "From Date",
+        "dateTo": "To Date"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "completed": "Completed",
+        "failed": "Failed",
+        "refunded": "Refunded",
+        "escrowed": "Escrowed",
+        "released": "Released"
+      },
+      "methods": {
+        "card": "Card",
+        "wallet": "Wallet",
+        "bankTransfer": "Bank Transfer"
+      },
+      "detail": {
+        "title": "Payment Details",
+        "notFound": "Payment not found",
+        "viewInStripe": "View in Stripe",
+        "processRefund": "Process Refund",
+        "transactionInfo": "Transaction Information",
+        "amount": "Amount",
+        "paymentMethod": "Payment Method",
+        "transactionId": "Transaction ID",
+        "currency": "Currency",
+        "created": "Created",
+        "escrowed": "Escrowed",
+        "released": "Released",
+        "feeBreakdown": "Fee Breakdown",
+        "baseAmount": "Base Amount",
+        "senderFee": "Sender Fee",
+        "travelerFee": "Traveler Fee",
+        "platformFee": "Platform Fee",
+        "travelerAmount": "Traveler Amount",
+        "payerInfo": "Payer Information",
+        "payeeInfo": "Payee Information",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "relatedShipment": "Related Shipment",
+        "trackingNumber": "Tracking Number",
+        "shipmentStatus": "Status",
+        "statusLabel": "Status",
+        "paymentStatus": "Payment Status",
+        "refundAmount": "Refund Amount (Optional)",
+        "fullAmount": "Full amount",
+        "leaveEmptyFullRefund": "Leave empty for full refund",
+        "refundReason": "Refund Reason",
+        "refundReasonPlaceholder": "Explain why this refund is being processed (minimum 10 characters)..."
+      },
+      "errors": {
+        "loadFailed": "Failed to load payment transactions"
+      }
+    },
+    "wallets": {
+      "title": "Wallets",
+      "subtitle": "Manage user wallet balances and transactions",
+      "noWallets": "No wallets found",
+      "columns": {
+        "user": "User",
+        "balance": "Balance",
+        "totalCredits": "Total Credits",
+        "totalDebits": "Total Debits",
+        "lastTransaction": "Last Transaction"
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Search by user name or email..."
+      },
+      "noTransactions": "No transactions yet",
+      "detail": {
+        "title": "{{name}}'s Wallet",
+        "notFound": "Wallet not found",
+        "currentBalance": "Current Balance",
+        "totalCredits": "Total Credits",
+        "totalDebits": "Total Debits",
+        "totalAdjustments": "Total Adjustments",
+        "transactionHistory": "Transaction History",
+        "type": "Type",
+        "amount": "Amount",
+        "description": "Description",
+        "reference": "Reference",
+        "date": "Date",
+        "credit": "Credit",
+        "debit": "Debit",
+        "adjustment": "Adjustment",
+        "refund": "Refund",
+        "adjustBalance": "Adjust Balance",
+        "adjustmentAmount": "Amount",
+        "adjustmentType": "Type",
+        "typeCredit": "Credit (add funds)",
+        "typeDebit": "Debit (remove funds)",
+        "reason": "Reason for Adjustment",
+        "reasonPlaceholder": "Explain why this adjustment is being made (minimum 10 characters)...",
+        "reasonMinChars": "{{count}} / 10 minimum",
+        "adjusting": "Adjusting...",
+        "confirmAdjust": "Confirm Adjustment"
+      }
+    },
+    "withdrawals": {
+      "title": "Withdrawal Requests",
+      "subtitle": "Review and process user withdrawal requests",
+      "noWithdrawals": "No withdrawal requests found",
+      "totalPendingAmount": "Total Pending Amount",
+      "pendingRequests": "pending requests",
+      "columns": {
+        "user": "User",
+        "amount": "Amount",
+        "fee": "Fee",
+        "netAmount": "Net Amount",
+        "paymentMethod": "Payment Method",
+        "status": "Status",
+        "requested": "Requested"
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Search by user name or email...",
+        "status": "Status"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "markProcessing": "Mark Processing",
+        "markCompleted": "Mark Completed"
+      },
+      "modal": {
+        "title": "Withdrawal Request",
+        "userInfo": "User Information",
+        "name": "Name",
+        "email": "Email",
+        "amountDetails": "Amount Details",
+        "withdrawalAmount": "Withdrawal Amount",
+        "processingFee": "Processing Fee",
+        "netAmount": "Net Amount",
+        "paymentDetails": "Payment Details",
+        "timeline": "Timeline",
+        "requested": "Requested",
+        "approvedAt": "Approved",
+        "approvedBy": "Approved by",
+        "completedAt": "Completed",
+        "rejectionReason": "Rejection Reason",
+        "rejectionPlaceholder": "Please provide a detailed reason for rejection (minimum 10 characters)...",
+        "confirmReject": "Confirm Rejection",
+        "confirmCompleteTitle": "Confirm Completion",
+        "confirmCompleteDesc": "Please confirm that the withdrawal has been successfully transferred to the user's account.",
+        "markCompleted": "Mark as Completed"
+      },
+      "errors": {
+        "loadFailed": "Failed to load withdrawal requests"
+      }
+    },
     "kyc": {
       "title": "KYC Verification",
       "subtitle": "Review and verify user identity documents",
