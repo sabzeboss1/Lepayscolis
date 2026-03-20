@@ -182,7 +182,10 @@ export const API_ENDPOINTS = {
       show: (id: string) => `/api/admin/ratings/${id}`,
     },
     
-    analytics: '/api/admin/analytics',
+    analytics: {
+      index: '/api/admin/analytics',
+      export: '/api/admin/analytics/export',
+    },
     
     settings: {
       get: '/api/admin/settings',
@@ -196,6 +199,8 @@ export const API_ENDPOINTS = {
     
     auditLogs: {
       list: '/api/admin/audit-logs',
+      show: (id: string) => `/api/admin/audit-logs/${id}`,
+      export: '/api/admin/audit-logs/export',
     },
 
     currencies: {

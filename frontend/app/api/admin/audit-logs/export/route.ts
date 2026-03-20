@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams.toString();
-    const queryString = searchParams ? `?${searchParams}` : '';
+    const body = await request.json();
 
     const response = await makeAdminRequest(
       request,
-      `/api/admin/analytics${queryString}`,
-      { method: 'GET' }
+      '/api/admin/audit-logs/export',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
     );
 
     const data = await response.json();
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(
-      { message: error.message || 'Failed to fetch analytics' },
+      { message: error.message || 'Failed to export audit logs' },
       { status: error.message?.includes('Unauthorized') ? 401 : 500 }
     );
   }
