@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Exceptions\InsufficientBalanceException;
 use App\Exceptions\InvalidWithdrawalStatusException;
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Requests\Admin\ApproveWithdrawalRequest;
 use App\Http\Requests\Admin\RejectWithdrawalRequest;
 use App\Http\Resources\WithdrawalRequestResource;
@@ -19,8 +18,7 @@ class WithdrawalManagementController extends Controller
     public function __construct(
         private WithdrawalService $withdrawalService
     ) {
-        $this->middleware('auth:sanctum');
-        $this->middleware(EnsureAdminRole::class);
+        // Auth and admin middleware applied at route level in api.php
     }
 
     /**

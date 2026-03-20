@@ -22,7 +22,35 @@ export async function GET(
       return NextResponse.json(data, { status: response.status });
     }
 
-    return NextResponse.json(data);
+    const d = data.data;
+    const wallet = d.wallet;
+    const aggregates = d.aggregates;
+
+    const transformed = {
+      data: {
+        wallet: {
+          user: d.user,
+          balance: wallet?.balance ?? 0,
+          currency_code: wallet?.currency_code ?? 'EUR',
+          total_credits: aggregates?.total_credits ?? 0,
+          total_debits: aggregates?.total_debits ?? 0,
+          total_adjustments: aggregates?.total_adjustments ?? 0,
+        },
+        transactions: (d.transactions ?? []).map((t: any) => ({
+          id: t.id,
+          type: t.type,
+          amount: t.amount,
+          description: t.description,
+          reference_type: t.reference_type,
+          reference_id: t.reference_id,
+          balance_after: t.balance_after,
+          created_at: t.created_at,
+        })),
+      },
+      meta: data.meta ?? { current_page: 1, last_page: 1, per_page: 25, total: 0 },
+    };
+
+    return NextResponse.json(transformed);
   } catch (error: any) {
     return NextResponse.json(
       { message: error.message || 'Wallet not found' },
