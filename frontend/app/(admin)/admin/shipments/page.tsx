@@ -6,6 +6,7 @@ import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface Shipment {
   id: string;
@@ -95,8 +96,7 @@ export default function ShipmentsPage() {
     );
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(amount);
+  const { formatCurrency } = useAdminCurrency();
 
   const columns: Column<Shipment>[] = [
     {

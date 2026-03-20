@@ -2,7 +2,9 @@
 
 namespace App\Services\Admin;
 
+use App\Models\Currency;
 use App\Models\Payment;
+use App\Models\PlatformSetting;
 use App\Models\Shipment;
 use App\Models\Trip;
 use App\Models\User;
@@ -15,6 +17,15 @@ class AdminAnalyticsService
      * Cache TTL for analytics data (1 hour)
      */
     const ANALYTICS_CACHE_TTL = 3600;
+
+    /**
+     * Get the exchange rate for the system default currency.
+     */
+    protected function getTargetRate(): float
+    {
+        $defaultCurrency = PlatformSetting::get('default_currency', 'EUR');
+        return (float) (Currency::findByCode($defaultCurrency)?->exchange_rate ?? 1.0);
+    }
 
     /**
      * Get the appropriate date format SQL based on DB driver.
@@ -42,27 +53,33 @@ class AdminAnalyticsService
             $usersQuery = User::where('role', 'user');
             $tripsQuery = Trip::query();
             $shipmentsQuery = Shipment::query();
-            $revenueQuery = Payment::where('status', 'released');
+            $revenueQuery = Payment::where('payments.status', 'released')
+                ->join('currencies', 'payments.currency_code', '=', 'currencies.code');
 
             if ($dateFrom) {
                 $usersQuery->where('created_at', '>=', $dateFrom);
                 $tripsQuery->where('created_at', '>=', $dateFrom);
                 $shipmentsQuery->where('created_at', '>=', $dateFrom);
-                $revenueQuery->where('created_at', '>=', $dateFrom);
+                $revenueQuery->where('payments.created_at', '>=', $dateFrom);
             }
 
             if ($dateTo) {
                 $usersQuery->where('created_at', '<=', $dateTo);
                 $tripsQuery->where('created_at', '<=', $dateTo);
                 $shipmentsQuery->where('created_at', '<=', $dateTo);
-                $revenueQuery->where('created_at', '<=', $dateTo);
+                $revenueQuery->where('payments.created_at', '<=', $dateTo);
             }
+
+            $targetRate = $this->getTargetRate();
+            $revenue = (float) $revenueQuery
+                ->selectRaw('SUM(payments.platform_fee * (? / currencies.exchange_rate)) as total', [$targetRate])
+                ->value('total') ?? 0.0;
 
             return [
                 'users' => $usersQuery->count(),
                 'trips' => $tripsQuery->count(),
                 'shipments' => $shipmentsQuery->count(),
-                'revenue' => (float) $revenueQuery->sum('platform_fee'),
+                'revenue' => $revenue,
             ];
         });
     }
@@ -140,18 +157,20 @@ class AdminAnalyticsService
         $cacheKey = "admin:analytics:revenue:{$dateFrom}:{$dateTo}";
 
         return Cache::remember($cacheKey, self::ANALYTICS_CACHE_TTL, function () use ($dateFrom, $dateTo) {
-            $dateExpr = $this->dateFormatMonth('created_at');
-            $query = Payment::selectRaw("{$dateExpr} as month, SUM(platform_fee) as total")
-                ->where('status', 'released');
+            $targetRate = $this->getTargetRate();
+            $dateExpr = $this->dateFormatMonth('payments.created_at');
+            $query = Payment::join('currencies', 'payments.currency_code', '=', 'currencies.code')
+                ->selectRaw("{$dateExpr} as month, SUM(payments.platform_fee * (? / currencies.exchange_rate)) as total", [$targetRate])
+                ->where('payments.status', 'released');
 
             if ($dateFrom) {
-                $query->where('created_at', '>=', $dateFrom);
+                $query->where('payments.created_at', '>=', $dateFrom);
             } else {
-                $query->where('created_at', '>=', now()->subMonths(12));
+                $query->where('payments.created_at', '>=', now()->subMonths(12));
             }
 
             if ($dateTo) {
-                $query->where('created_at', '<=', $dateTo);
+                $query->where('payments.created_at', '<=', $dateTo);
             }
 
             $data = $query->groupBy('month')
@@ -161,7 +180,7 @@ class AdminAnalyticsService
             return $data->map(function ($item) {
                 return [
                     'month' => $item->month,
-                    'amount' => (float) $item->total,
+                    'amount' => round((float) $item->total, 2),
                 ];
             })->toArray();
         });

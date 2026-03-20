@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Package, User, MapPin, Ban, TrendingUp } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface Shipment {
   id: string;
@@ -136,8 +137,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
     );
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(amount);
+  const { formatCurrency } = useAdminCurrency();
 
   const hasDimensions = shipment.package_length || shipment.package_width || shipment.package_height;
 

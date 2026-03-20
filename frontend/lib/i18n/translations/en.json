@@ -988,7 +988,10 @@
         "logoUrl": "Logo URL",
         "faviconUrl": "Favicon URL",
         "primaryColor": "Primary color",
-        "secondaryColor": "Secondary color"
+        "secondaryColor": "Secondary color",
+        "uploadLogo": "Upload Logo",
+        "uploadFavicon": "Upload Favicon",
+        "uploading": "Uploading..."
       },
       "currency": {
         "title": "Currency Management",

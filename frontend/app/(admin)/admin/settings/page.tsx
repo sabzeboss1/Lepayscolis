@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Settings as SettingsIcon,
   Save,
@@ -10,13 +10,20 @@ import {
   DollarSign,
   Shield,
   Bell,
-  Package
+  Package,
+  Upload,
+  X
 } from 'lucide-react';
-import { apiClient } from '@/lib/api/client';
-import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 type TabType = 'general' | 'smtp' | 'payment' | 'branding' | 'currency' | 'security' | 'notifications' | 'shipping';
+
+interface CurrencyItem {
+  code: string;
+  name: string;
+  symbol: string;
+  is_active: boolean;
+}
 
 interface PlatformSettings {
   // General
@@ -99,16 +106,27 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [uploading, setUploading] = useState<'logo' | 'favicon' | null>(null);
+  const [currencies, setCurrencies] = useState<CurrencyItem[]>([]);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchSettings();
+    fetchCurrencies();
   }, []);
 
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<{ data: PlatformSettings }>(API_ENDPOINTS.admin.settings.get);
-      setSettings(response.data || getDefaultSettings());
+      const response = await fetch('/api/admin/settings');
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setSettings(result.data || getDefaultSettings());
     } catch (error) {
       console.error('Failed to fetch settings:', error);
       setSettings(getDefaultSettings());
@@ -117,13 +135,26 @@ export default function SettingsPage() {
     }
   };
 
+  const fetchCurrencies = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/currencies`);
+      if (response.ok) {
+        const result = await response.json();
+        setCurrencies(result.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch currencies:', error);
+    }
+  };
+
   const getDefaultSettings = (): PlatformSettings => ({
     platform_name: 'Le Pays Express Colis',
     platform_url: 'https://lepaysexpresscolis.com',
     support_email: 'support@lepaysexpresscolis.com',
     support_phone: '+33 1 23 45 67 89',
-    sender_fee_percentage: 5.0,
-    traveler_fee_percentage: 10.0,
+    sender_fee_percentage: 1.0,
+    traveler_fee_percentage: 2.0,
 
     smtp_host: 'smtp.gmail.com',
     smtp_port: 587,
@@ -185,7 +216,17 @@ export default function SettingsPage() {
     setMessage(null);
 
     try {
-      await apiClient.put(API_ENDPOINTS.admin.settings.update, settings);
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to save settings');
+      }
+
       setMessage({ type: 'success', text: t('admin.settings.success') });
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
@@ -199,6 +240,41 @@ export default function SettingsPage() {
   const updateSetting = (key: keyof PlatformSettings, value: any) => {
     if (!settings) return;
     setSettings({ ...settings, [key]: value });
+  };
+
+  const handleBrandingUpload = async (file: File, type: 'logo' | 'favicon') => {
+    if (!file) return;
+
+    setUploading(type);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', type);
+
+      const response = await fetch('/api/admin/settings/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `Failed to upload ${type}`);
+      }
+
+      // Update local state with the new URL
+      const settingKey = type === 'logo' ? 'logo_url' : 'favicon_url';
+      updateSetting(settingKey, data.url);
+      setMessage({ type: 'success', text: data.message });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error: any) {
+      console.error(`Failed to upload ${type}:`, error);
+      setMessage({ type: 'error', text: error.message || `Failed to upload ${type}` });
+    } finally {
+      setUploading(null);
+    }
   };
 
   const tabs = [
@@ -765,37 +841,103 @@ export default function SettingsPage() {
               <h2 className="text-lg font-semibold text-gray-900">{t('admin.settings.branding.title')}</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Logo Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('admin.settings.branding.logoUrl')}
                   </label>
-                  <input
-                    type="text"
-                    value={settings.logo_url}
-                    onChange={(e) => updateSetting('logo_url', e.target.value)}
-                    placeholder="/logo.png"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {settings.logo_url && (
-                    <div className="mt-2">
-                      <img src={settings.logo_url} alt="Logo" className="h-16 object-contain" />
-                    </div>
-                  )}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                    {settings.logo_url && (
+                      <div className="mb-3 flex justify-center">
+                        <img src={settings.logo_url} alt="Logo" className="h-20 object-contain rounded" />
+                      </div>
+                    )}
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleBrandingUpload(file, 'logo');
+                        e.target.value = '';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={uploading === 'logo'}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+                    >
+                      {uploading === 'logo' ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                      {uploading === 'logo' ? t('admin.settings.branding.uploading') : t('admin.settings.branding.uploadLogo')}
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2">PNG, JPG, SVG - Max 2MB</p>
+                  </div>
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      value={settings.logo_url}
+                      onChange={(e) => updateSetting('logo_url', e.target.value)}
+                      placeholder="/logo.png"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
 
+                {/* Favicon Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('admin.settings.branding.faviconUrl')}
                   </label>
-                  <input
-                    type="text"
-                    value={settings.favicon_url}
-                    onChange={(e) => updateSetting('favicon_url', e.target.value)}
-                    placeholder="/favicon.ico"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                    {settings.favicon_url && (
+                      <div className="mb-3 flex justify-center">
+                        <img src={settings.favicon_url} alt="Favicon" className="h-12 w-12 object-contain rounded" />
+                      </div>
+                    )}
+                    <input
+                      ref={faviconInputRef}
+                      type="file"
+                      accept="image/x-icon,image/png,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleBrandingUpload(file, 'favicon');
+                        e.target.value = '';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => faviconInputRef.current?.click()}
+                      disabled={uploading === 'favicon'}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+                    >
+                      {uploading === 'favicon' ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                      {uploading === 'favicon' ? t('admin.settings.branding.uploading') : t('admin.settings.branding.uploadFavicon')}
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2">ICO, PNG, SVG - Max 2MB</p>
+                  </div>
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      value={settings.favicon_url}
+                      onChange={(e) => updateSetting('favicon_url', e.target.value)}
+                      placeholder="/favicon.ico"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
 
+                {/* Primary Color */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('admin.settings.branding.primaryColor')}
@@ -816,6 +958,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
+                {/* Secondary Color */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('admin.settings.branding.secondaryColor')}
@@ -854,13 +997,11 @@ export default function SettingsPage() {
                     onChange={(e) => updateSetting('default_currency', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="EUR">EUR - Euro</option>
-                    <option value="USD">USD - Dollar</option>
-                    <option value="GBP">GBP - Pound</option>
-                    <option value="XAF">XAF - Franc CFA (CEMAC)</option>
-                    <option value="XOF">XOF - Franc CFA (UEMOA)</option>
-                    <option value="RUB">RUB - Rouble</option>
-                    <option value="CAD">CAD - Dollar canadien</option>
+                    {currencies.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code} - {c.name} ({c.symbol})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -869,20 +1010,20 @@ export default function SettingsPage() {
                     {t('admin.settings.currency.supportedCurrencies')}
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {['EUR', 'USD', 'GBP', 'XAF', 'XOF', 'RUB', 'CAD', 'CHF'].map((currency) => (
-                      <label key={currency} className="flex items-center gap-2">
+                    {currencies.map((c) => (
+                      <label key={c.code} className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={settings.supported_currencies.includes(currency)}
+                          checked={settings.supported_currencies.includes(c.code)}
                           onChange={(e) => {
                             const newCurrencies = e.target.checked
-                              ? [...settings.supported_currencies, currency]
-                              : settings.supported_currencies.filter(c => c !== currency);
+                              ? [...settings.supported_currencies, c.code]
+                              : settings.supported_currencies.filter(sc => sc !== c.code);
                             updateSetting('supported_currencies', newCurrencies);
                           }}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">{currency}</span>
+                        <span className="text-sm text-gray-700">{c.code} - {c.name}</span>
                       </label>
                     ))}
                   </div>

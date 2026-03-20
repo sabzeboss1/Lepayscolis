@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, User, CreditCard, Calendar, DollarSign, ExternalLink, RefreshCw } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface PaymentDetail {
   id: string;
@@ -105,12 +106,7 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
-  const formatCurrency = (amount: number, currency?: string) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: currency || 'EUR',
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('fr-FR', {

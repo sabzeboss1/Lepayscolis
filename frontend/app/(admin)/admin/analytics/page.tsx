@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { TrendingUp, Users, DollarSign, Package, Download, MapPin, Truck } from 'lucide-react';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 import LineChart from '@/components/admin/LineChart';
 import BarChart from '@/components/admin/BarChart';
 import PieChart from '@/components/admin/PieChart';
@@ -113,14 +114,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   return (
     <div className="space-y-6">

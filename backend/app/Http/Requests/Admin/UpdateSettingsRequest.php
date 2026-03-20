@@ -20,13 +20,72 @@ class UpdateSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // General
+            'platform_name' => ['sometimes', 'string', 'max:255'],
+            'platform_url' => ['sometimes', 'string', 'url', 'max:255'],
+            'support_email' => ['sometimes', 'string', 'email', 'max:255'],
+            'support_phone' => ['sometimes', 'string', 'max:50'],
             'sender_fee_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
             'traveler_fee_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+
+            // SMTP
+            'smtp_host' => ['sometimes', 'string', 'max:255'],
+            'smtp_port' => ['sometimes', 'integer', 'min:1', 'max:65535'],
+            'smtp_username' => ['sometimes', 'string', 'max:255'],
+            'smtp_password' => ['sometimes', 'string', 'max:255'],
+            'smtp_encryption' => ['sometimes', 'string', 'in:tls,ssl,none'],
+            'smtp_from_address' => ['sometimes', 'string', 'email', 'max:255'],
+            'smtp_from_name' => ['sometimes', 'string', 'max:255'],
+
+            // Payment - Stripe
+            'stripe_public_key' => ['sometimes', 'string', 'max:255'],
+            'stripe_secret_key' => ['sometimes', 'string', 'max:255'],
+            'stripe_webhook_secret' => ['sometimes', 'string', 'max:255'],
+            'payment_currency' => ['sometimes', 'string', 'max:10'],
+
+            // Payment - Mobile Money
+            'orange_money_api_key' => ['sometimes', 'string', 'max:255'],
+            'orange_money_merchant_id' => ['sometimes', 'string', 'max:255'],
+            'orange_money_enabled' => ['sometimes', 'boolean'],
+            'mtn_money_api_key' => ['sometimes', 'string', 'max:255'],
+            'mtn_money_subscription_key' => ['sometimes', 'string', 'max:255'],
+            'mtn_money_enabled' => ['sometimes', 'boolean'],
+
+            // Payment - Bank / Cash
+            'bank_name' => ['sometimes', 'string', 'max:255'],
+            'bank_iban' => ['sometimes', 'string', 'max:50'],
+            'bank_bic' => ['sometimes', 'string', 'max:20'],
+            'bank_transfer_enabled' => ['sometimes', 'boolean'],
+            'cash_payment_enabled' => ['sometimes', 'boolean'],
+
+            // Withdrawal & Shipment
             'withdrawal_fee' => ['sometimes', 'numeric', 'min:0'],
             'min_withdrawal_amount' => ['sometimes', 'numeric', 'min:0'],
             'max_withdrawal_amount' => ['sometimes', 'numeric', 'gt:min_withdrawal_amount'],
             'min_shipment_price' => ['sometimes', 'numeric', 'min:0'],
             'max_shipment_price' => ['sometimes', 'numeric', 'gt:min_shipment_price'],
+
+            // Branding
+            'logo_url' => ['sometimes', 'string', 'max:500'],
+            'favicon_url' => ['sometimes', 'string', 'max:500'],
+            'primary_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'secondary_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+
+            // Currency — must exist in currencies table
+            'default_currency' => ['sometimes', 'string', 'exists:currencies,code'],
+            'supported_currencies' => ['sometimes', 'array'],
+            'supported_currencies.*' => ['string', 'exists:currencies,code'],
+
+            // Security
+            'kyc_required' => ['sometimes', 'boolean'],
+            'two_factor_enabled' => ['sometimes', 'boolean'],
+            'session_timeout' => ['sometimes', 'integer', 'min:300', 'max:86400'],
+            'max_login_attempts' => ['sometimes', 'integer', 'min:1', 'max:20'],
+
+            // Notifications
+            'email_notifications_enabled' => ['sometimes', 'boolean'],
+            'push_notifications_enabled' => ['sometimes', 'boolean'],
+            'sms_notifications_enabled' => ['sometimes', 'boolean'],
         ];
     }
 

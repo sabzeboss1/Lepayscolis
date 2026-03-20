@@ -6,6 +6,7 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { AdminCurrencyProvider } from '@/lib/hooks/useAdminCurrency';
 
 export default function AdminLayout({
   children,
@@ -48,19 +49,21 @@ export default function AdminLayout({
   // Admin layout with sidebar and header
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
-        <AdminSidebar userRole={user.role as 'admin' | 'super_admin'} />
-        <div className="lg:pl-64">
-          <AdminHeader
-            userName={user.name}
-            userRole={user.role as 'admin' | 'super_admin'}
-            onLogout={handleLogout}
-          />
-          <main className="py-6 px-4 sm:px-6 lg:px-8">
-            {children}
-          </main>
+      <AdminCurrencyProvider>
+        <div className="min-h-screen bg-gray-50">
+          <AdminSidebar userRole={user.role as 'admin' | 'super_admin'} />
+          <div className="lg:pl-64">
+            <AdminHeader
+              userName={user.name}
+              userRole={user.role as 'admin' | 'super_admin'}
+              onLogout={handleLogout}
+            />
+            <main className="py-6 px-4 sm:px-6 lg:px-8">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
+      </AdminCurrencyProvider>
     </ErrorBoundary>
   );
 }

@@ -988,7 +988,10 @@
         "logoUrl": "URL du logo",
         "faviconUrl": "URL du favicon",
         "primaryColor": "Couleur primaire",
-        "secondaryColor": "Couleur secondaire"
+        "secondaryColor": "Couleur secondaire",
+        "uploadLogo": "Uploader le logo",
+        "uploadFavicon": "Uploader le favicon",
+        "uploading": "Upload en cours..."
       },
       "currency": {
         "title": "Gestion des devises",
