@@ -1584,6 +1584,100 @@
           "createFailed": "Échec de la création de l'utilisateur"
         }
       }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Envoyer des notifications aux utilisateurs et consulter l'historique",
+      "sendNotification": "Envoyer une notification",
+      "hideForm": "Masquer le formulaire",
+      "sendNew": "Envoyer une nouvelle notification",
+      "history": "Historique des notifications",
+      "noHistory": "Aucune notification envoyée",
+      "sendSuccess": "Notification envoyée à {{count}} destinataire(s)",
+      "sendFailed": "Échec de l'envoi de la notification",
+      "guidelinesTitle": "Consignes pour les notifications",
+      "guidelines": [
+        "Le titre est limité à 100 caractères",
+        "Le message est limité à 500 caractères",
+        "Les notifications broadcast sont envoyées à tous les utilisateurs",
+        "Les notifications de groupe peuvent être filtrées par statut, rôle ou statut KYC",
+        "Prévisualisez votre notification avant envoi",
+        "Toutes les notifications sont enregistrées dans le journal d'audit"
+      ],
+      "columns": {
+        "title": "Titre",
+        "message": "Message",
+        "type": "Type",
+        "recipients": "Destinataires",
+        "sentBy": "Envoyé par",
+        "date": "Date"
+      },
+      "types": {
+        "individual": "Individuel",
+        "broadcast": "Diffusion",
+        "group": "Groupe"
+      }
+    },
+    "admins": {
+      "title": "Gestion des administrateurs",
+      "description": "Gérer les comptes administrateurs et les permissions",
+      "addAdmin": "Ajouter un admin",
+      "listTitle": "Administrateurs",
+      "noAdmins": "Aucun administrateur trouvé",
+      "refresh": "Actualiser",
+      "fetchFailed": "Impossible de charger les admins",
+      "createSuccess": "Admin créé avec succès",
+      "updateRoleSuccess": "Rôle mis à jour avec succès",
+      "updateRoleFailed": "Échec de la mise à jour du rôle",
+      "removeSuccess": "Accès admin supprimé avec succès",
+      "removeFailed": "Échec de la suppression de l'accès admin",
+      "cancel": "Annuler",
+      "viewActivity": "Voir l'activité",
+      "changeRole": "Changer le rôle",
+      "removeAccess": "Supprimer l'accès",
+      "columns": {
+        "name": "Nom",
+        "email": "Email",
+        "role": "Rôle",
+        "joined": "Inscrit le",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Admin",
+        "super_admin": "Super Admin"
+      },
+      "createModal": {
+        "title": "Créer un administrateur",
+        "name": "Nom complet",
+        "namePlaceholder": "Entrez le nom complet",
+        "email": "Adresse email",
+        "password": "Mot de passe",
+        "role": "Rôle",
+        "cancel": "Annuler",
+        "create": "Créer l'admin",
+        "creating": "Création...",
+        "errors": {
+          "nameRequired": "Le nom est requis",
+          "emailRequired": "L'email est requis",
+          "passwordRequired": "Le mot de passe est requis",
+          "passwordMin": "Le mot de passe doit contenir au moins 8 caractères",
+          "createFailed": "Échec de la création de l'admin"
+        }
+      },
+      "updateRoleModal": {
+        "title": "Changer le rôle",
+        "description": "Sélectionnez un nouveau rôle pour {{name}} :",
+        "confirm": "Mettre à jour le rôle"
+      },
+      "removeModal": {
+        "title": "Supprimer l'accès admin",
+        "description": "Êtes-vous sûr de vouloir supprimer l'accès admin de {{name}} ? Il sera rétrogradé en utilisateur standard.",
+        "confirm": "Supprimer l'accès"
+      },
+      "activityModal": {
+        "title": "Activité — {{name}}",
+        "noActivity": "Aucune activité enregistrée"
+      }
     }
   }
 }
