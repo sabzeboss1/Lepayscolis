@@ -12,7 +12,8 @@ class AdminMessagingService
 {
     public function getConversations(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Conversation::with(['user1', 'user2', 'lastMessage']);
+        $query = Conversation::with(['user1', 'user2', 'messages' => fn($q) => $q->latest('created_at')->limit(1)])
+            ->withCount('messages');
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -22,14 +23,10 @@ class AdminMessagingService
             });
         }
 
-        if (!empty($filters['reported'])) {
-            $query->whereHas('messages', fn($q) => $q->where('reported', true));
-        }
-
         return $query->latest('updated_at')->paginate($perPage);
     }
 
-    public function getConversationMessages(int $conversationId): array
+    public function getConversationMessages(string $conversationId): array
     {
         $conversation = Conversation::with(['user1', 'user2'])->findOrFail($conversationId);
         $messages = Message::where('conversation_id', $conversationId)
@@ -79,7 +76,7 @@ class AdminMessagingService
         return $user->fresh();
     }
 
-    public function deleteMessage(int $messageId, string $reason, User $admin): void
+    public function deleteMessage(string $messageId, string $reason, User $admin): void
     {
         $message = Message::findOrFail($messageId);
 

@@ -135,6 +135,8 @@ export const API_ENDPOINTS = {
       show: (id: string) => `/api/admin/users/${id}`,
       suspend: (id: string) => `/api/admin/users/${id}/suspend`,
       unsuspend: (id: string) => `/api/admin/users/${id}/unsuspend`,
+      banMessaging: (id: string) => `/api/admin/users/${id}/ban-messaging`,
+      unbanMessaging: (id: string) => `/api/admin/users/${id}/unban-messaging`,
     },
     
     kyc: {
@@ -175,11 +177,14 @@ export const API_ENDPOINTS = {
     messages: {
       list: '/api/admin/messages',
       show: (id: string) => `/api/admin/messages/${id}`,
+      delete: (id: string) => `/api/admin/messages/${id}`,
     },
-    
+
     ratings: {
       list: '/api/admin/ratings',
       show: (id: string) => `/api/admin/ratings/${id}`,
+      delete: (id: string) => `/api/admin/ratings/${id}`,
+      statistics: '/api/admin/ratings/statistics',
     },
     
     analytics: '/api/admin/analytics',
