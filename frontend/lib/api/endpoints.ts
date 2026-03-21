@@ -195,10 +195,18 @@ export const API_ENDPOINTS = {
     },
     
     notifications: {
-      list: '/api/admin/notifications',
-      send: '/api/admin/notifications',
+      history: '/api/admin/notifications/history',
+      send: '/api/admin/notifications/send',
     },
-    
+
+    admins: {
+      list: '/api/admin/admins',
+      create: '/api/admin/admins',
+      updateRole: (id: number) => `/api/admin/admins/${id}/role`,
+      remove: (id: number) => `/api/admin/admins/${id}`,
+      activity: (id: number) => `/api/admin/admins/${id}/activity`,
+    },
+
     auditLogs: {
       list: '/api/admin/audit-logs',
     },

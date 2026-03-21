@@ -1644,6 +1644,100 @@
       "removeDialogDescription": "This rating will be permanently removed and the user's average rating will be recalculated. Please provide a reason:",
       "removeReasonPlaceholder": "Reason for removal (minimum 10 characters)...",
       "minimum": "minimum"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Send notifications to users and view history",
+      "sendNotification": "Send Notification",
+      "hideForm": "Hide Form",
+      "sendNew": "Send New Notification",
+      "history": "Notification History",
+      "noHistory": "No notifications sent yet",
+      "sendSuccess": "Notification sent to {{count}} recipient(s)",
+      "sendFailed": "Failed to send notification",
+      "guidelinesTitle": "Notification Guidelines",
+      "guidelines": [
+        "Title is limited to 100 characters",
+        "Message is limited to 500 characters",
+        "Broadcast notifications are sent to all users",
+        "Group notifications can be filtered by status, role, or KYC status",
+        "Preview your notification before sending",
+        "All notifications are logged in the audit trail"
+      ],
+      "columns": {
+        "title": "Title",
+        "message": "Message",
+        "type": "Type",
+        "recipients": "Recipients",
+        "sentBy": "Sent By",
+        "date": "Date"
+      },
+      "types": {
+        "individual": "Individual",
+        "broadcast": "Broadcast",
+        "group": "Group"
+      }
+    },
+    "admins": {
+      "title": "Admin Management",
+      "description": "Manage administrator accounts and permissions",
+      "addAdmin": "Add Admin",
+      "listTitle": "Administrators",
+      "noAdmins": "No administrators found",
+      "refresh": "Refresh",
+      "fetchFailed": "Failed to load admins",
+      "createSuccess": "Admin created successfully",
+      "updateRoleSuccess": "Role updated successfully",
+      "updateRoleFailed": "Failed to update role",
+      "removeSuccess": "Admin access removed successfully",
+      "removeFailed": "Failed to remove admin access",
+      "cancel": "Cancel",
+      "viewActivity": "View activity",
+      "changeRole": "Change role",
+      "removeAccess": "Remove access",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "joined": "Joined",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Admin",
+        "super_admin": "Super Admin"
+      },
+      "createModal": {
+        "title": "Create New Admin",
+        "name": "Full Name",
+        "namePlaceholder": "Enter full name",
+        "email": "Email Address",
+        "password": "Password",
+        "role": "Role",
+        "cancel": "Cancel",
+        "create": "Create Admin",
+        "creating": "Creating...",
+        "errors": {
+          "nameRequired": "Name is required",
+          "emailRequired": "Email is required",
+          "passwordRequired": "Password is required",
+          "passwordMin": "Password must be at least 8 characters",
+          "createFailed": "Failed to create admin"
+        }
+      },
+      "updateRoleModal": {
+        "title": "Change Role",
+        "description": "Select a new role for {{name}}:",
+        "confirm": "Update Role"
+      },
+      "removeModal": {
+        "title": "Remove Admin Access",
+        "description": "Are you sure you want to remove admin access for {{name}}? They will be downgraded to a regular user.",
+        "confirm": "Remove Access"
+      },
+      "activityModal": {
+        "title": "Activity — {{name}}",
+        "noActivity": "No activity recorded"
+      }
     }
   }
 }
