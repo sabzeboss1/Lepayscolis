@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Ban, MapPin, Calendar, User, Package, TrendingUp, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface Trip {
   id: string;
@@ -140,12 +141,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const formatCurrency = (amount: number, code?: string) => {
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: code || 'EUR'
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, string> = {

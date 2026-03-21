@@ -6,6 +6,7 @@ import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface Wallet {
   id: string;
@@ -71,12 +72,7 @@ export default function WalletsPage() {
     setCurrentPage(1);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   const columns: Column<Wallet>[] = [
     {

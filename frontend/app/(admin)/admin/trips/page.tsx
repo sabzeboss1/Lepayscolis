@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
@@ -34,6 +35,7 @@ interface TripFilterValues {
 export default function TripsPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { formatCurrency } = useAdminCurrency();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -187,7 +189,7 @@ export default function TripsPage() {
     {
       key: 'price_per_kg',
       label: t('admin.trips.columns.pricePerKg'),
-      render: (trip) => <span className="text-sm text-gray-900">{trip.price_per_kg} {trip.currency_code || '€'}</span>
+      render: (trip) => <span className="text-sm text-gray-900">{formatCurrency(trip.price_per_kg, trip.currency_code)}</span>
     },
     {
       key: 'shipments_count',

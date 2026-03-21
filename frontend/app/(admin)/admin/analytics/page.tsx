@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { TrendingUp, Users, DollarSign, Package, Download, MapPin, Truck } from 'lucide-react';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 import LineChart from '@/components/admin/LineChart';
 import BarChart from '@/components/admin/BarChart';
 import PieChart from '@/components/admin/PieChart';
@@ -45,15 +46,8 @@ export default function AnalyticsPage() {
       if (dateRange.from) params.append('date_from', dateRange.from);
       if (dateRange.to) params.append('date_to', dateRange.to);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/admin/analytics?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
+      const queryString = params.toString();
+      const response = await fetch(`/api/admin/analytics${queryString ? `?${queryString}` : ''}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -71,28 +65,32 @@ export default function AnalyticsPage() {
   const handleExport = async (type: string) => {
     setExportLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/admin/analytics/export?type=${type}`, {
+      const response = await fetch('/api/admin/analytics/export', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-          'Accept': 'text/csv',
+          'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        body: JSON.stringify({
+          type,
+          date_from: dateRange.from || undefined,
+          date_to: dateRange.to || undefined,
+        }),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${type}_export_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const result = await response.json();
+
+      if (result.download_url) {
+        const a = document.createElement('a');
+        a.href = result.download_url;
+        a.download = result.filename || `${type}_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     } catch (error) {
       console.error('Failed to export data:', error);
     } finally {
@@ -116,14 +114,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   return (
     <div className="space-y-6">

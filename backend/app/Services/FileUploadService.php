@@ -120,6 +120,32 @@ class FileUploadService
     }
 
     /**
+     * Upload branding asset (logo or favicon) to public storage.
+     *
+     * @param UploadedFile $file
+     * @param string $type 'logo' or 'favicon'
+     * @return string Public URL of uploaded asset
+     * @throws \Exception
+     */
+    public function uploadBrandingAsset(UploadedFile $file, string $type): string
+    {
+        $allowedExtensions = $type === 'favicon'
+            ? ['ico', 'png', 'svg']
+            : ['png', 'jpg', 'jpeg', 'svg'];
+
+        $this->validateFileType($file, $allowedExtensions, $type);
+        $this->validateFileSize($file, 2 * 1024 * 1024, $type);
+
+        $extension = $file->getClientOriginalExtension();
+        $filename = "branding/{$type}_" . time() . ".{$extension}";
+
+        // Store on public disk
+        Storage::disk('public')->put($filename, file_get_contents($file->getRealPath()));
+
+        return Storage::disk('public')->url($filename);
+    }
+
+    /**
      * Delete file from storage
      * Handle errors gracefully
      *
@@ -173,6 +199,8 @@ class FileUploadService
             'jpeg' => ['image/jpeg', 'image/jpg'],
             'png' => ['image/png'],
             'pdf' => ['application/pdf'],
+            'svg' => ['image/svg+xml'],
+            'ico' => ['image/x-icon', 'image/vnd.microsoft.icon'],
         ];
 
         if (isset($allowedMimeTypes[$extension])) {
@@ -210,8 +238,8 @@ class FileUploadService
      */
     private function getDiskFromPath(string $path): string
     {
-        // Avatars are stored in public disk
-        if (str_starts_with($path, 'avatars/')) {
+        // Avatars and branding assets are stored in public disk
+        if (str_starts_with($path, 'avatars/') || str_starts_with($path, 'branding/')) {
             return 'public';
         }
 

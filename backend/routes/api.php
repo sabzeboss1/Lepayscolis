@@ -310,6 +310,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::prefix('settings')->group(function () {
         Route::get('/', [AdminSettingsController::class, 'index'])->middleware('throttle:60,1');
         Route::put('/', [AdminSettingsController::class, 'update'])->middleware('throttle:30,1');
+        Route::post('/upload', [AdminSettingsController::class, 'uploadBrandingAsset'])->middleware('throttle:10,1');
     });
 
     // Country Management

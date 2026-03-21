@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, User, Mail, CreditCard, Calendar, DollarSign, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 type WithdrawalStatus = 'pending' | 'approved' | 'processing' | 'completed' | 'rejected' | 'cancelled';
 
@@ -139,12 +140,7 @@ export default function WithdrawalApprovalModal({
 
   const isLoading = loading || isSubmitting;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: withdrawal.currency || 'EUR'
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('fr-FR', {

@@ -45,9 +45,9 @@ export default function AuditLogsPage() {
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
+        per_page: itemsPerPage.toString(),
         ...(filterValues.action && typeof filterValues.action === 'string' && { action: filterValues.action }),
-        ...(filterValues.resource && typeof filterValues.resource === 'string' && { resource: filterValues.resource }),
+        ...(filterValues.resource && typeof filterValues.resource === 'string' && { resource_type: filterValues.resource }),
         ...(filterValues.search && typeof filterValues.search === 'string' && { search: filterValues.search }),
       });
 
@@ -58,6 +58,11 @@ export default function AuditLogsPage() {
       }
 
       const response = await fetch(`/api/admin/audit-logs?${params}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
 
       setLogs(result.data || []);
@@ -91,28 +96,41 @@ export default function AuditLogsPage() {
   const handleExport = async () => {
     setExportLoading(true);
     try {
-      const csvContent = [
-        ['Admin', 'Email', 'Action', 'Resource Type', 'Resource ID', 'IP Address', 'Date'],
-        ...logs.map(log => [
-          log.admin.name,
-          log.admin.email,
-          log.action,
-          log.resource_type,
-          log.resource_id,
-          log.ip_address,
-          new Date(log.created_at).toLocaleString()
-        ])
-      ].map(row => row.join(',')).join('\n');
+      const exportFilters: Record<string, string> = {};
+      if (filterValues.action && typeof filterValues.action === 'string') {
+        exportFilters.action = filterValues.action;
+      }
+      if (filterValues.resource && typeof filterValues.resource === 'string') {
+        exportFilters.resource_type = filterValues.resource;
+      }
+      const dateRange = filterValues.dateRange;
+      if (dateRange && typeof dateRange === 'object' && 'from' in dateRange) {
+        if (dateRange.from) exportFilters.date_from = dateRange.from;
+        if (dateRange.to) exportFilters.date_to = dateRange.to;
+      }
 
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const response = await fetch('/api/admin/audit-logs/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exportFilters),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.download_url) {
+        const a = document.createElement('a');
+        a.href = result.download_url;
+        a.download = result.filename || `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     } catch (error) {
       console.error('Failed to export audit logs:', error);
     } finally {
@@ -159,7 +177,7 @@ export default function AuditLogsPage() {
       render: (log) => (
         <div>
           <div className="font-medium text-gray-900">{log.resource_type}</div>
-          <div className="text-xs text-gray-500 font-mono">{log.resource_id.substring(0, 12)}...</div>
+          <div className="text-xs text-gray-500 font-mono">{String(log.resource_id)}</div>
         </div>
       )
     },

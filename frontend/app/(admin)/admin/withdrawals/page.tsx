@@ -6,6 +6,7 @@ import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import WithdrawalApprovalModal from '@/components/admin/WithdrawalApprovalModal';
 import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface WithdrawalRequest {
   id: string;
@@ -151,12 +152,7 @@ export default function WithdrawalsPage() {
     fetchWithdrawals();
   };
 
-  const formatCurrency = (amount: number, currency?: string) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: currency || 'EUR',
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, string> = {

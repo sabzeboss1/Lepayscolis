@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, X } from 'lucide-react';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface WalletDetails {
   user: {
@@ -116,9 +117,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     setAdjustError(null);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   const getTypeLabel = (type: string) => {
     const map: Record<string, string> = {

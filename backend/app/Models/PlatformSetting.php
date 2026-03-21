@@ -141,7 +141,7 @@ class PlatformSetting extends Model
      */
     public static function getSenderFeePercentage(): float
     {
-        return (float) self::get('sender_fee_percentage', 5.0);
+        return (float) self::get('sender_fee_percentage', 1.0);
     }
 
     /**
@@ -149,7 +149,7 @@ class PlatformSetting extends Model
      */
     public static function getTravelerFeePercentage(): float
     {
-        return (float) self::get('traveler_fee_percentage', 10.0);
+        return (float) self::get('traveler_fee_percentage', 2.0);
     }
 
     /**

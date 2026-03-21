@@ -26,8 +26,8 @@ class AdminSettingsService
             'platform_url' => 'https://lepaysexpresscolis.com',
             'support_email' => 'support@lepaysexpresscolis.com',
             'support_phone' => '+33 1 23 45 67 89',
-            'sender_fee_percentage' => 5.0,
-            'traveler_fee_percentage' => 10.0,
+            'sender_fee_percentage' => 1.0,
+            'traveler_fee_percentage' => 2.0,
             
             // SMTP
             'smtp_host' => 'smtp.gmail.com',
