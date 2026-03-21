@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DeleteMessageRequest;
-use App\Http\Resources\ConversationResource;
+use App\Http\Resources\Admin\AdminConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Services\Admin\AdminMessagingService;
 use Illuminate\Http\JsonResponse;
@@ -21,13 +21,13 @@ class AdminMessageController extends Controller
 
     public function conversations(Request $request): JsonResponse
     {
-        $filters = $request->only(['search', 'reported']);
+        $filters = $request->only(['search']);
         $perPage = $request->input('per_page', 50);
 
         $conversations = $this->messagingService->getConversations($filters, $perPage);
 
         return response()->json([
-            'data' => ConversationResource::collection($conversations),
+            'data' => AdminConversationResource::collection($conversations),
             'meta' => [
                 'current_page' => $conversations->currentPage(),
                 'last_page' => $conversations->lastPage(),
@@ -37,14 +37,19 @@ class AdminMessageController extends Controller
         ], 200);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
-        $conversation = $this->messagingService->getConversationMessages($id);
+        $data = $this->messagingService->getConversationMessages($id);
 
-        return response()->json(['data' => $conversation], 200);
+        return response()->json([
+            'data' => [
+                'conversation' => new AdminConversationResource($data['conversation']),
+                'messages' => MessageResource::collection($data['messages']),
+            ],
+        ], 200);
     }
 
-    public function destroy(DeleteMessageRequest $request, int $id): JsonResponse
+    public function destroy(DeleteMessageRequest $request, string $id): JsonResponse
     {
         $this->messagingService->deleteMessage($id, $request->reason, $request->user());
 

@@ -4,10 +4,9 @@ import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    
-    // Build query parameters for Laravel backend
+
     const params = new URLSearchParams();
-    
+
     if (searchParams.get('page')) {
       params.append('page', searchParams.get('page')!);
     }
@@ -17,11 +16,7 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('search')) {
       params.append('search', searchParams.get('search')!);
     }
-    if (searchParams.get('reported_only') === 'yes') {
-      params.append('reported', 'true');
-    }
 
-    // Make request to Laravel backend
     const response = await makeAdminRequest(
       request,
       `/api/admin/messages/conversations?${params.toString()}`
@@ -37,12 +32,11 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    // Transform backend response to match frontend expectations
     const transformed = Array.isArray(data.data) ? data.data.map((conversation: any) => ({
       id: conversation.id,
       participants: [
-        conversation.user1 || { id: conversation.user1_id, name: 'Unknown', email: '' },
-        conversation.user2 || { id: conversation.user2_id, name: 'Unknown', email: '' }
+        conversation.user1 || { id: '', name: 'Unknown', email: '' },
+        conversation.user2 || { id: '', name: 'Unknown', email: '' }
       ],
       last_message: conversation.last_message ? {
         content: conversation.last_message.content || '',
@@ -52,8 +46,6 @@ export async function GET(request: NextRequest) {
         sent_at: conversation.created_at
       },
       message_count: conversation.messages_count || 0,
-      reported_count: conversation.reported_messages_count || 0,
-      has_reported_messages: (conversation.reported_messages_count || 0) > 0
     })) : [];
 
     return NextResponse.json({

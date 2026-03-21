@@ -13,14 +13,10 @@ class AdminRatingService
 {
     public function getRatings(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Rating::with(['fromUser', 'toUser', 'trip', 'shipment']);
+        $query = Rating::with(['fromUser', 'toUser', 'shipment']);
 
         if (!empty($filters['rating'])) {
             $query->where('rating', $filters['rating']);
-        }
-
-        if (!empty($filters['type'])) {
-            $query->where('type', $filters['type']);
         }
 
         if (!empty($filters['search'])) {
@@ -34,12 +30,12 @@ class AdminRatingService
         return $query->latest('created_at')->paginate($perPage);
     }
 
-    public function getRatingDetails(int $ratingId): Rating
+    public function getRatingDetails(string $ratingId): Rating
     {
-        return Rating::with(['fromUser', 'toUser', 'trip', 'shipment'])->findOrFail($ratingId);
+        return Rating::with(['fromUser', 'toUser', 'shipment'])->findOrFail($ratingId);
     }
 
-    public function removeRating(int $ratingId, string $reason, User $admin): array
+    public function removeRating(string $ratingId, string $reason, User $admin): array
     {
         $rating = Rating::findOrFail($ratingId);
         $toUser = $rating->toUser;
