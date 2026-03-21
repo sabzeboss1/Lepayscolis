@@ -5,11 +5,13 @@ use App\Http\Controllers\KYCController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ShipmentController;
+use App\Http\Controllers\TravelProofController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,10 +84,16 @@ Route::prefix('trips')->group(function () {
     Route::get('/{id}', [TripController::class, 'show']);
 });
 
+// Serve travel proof files (public - anyone can view) - Outside trips group to avoid route conflict
+Route::get('/trips/{id}/travel-proof', [TravelProofController::class, 'show']);
+
 // Shipment routes
 Route::prefix('shipments')->group(function () {
     // Public routes
     Route::get('/', [ShipmentController::class, 'index']);
+    
+    // Available shipments for travelers (public - anyone can browse)
+    Route::get('/available', [ShipmentController::class, 'available']);
     
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
@@ -108,6 +116,7 @@ Route::prefix('shipments')->group(function () {
 // Message routes (protected, require KYC verification)
 Route::middleware(['auth:sanctum', 'kyc.verified'])->prefix('messages')->group(function () {
     Route::get('/conversations', [MessageController::class, 'conversations']);
+    Route::get('/conversation-with/{userId}', [MessageController::class, 'getOrCreateConversation']);
     Route::get('/unread-count', [MessageController::class, 'unreadCount']);
     Route::get('/{conversationId}', [MessageController::class, 'index']);
     Route::post('/', [MessageController::class, 'store']);
@@ -128,10 +137,19 @@ Route::middleware('auth:sanctum')->prefix('users')->group(function () {
     
     // Update FCM token
     Route::post('/fcm-token', [UserController::class, 'updateFcmToken']);
+    
+    // Get user stats
+    Route::get('/stats', [\App\Http\Controllers\UserStatsController::class, 'stats']);
+    
+    // Get user activity
+    Route::get('/activity', [\App\Http\Controllers\UserStatsController::class, 'activity']);
 });
 
 // Public user profile route (must be after protected routes to avoid conflicts)
 Route::get('/users/{id}', [UserController::class, 'show']);
+
+// User ratings route (public)
+Route::get('/users/{id}/ratings', [\App\Http\Controllers\UserStatsController::class, 'ratings']);
 
 // Rating routes
 Route::prefix('ratings')->group(function () {
@@ -227,6 +245,22 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/{id}/reject', [AdminKYCController::class, 'reject'])->middleware('throttle:30,1');
         Route::post('/bulk-approve', [AdminKYCController::class, 'bulkApprove'])->middleware('throttle:30,1');
         Route::post('/bulk-reject', [AdminKYCController::class, 'bulkReject'])->middleware('throttle:30,1');
+        
+        // Serve KYC document files (admin only)
+        Route::get('/files/{userId}/{filename}', function ($userId, $filename) {
+            $path = "kyc/{$userId}/{$filename}";
+            
+            if (!Storage::disk('local')->exists($path)) {
+                abort(404, 'File not found');
+            }
+            
+            $file = Storage::disk('local')->get($path);
+            $mimeType = Storage::disk('local')->mimeType($path);
+            
+            return response($file, 200)
+                ->header('Content-Type', $mimeType)
+                ->header('Cache-Control', 'private, max-age=3600');
+        })->where('filename', '.*')->middleware('throttle:60,1');
     });
     
     // Trip Management

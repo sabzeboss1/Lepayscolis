@@ -9,12 +9,56 @@ import { NotificationDropdown } from '@/components/features/NotificationDropdown
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Locale } from '@/lib/i18n/config';
 import { User } from '@/lib/types/user';
+import {
+  LayoutDashboard,
+  Plane,
+  Package,
+  Wallet,
+  MessageCircle,
+  User as UserIcon,
+  LogOut,
+  ShieldCheck,
+  Star,
+  ChevronDown,
+  AlertCircle,
+  Clock,
+  Search,
+} from 'lucide-react';
 
 export interface HeaderAppProps {
   user: User;
   locale: Locale;
   unreadMessages?: number;
   onLogout: () => void;
+}
+
+const NAV_ITEMS = [
+  { href: '/dashboard', labelKey: 'navigation.dashboard', icon: LayoutDashboard },
+  { href: '/trips', labelKey: 'navigation.trips', icon: Plane },
+  { href: '/shipments/search', labelKey: 'navigation.findShipments', icon: Search },
+  { href: '/shipments', labelKey: 'navigation.shipments', icon: Package },
+  { href: '/wallet', labelKey: 'navigation.wallet', icon: Wallet },
+  { href: '/messages', labelKey: 'navigation.messages', icon: MessageCircle },
+];
+
+function KycBadge({ status }: { status: User['kyc_status'] }) {
+  if (status === 'approved') return null;
+  const cfg = {
+    pending: { icon: Clock, label: 'KYC en attente', color: '#b45309', bg: '#fef3c7' },
+    rejected: { icon: AlertCircle, label: 'KYC rejeté', color: '#b91c1c', bg: '#fee2e2' },
+    not_submitted: { icon: ShieldCheck, label: 'KYC requis', color: '#1d4ed8', bg: '#dbeafe' },
+  }[status];
+  if (!cfg) return null;
+  const Icon = cfg.icon;
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1"
+      style={{ background: cfg.bg, color: cfg.color }}
+    >
+      <Icon className="w-3 h-3" />
+      {cfg.label}
+    </span>
+  );
 }
 
 export const HeaderApp: React.FC<HeaderAppProps> = ({
@@ -24,399 +68,372 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
   onLogout,
 }) => {
   const [locale, setLocale] = useState<Locale>(initialLocale);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { t } = useTranslation(locale);
   const pathname = usePathname();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu when route changes
+  /* close user menu on route change */
   useEffect(() => {
-    setIsMenuOpen(false);
     setIsUserMenuOpen(false);
   }, [pathname]);
 
-  // Close user menu when clicking outside
+  /* close on outside click / Escape */
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+    const onClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setIsUserMenuOpen(false);
       }
     };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isUserMenuOpen) {
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isUserMenuOpen) {
         setIsUserMenuOpen(false);
-        // Return focus to the trigger button
-        const triggerButton = userMenuRef.current?.querySelector('button');
-        triggerButton?.focus();
+        userMenuRef.current?.querySelector('button')?.focus();
       }
     };
-
     if (isUserMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleEscape);
+      document.addEventListener('mousedown', onClickOutside);
+      document.addEventListener('keydown', onEscape);
     }
-
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('keydown', onEscape);
     };
   }, [isUserMenuOpen]);
 
-  // Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isMenuOpen]);
-
-  const handleLocaleChange = (newLocale: Locale) => {
-    setLocale(newLocale);
-  };
-
-  const navigationLinks = [
-    { href: '/dashboard', label: t('navigation.dashboard'), icon: '📊' },
-    { href: '/trips', label: t('navigation.trips'), icon: '✈️' },
-    { href: '/shipments', label: t('navigation.shipments'), icon: '📦' },
-    { href: '/wallet', label: t('navigation.wallet'), icon: '💰' },
-    { href: '/messages', label: t('navigation.messages'), icon: '💬', badge: unreadMessages },
-  ];
-
-  const isActiveLink = (href: string) => {
-    if (href === '/dashboard') {
-      return pathname === '/dashboard';
-    }
-    return pathname.startsWith(href);
-  };
+  const isActive = (href: string) =>
+    href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Link
-            href="/dashboard"
-            className="flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md p-1"
-            aria-label="LePaysExpressColis Dashboard"
-          >
-            <Image
-              src="/logo.png"
-              alt="LePaysExpressColis"
-              width={64}
-              height={64}
-              className="w-14 h-14 md:w-16 md:h-16 hover:opacity-80 transition-opacity"
-            />
-          </Link>
+    <>
+      {/* ═══════════════════════════════════════════
+          TOP HEADER  (all breakpoints)
+      ════════════════════════════════════════════ */}
+      <header
+        className="sticky top-0 z-50 w-full"
+        style={{
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14 md:h-16">
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-4" aria-label="Main navigation">
-            {navigationLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`
-                  relative flex items-center gap-2 text-sm font-medium transition-colors px-3 py-2 rounded-md
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                  ${isActiveLink(link.href)
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                  }
-                `}
-                aria-current={isActiveLink(link.href) ? 'page' : undefined}
+            {/* Logo */}
+            <Link
+              href="/dashboard"
+              className="flex items-center shrink-0 focus-visible:ring-2 focus-visible:ring-royal-blue rounded-lg"
+              aria-label="Accueil — LePaysExpressColis"
+            >
+              <Image
+                src="/logo.png"
+                alt="LePaysExpressColis"
+                width={48}
+                height={48}
+                className="w-10 h-10 md:w-11 md:h-11 object-contain hover:opacity-85 transition-opacity"
+              />
+              <span
+                className="hidden sm:block ml-2 text-sm font-bold text-navy leading-tight"
+                style={{ fontFamily: 'Prompt, sans-serif' }}
               >
-                <span role="img" aria-hidden="true">
-                  {link.icon}
-                </span>
-                <span>{link.label}</span>
-                {link.badge !== undefined && link.badge > 0 && (
-                  <span
-                    className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"
-                    aria-label={`${link.badge} unread messages`}
+                Tuma<span style={{ color: 'var(--color-vibrant-orange)' }}>Plus</span>
+              </span>
+            </Link>
+
+            {/* ── Desktop nav (lg+) ── */}
+            <nav className="hidden lg:flex items-center gap-1" aria-label="Navigation principale">
+              {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
+                const active = isActive(href);
+                const isMsgs = href === '/messages';
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={active ? 'page' : undefined}
+                    className="relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150"
+                    style={{
+                      color: active ? 'var(--color-royal-blue)' : '#64748b',
+                      background: active ? 'rgba(37,99,235,0.08)' : 'transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        (e.currentTarget as HTMLAnchorElement).style.background = '#f1f5f9';
+                        (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navy)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
+                        (e.currentTarget as HTMLAnchorElement).style.color = '#64748b';
+                      }
+                    }}
                   >
-                    {link.badge > 9 ? '9+' : link.badge}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-4">
-            <LanguageSwitcher currentLocale={locale} onLocaleChange={handleLocaleChange} />
-
-            {/* Notification Dropdown */}
-            <NotificationDropdown />
-
-            {/* User Menu */}
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px]"
-                aria-label="User menu"
-                aria-expanded={isUserMenuOpen}
-                aria-haspopup="true"
-              >
-                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-200">
-                  {user.avatar ? (
-                    <Image
-                      src={user.avatar}
-                      alt={user.name}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-600 font-semibold">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <svg
-                  className={`w-4 h-4 text-gray-600 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''
-                    }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-
-              {/* Dropdown Menu */}
-              {isUserMenuOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2"
-                  role="menu"
-                  aria-orientation="vertical"
-                  onKeyDown={(e) => {
-                    // Handle keyboard navigation within menu
-                    const menuItems = e.currentTarget.querySelectorAll('[role="menuitem"]');
-                    const currentIndex = Array.from(menuItems).indexOf(document.activeElement as HTMLElement);
-
-                    if (e.key === 'ArrowDown') {
-                      e.preventDefault();
-                      const nextIndex = currentIndex < menuItems.length - 1 ? currentIndex + 1 : 0;
-                      (menuItems[nextIndex] as HTMLElement).focus();
-                    } else if (e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      const prevIndex = currentIndex > 0 ? currentIndex - 1 : menuItems.length - 1;
-                      (menuItems[prevIndex] as HTMLElement).focus();
-                    } else if (e.key === 'Home') {
-                      e.preventDefault();
-                      (menuItems[0] as HTMLElement).focus();
-                    } else if (e.key === 'End') {
-                      e.preventDefault();
-                      (menuItems[menuItems.length - 1] as HTMLElement).focus();
-                    }
-                  }}
-                >
-                  <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-600 truncate">{user.email}</p>
-                    {user.is_recommended && (
-                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
-                        <span role="img" aria-hidden="true">
-                          ⭐
-                        </span>
-                        {t('profile.recommended')}
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{t(labelKey as Parameters<typeof t>[0])}</span>
+                    {isMsgs && unreadMessages > 0 && (
+                      <span
+                        className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-white text-[10px] font-bold rounded-full"
+                        style={{ background: 'var(--color-vibrant-orange)' }}
+                      >
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
                       </span>
                     )}
-                    {user.kyc_status !== 'approved' && (
-                      <div className={`mt-2 px-2 py-1 rounded text-xs font-medium ${user.kyc_status === 'rejected'
-                          ? 'bg-red-100 text-red-700'
-                          : user.kyc_status === 'pending'
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                        {user.kyc_status === 'rejected'
-                          ? '❌ KYC Rejected'
-                          : user.kyc_status === 'pending'
-                            ? '⏳ KYC Pending'
-                            : '🔒 KYC Required'}
-                      </div>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* ── Right side actions ── */}
+            <div className="flex items-center gap-2">
+              {/* Language */}
+              <div className="hidden md:block">
+                <LanguageSwitcher
+                  currentLocale={locale}
+                  onLocaleChange={setLocale}
+                />
+              </div>
+
+              {/* Notifications */}
+              <NotificationDropdown />
+
+              {/* User menu (desktop) */}
+              <div className="hidden lg:block relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen((v) => !v)}
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="true"
+                  aria-label="Menu utilisateur"
+                  className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl transition-colors min-h-[40px]"
+                  style={{ background: isUserMenuOpen ? '#f1f5f9' : 'transparent' }}
+                  onMouseEnter={(e) => {
+                    if (!isUserMenuOpen)
+                      (e.currentTarget as HTMLButtonElement).style.background = '#f1f5f9';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isUserMenuOpen)
+                      (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                  }}
+                >
+                  {/* Avatar */}
+                  <div
+                    className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    style={{
+                      background: user.avatar
+                        ? 'transparent'
+                        : 'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+                    }}
+                  >
+                    {user.avatar ? (
+                      <Image
+                        src={user.avatar}
+                        alt={user.name}
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      user.name.charAt(0).toUpperCase()
                     )}
                   </div>
+                  <span className="text-sm font-medium text-navy max-w-[90px] truncate">
+                    {user.name.split(' ')[0]}
+                  </span>
+                  <ChevronDown
+                    className="w-3.5 h-3.5 text-slate-400 transition-transform"
+                    style={{ transform: isUserMenuOpen ? 'rotate(180deg)' : 'none' }}
+                  />
+                </button>
 
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
-                    role="menuitem"
-                  >
-                    {t('navigation.profile')}
-                  </Link>
-
-                  {user.kyc_status !== 'approved' && (
-                    <Link
-                      href="/kyc"
-                      className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 focus:outline-none focus:bg-blue-50 font-medium"
-                      role="menuitem"
-                    >
-                      {user.kyc_status === 'rejected'
-                        ? 'Resubmit KYC Documents'
-                        : user.kyc_status === 'pending'
-                          ? 'View KYC Status'
-                          : 'Complete KYC Verification'}
-                    </Link>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setIsUserMenuOpen(false);
-                      onLogout();
+                {/* Dropdown */}
+                {isUserMenuOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-60 rounded-2xl py-2 z-50"
+                    style={{
+                      background: 'rgba(255,255,255,0.96)',
+                      backdropFilter: 'blur(16px)',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-50"
-                    role="menuitem"
+                    role="menu"
+                    aria-orientation="vertical"
+                    onKeyDown={(e) => {
+                      const items = e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]');
+                      const idx = Array.from(items).indexOf(document.activeElement as HTMLElement);
+                      if (e.key === 'ArrowDown') { e.preventDefault(); items[(idx + 1) % items.length]?.focus(); }
+                      else if (e.key === 'ArrowUp') { e.preventDefault(); items[(idx - 1 + items.length) % items.length]?.focus(); }
+                    }}
                   >
-                    {t('common.logout')}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+                    {/* User info */}
+                    <div className="px-4 pt-2 pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold shrink-0"
+                          style={{
+                            background: user.avatar
+                              ? 'transparent'
+                              : 'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+                          }}
+                        >
+                          {user.avatar ? (
+                            <Image src={user.avatar} alt={user.name} width={40} height={40} className="object-cover" />
+                          ) : (
+                            user.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-navy truncate">{user.name}</p>
+                          <p className="text-xs text-muted-text truncate">{user.email}</p>
+                          {user.is_recommended && (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1"
+                              style={{ background: 'rgba(249,115,22,0.12)', color: '#c2410c' }}
+                            >
+                              <Star className="w-3 h-3" />
+                              Recommandé
+                            </span>
+                          )}
+                          <KycBadge status={user.kyc_status} />
+                        </div>
+                      </div>
+                    </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 text-gray-700 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={isMenuOpen}
-            aria-controls="mobile-menu"
-          >
-            {isMenuOpen ? (
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            ) : (
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
+                    {/* Menu items */}
+                    <div className="py-1">
+                      <Link
+                        href="/profile"
+                        role="menuitem"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-navy hover:bg-slate-50 transition-colors"
+                      >
+                        <UserIcon className="w-4 h-4 text-slate-400" />
+                        {t('navigation.profile')}
+                      </Link>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div
-          id="mobile-menu"
-          className="lg:hidden fixed inset-0 top-16 bg-white z-40 overflow-y-auto"
-        >
-          <nav className="container mx-auto px-4 py-6 space-y-2" aria-label="Mobile navigation">
-            {/* User Info */}
-            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg mb-4">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                      {user.kyc_status !== 'approved' && (
+                        <Link
+                          href="/kyc"
+                          role="menuitem"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors"
+                          style={{ color: 'var(--color-royal-blue)' }}
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          {user.kyc_status === 'rejected'
+                            ? 'Resoumettre les documents'
+                            : user.kyc_status === 'pending'
+                            ? 'Voir le statut KYC'
+                            : 'Compléter la vérification'}
+                        </Link>
+                      )}
+
+                      <div className="border-t border-slate-100 mt-1 pt-1">
+                        <button
+                          role="menuitem"
+                          onClick={() => { setIsUserMenuOpen(false); onLogout(); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          {t('common.logout')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile: avatar link to profile */}
+              <Link
+                href="/profile"
+                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-full overflow-hidden text-white text-sm font-bold shrink-0"
+                style={{
+                  background: user.avatar
+                    ? 'transparent'
+                    : 'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+                }}
+                aria-label="Mon profil"
+              >
                 {user.avatar ? (
                   <Image
                     src={user.avatar}
                     alt={user.name}
-                    fill
-                    className="object-cover"
-                    sizes="48px"
+                    width={36}
+                    height={36}
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-600 font-semibold text-lg">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-                <p className="text-xs text-gray-600 truncate">{user.email}</p>
-              </div>
-            </div>
-
-            {navigationLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`
-                  relative flex items-center gap-3 text-base font-medium px-4 py-3 rounded-md transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                  ${isActiveLink(link.href)
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50'
-                  }
-                `}
-                aria-current={isActiveLink(link.href) ? 'page' : undefined}
-              >
-                <span role="img" aria-hidden="true" className="text-xl">
-                  {link.icon}
-                </span>
-                <span className="flex-1">{link.label}</span>
-                {link.badge !== undefined && link.badge > 0 && (
-                  <span
-                    className="bg-orange-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center"
-                    aria-label={`${link.badge} unread messages`}
-                  >
-                    {link.badge > 9 ? '9+' : link.badge}
-                  </span>
+                  user.name.charAt(0).toUpperCase()
                 )}
               </Link>
-            ))}
-
-            <div className="pt-4 border-t border-gray-200 space-y-4">
-              <div className="px-4">
-                <LanguageSwitcher
-                  currentLocale={locale}
-                  onLocaleChange={handleLocaleChange}
-                  className="w-full justify-center"
-                />
-              </div>
-
-              <Link
-                href="/profile"
-                className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                {t('navigation.profile')}
-              </Link>
-
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  onLogout();
-                }}
-                className="w-full text-left px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-              >
-                {t('common.logout')}
-              </button>
             </div>
-          </nav>
+          </div>
         </div>
-      )}
-    </header>
+      </header>
+
+      {/* ═══════════════════════════════════════════
+          MOBILE BOTTOM TAB BAR  (hidden lg+)
+      ════════════════════════════════════════════ */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          background: 'rgba(255,255,255,0.96)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderTop: '1px solid #e2e8f0',
+          boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+        aria-label="Navigation mobile"
+      >
+        <div className="flex items-stretch">
+          {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
+            const active = isActive(href);
+            const isMsgs = href === '/messages';
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] transition-colors"
+                style={{ color: active ? 'var(--color-royal-blue)' : '#94a3b8' }}
+              >
+                {/* active indicator */}
+                {active && (
+                  <span
+                    className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full"
+                    style={{ background: 'var(--color-royal-blue)' }}
+                  />
+                )}
+
+                <div className="relative">
+                  <Icon
+                    className="w-5 h-5"
+                    strokeWidth={active ? 2.5 : 1.8}
+                  />
+                  {isMsgs && unreadMessages > 0 && (
+                    <span
+                      className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-white text-[9px] font-bold rounded-full"
+                      style={{ background: 'var(--color-vibrant-orange)' }}
+                    >
+                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
+                </div>
+
+                <span
+                  className="text-[10px] font-medium leading-none"
+                  style={{ fontWeight: active ? 600 : 400 }}
+                >
+                  {t(labelKey as Parameters<typeof t>[0])}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Spacer so content isn't hidden behind bottom nav on mobile */}
+      <div className="lg:hidden h-[calc(56px+env(safe-area-inset-bottom,0px))] pointer-events-none" />
+    </>
   );
 };
