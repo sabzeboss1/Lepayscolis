@@ -135,6 +135,8 @@ export const API_ENDPOINTS = {
       show: (id: string) => `/api/admin/users/${id}`,
       suspend: (id: string) => `/api/admin/users/${id}/suspend`,
       unsuspend: (id: string) => `/api/admin/users/${id}/unsuspend`,
+      banMessaging: (id: string) => `/api/admin/users/${id}/ban-messaging`,
+      unbanMessaging: (id: string) => `/api/admin/users/${id}/unban-messaging`,
     },
     
     kyc: {
@@ -175,11 +177,14 @@ export const API_ENDPOINTS = {
     messages: {
       list: '/api/admin/messages',
       show: (id: string) => `/api/admin/messages/${id}`,
+      delete: (id: string) => `/api/admin/messages/${id}`,
     },
-    
+
     ratings: {
       list: '/api/admin/ratings',
       show: (id: string) => `/api/admin/ratings/${id}`,
+      delete: (id: string) => `/api/admin/ratings/${id}`,
+      statistics: '/api/admin/ratings/statistics',
     },
     
     analytics: {
@@ -193,10 +198,18 @@ export const API_ENDPOINTS = {
     },
     
     notifications: {
-      list: '/api/admin/notifications',
-      send: '/api/admin/notifications',
+      history: '/api/admin/notifications/history',
+      send: '/api/admin/notifications/send',
     },
-    
+
+    admins: {
+      list: '/api/admin/admins',
+      create: '/api/admin/admins',
+      updateRole: (id: number) => `/api/admin/admins/${id}/role`,
+      remove: (id: number) => `/api/admin/admins/${id}`,
+      activity: (id: number) => `/api/admin/admins/${id}/activity`,
+    },
+
     auditLogs: {
       list: '/api/admin/audit-logs',
       show: (id: string) => `/api/admin/audit-logs/${id}`,

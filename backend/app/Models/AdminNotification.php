@@ -22,6 +22,7 @@ class AdminNotification extends Model
         'title',
         'message',
         'group_filter',
+        'sent_at',
     ];
 
     /**
