@@ -1238,6 +1238,182 @@
         }
       }
     },
+    "payments": {
+      "title": "Transactions de paiement",
+      "subtitle": "Voir et gérer toutes les transactions de paiement de la plateforme",
+      "noPayments": "Aucune transaction de paiement trouvée",
+      "columns": {
+        "transactionId": "ID Transaction",
+        "user": "Utilisateur",
+        "amount": "Montant",
+        "method": "Méthode",
+        "status": "Statut",
+        "shipment": "Expédition",
+        "date": "Date"
+      },
+      "filters": {
+        "status": "Statut",
+        "method": "Méthode",
+        "dateFrom": "Date de début",
+        "dateTo": "Date de fin"
+      },
+      "statuses": {
+        "pending": "En attente",
+        "completed": "Complété",
+        "failed": "Échoué",
+        "refunded": "Remboursé",
+        "escrowed": "Sous séquestre",
+        "released": "Libéré"
+      },
+      "methods": {
+        "card": "Carte",
+        "wallet": "Portefeuille",
+        "bankTransfer": "Virement bancaire"
+      },
+      "detail": {
+        "title": "Détails du paiement",
+        "notFound": "Paiement non trouvé",
+        "viewInStripe": "Voir dans Stripe",
+        "processRefund": "Traiter le remboursement",
+        "transactionInfo": "Informations de la transaction",
+        "amount": "Montant",
+        "paymentMethod": "Méthode de paiement",
+        "transactionId": "ID Transaction",
+        "currency": "Devise",
+        "created": "Créé",
+        "escrowed": "Sous séquestre",
+        "released": "Libéré",
+        "feeBreakdown": "Détail des frais",
+        "baseAmount": "Montant de base",
+        "senderFee": "Frais expéditeur",
+        "travelerFee": "Frais voyageur",
+        "platformFee": "Frais plateforme",
+        "travelerAmount": "Montant voyageur",
+        "payerInfo": "Informations du payeur",
+        "payeeInfo": "Informations du bénéficiaire",
+        "name": "Nom",
+        "email": "Email",
+        "phone": "Téléphone",
+        "relatedShipment": "Expédition associée",
+        "trackingNumber": "Numéro de suivi",
+        "shipmentStatus": "Statut",
+        "statusLabel": "Statut",
+        "paymentStatus": "Statut du paiement",
+        "refundAmount": "Montant du remboursement (optionnel)",
+        "fullAmount": "Montant total",
+        "leaveEmptyFullRefund": "Laisser vide pour un remboursement total",
+        "refundReason": "Motif du remboursement",
+        "refundReasonPlaceholder": "Expliquez pourquoi ce remboursement est effectué (minimum 10 caractères)..."
+      },
+      "errors": {
+        "loadFailed": "Impossible de charger les transactions de paiement"
+      }
+    },
+    "wallets": {
+      "title": "Portefeuilles",
+      "subtitle": "Gérer les soldes et transactions des portefeuilles utilisateurs",
+      "noWallets": "Aucun portefeuille trouvé",
+      "columns": {
+        "user": "Utilisateur",
+        "balance": "Solde",
+        "totalCredits": "Total crédits",
+        "totalDebits": "Total débits",
+        "lastTransaction": "Dernière transaction"
+      },
+      "filters": {
+        "search": "Rechercher",
+        "searchPlaceholder": "Rechercher par nom ou email..."
+      },
+      "noTransactions": "Aucune transaction",
+      "detail": {
+        "title": "Portefeuille de {{name}}",
+        "notFound": "Portefeuille non trouvé",
+        "currentBalance": "Solde actuel",
+        "totalCredits": "Total crédits",
+        "totalDebits": "Total débits",
+        "totalAdjustments": "Total ajustements",
+        "transactionHistory": "Historique des transactions",
+        "type": "Type",
+        "amount": "Montant",
+        "description": "Description",
+        "reference": "Référence",
+        "date": "Date",
+        "credit": "Crédit",
+        "debit": "Débit",
+        "adjustment": "Ajustement",
+        "refund": "Remboursement",
+        "adjustBalance": "Ajuster le solde",
+        "adjustmentAmount": "Montant",
+        "adjustmentType": "Type",
+        "typeCredit": "Crédit (ajouter des fonds)",
+        "typeDebit": "Débit (retirer des fonds)",
+        "reason": "Raison de l'ajustement",
+        "reasonPlaceholder": "Expliquez pourquoi cet ajustement est effectué (minimum 10 caractères)...",
+        "reasonMinChars": "{{count}} / 10 minimum",
+        "adjusting": "Ajustement...",
+        "confirmAdjust": "Confirmer l'ajustement"
+      }
+    },
+    "withdrawals": {
+      "title": "Demandes de retrait",
+      "subtitle": "Examiner et traiter les demandes de retrait des utilisateurs",
+      "noWithdrawals": "Aucune demande de retrait trouvée",
+      "totalPendingAmount": "Montant total en attente",
+      "pendingRequests": "demandes en attente",
+      "columns": {
+        "user": "Utilisateur",
+        "amount": "Montant",
+        "fee": "Frais",
+        "netAmount": "Montant net",
+        "paymentMethod": "Méthode de paiement",
+        "status": "Statut",
+        "requested": "Demandé"
+      },
+      "filters": {
+        "search": "Rechercher",
+        "searchPlaceholder": "Rechercher par nom ou email...",
+        "status": "Statut"
+      },
+      "statuses": {
+        "pending": "En attente",
+        "approved": "Approuvé",
+        "processing": "En cours",
+        "completed": "Terminé",
+        "rejected": "Rejeté",
+        "cancelled": "Annulé"
+      },
+      "actions": {
+        "approve": "Approuver",
+        "reject": "Rejeter",
+        "markProcessing": "Marquer en cours",
+        "markCompleted": "Marquer terminé"
+      },
+      "modal": {
+        "title": "Demande de retrait",
+        "userInfo": "Informations utilisateur",
+        "name": "Nom",
+        "email": "Email",
+        "amountDetails": "Détails du montant",
+        "withdrawalAmount": "Montant du retrait",
+        "processingFee": "Frais de traitement",
+        "netAmount": "Montant net",
+        "paymentDetails": "Détails de paiement",
+        "timeline": "Chronologie",
+        "requested": "Demandé",
+        "approvedAt": "Approuvé",
+        "approvedBy": "Approuvé par",
+        "completedAt": "Terminé",
+        "rejectionReason": "Motif du rejet",
+        "rejectionPlaceholder": "Veuillez fournir un motif détaillé pour le rejet (minimum 10 caractères)...",
+        "confirmReject": "Confirmer le rejet",
+        "confirmCompleteTitle": "Confirmer la complétion",
+        "confirmCompleteDesc": "Veuillez confirmer que le retrait a été transféré avec succès sur le compte de l'utilisateur.",
+        "markCompleted": "Marquer comme terminé"
+      },
+      "errors": {
+        "loadFailed": "Impossible de charger les demandes de retrait"
+      }
+    },
     "kyc": {
       "title": "Vérification KYC",
       "subtitle": "Examiner et vérifier les documents d'identité des utilisateurs",

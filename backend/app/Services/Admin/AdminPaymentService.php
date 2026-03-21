@@ -20,7 +20,7 @@ class AdminPaymentService
 
     public function getPayments(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Payment::with(['user', 'shipment']);
+        $query = Payment::with(['payer', 'shipment']);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -41,12 +41,12 @@ class AdminPaymentService
         return $query->latest('created_at')->paginate($perPage);
     }
 
-    public function getPaymentDetails(int $paymentId): Payment
+    public function getPaymentDetails(string $paymentId): Payment
     {
-        return Payment::with(['user', 'shipment'])->findOrFail($paymentId);
+        return Payment::with(['payer', 'payee', 'shipment'])->findOrFail($paymentId);
     }
 
-    public function processRefund(int $paymentId, string $reason, ?float $amount, User $admin): Payment
+    public function processRefund(string $paymentId, string $reason, ?float $amount, User $admin): Payment
     {
         $payment = Payment::findOrFail($paymentId);
 

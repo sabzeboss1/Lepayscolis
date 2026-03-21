@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Requests\Admin\AdjustBalanceRequest;
 use App\Http\Resources\WalletAuditLogResource;
 use App\Http\Resources\WalletResource;
@@ -20,8 +19,7 @@ class WalletManagementController extends Controller
     public function __construct(
         private WalletService $walletService
     ) {
-        $this->middleware('auth:sanctum');
-        $this->middleware(EnsureAdminRole::class);
+        // Auth and admin middleware applied at route level in api.php
     }
 
     /**
@@ -90,7 +88,7 @@ class WalletManagementController extends Controller
      */
     public function show(Request $request, string $userId): JsonResponse
     {
-        $user = User::with(['wallet.transactions'])->find($userId);
+        $user = User::with('wallet')->find($userId);
 
         if (!$user || !$user->wallet) {
             return response()->json([
@@ -100,25 +98,25 @@ class WalletManagementController extends Controller
         }
 
         $wallet = $user->wallet;
-        
+        $perPage = $request->input('per_page', 25);
+
         // Calculate aggregated totals
         $totalCredits = $wallet->transactions()
             ->whereIn('type', ['credit', 'refund'])
             ->sum('amount');
-        
+
         $totalDebits = $wallet->transactions()
             ->where('type', 'debit')
             ->sum('amount');
-        
+
         $totalAdjustments = $wallet->transactions()
             ->where('type', 'adjustment')
             ->sum('amount');
 
-        // Get recent transactions
-        $recentTransactions = $wallet->transactions()
+        // Paginated transactions
+        $transactions = $wallet->transactions()
             ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+            ->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -128,16 +126,20 @@ class WalletManagementController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'phone' => $user->phone,
                 ],
                 'aggregates' => [
                     'total_credits' => (float) $totalCredits,
-                    'total_debits' => (float) $totalDebits,
+                    'total_debits' => (float) abs($totalDebits),
                     'total_adjustments' => (float) $totalAdjustments,
-                    'formatted_total_credits' => number_format($totalCredits, 2) . ' EUR',
-                    'formatted_total_debits' => number_format($totalDebits, 2) . ' EUR',
-                    'formatted_total_adjustments' => number_format($totalAdjustments, 2) . ' EUR',
                 ],
-                'recent_transactions' => WalletTransactionResource::collection($recentTransactions),
+                'transactions' => WalletTransactionResource::collection($transactions),
+            ],
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'last_page' => $transactions->lastPage(),
+                'per_page' => $transactions->perPage(),
+                'total' => $transactions->total(),
             ],
         ]);
     }

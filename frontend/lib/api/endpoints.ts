@@ -151,6 +151,8 @@ export const API_ENDPOINTS = {
       show: (id: string) => `/api/admin/withdrawals/${id}`,
       approve: (id: string) => `/api/admin/withdrawals/${id}/approve`,
       reject: (id: string) => `/api/admin/withdrawals/${id}/reject`,
+      processing: (id: string) => `/api/admin/withdrawals/${id}/processing`,
+      complete: (id: string) => `/api/admin/withdrawals/${id}/complete`,
     },
     
     trips: {
@@ -168,6 +170,8 @@ export const API_ENDPOINTS = {
     payments: {
       list: '/api/admin/payments',
       show: (id: string) => `/api/admin/payments/${id}`,
+      refund: (id: string) => `/api/admin/payments/${id}/refund`,
+      analytics: '/api/admin/payments/analytics',
     },
     
     messages: {
@@ -222,6 +226,12 @@ export const API_ENDPOINTS = {
       update: (id: number) => `/api/admin/cities/${id}`,
       toggle: (id: number) => `/api/admin/cities/${id}/toggle`,
       delete: (id: number) => `/api/admin/cities/${id}`,
+    },
+
+    wallets: {
+      list: '/api/admin/wallets',
+      show: (userId: string) => `/api/admin/wallets/${userId}`,
+      adjust: (userId: string) => `/api/admin/wallets/${userId}/adjust`,
     },
   },
 } as const;
