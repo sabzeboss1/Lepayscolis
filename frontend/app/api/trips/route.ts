@@ -19,35 +19,35 @@ export async function GET(request: NextRequest) {
     let filteredTrips = allTrips.filter(trip => trip.status === 'active');
 
     if (departure) {
-      filteredTrips = filteredTrips.filter(trip => 
-        trip.departure.city.toLowerCase().includes(departure.toLowerCase())
+      filteredTrips = filteredTrips.filter(trip =>
+        trip.departure_city.toLowerCase().includes(departure.toLowerCase())
       );
     }
 
     if (arrival) {
-      filteredTrips = filteredTrips.filter(trip => 
-        trip.arrival.city.toLowerCase().includes(arrival.toLowerCase())
+      filteredTrips = filteredTrips.filter(trip =>
+        trip.arrival_city.toLowerCase().includes(arrival.toLowerCase())
       );
     }
 
     if (dateFrom) {
       const fromDate = new Date(dateFrom);
-      filteredTrips = filteredTrips.filter(trip => 
-        new Date(trip.departure.date) >= fromDate
+      filteredTrips = filteredTrips.filter(trip =>
+        new Date(trip.departure_date) >= fromDate
       );
     }
 
     if (dateTo) {
       const toDate = new Date(dateTo);
-      filteredTrips = filteredTrips.filter(trip => 
-        new Date(trip.departure.date) <= toDate
+      filteredTrips = filteredTrips.filter(trip =>
+        new Date(trip.departure_date) <= toDate
       );
     }
 
     if (minCapacity) {
       const capacity = parseFloat(minCapacity);
-      filteredTrips = filteredTrips.filter(trip => 
-        trip.availableCapacity >= capacity
+      filteredTrips = filteredTrips.filter(trip =>
+        trip.available_capacity >= capacity
       );
     }
 
@@ -161,24 +161,20 @@ export async function POST(request: NextRequest) {
 
     // Create new trip (mock data for now)
     const newTrip = generateMockTrip({
-      departure: {
-        city: departureCity,
-        country: departureCountry,
-        date: departureDateObj,
-      },
-      arrival: {
-        city: arrivalCity,
-        country: arrivalCountry,
-        date: arrivalDateObj,
-      },
-      availableCapacity,
-      pricePerKg,
-      acceptedPackageTypes,
-      pickupAddress,
-      deliveryAddress,
-      travelProofUrl: formData.has('travel_proof') ? 'mock-travel-proof-url.pdf' : undefined,
+      departure_city: departureCity,
+      departure_country: departureCountry,
+      departure_date: departureDateObj.toISOString(),
+      arrival_city: arrivalCity,
+      arrival_country: arrivalCountry,
+      arrival_date: arrivalDateObj.toISOString(),
+      available_capacity: availableCapacity,
+      price_per_kg: pricePerKg,
+      accepted_package_types: acceptedPackageTypes,
+      pickup_address: pickupAddress,
+      delivery_address: deliveryAddress,
+      travel_proof_url: formData.has('travel_proof') ? 'mock-travel-proof-url.pdf' : undefined,
       status: 'active',
-      createdAt: new Date(),
+      created_at: new Date().toISOString(),
     });
 
     allTrips.push(newTrip);

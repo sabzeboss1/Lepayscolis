@@ -10,7 +10,8 @@ import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import { NotificationService } from '@/lib/services/NotificationService';
 import { useRealtimeMessages } from '@/lib/hooks/useRealtimeMessages';
 import { Button } from '@/components/ui/Button';
-import type { Message, Conversation } from '@/lib/types/api';
+import type { Conversation } from '@/lib/types/api';
+import type { Message } from '@/lib/types/message';
 
 export default function ConversationPage() {
   const params = useParams();
@@ -50,7 +51,7 @@ export default function ConversationPage() {
       });
       
       // Mark as read if it's from another user
-      if (newMessage.sender_id !== user?.id && !newMessage.is_read) {
+      if (newMessage.sender_id !== user?.id && !newMessage.read) {
         markMessageAsRead(newMessage.id);
       }
     },
@@ -98,9 +99,9 @@ export default function ConversationPage() {
 
       setMessages(response.data || []);
     } catch (err) {
-      const errorMessage = ErrorHandler.handle(err);
-      setError(errorMessage);
-      NotificationService.error(errorMessage, t('messages.errorFetchingMessages'));
+      const errorResponse = ErrorHandler.handle(err);
+      setError(errorResponse.message);
+      NotificationService.error(errorResponse.message, t('messages.errorFetchingMessages'));
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,7 @@ export default function ConversationPage() {
 
   const markUnreadMessagesAsRead = async () => {
     const unreadMessages = messages.filter(
-      (m) => !m.is_read && m.sender_id !== user?.id
+      (m) => !m.read && m.sender_id !== user?.id
     );
 
     for (const message of unreadMessages) {
@@ -122,7 +123,7 @@ export default function ConversationPage() {
       
       // Update local state
       setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, is_read: true } : m))
+        prev.map((m) => (m.id === messageId ? { ...m, read: true } : m))
       );
     } catch (err) {
       console.error('Error marking message as read:', err);
@@ -145,10 +146,12 @@ export default function ConversationPage() {
       id: `temp-${Date.now()}`,
       conversation_id: conversationId,
       sender_id: user?.id || '',
+      recipient_id: recipientId,
       sender: user!,
       content: messageInput.trim(),
-      is_read: false,
+      read: false,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, optimisticMessage]);
@@ -177,8 +180,8 @@ export default function ConversationPage() {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMessage.id));
       setMessageInput(optimisticMessage.content);
 
-      const errorMessage = ErrorHandler.handle(err);
-      NotificationService.error(errorMessage, t('messages.errorSendingMessage'));
+      const errorResponse = ErrorHandler.handle(err);
+      NotificationService.error(errorResponse.message, t('messages.errorSendingMessage'));
     } finally {
       setSending(false);
     }
@@ -318,7 +321,7 @@ export default function ConversationPage() {
                       </p>
                       {isOwnMessage && (
                         <span className="text-xs text-blue-100">
-                          {message.is_read ? '✓✓' : '✓'}
+                          {message.read ? '✓✓' : '✓'}
                         </span>
                       )}
                     </div>

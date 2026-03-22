@@ -95,11 +95,11 @@ export default function MyTripsPage() {
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'date':
-          return new Date(b.departure.date).getTime() - new Date(a.departure.date).getTime();
+          return new Date(b.departure_date).getTime() - new Date(a.departure_date).getTime();
         case 'price':
-          return b.pricePerKg - a.pricePerKg;
+          return b.price_per_kg - a.price_per_kg;
         case 'capacity':
-          return b.availableCapacity - a.availableCapacity;
+          return b.available_capacity - a.available_capacity;
         default:
           return 0;
       }
@@ -108,7 +108,7 @@ export default function MyTripsPage() {
     return sorted;
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
@@ -222,7 +222,7 @@ export default function MyTripsPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
                     <h3 className="text-xl font-semibold">
-                      {trip.departure.city} → {trip.arrival.city}
+                      {trip.departure_city} → {trip.arrival_city}
                     </h3>
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(
@@ -236,26 +236,26 @@ export default function MyTripsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                     <div>
                       <p className="font-medium text-gray-900">{t('trips.departure')}</p>
-                      <p>{trip.departure.city}, {trip.departure.country}</p>
-                      <p>{formatDate(trip.departure.date)}</p>
+                      <p>{trip.departure_city}, {trip.departure_country}</p>
+                      <p>{formatDate(trip.departure_date)}</p>
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{t('trips.arrival')}</p>
-                      <p>{trip.arrival.city}, {trip.arrival.country}</p>
-                      <p>{formatDate(trip.arrival.date)}</p>
+                      <p>{trip.arrival_city}, {trip.arrival_country}</p>
+                      <p>{formatDate(trip.arrival_date)}</p>
                     </div>
                   </div>
 
                   <div className="mt-3 flex gap-6 text-sm">
                     <div>
                       <span className="font-medium">{t('trips.capacity')}:</span>{' '}
-                      <span className="text-gray-700">{trip.availableCapacity} kg</span>
+                      <span className="text-gray-700">{trip.available_capacity} kg</span>
                     </div>
                     <div>
                       <span className="font-medium">{t('trips.pricePerKg')}:</span>{' '}
-                      <span className="text-gray-700">${trip.pricePerKg}</span>
+                      <span className="text-gray-700">${trip.price_per_kg}</span>
                     </div>
-                    {trip.travelProofUrl && (
+                    {trip.travel_proof_url && (
                       <div className="flex items-center gap-1 text-green-600">
                         <svg
                           className="w-4 h-4"

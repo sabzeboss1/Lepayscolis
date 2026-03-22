@@ -210,7 +210,7 @@ export default function NotificationsPage() {
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-yellow-900 mb-2">{t('admin.notifications.guidelinesTitle')}</h3>
         <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
-          {(t('admin.notifications.guidelines', { returnObjects: true }) as string[]).map((item, i) => (
+          {(t('admin.notifications.guidelines') as unknown as string[]).map((item, i) => (
             <li key={i}>{item}</li>
           ))}
         </ul>

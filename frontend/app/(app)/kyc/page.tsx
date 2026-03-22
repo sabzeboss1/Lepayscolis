@@ -307,7 +307,6 @@ export default function KYCVerificationPage() {
                   <span className="text-red-500 ml-1">*</span>
                 </label>
                 <FileUpload
-                  id="document-file"
                   accept="image/jpeg,image/jpg,image/png,application/pdf"
                   onChange={(file) => {
                     if (file) {
@@ -347,7 +346,6 @@ export default function KYCVerificationPage() {
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <FileUpload
-                    id="document-back-file"
                     accept="image/jpeg,image/jpg,image/png,application/pdf"
                     onChange={(file) => {
                       if (file) {
@@ -402,7 +400,6 @@ export default function KYCVerificationPage() {
                   </div>
                 </div>
                 <FileUpload
-                  id="selfie-file"
                   accept="image/jpeg,image/jpg,image/png"
                   onChange={(file) => {
                     if (file) {

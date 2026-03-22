@@ -46,10 +46,6 @@ export default function WithdrawPage() {
   useEffect(() => {
     if (user) {
       fetchWalletBalance();
-      // Set default country from user profile
-      if (user.country) {
-        setSelectedCountry(user.country);
-      }
     }
   }, [user]);
 

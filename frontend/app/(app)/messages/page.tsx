@@ -35,9 +35,9 @@ export default function MessagesPage() {
       
       setConversations(response.data || []);
     } catch (err) {
-      const errorMessage = ErrorHandler.handle(err);
-      setError(errorMessage);
-      NotificationService.error(errorMessage, t('messages.errorFetchingConversations'));
+      const errorResponse = ErrorHandler.handle(err);
+      setError(errorResponse.message);
+      NotificationService.error(errorResponse.message, t('messages.errorFetchingConversations'));
     } finally {
       setLoading(false);
     }

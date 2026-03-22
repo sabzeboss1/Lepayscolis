@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mockRatings, mockUsers } from '@/lib/api/mockData';
-import type { Rating } from '@/lib/types/api';
+import type { Rating } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Check if rating already exists for this shipment
     const existingRating = mockRatings.find(
-      r => r.shipment_id === body.shipment_id && r.rated_id === body.rated_id
+      r => r.shipment_id === body.shipment_id && r.to_user_id === body.rated_id
     );
 
     if (existingRating) {
@@ -44,14 +44,12 @@ export async function POST(request: NextRequest) {
 
     // Create new rating
     const newRating: Rating = {
-      id: `rating-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `rating-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       shipment_id: body.shipment_id,
-      rater_id: body.rater_id || 'current-user-id', // In production, get from auth
-      rater: {} as any, // Would be populated from database
-      rated_id: body.rated_id,
-      rated: {} as any, // Would be populated from database
-      score: body.score,
-      comment: body.comment || undefined,
+      from_user_id: body.rater_id || 'current-user-id',
+      to_user_id: body.rated_id,
+      rating: body.score,
+      comment: body.comment || '',
       created_at: new Date().toISOString(),
     };
 
@@ -61,12 +59,11 @@ export async function POST(request: NextRequest) {
     // Update user's average rating
     const userIndex = mockUsers.findIndex(u => u.id === body.rated_id);
     if (userIndex !== -1) {
-      const userRatings = mockRatings.filter(r => r.rated_id === body.rated_id);
-      const totalRating = userRatings.reduce((sum, r) => sum + r.score, 0);
+      const userRatings = mockRatings.filter(r => r.to_user_id === body.rated_id);
+      const totalRating = userRatings.reduce((sum, r) => sum + r.rating, 0);
       const averageRating = totalRating / userRatings.length;
-      
+
       mockUsers[userIndex].rating = Math.round(averageRating * 10) / 10;
-      mockUsers[userIndex].total_ratings = userRatings.length;
     }
 
     return NextResponse.json({
@@ -91,7 +88,7 @@ export async function GET(request: NextRequest) {
     let filteredRatings = [...mockRatings];
 
     if (userId) {
-      filteredRatings = filteredRatings.filter(r => r.rated_id === userId);
+      filteredRatings = filteredRatings.filter(r => r.to_user_id === userId);
     }
 
     if (shipmentId) {

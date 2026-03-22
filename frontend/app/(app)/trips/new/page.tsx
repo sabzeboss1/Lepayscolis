@@ -155,8 +155,7 @@ export default function NewTripPage() {
 
   const handleSubmit = async () => {
     // Check KYC before allowing submission
-    if (needsKYC) {
-      setShowKYCPrompt(true);
+    if (!isKYCApproved) {
       return;
     }
 

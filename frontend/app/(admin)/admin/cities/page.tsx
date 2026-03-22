@@ -35,6 +35,7 @@ interface Country {
 }
 
 interface CityFilterValues {
+  [key: string]: string;
   search: string;
   country_id: string;
   status: string;

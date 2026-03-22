@@ -165,7 +165,7 @@ export const withdrawalSchema = z.object({
     .min(10, 'Minimum withdrawal amount is 10 EUR')
     .refine((amount) => amount > 0, 'Amount must be positive'),
   payment_method: z.string().min(1, 'Payment method is required'),
-  payment_details: z.record(z.any()),
+  payment_details: z.record(z.string(), z.any()),
 });
 
 /**
@@ -174,7 +174,7 @@ export const withdrawalSchema = z.object({
 
 export const kycDocumentSchema = z.object({
   document_type: z.enum(['passport', 'id_card', 'driver_license', 'proof_of_address'], {
-    errorMap: () => ({ message: 'Invalid document type' }),
+    error: 'Invalid document type',
   }),
   file: z
     .instanceof(File)
@@ -229,9 +229,9 @@ export function validateData<T>(
 
   // Convert Zod errors to field-level errors
   const errors: Record<string, string> = {};
-  result.error.errors.forEach((error) => {
-    const path = error.path.join('.');
-    errors[path] = error.message;
+  result.error.issues.forEach((issue: any) => {
+    const path = issue.path.join('.');
+    errors[path] = issue.message;
   });
 
   return { success: false, errors };
@@ -246,5 +246,5 @@ export function validateData<T>(
 export function validateField<T>(schema: z.ZodSchema<T>, value: unknown): string | null {
   const result = schema.safeParse(value);
   if (result.success) return null;
-  return result.error.errors[0]?.message || 'Invalid value';
+  return (result.error.issues as any)[0]?.message || 'Invalid value';
 }

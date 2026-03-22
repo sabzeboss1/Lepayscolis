@@ -38,12 +38,12 @@ export async function POST(request: NextRequest) {
 
     // Create new message
     const newMessage = generateMockMessage({
-      conversationId,
-      senderId,
-      recipientId,
+      conversation_id: conversationId,
+      sender_id: senderId,
+      recipient_id: recipientId,
       content: content.trim(),
       read: false,
-      createdAt: new Date(),
+      created_at: new Date().toISOString(),
     });
 
     allMessages.push(newMessage);

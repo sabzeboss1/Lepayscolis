@@ -13,7 +13,7 @@ interface KYCBlockerProps {
 
 export function KYCBlocker({ action, children }: KYCBlockerProps) {
   const router = useRouter();
-  const { isKYCApproved, isKYCPending, isKYCRejected, kycStatus } = useKYCCheck();
+  const { isKYCApproved, isKYCPending, isKYCRejected } = useKYCCheck();
 
   // If KYC is approved, render children
   if (isKYCApproved) {

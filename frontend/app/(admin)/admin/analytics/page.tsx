@@ -398,7 +398,6 @@ export default function AnalyticsPage() {
             label: route.route,
             value: route.trips + route.shipments
           }))}
-          height={400}
         />
       </div>
     </div>

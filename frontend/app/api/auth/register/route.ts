@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
       name,
       phone,
       rating: 0,
-      completedDeliveries: 0,
-      isRecommended: false,
-      kycStatus: 'pending',
-      createdAt: new Date(),
+      completed_deliveries: 0,
+      is_recommended: false,
+      kyc_status: 'pending',
+      created_at: new Date().toISOString(),
       locale: 'en',
     });
 
