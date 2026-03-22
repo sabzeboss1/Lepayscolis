@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const response = await makeAdminRequest(
       request,
-      `/api/admin/admins/${params.id}/activity`,
+      `/api/admin/admins/${id}/activity`,
       { method: 'GET' }
     );
     const data = await response.json();
