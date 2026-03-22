@@ -3,10 +3,10 @@ import { mockRatings } from '@/lib/api/mockData';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Filter ratings for this user
     const userRatings = mockRatings.filter(r => r.rated_id === id);

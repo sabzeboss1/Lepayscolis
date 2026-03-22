@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const response = await makeAdminRequest(
       request,
-      `/api/admin/admins/${params.id}`,
+      `/api/admin/admins/${id}`,
       { method: 'DELETE' }
     );
     if (response.status === 204) return new NextResponse(null, { status: 204 });
