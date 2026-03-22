@@ -297,7 +297,6 @@ export default function AnalyticsPage() {
           }))}
           height={300}
           color="#10B981"
-          formatValue={(value) => formatCurrency(value)}
         />
       </div>
 
