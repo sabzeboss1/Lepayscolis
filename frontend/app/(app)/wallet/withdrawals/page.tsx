@@ -75,7 +75,7 @@ export default function WithdrawalsPage() {
     } catch (err) {
       const errorResponse = ErrorHandler.handle(err, locale);
       alert(errorResponse.message);
-      ErrorHandler.log(err, { endpoint: 'withdrawals', method: 'DELETE', withdrawalId: id });
+      ErrorHandler.log(err, { endpoint: `withdrawals/${id}`, method: 'DELETE' });
     }
   };
 
@@ -330,42 +330,27 @@ export default function WithdrawalsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
                         <p className="text-gray-500">Demandé le</p>
-                        <p className="text-gray-900 font-medium">{formatDate(withdrawal.requested_at)}</p>
+                        <p className="text-gray-900 font-medium">{formatDate(withdrawal.created_at)}</p>
                       </div>
-                      
-                      {withdrawal.fee > 0 && (
-                        <div>
-                          <p className="text-gray-500">Frais</p>
-                          <p className="text-gray-900 font-medium">{formatCurrency(withdrawal.fee)}</p>
-                        </div>
-                      )}
-                      
+
                       <div>
-                        <p className="text-gray-500">Montant net</p>
-                        <p className="text-green-600 font-semibold">{formatCurrency(withdrawal.net_amount)}</p>
+                        <p className="text-gray-500">Montant</p>
+                        <p className="text-green-600 font-semibold">{formatCurrency(withdrawal.amount)}</p>
                       </div>
                     </div>
 
-                    {withdrawal.approved_at && (
+                    {withdrawal.processed_at && (
                       <div className="mt-3 text-sm">
                         <p className="text-gray-500">
-                          Approuvé le {formatDate(withdrawal.approved_at)}
+                          Traité le {formatDate(withdrawal.processed_at)}
                         </p>
                       </div>
                     )}
 
-                    {withdrawal.completed_at && (
-                      <div className="mt-3 text-sm">
-                        <p className="text-gray-500">
-                          Complété le {formatDate(withdrawal.completed_at)}
-                        </p>
-                      </div>
-                    )}
-
-                    {withdrawal.rejection_reason && (
+                    {withdrawal.admin_notes && withdrawal.status === 'rejected' && (
                       <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
                         <p className="text-sm font-medium text-red-800 mb-1">Raison du rejet :</p>
-                        <p className="text-sm text-red-700">{withdrawal.rejection_reason}</p>
+                        <p className="text-sm text-red-700">{withdrawal.admin_notes}</p>
                       </div>
                     )}
 

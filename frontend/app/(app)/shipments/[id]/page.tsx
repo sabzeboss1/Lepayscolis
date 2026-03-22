@@ -63,7 +63,7 @@ export default function ShipmentDetailPage() {
       }
     } catch (err) {
       console.error('Failed to fetch shipment:', err);
-      setError(ErrorHandler.handle(err));
+      setError(ErrorHandler.handle(err).message);
     } finally {
       setIsLoading(false);
     }
@@ -84,10 +84,10 @@ export default function ShipmentDetailPage() {
         payee: shipment?.traveler,
         amount: shipment?.price || 0,
         currency: 'EUR',
-        status: shipment?.status === 'paid' || shipment?.status === 'in_transit' || shipment?.status === 'delivered' 
-          ? 'held' 
-          : shipment?.status === 'delivered' 
-          ? 'released' 
+        status: shipment?.status === 'delivered'
+          ? 'released'
+          : shipment?.status === 'paid' || shipment?.status === 'in_transit'
+          ? 'held'
           : 'pending',
         created_at: shipment?.created_at || new Date().toISOString(),
         updated_at: shipment?.updated_at || new Date().toISOString(),
@@ -171,7 +171,7 @@ export default function ShipmentDetailPage() {
         id: 'pending',
         label: t('shipments.pending'),
         status: 'completed' as StepStatus,
-        date: shipment.created_at,
+        date: new Date(shipment.created_at),
       },
       {
         id: 'accepted',
@@ -410,7 +410,7 @@ export default function ShipmentDetailPage() {
           <Card className="p-6">
             <h3 className="font-semibold mb-3">{t('profile.personalInfo')}</h3>
             <UserCard
-              user={shipment.sender}
+              user={shipment.sender as any}
               showContactButton={!isSender && shipment.status !== 'cancelled'}
               onClick={() => !isSender && handleContactUser(shipment.sender.id)}
             />
@@ -421,7 +421,7 @@ export default function ShipmentDetailPage() {
             <Card className="p-6">
               <h3 className="font-semibold mb-3">{t('shipments.matchedTraveler')}</h3>
               <UserCard
-                user={shipment.traveler}
+                user={shipment.traveler as any}
                 showContactButton={!isTraveler && shipment.status !== 'cancelled'}
                 onClick={() => !isTraveler && handleContactUser(shipment.traveler!.id)}
               />

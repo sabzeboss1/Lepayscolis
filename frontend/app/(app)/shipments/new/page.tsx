@@ -148,8 +148,8 @@ export default function NewShipmentPage() {
       router.push('/shipments/my');
     } catch (error) {
       console.error('Failed to create shipment:', error);
-      const errorMessage = ErrorHandler.handle(error);
-      setErrors({ submit: errorMessage });
+      const errorResponse = ErrorHandler.handle(error);
+      setErrors({ submit: errorResponse.message });
     } finally {
       setIsSubmitting(false);
     }
@@ -213,15 +213,10 @@ export default function NewShipmentPage() {
                 {t('shipments.photos')} <span className="text-gray-500 text-sm">({t('common.optional')})</span>
               </label>
               <FileUpload
-                {...fileUpload.dragProps}
-                files={fileUpload.files}
-                previews={fileUpload.previews}
-                onFilesSelected={(files) => fileUpload.addFiles(files)}
-                onRemoveFile={fileUpload.removeFile}
                 error={fileUpload.error || undefined}
                 accept="image/*"
-                multiple
-                maxFiles={5}
+                onChange={(file) => file && fileUpload.addFiles([file])}
+                value={fileUpload.files[0] || null}
               />
               <p className="mt-1 text-xs text-gray-500">
                 {t('shipments.photosHelper')}

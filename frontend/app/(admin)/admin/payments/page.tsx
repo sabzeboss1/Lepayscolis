@@ -29,6 +29,7 @@ interface Payment {
 }
 
 interface PaymentFilterValues {
+  [key: string]: string;
   status: string;
   method: string;
   date_from: string;

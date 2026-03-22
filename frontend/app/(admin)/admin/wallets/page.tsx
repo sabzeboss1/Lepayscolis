@@ -23,6 +23,7 @@ interface Wallet {
 }
 
 interface WalletFilterValues {
+  [key: string]: string;
   search: string;
 }
 

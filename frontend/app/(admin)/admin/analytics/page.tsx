@@ -309,7 +309,6 @@ export default function AnalyticsPage() {
             value: item.count
           }))}
           height={300}
-          color="#8B5CF6"
         />
       </div>
 
@@ -399,7 +398,6 @@ export default function AnalyticsPage() {
             label: route.route,
             value: route.trips + route.shipments
           }))}
-          height={400}
         />
       </div>
     </div>

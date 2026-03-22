@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const userId = tokenParts.length >= 3 ? tokenParts.slice(2, -1).join('-') : mockUsers[0].id;
 
     // Filter trips by user
-    const userTrips = allTrips.filter(trip => trip.travelerId === userId);
+    const userTrips = allTrips.filter(trip => trip.traveler_id === userId);
 
     return NextResponse.json({
       trips: userTrips,

@@ -68,7 +68,7 @@ export function useCachedApi<T>(
       
       // Update cache
       cacheManager.set(key, freshData, {
-        ttl: options?.ttl,
+        ttl: options?.ttl ?? 300,
         staleWhileRevalidate: options?.staleWhileRevalidate,
       });
 

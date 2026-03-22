@@ -15,11 +15,14 @@ export default function LayoutDemoPage() {
     avatar: '',
     phone: '+1234567890',
     rating: 4.8,
-    completedDeliveries: 12,
-    isRecommended: true,
-    kycStatus: 'approved',
-    createdAt: new Date(),
+    completed_deliveries: 12,
+    is_recommended: true,
+    kyc_status: 'approved',
+    role: 'user',
+    currency_code: 'EUR',
     locale: 'en',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 
   return (
@@ -38,7 +41,7 @@ export default function LayoutDemoPage() {
       {showPublicHeader ? (
         <HeaderPublic locale="en" />
       ) : (
-        <HeaderApp user={mockUser} locale="en" unreadMessages={3} />
+        <HeaderApp user={mockUser} locale="en" unreadMessages={3} onLogout={() => {}} />
       )}
 
       {/* Main Content */}

@@ -25,6 +25,7 @@ interface Shipment {
 }
 
 interface ShipmentFilterValues {
+  [key: string]: string;
   search: string;
   status: string;
 }

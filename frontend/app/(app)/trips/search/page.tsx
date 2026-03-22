@@ -121,11 +121,11 @@ export default function TripSearchPage() {
   const sortedTrips = [...trips].sort((a, b) => {
     switch (sortBy) {
       case 'date':
-        return new Date(a.departure.date).getTime() - new Date(b.departure.date).getTime();
+        return new Date(a.departure_date).getTime() - new Date(b.departure_date).getTime();
       case 'price':
-        return a.pricePerKg - b.pricePerKg;
+        return a.price_per_kg - b.price_per_kg;
       case 'rating':
-        return b.traveler.rating - a.traveler.rating;
+        return (b.traveler?.rating ?? 0) - (a.traveler?.rating ?? 0);
       default:
         return 0;
     }

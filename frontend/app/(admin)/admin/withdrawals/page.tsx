@@ -36,6 +36,7 @@ interface WithdrawalRequest {
 }
 
 interface WithdrawalFilterValues {
+  [key: string]: string;
   status: string;
   search: string;
 }

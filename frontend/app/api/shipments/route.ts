@@ -25,26 +25,26 @@ export async function GET(request: NextRequest) {
     }
 
     if (senderId) {
-      filteredShipments = filteredShipments.filter(shipment => 
-        shipment.senderId === senderId
+      filteredShipments = filteredShipments.filter(shipment =>
+        shipment.sender_id === senderId
       );
     }
 
     if (travelerId) {
-      filteredShipments = filteredShipments.filter(shipment => 
-        shipment.travelerId === travelerId
+      filteredShipments = filteredShipments.filter(shipment =>
+        shipment.traveler_id === travelerId
       );
     }
 
     if (pickupCity) {
-      filteredShipments = filteredShipments.filter(shipment => 
-        shipment.pickup.city.toLowerCase().includes(pickupCity.toLowerCase())
+      filteredShipments = filteredShipments.filter(shipment =>
+        shipment.pickup_city.toLowerCase().includes(pickupCity.toLowerCase())
       );
     }
 
     if (deliveryCity) {
-      filteredShipments = filteredShipments.filter(shipment => 
-        shipment.delivery.city.toLowerCase().includes(deliveryCity.toLowerCase())
+      filteredShipments = filteredShipments.filter(shipment =>
+        shipment.delivery_city.toLowerCase().includes(deliveryCity.toLowerCase())
       );
     }
 
@@ -119,15 +119,21 @@ export async function POST(request: NextRequest) {
 
     // Create new shipment
     const newShipment = generateMockShipment({
-      package: pkg,
-      pickup,
-      delivery,
+      package_description: pkg.description,
+      package_weight: pkg.weight,
+      package_length: pkg.dimensions?.length,
+      package_width: pkg.dimensions?.width,
+      package_height: pkg.dimensions?.height,
+      pickup_city: pickup.city,
+      pickup_country: pickup.country,
+      pickup_address: pickup.address,
+      delivery_city: delivery.city,
+      delivery_country: delivery.country,
+      delivery_address: delivery.address,
       status: 'pending',
-      payment: {
-        amount: pkg.weight * 20, // Mock calculation
-        status: 'pending',
-      },
-      createdAt: new Date(),
+      payment_amount: pkg.weight * 20,
+      payment_status: 'pending',
+      created_at: new Date().toISOString(),
     });
 
     allShipments.push(newShipment);

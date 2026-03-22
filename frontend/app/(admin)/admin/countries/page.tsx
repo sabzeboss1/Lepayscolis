@@ -30,6 +30,7 @@ interface Currency {
 }
 
 interface CountryFilterValues {
+  [key: string]: string;
   search: string;
   status: string;
 }
