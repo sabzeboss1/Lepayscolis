@@ -13,11 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Configure API middleware
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
-
         // Apply locale detection to all API requests
         $middleware->api(append: [
             \App\Http\Middleware\SetLocale::class,
@@ -26,10 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Configure rate limiting for API
         $middleware->throttleApi();
 
-        // Use custom CSRF middleware that excludes admin routes
+        // Exclude all API routes from CSRF (API uses Sanctum token auth, not sessions)
         $middleware->validateCsrfTokens(except: [
-            'api/admin/login',
-            'api/admin/*',
+            'api/*',
         ]);
 
         // Register custom middleware aliases
