@@ -99,6 +99,8 @@ return [
 
     'key' => env('APP_KEY'),
 
+    'setup_token' => env('SETUP_TOKEN'),
+
     'previous_keys' => [
         ...array_filter(
             explode(',', env('APP_PREVIOUS_KEYS', ''))
