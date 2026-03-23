@@ -520,7 +520,7 @@ class DemoUserSeeder extends Seeder
             $wallet = Wallet::firstOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'balance' => fake()->randomFloat(2, 10, 500),
+                    'balance' => round(rand(1000, 50000) / 100, 2),
                     'currency_code' => $user->currency_code ?? 'EUR',
                 ]
             );
