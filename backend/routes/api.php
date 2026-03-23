@@ -9,8 +9,17 @@ use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\SetupController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Setup & Health Routes (no auth)
+|--------------------------------------------------------------------------
+*/
+Route::post('/setup', SetupController::class);
+Route::get('/health', [SetupController::class, 'health']);
 
 /*
 |--------------------------------------------------------------------------
