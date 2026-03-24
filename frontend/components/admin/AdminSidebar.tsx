@@ -21,7 +21,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Globe
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
@@ -81,6 +82,7 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
     {
       titleKey: 'admin.sidebar.system',
       items: [
+        { labelKey: 'admin.sidebar.locations', href: '/admin/locations', icon: Globe },
         { labelKey: 'admin.sidebar.settings', href: '/admin/settings', icon: Settings, superAdminOnly: true },
         { labelKey: 'admin.sidebar.analytics', href: '/admin/analytics', icon: BarChart3 },
         { labelKey: 'admin.sidebar.auditLogs', href: '/admin/audit-logs', icon: FileText }

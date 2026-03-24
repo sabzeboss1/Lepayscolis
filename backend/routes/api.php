@@ -10,6 +10,7 @@ use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -30,8 +31,13 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
+// Broadcasting authentication (for Pusher private/presence channels)
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
+
 // Public utility routes
 Route::get('/languages', [UserController::class, 'supportedLanguages']);
+Route::get('/locations/countries', [\App\Http\Controllers\LocationController::class, 'countries']);
+Route::get('/locations/cities/{country}', [\App\Http\Controllers\LocationController::class, 'cities']);
 
 // Webhook routes (public, no authentication required)
 Route::prefix('webhooks')->group(function () {
@@ -325,6 +331,22 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::prefix('settings')->group(function () {
         Route::get('/', [AdminSettingsController::class, 'index'])->middleware('throttle:60,1');
         Route::put('/', [AdminSettingsController::class, 'update'])->middleware('throttle:30,1');
+    });
+    
+    // Location Management
+    Route::prefix('locations')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LocationManagementController::class, 'index'])->middleware('throttle:60,1');
+        
+        // Countries
+        Route::post('/countries', [\App\Http\Controllers\Admin\LocationManagementController::class, 'storeCountry'])->middleware('throttle:30,1');
+        Route::put('/countries/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'updateCountry'])->middleware('throttle:30,1');
+        Route::delete('/countries/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'deleteCountry'])->middleware('throttle:30,1');
+        
+        // Cities
+        Route::get('/countries/{countryId}/cities', [\App\Http\Controllers\Admin\LocationManagementController::class, 'getCitiesByCountry'])->middleware('throttle:60,1');
+        Route::post('/cities', [\App\Http\Controllers\Admin\LocationManagementController::class, 'storeCity'])->middleware('throttle:30,1');
+        Route::put('/cities/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'updateCity'])->middleware('throttle:30,1');
+        Route::delete('/cities/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'deleteCity'])->middleware('throttle:30,1');
     });
     
     // Analytics
