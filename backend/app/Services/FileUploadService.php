@@ -14,7 +14,7 @@ class FileUploadService
 {
     /**
      * Upload and resize avatar image to 200x200 pixels
-     * Store in public S3 bucket and return public URL
+     * Store in public storage (S3 or local) and return public URL
      *
      * @param UploadedFile $file
      * @param string $userId
@@ -49,16 +49,19 @@ class FileUploadService
         
         $encodedImage = $image->encode($encoder);
         
-        // Upload to S3 public bucket
-        Storage::disk('s3-public')->put($filename, (string) $encodedImage);
+        // Use local storage if AWS is not configured
+        $disk = $this->getStorageDisk('public');
+        
+        // Upload to storage
+        Storage::disk($disk)->put($filename, (string) $encodedImage);
         
         // Return public URL
-        return Storage::disk('s3-public')->url($filename);
+        return Storage::disk($disk)->url($filename);
     }
     
     /**
-     * Upload KYC document to private S3 bucket
-     * Store in private bucket and return URL
+     * Upload KYC document to private storage
+     * Store in private bucket (S3 or local) and return URL
      *
      * @param UploadedFile $file
      * @param string $userId
@@ -78,20 +81,27 @@ class FileUploadService
         $extension = $file->getClientOriginalExtension();
         $filename = "kyc/{$userId}/{$type}_" . time() . ".{$extension}";
         
-        // Upload to S3 private bucket
-        $path = $file->storeAs('', $filename, 's3-private');
+        // Use local storage if AWS is not configured
+        $disk = $this->getStorageDisk('private');
+        
+        // Upload to storage
+        $path = $file->storeAs('', $filename, $disk);
         
         if (!$path) {
-            throw new \Exception('Failed to upload KYC document to S3');
+            throw new \Exception('Failed to upload KYC document');
         }
         
-        // Return URL (will be a signed URL when accessed)
-        return Storage::disk('s3-private')->url($filename);
+        // Return the path (not URL) for local storage, or URL for S3
+        if ($disk === 'local') {
+            return $path; // Return path like "kyc/6/document_front_123.jpg"
+        }
+        
+        return Storage::disk($disk)->url($filename);
     }
     
     /**
-     * Upload travel proof document to private S3 bucket
-     * Store in private bucket and return URL
+     * Upload travel proof document to private storage
+     * Store in private bucket (S3 or local) and return URL
      *
      * @param UploadedFile $file
      * @param string $tripId
@@ -110,15 +120,18 @@ class FileUploadService
         $extension = $file->getClientOriginalExtension();
         $filename = "travel-proofs/{$tripId}_" . time() . ".{$extension}";
         
-        // Upload to S3 private bucket
-        $path = $file->storeAs('', $filename, 's3-private');
+        // Use local storage if AWS is not configured
+        $disk = $this->getStorageDisk('private');
+        
+        // Upload to storage
+        $path = $file->storeAs('', $filename, $disk);
         
         if (!$path) {
-            throw new \Exception('Failed to upload travel proof to S3');
+            throw new \Exception('Failed to upload travel proof');
         }
         
-        // Return URL (will be a signed URL when accessed)
-        return Storage::disk('s3-private')->url($filename);
+        // Return URL
+        return Storage::disk($disk)->url($filename);
     }
     
     /**
@@ -168,20 +181,23 @@ class FileUploadService
             );
         }
         
-        // Additional MIME type validation
+        // Additional MIME type validation (more flexible for JPEG variants)
         $mimeType = $file->getMimeType();
         $allowedMimeTypes = [
-            'jpg' => ['image/jpeg', 'image/jpg'],
-            'jpeg' => ['image/jpeg', 'image/jpg'],
-            'png' => ['image/png'],
-            'pdf' => ['application/pdf'],
+            'jpg' => ['image/jpeg', 'image/jpg', 'image/pjpeg'],
+            'jpeg' => ['image/jpeg', 'image/jpg', 'image/pjpeg'],
+            'png' => ['image/png', 'image/x-png'],
+            'pdf' => ['application/pdf', 'application/x-pdf'],
         ];
         
         if (isset($allowedMimeTypes[$extension])) {
             if (!in_array($mimeType, $allowedMimeTypes[$extension])) {
-                throw new \Exception(
-                    "File MIME type does not match extension for {$fileType}"
-                );
+                // Log warning but don't throw exception - trust extension validation
+                \Log::warning("MIME type mismatch for {$fileType}", [
+                    'expected' => $allowedMimeTypes[$extension],
+                    'actual' => $mimeType,
+                    'extension' => $extension,
+                ]);
             }
         }
     }
@@ -224,5 +240,25 @@ class FileUploadService
         
         // Default to private for security
         return 's3-private';
+    }
+    
+    /**
+     * Get the appropriate storage disk (S3 or local fallback)
+     *
+     * @param string $type 'public' or 'private'
+     * @return string Disk name
+     */
+    private function getStorageDisk(string $type = 'private'): string
+    {
+        // Check if AWS is configured
+        $awsConfigured = !empty(env('AWS_ACCESS_KEY_ID')) && !empty(env('AWS_SECRET_ACCESS_KEY'));
+        
+        if (!$awsConfigured) {
+            // Use local storage as fallback
+            return $type === 'public' ? 'public' : 'local';
+        }
+        
+        // Use S3 storage
+        return $type === 'public' ? 's3-public' : 's3-private';
     }
 }

@@ -28,6 +28,7 @@ class UserObserver
         Wallet::create([
             'user_id' => $user->id,
             'balance' => 0.00,
+            'held_balance' => 0.00,
         ]);
     }
 }

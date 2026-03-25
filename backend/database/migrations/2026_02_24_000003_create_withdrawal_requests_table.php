@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('withdrawal_requests', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->decimal('fee', 10, 2)->default(0.00);
             $table->decimal('net_amount', 10, 2);
             $table->enum('status', ['pending', 'approved', 'processing', 'completed', 'rejected', 'cancelled'])->default('pending');
             $table->text('rejection_reason')->nullable();
-            $table->foreignUuid('approved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('approved_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();

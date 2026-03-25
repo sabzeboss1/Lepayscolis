@@ -141,6 +141,37 @@ class MessageController extends Controller
     }
 
     /**
+     * Get or create a conversation with a specific user.
+     * 
+     * GET /api/messages/conversation-with/{userId}
+     */
+    public function getOrCreateConversation(Request $request, string $userId): JsonResponse
+    {
+        $currentUser = $request->user();
+
+        // Prevent user from creating conversation with themselves
+        if ($currentUser->id == $userId) {
+            return response()->json([
+                'message' => 'You cannot create a conversation with yourself.',
+            ], 400);
+        }
+
+        // Verify the other user exists
+        $otherUser = \App\Models\User::findOrFail($userId);
+
+        // Find or create conversation
+        $conversation = $this->findOrCreateConversation($currentUser->id, $userId);
+        
+        $conversation->load(['user1', 'user2', 'messages' => function ($query) {
+            $query->latest()->limit(1);
+        }]);
+
+        return response()->json([
+            'data' => new ConversationResource($conversation),
+        ]);
+    }
+
+    /**
      * Find or create a conversation between two users.
      */
     private function findOrCreateConversation(int $userId1, int $userId2, ?string $conversationId = null): Conversation

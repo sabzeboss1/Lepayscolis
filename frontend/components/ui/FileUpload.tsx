@@ -34,11 +34,21 @@ export const FileUpload = ({
       return;
     }
 
-    // Check file type
+    // Check file type - handle both MIME types and extensions
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    const acceptedTypes = accept.split(',').map(t => t.trim());
+    const fileMimeType = file.type.toLowerCase();
+    const acceptedTypes = accept.split(',').map(t => t.trim().toLowerCase());
     
-    if (!acceptedTypes.includes(fileExtension)) {
+    // Check if file matches by extension or MIME type
+    const isValidExtension = acceptedTypes.some(type => 
+      type.startsWith('.') && type === fileExtension
+    );
+    
+    const isValidMimeType = acceptedTypes.some(type => 
+      !type.startsWith('.') && (type === fileMimeType || fileMimeType.includes(type.split('/')[1]))
+    );
+    
+    if (!isValidExtension && !isValidMimeType) {
       setUploadError(`Type de fichier non accepté. Formats acceptés : ${accept}`);
       return;
     }

@@ -74,10 +74,18 @@ class AdminUserController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $user = $this->userService->getUserDetails($id);
+        $details = $this->userService->getUserDetails($id);
+        
+        $userResource = new UserDetailResource($details['user']);
 
         return response()->json([
-            'data' => new UserDetailResource($user),
+            'data' => array_merge(
+                $userResource->toArray(request()),
+                [
+                    'activity_history' => $details['activity_history'],
+                    'recent_transactions' => $details['recent_transactions'],
+                ]
+            ),
         ], 200);
     }
 

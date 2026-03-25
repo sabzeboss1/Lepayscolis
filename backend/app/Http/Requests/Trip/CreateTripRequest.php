@@ -39,7 +39,7 @@ class CreateTripRequest extends FormRequest
         return [
             'departure_city' => ['required', 'string', 'max:255'],
             'departure_country' => ['required', 'string', 'max:255'],
-            'departure_date' => ['required', 'date', 'after:today'],
+            'departure_date' => ['required', 'date', 'after_or_equal:today'],
             'arrival_city' => ['required', 'string', 'max:255'],
             'arrival_country' => ['required', 'string', 'max:255'],
             'arrival_date' => ['required', 'date', 'after:departure_date'],

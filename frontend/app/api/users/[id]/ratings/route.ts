@@ -1,34 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockRatings } from '@/lib/api/mockData';
+import { cookies } from 'next/headers';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
     
-    // Filter ratings for this user
-    const userRatings = mockRatings.filter(r => r.rated_id === id);
+    const headers: HeadersInit = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
     
-    // Calculate average rating
-    const totalScore = userRatings.reduce((sum, r) => sum + r.score, 0);
-    const averageRating = userRatings.length > 0 ? totalScore / userRatings.length : 0;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     
-    // Sort by date (newest first)
-    userRatings.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    const response = await fetch(
+      `${BACKEND_URL}/api/users/${id}/ratings`,
+      {
+        method: 'GET',
+        headers,
+        cache: 'no-store',
+      }
     );
     
-    return NextResponse.json({
-      ratings: userRatings,
-      average_rating: Math.round(averageRating * 10) / 10,
-      total_ratings: userRatings.length,
-    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch ratings' }));
+      return NextResponse.json(
+        { message: errorData.message || 'Failed to fetch ratings' },
+        { status: response.status }
+      );
+    }
+    
+    const data = await response.json();
+    return NextResponse.json(data);
+    
   } catch (error) {
-    console.error('Error fetching user ratings:', error);
+    console.error('User ratings fetch error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch user ratings' },
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }

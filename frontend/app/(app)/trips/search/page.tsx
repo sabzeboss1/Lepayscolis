@@ -8,452 +8,543 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import {
+  Search,
+  SlidersHorizontal,
+  X,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Plane,
+  AlertCircle,
+  Loader2,
+  MapPin,
+} from 'lucide-react';
 
+/* ── Skeleton card ───────────────────────────── */
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 animate-pulse">
+      <div className="flex items-center gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="h-2.5 bg-slate-100 rounded w-1/3" />
+          <div className="h-4 bg-slate-100 rounded w-2/3" />
+          <div className="h-2.5 bg-slate-100 rounded w-1/4" />
+        </div>
+        <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0" />
+        <div className="flex-1 space-y-2 text-right">
+          <div className="h-2.5 bg-slate-100 rounded w-1/3 ml-auto" />
+          <div className="h-4 bg-slate-100 rounded w-2/3 ml-auto" />
+          <div className="h-2.5 bg-slate-100 rounded w-1/4 ml-auto" />
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+        <div className="h-3 bg-slate-100 rounded w-1/3" />
+        <div className="h-6 bg-slate-100 rounded-lg w-20" />
+      </div>
+      <div className="flex items-center gap-3 pt-3 border-t border-slate-50">
+        <div className="w-9 h-9 rounded-full bg-slate-100 shrink-0" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3 bg-slate-100 rounded w-1/2" />
+          <div className="h-2.5 bg-slate-100 rounded w-1/3" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main page ───────────────────────────────── */
 export default function TripSearchPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  
-  // Filter state
+
+  /* filter state */
   const [departureCity, setDepartureCity] = useState('');
-  const [arrivalCity, setArrivalCity] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [minCapacity, setMinCapacity] = useState('');
-  const [travelerName, setTravelerName] = useState('');
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  
-  // Debounced search values (300ms delay)
-  const debouncedDepartureCity = useDebounce(departureCity, 300);
-  const debouncedArrivalCity = useDebounce(arrivalCity, 300);
-  const debouncedTravelerName = useDebounce(travelerName, 300);
-  
-  // Results state
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [arrivalCity, setArrivalCity]     = useState('');
+  const [dateFrom, setDateFrom]           = useState('');
+  const [dateTo, setDateTo]               = useState('');
+  const [minCapacity, setMinCapacity]     = useState('');
+  const [travelerName, setTravelerName]   = useState('');
+  const [showAdvanced, setShowAdvanced]   = useState(false);
+
+  const debouncedDeparture  = useDebounce(departureCity, 300);
+  const debouncedArrival    = useDebounce(arrivalCity, 300);
+  const debouncedTraveler   = useDebounce(travelerName, 300);
+
+  /* results state */
+  const [trips, setTrips]           = useState<Trip[]>([]);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
   const [hasSearched, setHasSearched] = useState(false);
-  
-  // Sorting state
-  const [sortBy, setSortBy] = useState<'date' | 'price' | 'rating'>('date');
-  
-  // Pagination state
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 9;
+  const [sortBy, setSortBy]         = useState<'date' | 'price' | 'rating'>('date');
+  const [page, setPage]             = useState(1);
+  const PER_PAGE = 9;
 
-  // Auto-search when debounced values change (if user has started searching)
-  useEffect(() => {
-    if (hasSearched) {
-      handleSearch();
-    }
-  }, [debouncedDepartureCity, debouncedArrivalCity, debouncedTravelerName, dateFrom, dateTo, minCapacity]);
-
+  /* search */
   const handleSearch = useCallback(async () => {
     setLoading(true);
     setError('');
     setHasSearched(true);
     setPage(1);
-
     try {
       const params = new URLSearchParams();
-      if (debouncedDepartureCity) params.append('departure_city', debouncedDepartureCity);
-      if (debouncedArrivalCity) params.append('arrival_city', debouncedArrivalCity);
-      if (dateFrom) params.append('date_from', dateFrom);
-      if (dateTo) params.append('date_to', dateTo);
-      if (minCapacity) params.append('min_capacity', minCapacity);
-      if (debouncedTravelerName) params.append('traveler_name', debouncedTravelerName);
+      if (debouncedDeparture) params.append('departure_city', debouncedDeparture);
+      if (debouncedArrival)   params.append('arrival_city', debouncedArrival);
+      if (dateFrom)           params.append('date_from', dateFrom);
+      if (dateTo)             params.append('date_to', dateTo);
+      if (minCapacity)        params.append('min_capacity', minCapacity);
+      if (debouncedTraveler)  params.append('traveler_name', debouncedTraveler);
 
-      const response = await fetch(`/api/trips/search?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-        },
+      const res = await fetch(`/api/trips/search?${params}`, {
+        headers: { Accept: 'application/json' },
+        credentials: 'include',
       });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error(t('errors.unauthorized'));
-        }
-        throw new Error(t('trips.searchError'));
-      }
-
-      const data = await response.json();
-      // Handle both paginated and non-paginated responses
-      const tripsData = data.data || data.trips || [];
-      setTrips(tripsData);
+      if (!res.ok) throw new Error(res.status === 401 ? t('errors.unauthorized') : t('trips.searchError'));
+      const data = await res.json();
+      setTrips(data.data || data.trips || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.networkError'));
-      console.error('Search error:', err);
     } finally {
       setLoading(false);
     }
-  }, [debouncedDepartureCity, debouncedArrivalCity, dateFrom, dateTo, minCapacity, debouncedTravelerName, t]);
+  }, [debouncedDeparture, debouncedArrival, dateFrom, dateTo, minCapacity, debouncedTraveler, t]);
 
-  const handleClearFilters = () => {
-    setDepartureCity('');
-    setArrivalCity('');
-    setDateFrom('');
-    setDateTo('');
-    setMinCapacity('');
-    setTravelerName('');
-    setTrips([]);
-    setHasSearched(false);
-    setError('');
+  /* initial load */
+  useEffect(() => { handleSearch(); }, []); // eslint-disable-line
+
+  /* auto-search when debounced values change */
+  useEffect(() => {
+    if (hasSearched) handleSearch();
+  }, [debouncedDeparture, debouncedArrival, debouncedTraveler, dateFrom, dateTo, minCapacity]); // eslint-disable-line
+
+  const handleClear = () => {
+    setDepartureCity(''); setArrivalCity('');
+    setDateFrom(''); setDateTo('');
+    setMinCapacity(''); setTravelerName('');
+    setTrips([]); setHasSearched(false); setError('');
   };
 
-  const handleTripClick = (tripId: string) => {
-    router.push(`/trips/${tripId}`);
-  };
-
-  // Sort trips
-  const sortedTrips = [...trips].sort((a, b) => {
-    switch (sortBy) {
-      case 'date':
-        return new Date(a.departure.date).getTime() - new Date(b.departure.date).getTime();
-      case 'price':
-        return a.pricePerKg - b.pricePerKg;
-      case 'rating':
-        return b.traveler.rating - a.traveler.rating;
-      default:
-        return 0;
-    }
+  /* sort + paginate */
+  const sorted = [...trips].sort((a, b) => {
+    if (sortBy === 'date')   return new Date(a.departure_date).getTime() - new Date(b.departure_date).getTime();
+    if (sortBy === 'price')  return a.price_per_kg - b.price_per_kg;
+    if (sortBy === 'rating') return (b.traveler?.rating || 0) - (a.traveler?.rating || 0);
+    return 0;
   });
+  const paginated   = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const totalPages  = Math.ceil(sorted.length / PER_PAGE);
 
-  // Paginate trips
-  const paginatedTrips = sortedTrips.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-  const totalPages = Math.ceil(sortedTrips.length / itemsPerPage);
+  /* active filter chips */
+  const chips = [
+    departureCity && { label: `Départ : ${departureCity}`, clear: () => setDepartureCity('') },
+    arrivalCity   && { label: `Arrivée : ${arrivalCity}`,  clear: () => setArrivalCity('') },
+    dateFrom      && { label: `Depuis le ${dateFrom}`,      clear: () => setDateFrom('') },
+    dateTo        && { label: `Jusqu'au ${dateTo}`,         clear: () => setDateTo('') },
+    minCapacity   && { label: `≥ ${minCapacity} kg`,        clear: () => setMinCapacity('') },
+    travelerName  && { label: `Voyageur : ${travelerName}`, clear: () => setTravelerName('') },
+  ].filter(Boolean) as { label: string; clear: () => void }[];
 
-  // Active filters
-  const activeFilters = [
-    departureCity && { label: `${t('trips.departure')}: ${departureCity}`, clear: () => setDepartureCity('') },
-    arrivalCity && { label: `${t('trips.arrival')}: ${arrivalCity}`, clear: () => setArrivalCity('') },
-    dateFrom && { label: `From: ${dateFrom}`, clear: () => setDateFrom('') },
-    dateTo && { label: `To: ${dateTo}`, clear: () => setDateTo('') },
-    minCapacity && { label: `Min ${minCapacity}kg`, clear: () => setMinCapacity('') },
-    travelerName && { label: `${t('trips.traveler')}: ${travelerName}`, clear: () => setTravelerName('') },
-  ].filter(Boolean) as Array<{ label: string; clear: () => void }>;
+  /* pagination helper */
+  const pageNums = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (page <= 4) return [1, 2, 3, 4, 5, '…', totalPages];
+    if (page >= totalPages - 3) return [1, '…', totalPages-4, totalPages-3, totalPages-2, totalPages-1, totalPages];
+    return [1, '…', page-1, page, page+1, '…', totalPages];
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {t('trips.search')}
-          </h1>
-          <p className="text-gray-600">
-            {t('howItWorksPage.sender.step1.description')}
-          </p>
-        </div>
+    <div className="min-h-screen" style={{ background: 'var(--color-soft-gray)' }}>
 
-        {/* Search Filters - Mobile Collapsible */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          {/* Mobile Filter Toggle Button */}
-          <button
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-            className="md:hidden w-full flex items-center justify-between p-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t-lg"
-            aria-expanded={isFiltersOpen}
-            aria-controls="filter-panel"
-          >
-            <div className="flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                />
-              </svg>
-              <span className="font-semibold text-gray-900">
-                {t('trips.filterResults')}
-              </span>
-              {activeFilters.length > 0 && (
-                <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full">
-                  {activeFilters.length}
-                </span>
-              )}
-            </div>
-            <svg
-              className={`w-5 h-5 text-gray-600 transition-transform ${
-                isFiltersOpen ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      {/* ── Hero search header ── */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, var(--color-navy) 0%, #1e3a8a 60%, #1d4ed8 100%)',
+        }}
+      >
+        {/* decorative blobs */}
+        <div className="absolute top-[-60px] right-[-60px] w-64 h-64 rounded-full opacity-10 animate-blob"
+          style={{ background: 'var(--color-vibrant-orange)' }} />
+        <div className="absolute bottom-[-40px] left-[10%] w-48 h-48 rounded-full opacity-5 animate-blob animation-delay-2000"
+          style={{ background: 'var(--color-ocean-blue)' }} />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <div className="mb-7 text-center">
+            <p
+              className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-4"
+              style={{
+                background: 'rgba(249,115,22,0.15)',
+                color: '#fdba74',
+                border: '1px solid rgba(249,115,22,0.25)',
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
+              <Plane className="w-3.5 h-3.5" />
+              Trouvez le bon voyageur
+            </p>
+            <h1
+              className="text-3xl sm:text-4xl font-bold text-white mb-2"
+              style={{ fontFamily: 'Prompt, sans-serif' }}
+            >
+              Chercher un voyageur
+            </h1>
+            <p className="text-white/60 text-sm sm:text-base">
+              Connectez-vous avec des voyageurs de confiance qui partent vers votre destination
+            </p>
+          </div>
 
-          {/* Filter Panel */}
+          {/* Main search bar */}
           <div
-            id="filter-panel"
-            className={`p-6 ${isFiltersOpen ? 'block' : 'hidden md:block'}`}
+            className="rounded-2xl p-4 sm:p-5"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(12px)',
+            }}
           >
-            <h2 className="hidden md:block text-lg font-semibold text-gray-900 mb-4">
-              {t('trips.filterResults')}
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              <Input
-                type="text"
-                label={t('trips.departureCity')}
-                value={departureCity}
-                onChange={(e) => setDepartureCity(e.target.value)}
-                placeholder={t('trips.departureCity')}
-              />
-              
-              <Input
-                type="text"
-                label={t('trips.arrivalCity')}
-                value={arrivalCity}
-                onChange={(e) => setArrivalCity(e.target.value)}
-                placeholder={t('trips.arrivalCity')}
-              />
-              
-              <Input
-                type="text"
-                label={t('trips.travelerName')}
-                value={travelerName}
-                onChange={(e) => setTravelerName(e.target.value)}
-                placeholder={t('trips.travelerNamePlaceholder')}
-              />
-              
-              <Input
-                type="number"
-                label={t('trips.capacity')}
-                value={minCapacity}
-                onChange={(e) => setMinCapacity(e.target.value)}
-                placeholder="Min kg"
-              />
-              
-              <Input
-                type="date"
-                label={`${t('trips.departureDate')} (From)`}
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-              />
-              
-              <Input
-                type="date"
-                label={`${t('trips.departureDate')} (To)`}
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-              />
-            </div>
+            {/* Primary row */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-3">
+              <div className="flex-1 relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.4)' }} />
+                <input
+                  type="text"
+                  value={departureCity}
+                  onChange={(e) => setDepartureCity(e.target.value)}
+                  placeholder="Ville de départ (ex: Paris)"
+                  className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium placeholder:font-normal focus:outline-none focus:ring-2"
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    caretColor: '#fff',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
+                  onBlur={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                />
+              </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+              <div
+                className="hidden sm:flex items-center justify-center w-8 h-12 shrink-0"
+                aria-hidden="true"
+              >
+                <Plane className="w-4 h-4 rotate-0" style={{ color: 'rgba(255,255,255,0.4)' }} />
+              </div>
+
+              <div className="flex-1 relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.4)' }} />
+                <input
+                  type="text"
+                  value={arrivalCity}
+                  onChange={(e) => setArrivalCity(e.target.value)}
+                  placeholder="Ville d'arrivée (ex: Abidjan)"
+                  className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium placeholder:font-normal focus:outline-none focus:ring-2"
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    caretColor: '#fff',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
+                  onBlur={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                />
+              </div>
+
               <Button
-                variant="primary"
-                onClick={() => {
-                  handleSearch();
-                  setIsFiltersOpen(false);
-                }}
+                onClick={() => { handleSearch(); }}
                 disabled={loading}
                 loading={loading}
-                fullWidth
-                className="sm:w-auto"
+                className="!rounded-xl !font-semibold shrink-0 sm:w-auto"
+                style={{
+                  background: 'var(--color-vibrant-orange)',
+                  boxShadow: '0 4px 16px rgba(249,115,22,0.35)',
+                  color: '#fff',
+                  border: 'none',
+                }}
               >
-                {t('common.search')}
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleClearFilters}
-                disabled={loading}
-                fullWidth
-                className="sm:w-auto"
-              >
-                {t('common.cancel')}
+                <Search className="w-4 h-4 mr-2" />
+                Rechercher
               </Button>
             </div>
+
+            {/* Advanced filters toggle */}
+            <button
+              onClick={() => setShowAdvanced((v) => !v)}
+              className="flex items-center gap-2 text-xs font-medium transition-colors"
+              style={{ color: 'rgba(255,255,255,0.55)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.85)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'; }}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Filtres avancés
+              {chips.length > 0 && (
+                <span
+                  className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold"
+                  style={{ background: 'var(--color-vibrant-orange)', color: '#fff' }}
+                >
+                  {chips.length}
+                </span>
+              )}
+              <ChevronDown
+                className="w-3.5 h-3.5 transition-transform"
+                style={{ transform: showAdvanced ? 'rotate(180deg)' : 'none' }}
+              />
+            </button>
+
+            {/* Advanced filter fields */}
+            {showAdvanced && (
+              <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    {
+                      label: 'Nom du voyageur',
+                      value: travelerName,
+                      onChange: setTravelerName,
+                      placeholder: 'Ex: Jean Martin',
+                      type: 'text',
+                    },
+                    {
+                      label: 'Capacité min. (kg)',
+                      value: minCapacity,
+                      onChange: setMinCapacity,
+                      placeholder: 'Ex: 5',
+                      type: 'number',
+                    },
+                  ].map(({ label, value, onChange, placeholder, type }) => (
+                    <div key={label}>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                        {label}
+                      </label>
+                      <input
+                        type={type}
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder={placeholder}
+                        className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none"
+                        style={{
+                          background: 'rgba(255,255,255,0.08)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          color: '#fff',
+                          caretColor: '#fff',
+                        }}
+                      />
+                    </div>
+                  ))}
+
+                  <div className="grid grid-cols-2 gap-2 sm:col-span-1">
+                    {[
+                      { label: 'Départ à partir de', value: dateFrom, onChange: setDateFrom },
+                      { label: "Départ jusqu'au", value: dateTo, onChange: setDateTo },
+                    ].map(({ label, value, onChange }) => (
+                      <div key={label}>
+                        <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                          {label}
+                        </label>
+                        <input
+                          type="date"
+                          value={value}
+                          onChange={(e) => onChange(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none"
+                          style={{
+                            background: 'rgba(255,255,255,0.08)',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                            color: value ? '#fff' : 'rgba(255,255,255,0.35)',
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      </div>
 
-        {/* Active Filters */}
-        {activeFilters.length > 0 && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
-              {activeFilters.map((filter, index) => (
-                <div
-                  key={index}
-                  className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-                >
-                  <span>{filter.label}</span>
-                  <button
-                    onClick={filter.clear}
-                    className="hover:text-blue-900"
-                    aria-label={`Remove ${filter.label} filter`}
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* ── Results area ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
-        {/* Sorting and Results Count */}
-        {hasSearched && !loading && (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <p className="text-gray-600">
-              {sortedTrips.length} {sortedTrips.length === 1 ? 'trip' : 'trips'} found
-            </p>
-            
-            <div className="flex items-center gap-2">
-              <label htmlFor="sort" className="text-sm text-gray-600">
-                {t('trips.sortBy')}:
-              </label>
-              <select
-                id="sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'date' | 'price' | 'rating')}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        {/* Active chips */}
+        {chips.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            <span className="text-xs font-medium text-muted-text">Filtres actifs :</span>
+            {chips.map(({ label, clear }, i) => (
+              <button
+                key={i}
+                onClick={clear}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors"
+                style={{
+                  background: 'rgba(37,99,235,0.08)',
+                  color: 'var(--color-royal-blue)',
+                  border: '1px solid rgba(37,99,235,0.2)',
+                }}
               >
-                <option value="date">{t('trips.sortByDate')}</option>
-                <option value="price">{t('trips.sortByPrice')}</option>
-                <option value="rating">{t('trips.sortByRating')}</option>
-              </select>
+                {label}
+                <X className="w-3 h-3" />
+              </button>
+            ))}
+            <button
+              onClick={handleClear}
+              className="text-xs text-muted-text underline hover:text-navy transition-colors ml-1"
+            >
+              Tout effacer
+            </button>
+          </div>
+        )}
+
+        {/* Sort bar + count */}
+        {hasSearched && !loading && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <p className="text-sm font-medium text-body-text">
+              <span className="font-bold text-navy">{sorted.length}</span>{' '}
+              {sorted.length === 1 ? 'voyageur trouvé' : 'voyageurs trouvés'}
+            </p>
+            <div className="flex items-center gap-2">
+              <label htmlFor="sort-select" className="text-xs font-medium text-muted-text whitespace-nowrap">
+                Trier par :
+              </label>
+              <div className="relative">
+                <select
+                  id="sort-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'date' | 'price' | 'rating')}
+                  className="appearance-none pl-3 pr-8 py-2 rounded-xl text-sm font-medium focus:outline-none focus:ring-2"
+                  style={{
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    color: 'var(--color-navy)',
+                  }}
+                >
+                  <option value="date">Date de départ</option>
+                  <option value="price">Prix / kg</option>
+                  <option value="rating">Note</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-text pointer-events-none" />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div
+            className="flex items-start gap-3 px-4 py-3 rounded-xl mb-6 text-sm"
+            style={{
+              background: 'rgba(239,68,68,0.06)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              color: '#b91c1c',
+            }}
+            role="alert"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             {error}
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Loading skeletons */}
         {loading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            <p className="mt-4 text-gray-600">{t('common.loading')}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         )}
 
-        {/* Empty State - No Search Yet */}
+        {/* Empty — no search yet (shouldn't happen since we load on mount) */}
         {!hasSearched && !loading && (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <svg
-              className="mx-auto h-16 w-16 text-gray-400 mb-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+              style={{ background: 'rgba(37,99,235,0.08)' }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {t('trips.search')}
-            </h3>
-            <p className="text-gray-600">
-              Use the filters above to find trips matching your needs
+              <Search className="w-7 h-7" style={{ color: 'var(--color-royal-blue)' }} />
+            </div>
+            <h3 className="text-base font-semibold text-navy mb-1">Lancez une recherche</h3>
+            <p className="text-sm text-muted-text max-w-xs">
+              Utilisez les filtres ci-dessus pour trouver un voyageur adapté à vos besoins
             </p>
           </div>
         )}
 
-        {/* Empty State - No Results */}
-        {hasSearched && !loading && sortedTrips.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <svg
-              className="mx-auto h-16 w-16 text-gray-400 mb-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        {/* Empty — no results */}
+        {hasSearched && !loading && sorted.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+              style={{ background: 'rgba(249,115,22,0.08)' }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {t('trips.noTripsFound')}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Try adjusting your filters or search criteria
+              <Plane className="w-7 h-7" style={{ color: 'var(--color-vibrant-orange)' }} />
+            </div>
+            <h3 className="text-base font-semibold text-navy mb-1">Aucun voyageur trouvé</h3>
+            <p className="text-sm text-muted-text max-w-xs mb-5">
+              Essayez d'ajuster vos critères de recherche ou revenez plus tard
             </p>
-            <Button variant="outline" onClick={handleClearFilters}>
-              Clear all filters
+            <Button variant="outline" size="sm" onClick={handleClear} className="!rounded-xl">
+              Effacer les filtres
             </Button>
           </div>
         )}
 
-        {/* Results Grid */}
-        {!loading && paginatedTrips.length > 0 && (
+        {/* Results grid */}
+        {!loading && paginated.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {paginatedTrips.map((trip) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8">
+              {paginated.map((trip) => (
                 <TripCard
                   key={trip.id}
                   trip={trip}
-                  onClick={() => handleTripClick(trip.id)}
+                  onClick={() => router.push(`/trips/${trip.id}`)}
                 />
               ))}
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+              <div className="flex items-center justify-center gap-1.5">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: '#fff', borderColor: '#e2e8f0', color: 'var(--color-navy)' }}
+                  aria-label="Page précédente"
                 >
-                  {t('common.previous')}
-                </Button>
-                
-                <div className="flex gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {pageNums().map((n, i) =>
+                  n === '…' ? (
+                    <span key={`ellipsis-${i}`} className="w-9 h-9 flex items-center justify-center text-sm text-muted-text">
+                      …
+                    </span>
+                  ) : (
                     <button
-                      key={pageNum}
-                      onClick={() => setPage(pageNum)}
-                      className={`px-3 py-1 rounded ${
-                        page === pageNum
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-100'
-                      }`}
+                      key={n}
+                      onClick={() => setPage(n as number)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl text-sm font-semibold border transition-colors"
+                      style={
+                        page === n
+                          ? {
+                              background: 'var(--color-royal-blue)',
+                              borderColor: 'var(--color-royal-blue)',
+                              color: '#fff',
+                            }
+                          : {
+                              background: '#fff',
+                              borderColor: '#e2e8f0',
+                              color: 'var(--color-navy)',
+                            }
+                      }
                     >
-                      {pageNum}
+                      {n}
                     </button>
-                  ))}
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  )
+                )}
+
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: '#fff', borderColor: '#e2e8f0', color: 'var(--color-navy)' }}
+                  aria-label="Page suivante"
                 >
-                  {t('common.next')}
-                </Button>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             )}
           </>

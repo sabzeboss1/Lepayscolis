@@ -12,6 +12,12 @@ export function useUnreadMessages() {
   const fetchUnreadCount = useCallback(async () => {
     try {
       if (!user) return;
+      
+      // Only fetch if KYC is approved
+      if (user.kyc_status !== 'approved') {
+        setUnreadCount(0);
+        return;
+      }
 
       const response = await apiClient.get<{ data: Conversation[] }>(
         API_ENDPOINTS.messages.conversations
@@ -27,6 +33,11 @@ export function useUnreadMessages() {
 
       setUnreadCount(total);
     } catch (error) {
+      // Silently fail if KYC verification is required
+      if (error instanceof Error && error.message.includes('KYC')) {
+        setUnreadCount(0);
+        return;
+      }
       console.error('Error fetching unread count:', error);
     }
   }, [user]);

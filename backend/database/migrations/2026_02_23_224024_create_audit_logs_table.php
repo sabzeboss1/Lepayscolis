@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('admin_id')->constrained('users')->onDelete('cascade');
             $table->string('action', 50); // create, update, delete, approve, reject, cancel
             $table->string('resource_type', 50); // user, trip, shipment, kyc, payment, withdrawal, setting
-            $table->unsignedBigInteger('resource_id');
+            $table->string('resource_id', 100); // Support both integer IDs and UUIDs
             $table->string('ip_address', 45);
             $table->json('before')->nullable();
             $table->json('after')->nullable();

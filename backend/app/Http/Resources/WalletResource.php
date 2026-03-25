@@ -18,6 +18,7 @@ class WalletResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'balance' => (float) $this->balance,
+            'currency' => 'EUR', // Default currency
             'formatted_balance' => number_format($this->balance, 2) . ' EUR',
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

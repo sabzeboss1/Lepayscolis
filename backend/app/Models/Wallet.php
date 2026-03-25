@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Wallet extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -20,6 +19,7 @@ class Wallet extends Model
     protected $fillable = [
         'user_id',
         'balance',
+        'held_balance',
     ];
 
     /**
@@ -31,7 +31,18 @@ class Wallet extends Model
     {
         return [
             'balance' => 'decimal:2',
+            'held_balance' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Get available balance (balance - held_balance).
+     *
+     * @return float
+     */
+    public function getAvailableBalanceAttribute(): float
+    {
+        return $this->balance - $this->held_balance;
     }
 
     /**

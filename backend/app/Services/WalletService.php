@@ -273,6 +273,169 @@ class WalletService
     }
 
     /**
+     * Hold (block) funds in wallet for a shipment.
+     * Funds are moved from available balance to held_balance.
+     *
+     * @param Wallet $wallet
+     * @param float $amount
+     * @param string $description
+     * @param string|null $referenceType
+     * @param string|null $referenceId
+     * @return WalletTransaction
+     * @throws InsufficientBalanceException
+     */
+    public function hold(
+        Wallet $wallet,
+        float $amount,
+        string $description,
+        ?string $referenceType = null,
+        ?string $referenceId = null
+    ): WalletTransaction {
+        return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId) {
+            // Lock wallet row for update to prevent race conditions
+            $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
+            
+            // Calculate available balance (balance - held_balance)
+            $availableBalance = $wallet->balance - $wallet->held_balance;
+            
+            // Validate sufficient available balance
+            if ($availableBalance < $amount) {
+                throw new InsufficientBalanceException($amount, $availableBalance);
+            }
+            
+            // Increase held_balance (funds are blocked but not debited yet)
+            $wallet->held_balance += $amount;
+            $wallet->save();
+            
+            // Create transaction record
+            $transaction = WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'type' => 'hold',
+                'amount' => $amount,
+                'description' => $description,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'balance_after' => $wallet->balance,
+            ]);
+            
+            // Clear balance cache
+            $this->clearBalanceCache($wallet->user_id);
+            
+            return $transaction;
+        });
+    }
+
+    /**
+     * Release held funds and debit wallet (when shipment is confirmed).
+     * This moves funds from held_balance and debits the actual balance.
+     *
+     * @param Wallet $wallet
+     * @param float $amount
+     * @param string $description
+     * @param string|null $referenceType
+     * @param string|null $referenceId
+     * @return WalletTransaction
+     */
+    public function releaseAndDebit(
+        Wallet $wallet,
+        float $amount,
+        string $description,
+        ?string $referenceType = null,
+        ?string $referenceId = null
+    ): WalletTransaction {
+        return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId) {
+            // Lock wallet row for update
+            $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
+            
+            // Validate sufficient held balance
+            if ($wallet->held_balance < $amount) {
+                throw new \Exception("Insufficient held balance. Required: {$amount}, Available: {$wallet->held_balance}");
+            }
+            
+            // Decrease held_balance and actual balance
+            $wallet->held_balance -= $amount;
+            $wallet->balance -= $amount;
+            $wallet->save();
+            
+            // Create transaction record
+            $transaction = WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'type' => 'debit',
+                'amount' => $amount,
+                'description' => $description,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'balance_after' => $wallet->balance,
+            ]);
+            
+            // Clear balance cache
+            $this->clearBalanceCache($wallet->user_id);
+            
+            return $transaction;
+        });
+    }
+
+    /**
+     * Cancel hold and release funds back to available balance.
+     * Used when shipment is cancelled before confirmation.
+     *
+     * @param Wallet $wallet
+     * @param float $amount
+     * @param string $description
+     * @param string|null $referenceType
+     * @param string|null $referenceId
+     * @return WalletTransaction
+     */
+    public function cancelHold(
+        Wallet $wallet,
+        float $amount,
+        string $description,
+        ?string $referenceType = null,
+        ?string $referenceId = null
+    ): WalletTransaction {
+        return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId) {
+            // Lock wallet row for update
+            $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
+            
+            // Validate sufficient held balance
+            if ($wallet->held_balance < $amount) {
+                throw new \Exception("Insufficient held balance to cancel. Required: {$amount}, Available: {$wallet->held_balance}");
+            }
+            
+            // Decrease held_balance (funds return to available balance)
+            $wallet->held_balance -= $amount;
+            $wallet->save();
+            
+            // Create transaction record
+            $transaction = WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'type' => 'hold_cancelled',
+                'amount' => $amount,
+                'description' => $description,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'balance_after' => $wallet->balance,
+            ]);
+            
+            // Clear balance cache
+            $this->clearBalanceCache($wallet->user_id);
+            
+            return $transaction;
+        });
+    }
+
+    /**
+     * Get available balance (balance - held_balance).
+     *
+     * @param Wallet $wallet
+     * @return float
+     */
+    public function getAvailableBalance(Wallet $wallet): float
+    {
+        return $wallet->balance - $wallet->held_balance;
+    }
+
+    /**
      * Clear balance cache for a user.
      *
      * @param string $userId

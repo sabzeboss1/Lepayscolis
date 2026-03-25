@@ -47,6 +47,22 @@ export function PusherProvider({ children }: PusherProviderProps) {
       return;
     }
 
+    // Get auth token from cookie
+    const getAuthToken = () => {
+      if (typeof document === 'undefined') return null;
+      const cookies = document.cookie.split('; ');
+      const authCookie = cookies.find(row => row.startsWith('auth-token='));
+      return authCookie ? authCookie.split('=')[1] : null;
+    };
+
+    // Get CSRF token from cookie
+    const getCsrfToken = () => {
+      if (typeof document === 'undefined') return null;
+      const cookies = document.cookie.split('; ');
+      const csrfCookie = cookies.find(row => row.startsWith('XSRF-TOKEN='));
+      return csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : null;
+    };
+
     // Create Pusher instance
     const pusherInstance = new Pusher(pusherKey, {
       cluster: pusherCluster,
@@ -55,6 +71,8 @@ export function PusherProvider({ children }: PusherProviderProps) {
       auth: {
         headers: {
           Accept: 'application/json',
+          Authorization: `Bearer ${getAuthToken()}`,
+          'X-XSRF-TOKEN': getCsrfToken() || '',
         },
       },
       // Enable for debugging

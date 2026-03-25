@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/Button';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useRealtimeTripStatus } from '@/lib/hooks/useRealtimeStatusUpdates';
+import { useAuth } from '@/lib/auth';
 
 export default function TripDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const tripId = params.id as string;
 
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -29,10 +31,17 @@ export default function TripDetailPage() {
   useEffect(() => {
     const fetchTrip = async () => {
       try {
+        // Get auth tokens from cookies
+        const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+        const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
+        
         const response = await fetch(`/api/trips/${tripId}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+            'Authorization': `Bearer ${token}`,
+            'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
+            'Accept': 'application/json',
           },
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -62,9 +71,47 @@ export default function TripDetailPage() {
     }
   }, [tripId, t]);
 
-  const handleContactTraveler = () => {
-    if (trip) {
-      router.push(`/messages?userId=${trip.traveler_id}`);
+  const handleContactTraveler = async () => {
+    if (!trip) return;
+
+    // Check if user is trying to contact themselves
+    if (user?.id === trip.traveler_id) {
+      alert(t('messages.cannotContactYourself') || 'Vous ne pouvez pas vous envoyer un message à vous-même.');
+      return;
+    }
+
+    try {
+      // Get auth tokens from cookies
+      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
+      
+      // Get or create conversation with the traveler
+      const response = await fetch(`/api/messages/conversation-with/${trip.traveler_id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.message || t('messages.errorCreatingConversation'));
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Redirect to the conversation
+      if (data.data?.id) {
+        router.push(`/messages/${data.data.id}`);
+      } else {
+        router.push('/messages');
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      alert(t('messages.errorCreatingConversation') || 'Erreur lors de la création de la conversation');
     }
   };
 
@@ -364,7 +411,7 @@ export default function TripDetailPage() {
                     </svg>
                     <span className="text-gray-700 font-medium">Preuve de voyage vérifiée</span>
                     <a
-                      href={trip.travel_proof_url}
+                      href={`/api/trips/${trip.id}/travel-proof`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 underline"

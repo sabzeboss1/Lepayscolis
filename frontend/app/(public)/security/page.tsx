@@ -3,11 +3,12 @@ import type { Metadata } from 'next';
 import { SecurityPageClient } from './SecurityPageClient';
 
 export const metadata: Metadata = {
-  title: 'Security & Trust - LePaysExpressColis',
-  description: 'Learn about our KYC verification, escrow payment system, and rating system that keeps your deliveries safe and secure.',
+  title: 'Sécurité & Confiance - Tuma Plus',
+  description:
+    'Découvrez nos mesures de sécurité : vérification KYC, paiement escrow sécurisé et système de notation pour des livraisons en toute confiance.',
   openGraph: {
-    title: 'Security & Trust - LePaysExpressColis',
-    description: 'Your safety is our priority',
+    title: 'Sécurité & Confiance - Tuma Plus',
+    description: 'Votre sécurité est notre priorité',
     type: 'website',
   },
 };

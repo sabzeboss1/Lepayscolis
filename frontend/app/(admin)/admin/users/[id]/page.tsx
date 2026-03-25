@@ -17,20 +17,19 @@ interface User {
   created_at: string;
   last_login?: string;
   suspension_reason?: string;
-}
-
-interface ActivityItem {
-  id: string;
-  type: string;
-  description: string;
-  timestamp: string;
+  activity_history?: {
+    trips_count: number;
+    shipments_as_sender_count: number;
+    shipments_as_traveler_count: number;
+    ratings_received_count: number;
+    ratings_given_count: number;
+  };
 }
 
 export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
@@ -54,8 +53,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     try {
       const response = await fetch(`/api/admin/users/${userId}`);
       const data = await response.json();
-      setUser(data.data.user);
-      setActivities(data.data.activities || []);
+      setUser(data.data);
     } catch (error) {
       console.error('Failed to fetch user details:', error);
     } finally {
@@ -293,30 +291,30 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
             )}
           </div>
 
-          {/* Activity History */}
+          {/* Activity Statistics */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Activity History</h2>
-            {activities.length === 0 ? (
-              <p className="text-sm text-gray-500">No activity recorded</p>
-            ) : (
-              <div className="space-y-4">
-                {activities.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3 pb-4 border-b border-gray-200 last:border-0">
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">{activity.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(activity.timestamp).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Activity Statistics</h2>
+            {user.activity_history ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm font-medium text-blue-900">Trips Created</p>
+                  <p className="text-2xl font-bold text-blue-600 mt-1">{user.activity_history.trips_count}</p>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm font-medium text-green-900">Shipments as Sender</p>
+                  <p className="text-2xl font-bold text-green-600 mt-1">{user.activity_history.shipments_as_sender_count}</p>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <p className="text-sm font-medium text-purple-900">Shipments as Traveler</p>
+                  <p className="text-2xl font-bold text-purple-600 mt-1">{user.activity_history.shipments_as_traveler_count}</p>
+                </div>
+                <div className="p-4 bg-yellow-50 rounded-lg">
+                  <p className="text-sm font-medium text-yellow-900">Ratings Received</p>
+                  <p className="text-2xl font-bold text-yellow-600 mt-1">{user.activity_history.ratings_received_count}</p>
+                </div>
               </div>
+            ) : (
+              <p className="text-sm text-gray-500">No activity recorded</p>
             )}
           </div>
         </div>

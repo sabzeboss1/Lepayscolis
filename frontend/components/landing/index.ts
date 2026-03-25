@@ -1,0 +1,10 @@
+export { LandingHeader } from './LandingHeader';
+export { LandingFooter } from './LandingFooter';
+export { HeroSection } from './HeroSection';
+export { ProofSection } from './ProofSection';
+export { ExperienceSection } from './ExperienceSection';
+export { WhyChooseSection } from './WhyChooseSection';
+export { TestimonialsSection } from './TestimonialsSection';
+export { PopularDestinationsSection } from './PopularDestinationsSection';
+export { CTASection } from './CTASection';
+export { ImagePlaceholder } from './ImagePlaceholder';

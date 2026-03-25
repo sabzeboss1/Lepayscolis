@@ -10,12 +10,81 @@ import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { FileUploadService, DEFAULT_UPLOAD_OPTIONS } from '@/lib/services/FileUploadService';
 import type { KYCDocument } from '@/lib/types/api';
+import {
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  BookOpen,
+  CreditCard,
+  Car,
+  Camera,
+  Info,
+  Lock,
+  Users,
+  Zap,
+  Award,
+  Check,
+  AlertCircle,
+  FileText,
+  ChevronRight,
+} from 'lucide-react';
+
+type DocumentType = 'passport' | 'idCard' | 'driversLicense';
+
+const DOC_TYPES: {
+  value: DocumentType;
+  label: string;
+  subtitle: string;
+  icon: React.FC<{ className?: string }>;
+}[] = [
+  { value: 'passport', label: 'Passeport', subtitle: 'Valide internationalement', icon: BookOpen },
+  { value: 'idCard', label: "Carte d'identité (CNI)", subtitle: 'Recto + verso requis', icon: CreditCard },
+  { value: 'driversLicense', label: 'Permis de conduire', subtitle: 'Recto uniquement', icon: Car },
+];
+
+const WHY_KYC = [
+  {
+    icon: Lock,
+    title: 'Sécurité',
+    desc: 'Protéger tous les utilisateurs',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-100',
+  },
+  {
+    icon: Users,
+    title: 'Confiance',
+    desc: 'Communauté vérifiée',
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
+    border: 'border-purple-100',
+  },
+  {
+    icon: Zap,
+    title: 'Accès complet',
+    desc: 'Toutes les fonctionnalités',
+    color: 'text-orange-600',
+    bg: 'bg-orange-50',
+    border: 'border-orange-100',
+  },
+  {
+    icon: Award,
+    title: 'Badge vérifié',
+    desc: 'Profil de confiance',
+    color: 'text-green-600',
+    bg: 'bg-green-50',
+    border: 'border-green-100',
+  },
+];
 
 export default function KYCVerificationPage() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [kycDocument, setKycDocument] = useState<KYCDocument | null>(null);
-  const [documentType, setDocumentType] = useState<'passport' | 'idCard' | 'driversLicense'>('passport');
+  const [documentType, setDocumentType] = useState<DocumentType>('passport');
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [documentBackFile, setDocumentBackFile] = useState<File | null>(null);
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
@@ -34,7 +103,6 @@ export default function KYCVerificationPage() {
       const response = await apiClient.get<{ document: KYCDocument }>(API_ENDPOINTS.kyc.status);
       setKycDocument(response.document);
     } catch (err: any) {
-      // 404 means no KYC document submitted yet, which is fine
       if (err.status !== 404) {
         console.error('Error fetching KYC document:', err);
         setError('Erreur lors du chargement du statut KYC');
@@ -51,35 +119,12 @@ export default function KYCVerificationPage() {
       setError(t('kyc.documentRequired'));
       return;
     }
-
     if (documentType === 'idCard' && !documentBackFile) {
       setError(t('kyc.idCardBackRequired'));
       return;
     }
-
     if (!selfieFile) {
       setError(t('kyc.selfieRequired'));
-      return;
-    }
-
-    // Validate files before submission
-    const documentValidation = FileUploadService.validateFile(documentFile, DEFAULT_UPLOAD_OPTIONS.document);
-    if (!documentValidation.valid) {
-      setError(documentValidation.error || 'Document invalide');
-      return;
-    }
-
-    if (documentBackFile) {
-      const backValidation = FileUploadService.validateFile(documentBackFile, DEFAULT_UPLOAD_OPTIONS.document);
-      if (!backValidation.valid) {
-        setError(backValidation.error || 'Document verso invalide');
-        return;
-      }
-    }
-
-    const selfieValidation = FileUploadService.validateFile(selfieFile, DEFAULT_UPLOAD_OPTIONS.image);
-    if (!selfieValidation.valid) {
-      setError(selfieValidation.error || 'Selfie invalide');
       return;
     }
 
@@ -90,21 +135,19 @@ export default function KYCVerificationPage() {
     try {
       const formData = new FormData();
       formData.append('document_type', documentType);
-      formData.append('document_file', documentFile);
-      if (documentBackFile) {
-        formData.append('document_back_file', documentBackFile);
-      }
-      formData.append('selfie_file', selfieFile);
+      formData.append('document_front', documentFile);
+      if (documentBackFile) formData.append('document_back', documentBackFile);
+      formData.append('selfie', selfieFile);
 
-      // Use fetch directly for FormData (apiClient handles JSON by default)
       const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
       const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
-      
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_ENDPOINTS.kyc.submit}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
+          'Accept': 'application/json',
         },
         credentials: 'include',
         body: formData,
@@ -116,7 +159,7 @@ export default function KYCVerificationPage() {
       }
 
       const data = await response.json();
-      setKycDocument(data.document);
+      setKycDocument(data.data);
       setSuccess(t('kyc.submitSuccess'));
       setDocumentFile(null);
       setDocumentBackFile(null);
@@ -129,367 +172,439 @@ export default function KYCVerificationPage() {
     }
   };
 
+  const handleFileChange = (
+    setter: (f: File | null) => void,
+    validTypes: string[],
+    validExtensions: string[],
+    errorMessage: string,
+  ) => (file: File | null) => {
+    if (!file) {
+      setter(null);
+      return;
+    }
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (!validTypes.includes(file.type) && !validExtensions.includes(ext)) {
+      setError(errorMessage);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Le fichier est trop volumineux. Maximum 5 MB.');
+      return;
+    }
+    setter(file);
+    setError(null);
+  };
+
+  // ─── Loading Skeleton ─────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3 mb-8"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Shield className="w-8 h-8 text-blue-200" />
           </div>
+          <div className="h-4 bg-gray-200 rounded-full w-48 mx-auto mb-2 animate-pulse" />
+          <div className="h-3 bg-gray-100 rounded-full w-32 mx-auto animate-pulse" />
         </div>
       </div>
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'text-green-600 bg-green-50';
-      case 'rejected':
-        return 'text-red-600 bg-red-50';
-      case 'pending':
-        return 'text-orange-600 bg-orange-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
-    }
-  };
+  // ─── Status helpers ───────────────────────────────────────────────────────
+  const kycStatus = user?.kyc_status || 'not_submitted';
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return t('kyc.approved');
-      case 'rejected':
-        return t('kyc.rejected');
-      case 'pending':
-        return t('kyc.pending');
-      default:
-        return status;
-    }
-  };
+  const statusConfig = {
+    approved: {
+      icon: ShieldCheck,
+      iconColor: 'text-green-600',
+      iconBg: 'bg-green-100',
+      badgeBg: 'bg-green-100',
+      badgeText: 'text-green-700',
+      border: 'border-green-200',
+      bg: 'bg-green-50',
+      label: t('kyc.approved'),
+      message: '✓ Votre identité a été vérifiée. Vous avez accès à toutes les fonctionnalités de la plateforme.',
+    },
+    pending: {
+      icon: Clock,
+      iconColor: 'text-yellow-600',
+      iconBg: 'bg-yellow-100',
+      badgeBg: 'bg-yellow-100',
+      badgeText: 'text-yellow-700',
+      border: 'border-yellow-200',
+      bg: 'bg-yellow-50',
+      label: t('kyc.pending'),
+      message:
+        'Votre document est en cours de vérification. Ce processus prend généralement 1 à 2 jours ouvrables.',
+    },
+    rejected: {
+      icon: XCircle,
+      iconColor: 'text-red-600',
+      iconBg: 'bg-red-100',
+      badgeBg: 'bg-red-100',
+      badgeText: 'text-red-700',
+      border: 'border-red-200',
+      bg: 'bg-red-50',
+      label: t('kyc.rejected'),
+      message: 'Votre document a été rejeté. Veuillez soumettre à nouveau vos documents.',
+    },
+    not_submitted: {
+      icon: Shield,
+      iconColor: 'text-blue-600',
+      iconBg: 'bg-blue-100',
+      badgeBg: 'bg-gray-100',
+      badgeText: 'text-gray-600',
+      border: 'border-gray-200',
+      bg: 'bg-gray-50',
+      label: 'Non soumis',
+      message: 'Complétez votre vérification pour accéder à toutes les fonctionnalités.',
+    },
+  } as const;
+
+  type StatusKey = keyof typeof statusConfig;
+  const cfg = statusConfig[(kycStatus as StatusKey) in statusConfig ? (kycStatus as StatusKey) : 'not_submitted'];
+  const StatusIcon = cfg.icon;
+
+  const showForm = !kycDocument || kycDocument.status === 'rejected';
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">{t('kyc.title')}</h1>
-        <p className="text-gray-600 mb-8">{t('kyc.description')}</p>
+    <div className="min-h-screen bg-slate-50">
+      {/* ─── Hero Header ───────────────────────────────────────────────────── */}
+      <div className="bg-gradient-to-br from-blue-700 to-blue-900 text-white">
+        <div className="max-w-2xl mx-auto px-4 py-10 text-center">
+          <div className="w-16 h-16 bg-white/15 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+            <Shield className="w-9 h-9 text-white" />
+          </div>
+          <h1
+            className="text-2xl font-bold mb-2"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            {t('kyc.title')}
+          </h1>
+          <p className="text-blue-200 text-sm max-w-md mx-auto leading-relaxed">
+            Complétez votre vérification d'identité pour accéder à toutes les fonctionnalités
+          </p>
+        </div>
+      </div>
 
-        {/* Current Status */}
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* ─── Status Card ─────────────────────────────────────────────────── */}
         {user && (
-          <Card className="mb-6">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">{t('kyc.status')}</h2>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">{t('profile.kycStatus')}:</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(user.kyc_status)}`}>
-                  {getStatusText(user.kyc_status)}
-                </span>
+          <div className={`rounded-2xl border ${cfg.border} ${cfg.bg} p-5`}>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Statut actuel</p>
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl ${cfg.iconBg} flex items-center justify-center flex-shrink-0`}>
+                <StatusIcon className={`w-6 h-6 ${cfg.iconColor}`} />
               </div>
-
-              {kycDocument && kycDocument.status === 'rejected' && kycDocument.rejection_reason && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm font-medium text-red-800 mb-1">{t('kyc.rejectionReason')}:</p>
-                  <p className="text-sm text-red-700">{kycDocument.rejection_reason}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText}`}>
+                    {cfg.label}
+                  </span>
                 </div>
-              )}
-
-              {kycDocument && kycDocument.status === 'pending' && (
-                <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="text-sm text-orange-700">
-                    Your document is currently under review. This usually takes 1-2 business days.
-                  </p>
-                </div>
-              )}
-
-              {kycDocument && kycDocument.status === 'approved' && (
-                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-700">
-                    ✓ Your identity has been verified. You can now access all platform features.
-                  </p>
-                </div>
-              )}
+                <p className="text-sm text-gray-600 leading-relaxed">{cfg.message}</p>
+              </div>
             </div>
-          </Card>
+
+            {kycDocument?.status === 'rejected' && kycDocument.rejection_reason && (
+              <div className="mt-4 p-3 bg-white/60 border border-red-100 rounded-xl">
+                <p className="text-xs font-semibold text-red-800 mb-1">{t('kyc.rejectionReason')} :</p>
+                <p className="text-sm text-red-700">{kycDocument.rejection_reason}</p>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Why KYC Explanation */}
-        <Card className="mb-6 bg-blue-50 border-blue-200">
-          <div className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="text-4xl">🔒</div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">{t('kyc.whyKycTitle')}</h3>
-                <p className="text-sm text-blue-800 mb-3">{t('kyc.whyKycDescription')}</p>
-                <ul className="space-y-2 text-sm text-blue-700">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-0.5">✓</span>
-                    <span>{t('kyc.whyKycReason1')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-0.5">✓</span>
-                    <span>{t('kyc.whyKycReason2')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-0.5">✓</span>
-                    <span>{t('kyc.whyKycReason3')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-0.5">✓</span>
-                    <span>{t('kyc.whyKycReason4')}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+        {/* ─── Why KYC ─────────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <Info className="w-4 h-4 text-blue-500" />
+            <h2 className="font-bold text-gray-900 text-sm">{t('kyc.whyKycTitle')}</h2>
           </div>
-        </Card>
+          <p className="text-sm text-gray-500 mb-4 leading-relaxed">{t('kyc.whyKycDescription')}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {WHY_KYC.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.title}
+                  className={`${item.bg} border ${item.border} rounded-xl p-3 text-center`}
+                >
+                  <div className={`w-8 h-8 rounded-lg bg-white flex items-center justify-center mx-auto mb-2`}>
+                    <Icon className={`w-4 h-4 ${item.color}`} />
+                  </div>
+                  <div className="text-xs font-bold text-gray-800">{item.title}</div>
+                  <div className="text-xs text-gray-500 mt-0.5 leading-tight">{item.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+          <ul className="mt-4 space-y-1.5">
+            {[
+              t('kyc.whyKycReason1'),
+              t('kyc.whyKycReason2'),
+              t('kyc.whyKycReason3'),
+              t('kyc.whyKycReason4'),
+            ].map((reason, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                {reason}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        {/* Upload Form */}
-        {(!kycDocument || kycDocument.status === 'rejected') && (
-          <Card>
-            <form onSubmit={handleSubmit} className="p-6">
-              <h2 className="text-xl font-semibold mb-4">
+        {/* ─── Upload Form ──────────────────────────────────────────────────── */}
+        {showForm && (
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-50">
+              <h2 className="font-bold text-gray-900" style={{ fontFamily: 'var(--font-heading)' }}>
                 {kycDocument?.status === 'rejected' ? t('kyc.resubmit') : t('kyc.uploadDocument')}
               </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Formats acceptés : JPG, PNG, PDF — Max 5 MB par fichier
+              </p>
+            </div>
 
+            <div className="p-5 space-y-7">
               {/* Document Type Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('kyc.documentType')}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  {t('kyc.documentType')} <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDocumentType('passport');
-                      setDocumentBackFile(null);
-                    }}
-                    className={`p-4 border-2 rounded-lg text-center transition-colors ${documentType === 'passport'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                  >
-                    <div className="text-2xl mb-2">🛂</div>
-                    <div className="font-medium">{t('kyc.passport')}</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDocumentType('idCard')}
-                    className={`p-4 border-2 rounded-lg text-center transition-colors ${documentType === 'idCard'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                  >
-                    <div className="text-2xl mb-2">🪪</div>
-                    <div className="font-medium">{t('kyc.idCard')}</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDocumentType('driversLicense');
-                      setDocumentBackFile(null);
-                    }}
-                    className={`p-4 border-2 rounded-lg text-center transition-colors ${documentType === 'driversLicense'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                  >
-                    <div className="text-2xl mb-2">🚗</div>
-                    <div className="font-medium">{t('kyc.driversLicense')}</div>
-                  </button>
+                  {DOC_TYPES.map((doc) => {
+                    const DocIcon = doc.icon;
+                    const selected = documentType === doc.value;
+                    return (
+                      <button
+                        key={doc.value}
+                        type="button"
+                        onClick={() => {
+                          setDocumentType(doc.value);
+                          if (doc.value !== 'idCard') setDocumentBackFile(null);
+                        }}
+                        className={`group p-4 border-2 rounded-xl text-center transition-all duration-200 ${
+                          selected
+                            ? 'border-blue-500 bg-blue-50 shadow-sm'
+                            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 transition-colors ${
+                            selected
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
+                          }`}
+                        >
+                          <DocIcon className="w-6 h-6" />
+                        </div>
+                        <div className="font-semibold text-gray-900 text-sm">{doc.label}</div>
+                        <div className={`text-xs mt-1 ${selected ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                          {selected ? '✓ Sélectionné' : doc.subtitle}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Document Front Upload */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {documentType === 'idCard' ? 'Carte d\'identité (Recto)' : documentType === 'passport' ? 'Passeport (Première page)' : 'Document (Recto)'}
-                  <span className="text-red-500 ml-1">*</span>
-                </label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-400" />
+                  <label className="text-sm font-semibold text-gray-700">
+                    {documentType === 'idCard'
+                      ? "Carte d'identité — Recto"
+                      : documentType === 'passport'
+                      ? 'Passeport — Première page'
+                      : 'Document — Recto'}
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                </div>
                 <FileUpload
-                  id="document-file"
                   accept="image/jpeg,image/jpg,image/png,application/pdf"
-                  onChange={(file) => {
-                    if (file) {
-                      // Validate file type
-                      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-                      if (!validTypes.includes(file.type)) {
-                        setError('Type de fichier invalide. Utilisez JPG, PNG ou PDF.');
-                        return;
-                      }
-                      // Validate file size (max 5MB)
-                      if (file.size > 5 * 1024 * 1024) {
-                        setError('Le fichier est trop volumineux. Maximum 5 MB.');
-                        return;
-                      }
-                      setDocumentFile(file);
-                      setError(null);
-                    }
-                  }}
+                  onChange={handleFileChange(
+                    setDocumentFile,
+                    ['image/jpeg', 'image/jpg', 'image/png', 'image/pjpeg', 'application/pdf'],
+                    ['jpg', 'jpeg', 'png', 'pdf'],
+                    'Type de fichier invalide. Utilisez JPG, PNG ou PDF.',
+                  )}
+                  value={documentFile}
                   maxSize={5}
                   helperText="Formats acceptés: JPG, PNG, PDF (max 5 MB)"
                 />
-                {documentFile && (
-                  <p className="mt-2 text-sm text-green-600 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Fichier sélectionné: {documentFile.name}
-                  </p>
-                )}
               </div>
 
               {/* Document Back Upload (ID Card only) */}
               {documentType === 'idCard' && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Carte d'identité (Verso)
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-400" />
+                    <label className="text-sm font-semibold text-gray-700">
+                      Carte d'identité — Verso
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                  </div>
                   <FileUpload
-                    id="document-back-file"
                     accept="image/jpeg,image/jpg,image/png,application/pdf"
-                    onChange={(file) => {
-                      if (file) {
-                        // Validate file type
-                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-                        if (!validTypes.includes(file.type)) {
-                          setError('Type de fichier invalide. Utilisez JPG, PNG ou PDF.');
-                          return;
-                        }
-                        // Validate file size (max 5MB)
-                        if (file.size > 5 * 1024 * 1024) {
-                          setError('Le fichier est trop volumineux. Maximum 5 MB.');
-                          return;
-                        }
-                        setDocumentBackFile(file);
-                        setError(null);
-                      }
-                    }}
+                    onChange={handleFileChange(
+                      setDocumentBackFile,
+                      ['image/jpeg', 'image/jpg', 'image/png', 'image/pjpeg', 'application/pdf'],
+                      ['jpg', 'jpeg', 'png', 'pdf'],
+                      'Type de fichier invalide. Utilisez JPG, PNG ou PDF.',
+                    )}
+                    value={documentBackFile}
                     maxSize={5}
                     helperText="Formats acceptés: JPG, PNG, PDF (max 5 MB)"
                   />
-                  {documentBackFile && (
-                    <p className="mt-2 text-sm text-green-600 flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      Fichier sélectionné: {documentBackFile.name}
-                    </p>
-                  )}
                 </div>
               )}
 
               {/* Selfie Upload */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Photo Selfie avec le document
-                  <span className="text-red-500 ml-1">*</span>
-                </label>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-gray-400" />
+                  <label className="text-sm font-semibold text-gray-700">
+                    Selfie avec le document
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                </div>
+
+                {/* Selfie instructions */}
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
                   <div className="flex items-start gap-3">
-                    <div className="text-2xl">📸</div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-blue-900 mb-2">Instructions pour le selfie:</p>
-                      <ul className="text-xs text-blue-800 space-y-1">
-                        <li>• Tenez votre document d'identité à côté de votre visage</li>
-                        <li>• Assurez-vous que votre visage et le document sont clairement visibles</li>
-                        <li>• Prenez la photo dans un endroit bien éclairé</li>
-                        <li>• Ne portez pas de lunettes de soleil ou de chapeau</li>
-                        <li>• Le document doit être lisible sur la photo</li>
+                    <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Camera className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-blue-900 mb-2">Instructions pour le selfie :</p>
+                      <ul className="text-xs text-blue-700 space-y-1">
+                        <li className="flex items-start gap-1.5">
+                          <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          Tenez votre document d'identité à côté de votre visage
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          Assurez-vous que votre visage et le document sont clairement visibles
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          Prenez la photo dans un endroit bien éclairé
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          Ne portez pas de lunettes de soleil ou de chapeau
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          Le document doit être lisible sur la photo
+                        </li>
                       </ul>
                     </div>
                   </div>
                 </div>
+
                 <FileUpload
-                  id="selfie-file"
                   accept="image/jpeg,image/jpg,image/png"
-                  onChange={(file) => {
-                    if (file) {
-                      // Validate file type
-                      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-                      if (!validTypes.includes(file.type)) {
-                        setError('Type de fichier invalide pour le selfie. Utilisez JPG ou PNG.');
-                        return;
-                      }
-                      // Validate file size (max 5MB)
-                      if (file.size > 5 * 1024 * 1024) {
-                        setError('Le fichier est trop volumineux. Maximum 5 MB.');
-                        return;
-                      }
-                      setSelfieFile(file);
-                      setError(null);
-                    }
-                  }}
+                  onChange={handleFileChange(
+                    setSelfieFile,
+                    ['image/jpeg', 'image/jpg', 'image/png', 'image/pjpeg'],
+                    ['jpg', 'jpeg', 'png'],
+                    'Type de fichier invalide pour le selfie. Utilisez JPG ou PNG.',
+                  )}
+                  value={selfieFile}
                   maxSize={5}
                   helperText="Formats acceptés: JPG, PNG (max 5 MB)"
                 />
-                {selfieFile && (
-                  <p className="mt-2 text-sm text-green-600 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Fichier sélectionné: {selfieFile.name}
-                  </p>
-                )}
               </div>
 
-              {/* Error Message */}
+              {/* Upload progress summary */}
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                {[
+                  { label: 'Document recto', done: !!documentFile },
+                  {
+                    label: documentType === 'idCard' ? 'Document verso' : 'Non requis',
+                    done: documentType === 'idCard' ? !!documentBackFile : true,
+                    skipped: documentType !== 'idCard',
+                  },
+                  { label: 'Selfie', done: !!selfieFile },
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    className={`rounded-lg px-3 py-2 text-center text-xs border ${
+                      item.skipped
+                        ? 'bg-gray-50 border-gray-100 text-gray-400'
+                        : item.done
+                        ? 'bg-green-50 border-green-100 text-green-700 font-medium'
+                        : 'bg-gray-50 border-gray-200 text-gray-400'
+                    }`}
+                  >
+                    {item.skipped ? '—' : item.done ? '✓ ' : '○ '}
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+
+              {/* Error */}
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700">{error}</p>
+                <div className="flex items-center gap-3 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  {error}
                 </div>
               )}
 
-              {/* Success Message */}
+              {/* Success */}
               {success && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-700">{success}</p>
+                <div className="flex items-center gap-3 p-3.5 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                  {success}
                 </div>
               )}
 
-              {/* Submit Button */}
+              {/* Submit */}
               <Button
                 type="submit"
                 variant="primary"
                 fullWidth
-                disabled={isSubmitting || !documentFile || !selfieFile || (documentType === 'idCard' && !documentBackFile)}
+                disabled={
+                  isSubmitting ||
+                  !documentFile ||
+                  !selfieFile ||
+                  (documentType === 'idCard' && !documentBackFile)
+                }
                 loading={isSubmitting}
               >
+                {!isSubmitting && <Shield className="w-4 h-4 mr-2" />}
                 {isSubmitting ? t('kyc.submitting') : t('kyc.submitDocument')}
               </Button>
-            </form>
-          </Card>
+            </div>
+          </form>
         )}
 
-        {/* Information Card */}
-        <Card className="mt-6">
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-3">{t('kyc.importantInfo')}</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>{t('kyc.info1')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>{t('kyc.info2')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>{t('kyc.info3')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>{t('kyc.info4')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>{t('kyc.info5')}</span>
-              </li>
-            </ul>
+        {/* ─── Important Info Card ──────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Info className="w-4 h-4 text-blue-500" />
+            <h3 className="font-bold text-gray-900 text-sm">{t('kyc.importantInfo')}</h3>
           </div>
-        </Card>
+          <ul className="space-y-2.5">
+            {[
+              t('kyc.info1'),
+              t('kyc.info2'),
+              t('kyc.info3'),
+              t('kyc.info4'),
+              t('kyc.info5'),
+            ].map((info, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-gray-600">
+                <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 text-blue-500" />
+                </div>
+                {info}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

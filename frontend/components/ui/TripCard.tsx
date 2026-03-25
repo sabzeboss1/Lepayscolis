@@ -1,7 +1,14 @@
 import React from 'react';
 import { Trip } from '@/lib/types/trip';
-import { Card } from './Card';
 import { RatingStars } from './RatingStars';
+import {
+  Plane,
+  Package,
+  ShieldCheck,
+  Star,
+  CheckCircle2,
+  CalendarDays,
+} from 'lucide-react';
 
 export interface TripCardProps {
   trip: Trip;
@@ -9,167 +16,176 @@ export interface TripCardProps {
   className?: string;
 }
 
-export const TripCard: React.FC<TripCardProps> = ({
-  trip,
-  onClick,
-  className = '',
-}) => {
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+  });
+}
 
+export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '' }) => {
   return (
-    <Card
-      hoverable={!!onClick}
+    <div
       onClick={onClick}
-      className={`${className} touch-manipulation active:scale-[0.98] transition-transform`}
-      padding="lg"
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+      className={`group relative bg-white rounded-2xl border transition-all duration-200 overflow-hidden ${
+        onClick ? 'cursor-pointer hover:shadow-lg hover:-translate-y-0.5' : ''
+      } ${className}`}
+      style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
     >
-      <div className="space-y-4">
-        {/* Route visualization */}
-        <div className="flex items-center justify-between gap-2 sm:gap-3">
-          <div className="flex-1 text-left min-w-0">
-            <p className="text-xs sm:text-sm text-gray-500 truncate">{trip.departure_country}</p>
-            <p className="font-semibold text-sm sm:text-base text-gray-900 truncate">{trip.departure_city}</p>
-            <p className="text-xs text-gray-500 mt-1">{formatDate(trip.departure_date)}</p>
+      {/* Top accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-0.5"
+        style={{
+          background: 'linear-gradient(90deg, var(--color-royal-blue), var(--color-vibrant-orange))',
+        }}
+      />
+
+      <div className="p-5 pt-6 space-y-4">
+        {/* ── Route ── */}
+        <div className="flex items-center gap-3">
+          {/* Departure */}
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-text mb-0.5">
+              {trip.departure_country}
+            </p>
+            <p className="text-base font-bold text-navy truncate">{trip.departure_city}</p>
+            <div className="flex items-center gap-1 mt-1">
+              <CalendarDays className="w-3 h-3 text-muted-text shrink-0" />
+              <p className="text-xs text-muted-text">{formatDate(trip.departure_date)}</p>
+            </div>
           </div>
 
-          <div className="flex-shrink-0">
-            <svg
-              className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
+          {/* Arrow */}
+          <div className="shrink-0 flex flex-col items-center gap-1">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(37,99,235,0.08)' }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              <Plane
+                className="w-4 h-4"
+                style={{ color: 'var(--color-royal-blue)' }}
               />
-            </svg>
+            </div>
+            <div
+              className="w-12 h-px"
+              style={{
+                background: 'linear-gradient(90deg, var(--color-royal-blue), var(--color-vibrant-orange))',
+              }}
+            />
           </div>
 
-          <div className="flex-1 text-right min-w-0">
-            <p className="text-xs sm:text-sm text-gray-500 truncate">{trip.arrival_country}</p>
-            <p className="font-semibold text-sm sm:text-base text-gray-900 truncate">{trip.arrival_city}</p>
-            <p className="text-xs text-gray-500 mt-1">{formatDate(trip.arrival_date)}</p>
+          {/* Arrival */}
+          <div className="flex-1 min-w-0 text-right">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-text mb-0.5">
+              {trip.arrival_country}
+            </p>
+            <p className="text-base font-bold text-navy truncate">{trip.arrival_city}</p>
+            <div className="flex items-center justify-end gap-1 mt-1">
+              <CalendarDays className="w-3 h-3 text-muted-text shrink-0" />
+              <p className="text-xs text-muted-text">{formatDate(trip.arrival_date)}</p>
+            </div>
           </div>
         </div>
 
-        {/* Capacity and price */}
-        <div className="flex items-center justify-between gap-4 pt-3 border-t border-gray-200">
-          <div className="flex items-center gap-2">
-            <svg
-              className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
-            </svg>
-            <span className="text-xs sm:text-sm text-gray-600">
-              {trip.available_capacity} kg available
+        {/* ── Capacity + Price ── */}
+        <div
+          className="flex items-center justify-between gap-3 pt-3"
+          style={{ borderTop: '1px solid #f1f5f9' }}
+        >
+          <div className="flex items-center gap-1.5">
+            <Package className="w-3.5 h-3.5 text-muted-text shrink-0" />
+            <span className="text-xs font-medium text-body-text">
+              {trip.available_capacity} kg dispo
             </span>
             {trip.travel_proof_url && (
-              <svg
-                className="w-4 h-4 text-green-500 flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-label="Preuve de voyage vérifiée"
-              >
-                <title>Preuve de voyage vérifiée</title>
-                <path
-                  fillRule="evenodd"
-                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: '#10b981' }} />
             )}
           </div>
 
-          <div className="text-right">
-            <p className="text-base sm:text-lg font-bold text-orange-500">
-              ${trip.price_per_kg.toFixed(2)}/kg
-            </p>
+          <div
+            className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-bold"
+            style={{
+              background: 'rgba(249,115,22,0.1)',
+              color: 'var(--color-vibrant-orange)',
+            }}
+          >
+            {trip.price_per_kg.toFixed(2)} €/kg
           </div>
         </div>
 
-        {/* Traveler info */}
+        {/* ── Traveler ── */}
         {trip.traveler && (
-          <div className="flex items-center gap-2 sm:gap-3 pt-3 border-t border-gray-200">
-            <img
-              src={trip.traveler.avatar || '/default-avatar.png'}
-              alt={`${trip.traveler.name}'s avatar`}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-gray-200 flex-shrink-0"
-            />
+          <div
+            className="flex items-center gap-3 pt-3"
+            style={{ borderTop: '1px solid #f1f5f9' }}
+          >
+            {/* Avatar */}
+            {trip.traveler.avatar ? (
+              <img
+                src={trip.traveler.avatar}
+                alt={trip.traveler.name}
+                className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-100"
+              />
+            ) : (
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                }}
+              >
+                {trip.traveler.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                <p className="font-medium text-sm sm:text-base text-gray-900 truncate">
-                  {trip.traveler.name}
-                </p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-sm font-semibold text-navy truncate">{trip.traveler.name}</p>
+                {trip.traveler.kyc_status === 'approved' && (
+                  <ShieldCheck
+                    className="w-3.5 h-3.5 shrink-0"
+                    style={{ color: 'var(--color-royal-blue)' }}
+                    aria-label="Identité vérifiée"
+                  />
+                )}
                 {trip.traveler.is_recommended && (
                   <span
-                    className="inline-flex items-center px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded flex-shrink-0"
-                    title="Recommended"
-                    aria-label="Recommended traveler"
+                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold shrink-0"
+                    style={{
+                      background: 'rgba(249,115,22,0.1)',
+                      color: '#c2410c',
+                    }}
                   >
-                    <svg
-                      className="w-3 h-3"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    <Star className="w-2.5 h-2.5" />
+                    Top
                   </span>
                 )}
-                {trip.traveler.kyc_status === 'approved' && (
-                  <svg
-                    className="w-4 h-4 text-blue-500 flex-shrink-0"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-label="KYC Verified"
-                  >
-                    <title>KYC Verified</title>
-                    <path
-                      fillRule="evenodd"
-                      d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
               </div>
-              <div className="flex items-center gap-1 mt-1">
+              <div className="flex items-center gap-1.5 mt-0.5">
                 <RatingStars rating={trip.traveler.rating} size="sm" />
-                <span className="text-xs text-gray-500 ml-1">
-                  ({trip.traveler.completed_deliveries})
+                <span className="text-xs text-muted-text">
+                  ({trip.traveler.completed_deliveries} livraisons)
                 </span>
               </div>
             </div>
+
+            {/* CTA hint on hover */}
+            {onClick && (
+              <div
+                className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: 'var(--color-royal-blue)' }}
+                aria-hidden="true"
+              >
+                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            )}
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 };
