@@ -14,10 +14,17 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { PaginatedResponse } from '@/lib/types/api';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const { needsKYC, isKYCPending, isKYCRejected } = useKYCCheck();
   const router = useRouter();
   const { t } = useTranslation();
+
+  // Redirect admin users to admin dashboard
+  useEffect(() => {
+    if (!authLoading && isAdmin) {
+      router.replace('/admin/dashboard');
+    }
+  }, [authLoading, isAdmin, router]);
 
   const [activeTrips, setActiveTrips] = useState<Trip[]>([]);
   const [pendingShipments, setPendingShipments] = useState<Shipment[]>([]);

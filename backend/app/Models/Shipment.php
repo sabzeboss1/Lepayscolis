@@ -25,9 +25,13 @@ class Shipment extends Model
         'package_height',
         'pickup_city',
         'pickup_country',
+        'pickup_country_id',
+        'pickup_city_id',
         'pickup_address',
         'delivery_city',
         'delivery_country',
+        'delivery_country_id',
+        'delivery_city_id',
         'delivery_address',
         'status',
         'payment_amount',
@@ -66,6 +70,26 @@ class Shipment extends Model
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
+    }
+
+    public function pickupCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'pickup_country_id');
+    }
+
+    public function pickupCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'pickup_city_id');
+    }
+
+    public function deliveryCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'delivery_country_id');
+    }
+
+    public function deliveryCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'delivery_city_id');
     }
 
     /**

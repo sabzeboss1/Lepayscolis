@@ -1,39 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminWallets } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ userId: string }> }
 ) {
-  const params = await context.params;
-  const body = await request.json();
-  const { amount, reason } = body;
+  try {
+    const params = await context.params;
+    const body = await request.json();
 
-  const wallet = mockAdminWallets.find(w => w.userId === params.userId);
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/wallets/${params.userId}/adjust`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
+    );
 
-  if (!wallet) {
-    return NextResponse.json({ error: 'Wallet not found' }, { status: 404 });
-  }
+    const data = await response.json();
 
-  if (!amount || amount === 0) {
-    return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
-  }
-
-  if (!reason || reason.length < 10) {
-    return NextResponse.json({ error: 'Reason must be at least 10 characters' }, { status: 400 });
-  }
-
-  // Update wallet balance (in mock data)
-  wallet.balance += amount;
-  wallet.totalEarned += amount > 0 ? amount : 0;
-  wallet.totalWithdrawn += amount < 0 ? Math.abs(amount) : 0;
-
-  return NextResponse.json({
-    message: 'Balance adjusted successfully',
-    data: {
-      new_balance: wallet.balance,
-      adjustment_amount: amount,
-      reason
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
     }
-  });
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || 'Failed to adjust balance' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+    );
+  }
 }

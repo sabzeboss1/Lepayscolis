@@ -40,8 +40,16 @@ return [
         'pickup_address_min' => 'L\'adresse de collecte doit contenir au moins 5 caractères.',
         'delivery_address_required' => 'L\'adresse de livraison est obligatoire.',
         'delivery_address_min' => 'L\'adresse de livraison doit contenir au moins 5 caractères.',
+        'travel_proof_required' => 'Une preuve de voyage est obligatoire.',
         'travel_proof_mimes' => 'La preuve de voyage doit être un fichier de type : pdf, jpg, jpeg, png.',
         'travel_proof_max' => 'La preuve de voyage ne doit pas dépasser 5 Mo.',
+        'currency_required' => 'La devise est obligatoire.',
+        'currency_invalid' => 'La devise sélectionnée n\'est pas valide.',
+        'country_required' => 'Le pays est obligatoire.',
+        'country_invalid' => 'Le pays sélectionné n\'est pas valide.',
+        'city_required' => 'La ville est obligatoire.',
+        'city_invalid' => 'La ville sélectionnée n\'est pas valide.',
+        'city_country_mismatch' => 'La ville sélectionnée n\'appartient pas au pays sélectionné.',
     ],
 
     /*
@@ -64,6 +72,10 @@ return [
         'height_max' => 'La hauteur du colis ne doit pas dépasser 500 cm.',
         'pickup_address_max' => 'L\'adresse de collecte ne doit pas dépasser 500 caractères.',
         'delivery_address_max' => 'L\'adresse de livraison ne doit pas dépasser 500 caractères.',
+        'city_country_mismatch' => 'La ville sélectionnée n\'appartient pas au pays sélectionné.',
+        'insufficient_capacity' => 'Le voyage sélectionné n\'a pas assez de capacité pour cette expédition.',
+        'not_trip_owner' => 'Vous ne pouvez accepter que les expéditions pour vos propres voyages.',
+        'not_pending' => 'Seules les expéditions en attente peuvent être acceptées.',
     ],
 
     /*

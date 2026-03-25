@@ -108,12 +108,13 @@ class SecurityLogger {
 
     if (sentryDsn && environment === 'production') {
       // Dynamically import Sentry
-      import('@sentry/nextjs').then((Sentry) => {
+      // @ts-ignore - @sentry/nextjs is an optional dependency
+      import('@sentry/nextjs').then((Sentry: any) => {
         Sentry.init({
           dsn: sentryDsn,
           environment,
           tracesSampleRate: 0.1,
-          beforeSend: (event, hint) => {
+          beforeSend: (event: any, _hint: any) => {
             // Filter sensitive data from Sentry events
             if (event.request) {
               event.request = this.filterSensitiveData(event.request);
@@ -233,7 +234,8 @@ class SecurityLogger {
 
     // Send to Sentry in production
     if (this.sentryInitialized && process.env.NODE_ENV === 'production') {
-      import('@sentry/nextjs').then((Sentry) => {
+      // @ts-ignore - @sentry/nextjs is an optional dependency
+      import('@sentry/nextjs').then((Sentry: any) => {
         Sentry.captureMessage(message, {
           level: this.mapSeverityToSentryLevel(severity),
           tags: {

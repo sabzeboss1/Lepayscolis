@@ -37,14 +37,14 @@ class AdminShipmentController extends Controller
         ], 200);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $shipment = $this->shipmentService->getShipmentDetails($id);
 
         return response()->json(['data' => $shipment], 200);
     }
 
-    public function resolveDispute(ResolveDisputeRequest $request, int $id): JsonResponse
+    public function resolveDispute(ResolveDisputeRequest $request, string $id): JsonResponse
     {
         $shipment = $this->shipmentService->resolveDispute(
             $id,
@@ -59,7 +59,7 @@ class AdminShipmentController extends Controller
         ], 200);
     }
 
-    public function cancel(CancelShipmentRequest $request, int $id): JsonResponse
+    public function cancel(CancelShipmentRequest $request, string $id): JsonResponse
     {
         $shipment = $this->shipmentService->cancelShipment($id, $request->reason, $request->user());
 

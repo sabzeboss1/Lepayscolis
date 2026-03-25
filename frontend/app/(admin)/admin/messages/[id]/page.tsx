@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, User, Ban, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, User, Ban, CheckCircle, Trash2 } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 interface Message {
   id: string;
@@ -14,12 +15,6 @@ interface Message {
   };
   content: string;
   sent_at: string;
-  is_reported: boolean;
-  reported_by?: {
-    id: string;
-    name: string;
-    reason: string;
-  };
 }
 
 interface Conversation {
@@ -36,6 +31,7 @@ interface Conversation {
 
 export default function ConversationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +54,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
 
   const fetchConversationDetails = async () => {
     if (!conversationId) return;
-    
+
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/messages/${conversationId}`);
@@ -133,7 +129,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
   if (!conversation) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Conversation not found</p>
+        <p className="text-gray-500">{t('admin.messages.conversationNotFound')}</p>
       </div>
     );
   }
@@ -150,7 +146,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Conversation</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('admin.messages.conversation')}</h1>
             <p className="text-sm text-gray-600 mt-1">
               {conversation.participants.map(p => p.name).join(' & ')}
             </p>
@@ -176,7 +172,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                   {participant.messaging_banned && (
                     <div className="mt-2">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        Messaging Banned
+                        {t('admin.messages.messagingBanned')}
                       </span>
                       {participant.messaging_ban_reason && (
                         <p className="text-xs text-red-600 mt-1">{participant.messaging_ban_reason}</p>
@@ -192,7 +188,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                     className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 transition-colors"
                   >
                     <CheckCircle className="w-3 h-3 mr-1.5" />
-                    Unban
+                    {t('admin.messages.unban')}
                   </button>
                 ) : (
                   <button
@@ -203,7 +199,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                     className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 transition-colors"
                   >
                     <Ban className="w-3 h-3 mr-1.5" />
-                    Ban
+                    {t('admin.messages.ban')}
                   </button>
                 )}
               </div>
@@ -215,18 +211,16 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
       {/* Messages */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('admin.messages.messages')}</h2>
         </div>
         <div className="p-6 space-y-4 max-h-[600px] overflow-y-auto">
           {conversation.messages.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-8">No messages in this conversation</p>
+            <p className="text-sm text-gray-500 text-center py-8">{t('admin.messages.noMessages')}</p>
           ) : (
             conversation.messages.map((message) => (
               <div
                 key={message.id}
-                className={`p-4 rounded-lg ${
-                  message.is_reported ? 'bg-red-50 border border-red-200' : 'bg-gray-50'
-                }`}
+                className="p-4 rounded-lg bg-gray-50"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -239,7 +233,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                       </button>
                       {message.sender.messaging_banned && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          Banned
+                          {t('admin.messages.banned')}
                         </span>
                       )}
                       <span className="text-xs text-gray-500">
@@ -253,19 +247,6 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                       </span>
                     </div>
                     <p className="text-sm text-gray-900">{message.content}</p>
-                    {message.is_reported && message.reported_by && (
-                      <div className="mt-3 pt-3 border-t border-red-200">
-                        <div className="flex items-start">
-                          <AlertTriangle className="w-4 h-4 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-xs font-semibold text-red-900">
-                              Reported by {message.reported_by.name}
-                            </p>
-                            <p className="text-xs text-red-700 mt-1">{message.reported_by.reason}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                   <button
                     onClick={() => {
@@ -273,7 +254,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                       setShowDeleteDialog(true);
                     }}
                     className="ml-4 p-2 text-red-600 hover:bg-red-100 rounded transition-colors"
-                    title="Delete message"
+                    title={t('admin.messages.deleteMessage')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -286,22 +267,22 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
 
       {/* Ban Dialog */}
       {showBanDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Ban User from Messaging</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.messages.banDialogTitle')}</h3>
             <p className="text-sm text-gray-600 mb-4">
-              This user will not be able to send messages but can still receive them. Please provide a reason:
+              {t('admin.messages.banDialogDescription')}
             </p>
             <textarea
               value={banReason}
               onChange={(e) => setBanReason(e.target.value)}
-              placeholder="Reason for ban (minimum 10 characters)..."
+              placeholder={t('admin.messages.banReasonPlaceholder')}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
             />
             <div className="flex items-center justify-between mt-4">
               <span className={`text-xs ${banReason.length < 10 ? 'text-red-600' : 'text-gray-500'}`}>
-                {banReason.length} / 10 minimum
+                {banReason.length} / 10 {t('admin.messages.minimum')}
               </span>
               <div className="flex items-center space-x-2">
                 <button
@@ -312,14 +293,14 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                   }}
                   className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleBanUser}
                   disabled={banReason.length < 10}
                   className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Ban User
+                  {t('admin.messages.banUser')}
                 </button>
               </div>
             </div>
@@ -329,22 +310,22 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
 
       {/* Delete Message Dialog */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Message</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.messages.deleteDialogTitle')}</h3>
             <p className="text-sm text-gray-600 mb-4">
-              This message will be permanently deleted. Please provide a reason:
+              {t('admin.messages.deleteDialogDescription')}
             </p>
             <textarea
               value={deleteReason}
               onChange={(e) => setDeleteReason(e.target.value)}
-              placeholder="Reason for deletion (minimum 10 characters)..."
+              placeholder={t('admin.messages.deleteReasonPlaceholder')}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
             />
             <div className="flex items-center justify-between mt-4">
               <span className={`text-xs ${deleteReason.length < 10 ? 'text-red-600' : 'text-gray-500'}`}>
-                {deleteReason.length} / 10 minimum
+                {deleteReason.length} / 10 {t('admin.messages.minimum')}
               </span>
               <div className="flex items-center space-x-2">
                 <button
@@ -355,14 +336,14 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                   }}
                   className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleDeleteMessage}
                   disabled={deleteReason.length < 10}
                   className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Delete Message
+                  {t('admin.messages.deleteMessage')}
                 </button>
               </div>
             </div>

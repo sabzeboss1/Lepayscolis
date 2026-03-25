@@ -102,19 +102,19 @@ export default function ShipmentsPage() {
                                                     {shipment.status}
                                                 </span>
                                                 <span className="text-sm text-gray-500">
-                                                    {shipment.package?.weight}kg
+                                                    {shipment.package_weight}kg
                                                 </span>
                                             </div>
                                             <h3 className="font-semibold text-gray-900">
-                                                {shipment.pickup?.city} → {shipment.delivery?.city}
+                                                {shipment.pickup_city} → {shipment.delivery_city}
                                             </h3>
                                             <p className="text-sm text-gray-500 mt-1">
-                                                {shipment.package?.description}
+                                                {shipment.package_description}
                                             </p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-blue-600">
-                                                {shipment.payment?.amount?.toFixed(2)}€
+                                                {shipment.payment_amount?.toFixed(2)}€
                                             </p>
                                         </div>
                                     </div>

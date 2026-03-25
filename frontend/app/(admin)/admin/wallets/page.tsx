@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
+import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface Wallet {
   id: string;
@@ -20,19 +22,20 @@ interface Wallet {
   last_transaction_at?: string;
 }
 
+interface WalletFilterValues {
+  [key: string]: string;
+  search: string;
+}
+
 export default function WalletsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
   const [total, setTotal] = useState(0);
-  const [sortKey, setSortKey] = useState<string>('balance');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filters, setFilters] = useState({
-    search: '',
-    sort_by: 'balance_high'
-  });
+  const [filters, setFilters] = useState<WalletFilterValues>({ search: '' });
 
   const fetchWallets = async () => {
     setLoading(true);
@@ -40,25 +43,21 @@ export default function WalletsPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         per_page: perPage.toString(),
-        sort_by: sortKey,
-        sort_direction: sortDirection,
-        ...(filters.search && { search: filters.search })
+        ...(filters.search && { search: filters.search }),
       });
 
       const response = await fetch(`/api/admin/wallets?${params}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
-      // Ensure data.data is an array
       setWallets(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch wallets:', error);
-      setWallets([]); // Set empty array on error
+      setWallets([]);
       setTotal(0);
     } finally {
       setLoading(false);
@@ -67,110 +66,93 @@ export default function WalletsPage() {
 
   useEffect(() => {
     fetchWallets();
-  }, [currentPage, perPage, sortKey, sortDirection, filters]);
-
-  const handleSort = (key: string, direction: 'asc' | 'desc') => {
-    setSortKey(key);
-    setSortDirection(direction);
-  };
+  }, [currentPage, perPage, filters]);
 
   const handleFilterChange = (newFilters: any) => {
-    setFilters(newFilters as typeof filters);
+    setFilters(newFilters as WalletFilterValues);
     setCurrentPage(1);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   const columns: Column<Wallet>[] = [
     {
       key: 'user',
-      label: 'User',
+      label: t('admin.wallets.columns.user'),
       render: (wallet) => (
         <div>
           <div className="font-medium text-gray-900">{wallet.user.name}</div>
           <div className="text-sm text-gray-500">{wallet.user.email}</div>
         </div>
-      )
+      ),
     },
     {
       key: 'balance',
-      label: 'Balance',
+      label: t('admin.wallets.columns.balance'),
       sortable: true,
       render: (wallet) => (
-        <span className={`text-sm font-semibold ${
-          wallet.balance > 0 ? 'text-green-600' : wallet.balance < 0 ? 'text-red-600' : 'text-gray-900'
-        }`}>
+        <span
+          className={`text-sm font-semibold ${
+            wallet.balance > 0
+              ? 'text-green-600'
+              : wallet.balance < 0
+                ? 'text-red-600'
+                : 'text-gray-900'
+          }`}
+        >
           {formatCurrency(wallet.balance)}
         </span>
-      )
+      ),
     },
     {
       key: 'total_credits',
-      label: 'Total Credits',
+      label: t('admin.wallets.columns.totalCredits'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-gray-900">{formatCurrency(wallet.total_credits)}</span>
-      )
+        <span className="text-sm text-green-600">{formatCurrency(wallet.total_credits)}</span>
+      ),
     },
     {
       key: 'total_debits',
-      label: 'Total Debits',
+      label: t('admin.wallets.columns.totalDebits'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-gray-900">{formatCurrency(wallet.total_debits)}</span>
-      )
+        <span className="text-sm text-red-600">{formatCurrency(wallet.total_debits)}</span>
+      ),
     },
     {
       key: 'last_transaction_at',
-      label: 'Last Transaction',
+      label: t('admin.wallets.columns.lastTransaction'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-gray-900">
+        <span className="text-sm text-gray-500">
           {wallet.last_transaction_at
-            ? new Date(wallet.last_transaction_at).toLocaleDateString('en-US', {
+            ? new Date(wallet.last_transaction_at).toLocaleDateString('fr-FR', {
                 year: 'numeric',
                 month: 'short',
-                day: 'numeric'
+                day: 'numeric',
               })
-            : 'No transactions'}
+            : t('admin.wallets.noTransactions')}
         </span>
-      )
-    }
+      ),
+    },
   ];
 
   const filterConfig: FilterConfig[] = [
     {
-      type: 'text' as const,
+      type: 'text',
       key: 'search',
-      label: 'Search',
-      placeholder: 'Search by user name or email...'
+      label: t('admin.wallets.filters.search'),
+      placeholder: t('admin.wallets.filters.searchPlaceholder'),
     },
-    {
-      type: 'select' as const,
-      key: 'sort_by',
-      label: 'Sort By',
-      options: [
-        { value: 'balance_high', label: 'Balance: High to Low' },
-        { value: 'balance_low', label: 'Balance: Low to High' },
-        { value: 'credits_high', label: 'Credits: High to Low' },
-        { value: 'debits_high', label: 'Debits: High to Low' }
-      ]
-    }
   ];
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Wallets</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Manage user wallet balances and transactions
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('admin.wallets.title')}</h1>
+        <p className="text-sm text-gray-600 mt-1">{t('admin.wallets.subtitle')}</p>
       </div>
 
       {/* Filters */}
@@ -178,7 +160,7 @@ export default function WalletsPage() {
         filters={filterConfig}
         values={filters}
         onChange={handleFilterChange}
-        onReset={() => setFilters({ search: '', sort_by: 'balance_high' })}
+        onReset={() => { setFilters({ search: '' }); setCurrentPage(1); }}
       />
 
       {/* Data Table */}
@@ -186,8 +168,7 @@ export default function WalletsPage() {
         columns={columns}
         data={wallets}
         loading={loading}
-        emptyMessage="No wallets found"
-        onSort={handleSort}
+        emptyMessage={t('admin.wallets.noWallets')}
         onRowClick={(wallet) => router.push(`/admin/wallets/${wallet.user.id}`)}
         getRowId={(wallet) => wallet.id}
       />

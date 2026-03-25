@@ -20,6 +20,11 @@ class EnsureKYCVerified
     {
         $user = $request->user();
 
+        // Admins and super admins bypass KYC verification
+        if ($user && $user->isAdmin()) {
+            return $next($request);
+        }
+
         if (!$user || $user->kyc_status !== 'approved') {
             return response()->json([
                 'message' => 'KYC verification required',

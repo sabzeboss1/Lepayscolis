@@ -79,6 +79,7 @@ class UserController extends Controller
                 Rule::unique('users', 'phone')->ignore($user->id),
             ],
             'locale' => 'sometimes|string|in:fr,en',
+            'currency_code' => 'sometimes|string|size:3|exists:currencies,code',
             'avatar' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048', // 2MB max
         ]);
         
@@ -231,24 +232,24 @@ class UserController extends Controller
     /**
      * Delete old avatar from storage.
      * Extract path from URL and delete
-     * 
+     *
      * @param string $avatarUrl
      * @return void
      */
     private function deleteOldAvatar(string $avatarUrl): void
     {
         try {
-            // Extract path from URL
-            // URL format: https://bucket.s3.region.amazonaws.com/avatars/user_id_timestamp.ext
+            // Extract path from local storage URL
+            // URL format: http://host/storage/avatars/user_id_timestamp.ext
             $path = parse_url($avatarUrl, PHP_URL_PATH);
-            
+
             if ($path) {
-                // Remove leading slash
-                $path = ltrim($path, '/');
-                
+                // Remove /storage/ prefix to get the relative path within the public disk
+                $path = preg_replace('#^/storage/#', '', ltrim($path, '/'));
+
                 // Delete file
                 $this->fileUploadService->deleteFile($path);
-                
+
                 Log::info('Old avatar deleted', [
                     'path' => $path,
                 ]);

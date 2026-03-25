@@ -74,10 +74,17 @@ class AdminUserController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $user = $this->userService->getUserDetails($id);
+        $details = $this->userService->getUserDetails($id);
+        $user = $details['user'];
 
         return response()->json([
-            'data' => new UserDetailResource($user),
+            'data' => array_merge(
+                (new UserDetailResource($user))->resolve(),
+                [
+                    'activity_history' => $details['activity_history'],
+                    'recent_transactions' => $details['recent_transactions'],
+                ]
+            ),
         ], 200);
     }
 
@@ -141,6 +148,42 @@ class AdminUserController extends Controller
         $this->userService->deleteUser($id, $request->user());
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Bulk suspend users
+     */
+    public function bulkSuspend(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $count = $this->userService->bulkSuspend($request->user_ids, $request->user());
+
+        return response()->json([
+            'message' => "{$count} user(s) suspended successfully",
+            'count' => $count,
+        ], 200);
+    }
+
+    /**
+     * Bulk activate users
+     */
+    public function bulkActivate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $count = $this->userService->bulkActivate($request->user_ids, $request->user());
+
+        return response()->json([
+            'message' => "{$count} user(s) activated successfully",
+            'count' => $count,
+        ], 200);
     }
 
     /**

@@ -28,31 +28,34 @@ export default function ComponentsDemo() {
     avatar: 'https://i.pravatar.cc/150?img=1',
     phone: '+1234567890',
     rating: 4.8,
-    completedDeliveries: 12,
-    isRecommended: true,
-    kycStatus: 'approved',
-    createdAt: new Date(),
+    completed_deliveries: 12,
+    is_recommended: true,
+    kyc_status: 'approved',
+    role: 'user',
+    currency_code: 'EUR',
     locale: 'fr',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 
   const mockTrip: Trip = {
     id: '1',
-    travelerId: '1',
+    traveler_id: '1',
     traveler: mockUser,
-    departure: {
-      city: 'Moscow',
-      country: 'Russia',
-      date: new Date('2025-02-15'),
-    },
-    arrival: {
-      city: 'Dakar',
-      country: 'Senegal',
-      date: new Date('2025-02-20'),
-    },
-    availableCapacity: 15,
-    pricePerKg: 12.5,
+    departure_city: 'Moscow',
+    departure_country: 'Russia',
+    departure_date: '2025-02-15T00:00:00.000Z',
+    arrival_city: 'Dakar',
+    arrival_country: 'Senegal',
+    arrival_date: '2025-02-20T00:00:00.000Z',
+    available_capacity: 15,
+    price_per_kg: 12.5,
+    accepted_package_types: [],
+    pickup_address: '',
+    delivery_address: '',
     status: 'active',
-    createdAt: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 
   const timelineSteps: TimelineStep[] = [
@@ -60,13 +63,13 @@ export default function ComponentsDemo() {
       id: '1',
       label: 'Package picked up',
       status: 'completed',
-      date: new Date('2025-01-10'),
+      date: new Date('2025-01-10') as any,
     },
     {
       id: '2',
       label: 'In transit',
       status: 'current',
-      date: new Date('2025-01-15'),
+      date: new Date('2025-01-15') as any,
     },
     {
       id: '3',
@@ -188,7 +191,7 @@ export default function ComponentsDemo() {
               onContactClick={() => alert('Contact clicked!')}
             />
             <UserCard
-              user={{ ...mockUser, isRecommended: false, kycStatus: 'pending' }}
+              user={{ ...mockUser, is_recommended: false, kyc_status: 'pending' } as any}
             />
           </div>
         </section>
@@ -201,7 +204,7 @@ export default function ComponentsDemo() {
             <TripCard
               trip={{
                 ...mockTrip,
-                traveler: { ...mockUser, isRecommended: false },
+                traveler: { ...mockUser, is_recommended: false },
               }}
             />
           </div>

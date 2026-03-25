@@ -30,7 +30,7 @@ class AdminNotificationService
                 'user_id' => $user->id,
                 'type' => 'admin_message',
                 'title' => $title,
-                'message' => $message,
+                'body' => $message,
                 'data' => json_encode(['sent_by_admin' => $admin->id]),
             ]);
 
@@ -41,7 +41,6 @@ class AdminNotificationService
                 'recipient_count' => 1,
                 'title' => $title,
                 'message' => $message,
-                'sent_at' => now(),
             ]);
 
             // Create audit log
@@ -88,7 +87,7 @@ class AdminNotificationService
                     'user_id' => $user->id,
                     'type' => 'admin_broadcast',
                     'title' => $title,
-                    'message' => $message,
+                    'body' => $message,
                     'data' => json_encode(['sent_by_admin' => $admin->id]),
                 ]);
                 $recipientCount++;
@@ -101,7 +100,6 @@ class AdminNotificationService
                 'recipient_count' => $recipientCount,
                 'title' => $title,
                 'message' => $message,
-                'sent_at' => now(),
             ]);
 
             // Create audit log
@@ -166,7 +164,7 @@ class AdminNotificationService
                     'user_id' => $user->id,
                     'type' => 'admin_group',
                     'title' => $title,
-                    'message' => $message,
+                    'body' => $message,
                     'data' => json_encode(['sent_by_admin' => $admin->id]),
                 ]);
                 $recipientCount++;
@@ -180,7 +178,6 @@ class AdminNotificationService
                 'title' => $title,
                 'message' => $message,
                 'group_filter' => $groupFilter,
-                'sent_at' => now(),
             ]);
 
             // Create audit log

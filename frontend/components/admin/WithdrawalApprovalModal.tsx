@@ -1,34 +1,36 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, User, Mail, CreditCard, Building2, Calendar, DollarSign, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { X, User, Mail, CreditCard, Calendar, DollarSign, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
-type WithdrawalStatus = 'pending' | 'processing' | 'completed' | 'rejected';
+type WithdrawalStatus = 'pending' | 'approved' | 'processing' | 'completed' | 'rejected' | 'cancelled';
 
 interface WithdrawalRequest {
   id: string;
-  user: {
+  user?: {
     id: string;
     name: string;
     email: string;
   };
   amount: number;
+  formatted_amount?: string;
   fee: number;
+  formatted_fee?: string;
   net_amount: number;
-  bank_details: {
-    account_holder: string;
-    bank_name: string;
-    account_number: string;
-    routing_number?: string;
-    iban?: string;
-    swift_code?: string;
-  };
+  formatted_net_amount?: string;
+  currency?: string;
+  payment_method?: string;
+  payment_details?: Record<string, string>;
   status: WithdrawalStatus;
-  requested_at: string;
+  status_badge?: { color: string; text: string };
+  rejection_reason?: string;
+  approved_by?: { id: string; name: string };
   approved_at?: string;
   completed_at?: string;
-  rejected_at?: string;
-  rejection_reason?: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 interface WithdrawalApprovalModalProps {
@@ -37,6 +39,7 @@ interface WithdrawalApprovalModalProps {
   withdrawal: WithdrawalRequest | null;
   onApprove: (id: string) => Promise<void>;
   onReject: (id: string, reason: string) => Promise<void>;
+  onProcessing: (id: string) => Promise<void>;
   onComplete: (id: string) => Promise<void>;
   loading?: boolean;
 }
@@ -47,16 +50,17 @@ export default function WithdrawalApprovalModal({
   withdrawal,
   onApprove,
   onReject,
+  onProcessing,
   onComplete,
   loading = false
 }: WithdrawalApprovalModalProps) {
+  const { t } = useTranslation();
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setShowRejectForm(false);
@@ -65,10 +69,8 @@ export default function WithdrawalApprovalModal({
     }
   }, [isOpen]);
 
-  // ESC key handler
   useEffect(() => {
     if (!isOpen) return;
-
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !isSubmitting) {
         if (showRejectForm) {
@@ -80,21 +82,17 @@ export default function WithdrawalApprovalModal({
         }
       }
     };
-
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, isSubmitting, showRejectForm, showCompleteConfirm, onClose]);
 
-  // Prevent body scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
   if (!isOpen || !withdrawal) return null;
@@ -110,12 +108,20 @@ export default function WithdrawalApprovalModal({
   };
 
   const handleReject = async () => {
-    if (!rejectReason.trim() || rejectReason.length < 10) {
-      return;
-    }
+    if (!rejectReason.trim() || rejectReason.length < 10) return;
     setIsSubmitting(true);
     try {
       await onReject(withdrawal.id, rejectReason);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleProcessing = async () => {
+    setIsSubmitting(true);
+    try {
+      await onProcessing(withdrawal.id);
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -134,21 +140,25 @@ export default function WithdrawalApprovalModal({
 
   const isLoading = loading || isSubmitting;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
+  const { formatCurrency } = useAdminCurrency();
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString('fr-FR', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
   };
 
   const getStatusBadge = (status: WithdrawalStatus) => {
-    const badges = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending Review' },
-      processing: { color: 'bg-blue-100 text-blue-800', label: 'Processing' },
-      completed: { color: 'bg-green-100 text-green-800', label: 'Completed' },
-      rejected: { color: 'bg-red-100 text-red-800', label: 'Rejected' }
+    const badges: Record<string, { color: string; label: string }> = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', label: t('admin.withdrawals.statuses.pending') },
+      approved: { color: 'bg-blue-100 text-blue-800', label: t('admin.withdrawals.statuses.approved') },
+      processing: { color: 'bg-purple-100 text-purple-800', label: t('admin.withdrawals.statuses.processing') },
+      completed: { color: 'bg-green-100 text-green-800', label: t('admin.withdrawals.statuses.completed') },
+      rejected: { color: 'bg-red-100 text-red-800', label: t('admin.withdrawals.statuses.rejected') },
+      cancelled: { color: 'bg-gray-100 text-gray-800', label: t('admin.withdrawals.statuses.cancelled') },
     };
-    const badge = badges[status];
+    const badge = badges[status] || badges.pending;
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
         {badge.label}
@@ -158,11 +168,9 @@ export default function WithdrawalApprovalModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm"
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isLoading) {
-          onClose();
-        }
+        if (e.target === e.currentTarget && !isLoading) onClose();
       }}
       role="dialog"
       aria-modal="true"
@@ -177,7 +185,7 @@ export default function WithdrawalApprovalModal({
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center space-x-3">
             <h2 id="withdrawal-modal-title" className="text-xl font-semibold text-gray-900">
-              Withdrawal Request
+              {t('admin.withdrawals.modal.title')}
             </h2>
             {getStatusBadge(withdrawal.status)}
           </div>
@@ -185,7 +193,7 @@ export default function WithdrawalApprovalModal({
             onClick={onClose}
             disabled={isLoading}
             className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-            aria-label="Close modal"
+            aria-label={t('common.close')}
           >
             <X className="w-6 h-6" />
           </button>
@@ -194,145 +202,100 @@ export default function WithdrawalApprovalModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* User Information */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">User Information</h3>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm">
-                <User className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-24">Name:</span>
-                <span className="text-gray-900 font-medium">{withdrawal.user.name}</span>
-              </div>
-              <div className="flex items-center text-sm">
-                <Mail className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-24">Email:</span>
-                <span className="text-gray-900">{withdrawal.user.email}</span>
+          {withdrawal.user && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">{t('admin.withdrawals.modal.userInfo')}</h3>
+              <div className="space-y-3">
+                <div className="flex items-center text-sm">
+                  <User className="w-4 h-4 text-gray-400 mr-3" />
+                  <span className="text-gray-600 w-24">{t('admin.withdrawals.modal.name')}:</span>
+                  <span className="text-gray-900 font-medium">{withdrawal.user.name}</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <Mail className="w-4 h-4 text-gray-400 mr-3" />
+                  <span className="text-gray-600 w-24">{t('admin.withdrawals.modal.email')}:</span>
+                  <span className="text-gray-900">{withdrawal.user.email}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Amount Details */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Amount Details</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">{t('admin.withdrawals.modal.amountDetails')}</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
                   <DollarSign className="w-4 h-4 text-gray-400 mr-3" />
-                  <span className="text-gray-600">Withdrawal Amount:</span>
+                  <span className="text-gray-600">{t('admin.withdrawals.modal.withdrawalAmount')}:</span>
                 </div>
-                <span className="text-gray-900 font-medium">{formatCurrency(withdrawal.amount)}</span>
+                <span className="text-gray-900 font-medium">{withdrawal.formatted_amount || formatCurrency(withdrawal.amount)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
                   <DollarSign className="w-4 h-4 text-gray-400 mr-3" />
-                  <span className="text-gray-600">Processing Fee:</span>
+                  <span className="text-gray-600">{t('admin.withdrawals.modal.processingFee')}:</span>
                 </div>
-                <span className="text-gray-900">-{formatCurrency(withdrawal.fee)}</span>
+                <span className="text-gray-900">-{withdrawal.formatted_fee || formatCurrency(withdrawal.fee)}</span>
               </div>
               <div className="pt-3 border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-900">Net Amount:</span>
-                  <span className="text-lg font-bold text-gray-900">{formatCurrency(withdrawal.net_amount)}</span>
+                  <span className="text-sm font-semibold text-gray-900">{t('admin.withdrawals.modal.netAmount')}:</span>
+                  <span className="text-lg font-bold text-gray-900">{withdrawal.formatted_net_amount || formatCurrency(withdrawal.net_amount)}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Bank Details */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Bank Details</h3>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm">
-                <User className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-32">Account Holder:</span>
-                <span className="text-gray-900 font-medium">{withdrawal.bank_details.account_holder}</span>
+          {/* Payment Details */}
+          {withdrawal.payment_details && Object.keys(withdrawal.payment_details).length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">
+                {t('admin.withdrawals.modal.paymentDetails')}
+                {withdrawal.payment_method && (
+                  <span className="ml-2 text-xs font-normal text-gray-500">({withdrawal.payment_method})</span>
+                )}
+              </h3>
+              <div className="space-y-3">
+                {Object.entries(withdrawal.payment_details).map(([key, value]) => (
+                  <div key={key} className="flex items-center text-sm">
+                    <CreditCard className="w-4 h-4 text-gray-400 mr-3" />
+                    <span className="text-gray-600 w-32 capitalize">{key.replace(/_/g, ' ')}:</span>
+                    <span className="text-gray-900 font-mono text-xs">{value}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center text-sm">
-                <Building2 className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-32">Bank Name:</span>
-                <span className="text-gray-900">{withdrawal.bank_details.bank_name}</span>
-              </div>
-              <div className="flex items-center text-sm">
-                <CreditCard className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-32">Account Number:</span>
-                <span className="text-gray-900 font-mono">{withdrawal.bank_details.account_number}</span>
-              </div>
-              {withdrawal.bank_details.iban && (
-                <div className="flex items-center text-sm">
-                  <CreditCard className="w-4 h-4 text-gray-400 mr-3" />
-                  <span className="text-gray-600 w-32">IBAN:</span>
-                  <span className="text-gray-900 font-mono">{withdrawal.bank_details.iban}</span>
-                </div>
-              )}
-              {withdrawal.bank_details.swift_code && (
-                <div className="flex items-center text-sm">
-                  <CreditCard className="w-4 h-4 text-gray-400 mr-3" />
-                  <span className="text-gray-600 w-32">SWIFT Code:</span>
-                  <span className="text-gray-900 font-mono">{withdrawal.bank_details.swift_code}</span>
-                </div>
-              )}
             </div>
-          </div>
+          )}
 
           {/* Timeline */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Timeline</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">{t('admin.withdrawals.modal.timeline')}</h3>
             <div className="space-y-3">
               <div className="flex items-center text-sm">
                 <Calendar className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-32">Requested:</span>
-                <span className="text-gray-900">
-                  {new Date(withdrawal.requested_at).toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </span>
+                <span className="text-gray-600 w-32">{t('admin.withdrawals.modal.requested')}:</span>
+                <span className="text-gray-900">{formatDate(withdrawal.created_at)}</span>
               </div>
               {withdrawal.approved_at && (
                 <div className="flex items-center text-sm">
                   <Calendar className="w-4 h-4 text-gray-400 mr-3" />
-                  <span className="text-gray-600 w-32">Approved:</span>
-                  <span className="text-gray-900">
-                    {new Date(withdrawal.approved_at).toLocaleString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
+                  <span className="text-gray-600 w-32">{t('admin.withdrawals.modal.approvedAt')}:</span>
+                  <span className="text-gray-900">{formatDate(withdrawal.approved_at)}</span>
+                </div>
+              )}
+              {withdrawal.approved_by && (
+                <div className="flex items-center text-sm">
+                  <User className="w-4 h-4 text-gray-400 mr-3" />
+                  <span className="text-gray-600 w-32">{t('admin.withdrawals.modal.approvedBy')}:</span>
+                  <span className="text-gray-900">{withdrawal.approved_by.name}</span>
                 </div>
               )}
               {withdrawal.completed_at && (
                 <div className="flex items-center text-sm">
                   <Calendar className="w-4 h-4 text-gray-400 mr-3" />
-                  <span className="text-gray-600 w-32">Completed:</span>
-                  <span className="text-gray-900">
-                    {new Date(withdrawal.completed_at).toLocaleString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
-                </div>
-              )}
-              {withdrawal.rejected_at && (
-                <div className="flex items-center text-sm">
-                  <Calendar className="w-4 h-4 text-gray-400 mr-3" />
-                  <span className="text-gray-600 w-32">Rejected:</span>
-                  <span className="text-gray-900">
-                    {new Date(withdrawal.rejected_at).toLocaleString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
+                  <span className="text-gray-600 w-32">{t('admin.withdrawals.modal.completedAt')}:</span>
+                  <span className="text-gray-900">{formatDate(withdrawal.completed_at)}</span>
                 </div>
               )}
             </div>
@@ -344,7 +307,7 @@ export default function WithdrawalApprovalModal({
               <div className="flex items-start">
                 <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-semibold text-red-900 mb-1">Rejection Reason</h3>
+                  <h3 className="text-sm font-semibold text-red-900 mb-1">{t('admin.withdrawals.modal.rejectionReason')}</h3>
                   <p className="text-sm text-red-700">{withdrawal.rejection_reason}</p>
                 </div>
               </div>
@@ -354,11 +317,11 @@ export default function WithdrawalApprovalModal({
           {/* Reject Form */}
           {showRejectForm && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-red-900 mb-3">Rejection Reason</h3>
+              <h3 className="text-sm font-semibold text-red-900 mb-3">{t('admin.withdrawals.modal.rejectionReason')}</h3>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Please provide a detailed reason for rejection (minimum 10 characters)..."
+                placeholder={t('admin.withdrawals.modal.rejectionPlaceholder')}
                 rows={4}
                 disabled={isLoading}
                 className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
@@ -369,14 +332,11 @@ export default function WithdrawalApprovalModal({
                 </span>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => {
-                      setShowRejectForm(false);
-                      setRejectReason('');
-                    }}
+                    onClick={() => { setShowRejectForm(false); setRejectReason(''); }}
                     disabled={isLoading}
                     className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={handleReject}
@@ -384,7 +344,7 @@ export default function WithdrawalApprovalModal({
                     className="px-3 py-1.5 text-sm text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
                     {isLoading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-                    Confirm Rejection
+                    {t('admin.withdrawals.modal.confirmReject')}
                   </button>
                 </div>
               </div>
@@ -397,9 +357,9 @@ export default function WithdrawalApprovalModal({
               <div className="flex items-start mb-3">
                 <CheckCircle className="w-5 h-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-semibold text-green-900 mb-1">Confirm Completion</h3>
+                  <h3 className="text-sm font-semibold text-green-900 mb-1">{t('admin.withdrawals.modal.confirmCompleteTitle')}</h3>
                   <p className="text-sm text-green-700">
-                    Please confirm that the withdrawal of {formatCurrency(withdrawal.net_amount)} has been successfully transferred to the user's bank account.
+                    {t('admin.withdrawals.modal.confirmCompleteDesc')}
                   </p>
                 </div>
               </div>
@@ -409,7 +369,7 @@ export default function WithdrawalApprovalModal({
                   disabled={isLoading}
                   className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleComplete}
@@ -417,7 +377,7 @@ export default function WithdrawalApprovalModal({
                   className="px-3 py-1.5 text-sm text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
                   {isLoading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-                  Mark as Completed
+                  {t('admin.withdrawals.modal.markCompleted')}
                 </button>
               </div>
             </div>
@@ -435,7 +395,7 @@ export default function WithdrawalApprovalModal({
                   className="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                 >
                   <XCircle className="w-4 h-4 mr-2" />
-                  Reject
+                  {t('admin.withdrawals.actions.reject')}
                 </button>
                 <button
                   onClick={handleApprove}
@@ -445,16 +405,31 @@ export default function WithdrawalApprovalModal({
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing...
+                      {t('common.processing')}
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      Approve
+                      {t('admin.withdrawals.actions.approve')}
                     </>
                   )}
                 </button>
               </>
+            )}
+
+            {withdrawal.status === 'approved' && (
+              <button
+                onClick={handleProcessing}
+                disabled={isLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                )}
+                {t('admin.withdrawals.actions.markProcessing')}
+              </button>
             )}
 
             {withdrawal.status === 'processing' && (
@@ -464,7 +439,7 @@ export default function WithdrawalApprovalModal({
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Mark as Completed
+                {t('admin.withdrawals.actions.markCompleted')}
               </button>
             )}
           </div>

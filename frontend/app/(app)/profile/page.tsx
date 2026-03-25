@@ -161,7 +161,7 @@ export default function ProfilePage() {
           <div className="flex flex-col items-center lg:items-start">
             <div className="relative">
               <img
-                src={user.avatar}
+                src={user.avatar ?? undefined}
                 alt={user.name}
                 className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
               />

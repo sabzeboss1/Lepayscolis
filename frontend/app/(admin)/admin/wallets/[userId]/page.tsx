@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, X } from 'lucide-react';
 import TablePagination from '@/components/admin/TablePagination';
+import { useTranslation } from '@/lib/i18n';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface WalletDetails {
   user: {
@@ -13,6 +15,7 @@ interface WalletDetails {
     phone: string;
   };
   balance: number;
+  currency_code: string;
   total_credits: number;
   total_debits: number;
   total_adjustments: number;
@@ -20,16 +23,18 @@ interface WalletDetails {
 
 interface Transaction {
   id: string;
-  type: 'credit' | 'debit' | 'adjustment';
+  type: 'credit' | 'debit' | 'adjustment' | 'refund';
   amount: number;
   description: string;
   reference_type?: string;
   reference_id?: string;
+  balance_after: number;
   created_at: string;
 }
 
 export default function WalletDetailPage({ params }: { params: Promise<{ userId: string }> }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [userId, setUserId] = useState<string | null>(null);
   const [wallet, setWallet] = useState<WalletDetails | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -37,36 +42,38 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
   const [total, setTotal] = useState(0);
-  const [showAdjustBalance, setShowAdjustBalance] = useState(false);
-  const [adjustmentAmount, setAdjustmentAmount] = useState('');
-  const [adjustmentReason, setAdjustmentReason] = useState('');
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
+  const [adjustType, setAdjustType] = useState<'credit' | 'debit'>('credit');
+  const [adjustAmount, setAdjustAmount] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
+  const [adjusting, setAdjusting] = useState(false);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
 
   useEffect(() => {
-    params.then(p => setUserId(p.userId));
+    params.then((p) => setUserId(p.userId));
   }, [params]);
 
   useEffect(() => {
-    if (userId) {
-      fetchWalletDetails();
-    }
+    if (userId) fetchWalletDetails();
   }, [userId, currentPage, perPage]);
 
   const fetchWalletDetails = async () => {
     if (!userId) return;
-    
     setLoading(true);
     try {
-      const params_query = new URLSearchParams({
+      const qs = new URLSearchParams({
         page: currentPage.toString(),
-        per_page: perPage.toString()
+        per_page: perPage.toString(),
       });
 
-      const response = await fetch(`/api/admin/wallets/${userId}?${params_query}`);
+      const response = await fetch(`/api/admin/wallets/${userId}?${qs}`);
       const data = await response.json();
-      
+
+      if (!response.ok) throw new Error(data.message || 'Failed to fetch');
+
       setWallet(data.data.wallet);
-      setTransactions(data.data.transactions);
-      setTotal(data.meta.total);
+      setTransactions(data.data.transactions ?? []);
+      setTotal(data.meta?.total ?? 0);
     } catch (error) {
       console.error('Failed to fetch wallet details:', error);
     } finally {
@@ -75,54 +82,57 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
   };
 
   const handleAdjustBalance = async () => {
-    if (!userId || !adjustmentAmount || parseFloat(adjustmentAmount) === 0 || !adjustmentReason.trim() || adjustmentReason.length < 10) {
-      return;
-    }
+    if (!userId || !adjustAmount || parseFloat(adjustAmount) <= 0 || adjustReason.length < 10) return;
 
+    setAdjusting(true);
+    setAdjustError(null);
     try {
-      await fetch(`/api/admin/wallets/${userId}/adjust`, {
+      const response = await fetch(`/api/admin/wallets/${userId}/adjust`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: parseFloat(adjustmentAmount),
-          reason: adjustmentReason
-        })
+          amount: parseFloat(adjustAmount),
+          type: adjustType,
+          reason: adjustReason,
+        }),
       });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Adjustment failed');
+
       fetchWalletDetails();
-      setShowAdjustBalance(false);
-      setAdjustmentAmount('');
-      setAdjustmentReason('');
-    } catch (error) {
-      console.error('Failed to adjust balance:', error);
+      closeAdjustModal();
+    } catch (error: any) {
+      setAdjustError(error.message);
+    } finally {
+      setAdjusting(false);
     }
   };
 
-  if (loading && !wallet) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
-
-  if (!wallet) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Wallet not found</p>
-      </div>
-    );
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
+  const closeAdjustModal = () => {
+    setShowAdjustModal(false);
+    setAdjustType('credit');
+    setAdjustAmount('');
+    setAdjustReason('');
+    setAdjustError(null);
   };
 
-  const getTransactionIcon = (type: string) => {
+  const { formatCurrency } = useAdminCurrency();
+
+  const getTypeLabel = (type: string) => {
+    const map: Record<string, string> = {
+      credit: t('admin.wallets.detail.credit'),
+      debit: t('admin.wallets.detail.debit'),
+      adjustment: t('admin.wallets.detail.adjustment'),
+      refund: t('admin.wallets.detail.refund'),
+    };
+    return map[type] || type;
+  };
+
+  const getTypeIcon = (type: string) => {
     switch (type) {
       case 'credit':
+      case 'refund':
         return <TrendingUp className="w-4 h-4 text-green-600" />;
       case 'debit':
         return <TrendingDown className="w-4 h-4 text-red-600" />;
@@ -133,9 +143,10 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     }
   };
 
-  const getTransactionColor = (type: string) => {
+  const getTypeColor = (type: string) => {
     switch (type) {
       case 'credit':
+      case 'refund':
         return 'text-green-600';
       case 'debit':
         return 'text-red-600';
@@ -146,29 +157,46 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     }
   };
 
+  if (loading && !wallet) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  if (!wallet) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">{t('admin.wallets.detail.notFound')}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/admin/wallets')}
             className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{wallet.user.name}'s Wallet</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {t('admin.wallets.detail.title', { name: wallet.user.name })}
+            </h1>
             <p className="text-sm text-gray-600 mt-1">{wallet.user.email}</p>
           </div>
         </div>
-
         <button
-          onClick={() => setShowAdjustBalance(true)}
+          onClick={() => setShowAdjustModal(true)}
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <DollarSign className="w-4 h-4 mr-2" />
-          Adjust Balance
+          {t('admin.wallets.detail.adjustBalance')}
         </button>
       </div>
 
@@ -177,7 +205,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Current Balance</p>
+              <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.currentBalance')}</p>
               <p className={`text-2xl font-bold mt-2 ${
                 wallet.balance > 0 ? 'text-green-600' : wallet.balance < 0 ? 'text-red-600' : 'text-gray-900'
               }`}>
@@ -191,10 +219,8 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Credits</p>
-              <p className="text-2xl font-bold text-green-600 mt-2">
-                {formatCurrency(wallet.total_credits)}
-              </p>
+              <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalCredits')}</p>
+              <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(wallet.total_credits)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
@@ -203,10 +229,8 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Debits</p>
-              <p className="text-2xl font-bold text-red-600 mt-2">
-                {formatCurrency(wallet.total_debits)}
-              </p>
+              <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalDebits')}</p>
+              <p className="text-2xl font-bold text-red-600 mt-2">{formatCurrency(wallet.total_debits)}</p>
             </div>
             <TrendingDown className="w-8 h-8 text-red-600" />
           </div>
@@ -215,10 +239,8 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Adjustments</p>
-              <p className="text-2xl font-bold text-blue-600 mt-2">
-                {formatCurrency(wallet.total_adjustments)}
-              </p>
+              <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalAdjustments')}</p>
+              <p className="text-2xl font-bold text-blue-600 mt-2">{formatCurrency(wallet.total_adjustments)}</p>
             </div>
             <DollarSign className="w-8 h-8 text-blue-600" />
           </div>
@@ -228,60 +250,58 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
       {/* Transaction History */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Transaction History</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('admin.wallets.detail.transactionHistory')}</h2>
         </div>
         <div className="overflow-x-auto">
           {transactions.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-sm text-gray-500">No transactions found</p>
+              <p className="text-sm text-gray-500">{t('admin.wallets.noTransactions')}</p>
             </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.wallets.detail.type')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.wallets.detail.amount')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.wallets.detail.description')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.wallets.detail.reference')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.wallets.detail.date')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.map((transaction) => (
-                  <tr key={transaction.id} className="hover:bg-gray-50">
+                {transactions.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {getTransactionIcon(transaction.type)}
-                        <span className="ml-2 text-sm font-medium text-gray-900 capitalize">
-                          {transaction.type}
-                        </span>
+                        {getTypeIcon(tx.type)}
+                        <span className="ml-2 text-sm font-medium text-gray-900">{getTypeLabel(tx.type)}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`text-sm font-semibold ${getTransactionColor(transaction.type)}`}>
-                        {transaction.type === 'debit' ? '-' : '+'}{formatCurrency(Math.abs(transaction.amount))}
+                      <span className={`text-sm font-semibold ${getTypeColor(tx.type)}`}>
+                        {tx.type === 'debit' ? '-' : '+'}{formatCurrency(Math.abs(tx.amount))}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900">{transaction.description}</span>
+                      <span className="text-sm text-gray-900">{tx.description}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {transaction.reference_type && transaction.reference_id ? (
+                      {tx.reference_type && tx.reference_id ? (
                         <span className="text-sm text-gray-500">
-                          {transaction.reference_type} #{transaction.reference_id.substring(0, 8)}
+                          {tx.reference_type} #{tx.reference_id.substring(0, 8)}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
-                        {new Date(transaction.created_at).toLocaleString('en-US', {
+                      <span className="text-sm text-gray-500">
+                        {new Date(tx.created_at).toLocaleString('fr-FR', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',
                           hour: '2-digit',
-                          minute: '2-digit'
+                          minute: '2-digit',
                         })}
                       </span>
                     </td>
@@ -309,60 +329,85 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
       )}
 
       {/* Adjust Balance Modal */}
-      {showAdjustBalance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Adjust Balance</h3>
+      {showAdjustModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">{t('admin.wallets.detail.adjustBalance')}</h3>
+              <button onClick={closeAdjustModal}>
+                <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+              </button>
+            </div>
+
+            {adjustError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                {adjustError}
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Adjustment Amount
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('admin.wallets.detail.adjustmentType')}
+                </label>
+                <select
+                  value={adjustType}
+                  onChange={(e) => setAdjustType(e.target.value as 'credit' | 'debit')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="credit">{t('admin.wallets.detail.typeCredit')}</option>
+                  <option value="debit">{t('admin.wallets.detail.typeDebit')}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('admin.wallets.detail.adjustmentAmount')}
                 </label>
                 <input
                   type="number"
-                  value={adjustmentAmount}
-                  onChange={(e) => setAdjustmentAmount(e.target.value)}
-                  placeholder="Enter amount (positive to add, negative to subtract)"
+                  value={adjustAmount}
+                  onChange={(e) => setAdjustAmount(e.target.value)}
+                  placeholder="0.00"
+                  min="0.01"
                   step="0.01"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Current balance: {formatCurrency(wallet.balance)}
+                  {t('admin.wallets.detail.currentBalance')}: {formatCurrency(wallet.balance)}
                 </p>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for Adjustment
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('admin.wallets.detail.reason')}
                 </label>
                 <textarea
-                  value={adjustmentReason}
-                  onChange={(e) => setAdjustmentReason(e.target.value)}
-                  placeholder="Explain why this adjustment is being made (minimum 10 characters)..."
-                  rows={4}
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                  placeholder={t('admin.wallets.detail.reasonPlaceholder')}
+                  rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
-                <span className={`text-xs ${adjustmentReason.length < 10 ? 'text-red-600' : 'text-gray-500'}`}>
-                  {adjustmentReason.length} / 10 minimum
+                <span className={`text-xs ${adjustReason.length < 10 ? 'text-red-600' : 'text-gray-500'}`}>
+                  {t('admin.wallets.detail.reasonMinChars', { count: adjustReason.length })}
                 </span>
               </div>
             </div>
-            <div className="flex items-center justify-end space-x-2 mt-6">
+
+            <div className="flex items-center justify-end gap-3 mt-6">
               <button
-                onClick={() => {
-                  setShowAdjustBalance(false);
-                  setAdjustmentAmount('');
-                  setAdjustmentReason('');
-                }}
-                className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                onClick={closeAdjustModal}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleAdjustBalance}
-                disabled={!adjustmentAmount || parseFloat(adjustmentAmount) === 0 || adjustmentReason.length < 10}
-                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={adjusting || !adjustAmount || parseFloat(adjustAmount) <= 0 || adjustReason.length < 10}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Adjust Balance
+                {adjusting ? t('admin.wallets.detail.adjusting') : t('admin.wallets.detail.confirmAdjust')}
               </button>
             </div>
           </div>

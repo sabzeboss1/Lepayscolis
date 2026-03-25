@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
 import { useKYCCheck } from '@/lib/hooks/useKYCCheck';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Card } from '@/components/ui/Card';
 import { KYCBlocker } from '@/components/features/KYCBlocker';
-// Removed static location imports - now fetching from backend
+import { CountrySelect } from '@/components/ui/CountrySelect';
+import { CitySelect } from '@/components/ui/CitySelect';
+import { useCountries } from '@/lib/hooks/useCountries';
 import { z } from 'zod';
 import {
   MapPin,
@@ -40,11 +41,11 @@ import {
 
 // Zod schema for trip validation
 const tripSchema = z.object({
-  departureCity: z.string().min(1, 'Departure city is required'),
-  departureCountry: z.string().min(1, 'Departure country is required'),
+  departureCountryId: z.number().positive('Departure country is required'),
+  departureCityId: z.number().positive('Departure city is required'),
   departureDate: z.string().min(1, 'Departure date is required'),
-  arrivalCity: z.string().min(1, 'Arrival city is required'),
-  arrivalCountry: z.string().min(1, 'Arrival country is required'),
+  arrivalCountryId: z.number().positive('Arrival country is required'),
+  arrivalCityId: z.number().positive('Arrival city is required'),
   arrivalDate: z.string().min(1, 'Arrival date is required'),
   availableCapacity: z.number().positive('Capacity must be positive'),
   pricePerKg: z.number().positive('Price must be positive'),
@@ -76,16 +77,17 @@ export default function NewTripPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { isKYCApproved } = useKYCCheck();
+  const { getCountryById, getCityById } = useCountries();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState<Partial<TripFormData>>({
-    departureCity: '',
-    departureCountry: '',
+    departureCountryId: undefined,
+    departureCityId: undefined,
     departureDate: '',
-    arrivalCity: '',
-    arrivalCountry: '',
+    arrivalCountryId: undefined,
+    arrivalCityId: undefined,
     arrivalDate: '',
     availableCapacity: undefined,
     pricePerKg: undefined,
@@ -95,126 +97,8 @@ export default function NewTripPage() {
   });
 
   const [travelProof, setTravelProof] = useState<File | null>(null);
-  const [allCountries, setAllCountries] = useState<Array<{id: number; name: string; continent: string}>>([]);
-  const [departureCountries, setDepartureCountries] = useState<string[]>([]);
-  const [arrivalCountries, setArrivalCountries] = useState<string[]>([]);
-  const [departureCities, setDepartureCities] = useState<string[]>([]);
-  const [arrivalCities, setArrivalCities] = useState<string[]>([]);
-  const [isLoadingCountries, setIsLoadingCountries] = useState(true);
-  const [isLoadingDepartureCities, setIsLoadingDepartureCities] = useState(false);
-  const [isLoadingArrivalCities, setIsLoadingArrivalCities] = useState(false);
 
-  // Fetch countries on mount
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const response = await fetch('/api/locations/countries');
-        if (!response.ok) throw new Error('Failed to fetch countries');
-        const data = await response.json();
-        setAllCountries(data.data || []);
-        // Initially show all countries for departure
-        setDepartureCountries((data.data || []).map((c: any) => c.name));
-      } catch (error) {
-        console.error('Error fetching countries:', error);
-        setErrors({ submit: 'Impossible de charger les pays' });
-      } finally {
-        setIsLoadingCountries(false);
-      }
-    };
-    fetchCountries();
-  }, []);
-
-  // Update arrival countries based on departure country selection
-  useEffect(() => {
-    if (formData.departureCountry && allCountries.length > 0) {
-      const selectedCountry = allCountries.find(c => c.name === formData.departureCountry);
-      
-      if (selectedCountry) {
-        if (selectedCountry.continent === 'europe') {
-          // Si départ = Russie, arrivée = pays africains uniquement
-          const africanCountries = allCountries
-            .filter(c => c.continent === 'africa')
-            .map(c => c.name);
-          setArrivalCountries(africanCountries);
-          
-          // Reset arrival country if it's not African
-          if (formData.arrivalCountry) {
-            const arrivalCountry = allCountries.find(c => c.name === formData.arrivalCountry);
-            if (arrivalCountry?.continent !== 'africa') {
-              handleInputChange('arrivalCountry', '');
-              handleInputChange('arrivalCity', '');
-            }
-          }
-        } else if (selectedCountry.continent === 'africa') {
-          // Si départ = pays africain, arrivée = Russie automatiquement
-          const russia = allCountries.find(c => c.continent === 'europe');
-          if (russia) {
-            setArrivalCountries([russia.name]);
-            handleInputChange('arrivalCountry', russia.name);
-          }
-        } else {
-          // Autres pays : tous les pays sauf le pays de départ
-          const otherCountries = allCountries
-            .filter(c => c.name !== formData.departureCountry)
-            .map(c => c.name);
-          setArrivalCountries(otherCountries);
-        }
-      }
-    } else {
-      setArrivalCountries([]);
-    }
-  }, [formData.departureCountry, allCountries]);
-
-  useEffect(() => {
-    if (formData.departureCountry) {
-      console.log('Fetching cities for departure country:', formData.departureCountry);
-      setIsLoadingDepartureCities(true);
-      fetch(`/api/locations/cities/${encodeURIComponent(formData.departureCountry)}`)
-        .then(res => {
-          console.log('Departure cities response status:', res.status);
-          return res.json();
-        })
-        .then(data => {
-          console.log('Departure cities data:', data);
-          setDepartureCities(data.data || []);
-        })
-        .catch(error => {
-          console.error('Error fetching departure cities:', error);
-          setDepartureCities([]);
-        })
-        .finally(() => {
-          setIsLoadingDepartureCities(false);
-        });
-    } else {
-      setDepartureCities([]);
-    }
-  }, [formData.departureCountry]);
-
-  useEffect(() => {
-    if (formData.arrivalCountry) {
-      console.log('Fetching cities for arrival country:', formData.arrivalCountry);
-      setIsLoadingArrivalCities(true);
-      fetch(`/api/locations/cities/${encodeURIComponent(formData.arrivalCountry)}`)
-        .then(res => {
-          console.log('Arrival cities response status:', res.status);
-          return res.json();
-        })
-        .then(data => {
-          console.log('Arrival cities data:', data);
-          setArrivalCities(data.data || []);
-        })
-        .catch(error => {
-          console.error('Error fetching arrival cities:', error);
-          setArrivalCities([]);
-        })
-        .finally(() => {
-          setIsLoadingArrivalCities(false);
-        });
-    } else {
-      setArrivalCities([]);
-    }
-  }, [formData.arrivalCountry]);
-
+  // Draft functionality - save to localStorage
   const saveDraft = () => {
     localStorage.setItem('tripDraft', JSON.stringify(formData));
   };
@@ -230,11 +114,11 @@ export default function NewTripPage() {
     }
   });
 
-  const handleInputChange = (field: keyof TripFormData, value: string | number | string[]) => {
+  const handleInputChange = (field: keyof TripFormData, value: string | number | string[] | undefined) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
-      if (field === 'departureCountry') newData.departureCity = '';
-      if (field === 'arrivalCountry') newData.arrivalCity = '';
+      if (field === 'departureCountryId') { newData.departureCityId = undefined; }
+      if (field === 'arrivalCountryId') { newData.arrivalCityId = undefined; }
       return newData;
     });
     if (errors[field]) {
@@ -250,10 +134,10 @@ export default function NewTripPage() {
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
-      if (!formData.departureCity) newErrors.departureCity = t('errors.required');
-      if (!formData.departureCountry) newErrors.departureCountry = t('errors.required');
-      if (!formData.arrivalCity) newErrors.arrivalCity = t('errors.required');
-      if (!formData.arrivalCountry) newErrors.arrivalCountry = t('errors.required');
+      if (!formData.departureCountryId) newErrors.departureCountryId = t('errors.required');
+      if (!formData.departureCityId) newErrors.departureCityId = t('errors.required');
+      if (!formData.arrivalCountryId) newErrors.arrivalCountryId = t('errors.required');
+      if (!formData.arrivalCityId) newErrors.arrivalCityId = t('errors.required');
     } else if (step === 2) {
       if (!formData.departureDate) newErrors.departureDate = t('errors.required');
       if (!formData.arrivalDate) newErrors.arrivalDate = t('errors.required');
@@ -296,6 +180,11 @@ export default function NewTripPage() {
   };
 
   const handleSubmit = async () => {
+    // Check KYC before allowing submission
+    if (!isKYCApproved) {
+      return;
+    }
+
     if (!validateStep(3)) return;
 
     if (formData.departureDate && new Date(formData.departureDate) < new Date(new Date().setHours(0, 0, 0, 0))) {
@@ -316,11 +205,13 @@ export default function NewTripPage() {
       const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
 
       const formDataToSend = new FormData();
-      formDataToSend.append('departure_city', formData.departureCity!);
-      formDataToSend.append('departure_country', formData.departureCountry!);
+
+      // Ajouter les champs en snake_case (format attendu par le backend)
+      formDataToSend.append('departure_country_id', String(formData.departureCountryId!));
+      formDataToSend.append('departure_city_id', String(formData.departureCityId!));
       formDataToSend.append('departure_date', formData.departureDate!);
-      formDataToSend.append('arrival_city', formData.arrivalCity!);
-      formDataToSend.append('arrival_country', formData.arrivalCountry!);
+      formDataToSend.append('arrival_country_id', String(formData.arrivalCountryId!));
+      formDataToSend.append('arrival_city_id', String(formData.arrivalCityId!));
       formDataToSend.append('arrival_date', formData.arrivalDate!);
       formDataToSend.append('available_capacity', formData.availableCapacity!.toString());
       formDataToSend.append('price_per_kg', formData.pricePerKg!.toString());
@@ -432,30 +323,19 @@ export default function NewTripPage() {
             </div>
             <span className="font-bold text-orange-700 text-xs uppercase tracking-widest">Départ</span>
           </div>
-          <Select
+          <CountrySelect
             label={t('trips.departureCountry')}
-            value={formData.departureCountry || ''}
-            onChange={(value) => handleInputChange('departureCountry', value)}
-            options={departureCountries.map(c => ({ value: c, label: c }))}
-            placeholder={isLoadingCountries ? 'Chargement...' : t('common.select')}
-            error={errors.departureCountry}
-            disabled={isLoadingCountries}
+            value={formData.departureCountryId}
+            onChange={(id) => handleInputChange('departureCountryId', id ?? undefined)}
+            error={errors.departureCountryId}
             required
           />
-          <Select
+          <CitySelect
             label={t('trips.departureCity')}
-            value={formData.departureCity || ''}
-            onChange={(value) => handleInputChange('departureCity', value)}
-            options={departureCities.map(c => ({ value: c, label: c }))}
-            placeholder={
-              isLoadingDepartureCities 
-                ? 'Chargement...' 
-                : formData.departureCountry 
-                  ? t('common.select') 
-                  : t('trips.selectCountryFirst')
-            }
-            error={errors.departureCity}
-            disabled={!formData.departureCountry || isLoadingDepartureCities}
+            countryId={formData.departureCountryId}
+            value={formData.departureCityId}
+            onChange={(id) => handleInputChange('departureCityId', id ?? undefined)}
+            error={errors.departureCityId}
             required
           />
         </div>
@@ -477,30 +357,19 @@ export default function NewTripPage() {
             </div>
             <span className="font-bold text-blue-700 text-xs uppercase tracking-widest">Arrivée</span>
           </div>
-          <Select
+          <CountrySelect
             label={t('trips.arrivalCountry')}
-            value={formData.arrivalCountry || ''}
-            onChange={(value) => handleInputChange('arrivalCountry', value)}
-            options={arrivalCountries.map(c => ({ value: c, label: c }))}
-            placeholder={isLoadingCountries ? 'Chargement...' : formData.departureCountry ? t('common.select') : 'Sélectionnez d\'abord le pays de départ'}
-            error={errors.arrivalCountry}
-            disabled={isLoadingCountries || !formData.departureCountry || arrivalCountries.length === 0}
+            value={formData.arrivalCountryId}
+            onChange={(id) => handleInputChange('arrivalCountryId', id ?? undefined)}
+            error={errors.arrivalCountryId}
             required
           />
-          <Select
+          <CitySelect
             label={t('trips.arrivalCity')}
-            value={formData.arrivalCity || ''}
-            onChange={(value) => handleInputChange('arrivalCity', value)}
-            options={arrivalCities.map(c => ({ value: c, label: c }))}
-            placeholder={
-              isLoadingArrivalCities 
-                ? 'Chargement...' 
-                : formData.arrivalCountry 
-                  ? t('common.select') 
-                  : t('trips.selectCountryFirst')
-            }
-            error={errors.arrivalCity}
-            disabled={!formData.arrivalCountry || isLoadingArrivalCities}
+            countryId={formData.arrivalCountryId}
+            value={formData.arrivalCityId}
+            onChange={(id) => handleInputChange('arrivalCityId', id ?? undefined)}
+            error={errors.arrivalCityId}
             required
           />
         </div>
@@ -858,8 +727,12 @@ export default function NewTripPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-xs uppercase tracking-widest opacity-75 mb-1 font-medium">Départ</div>
-                <div className="font-bold text-xl leading-tight">{formData.departureCity}</div>
-                <div className="text-sm opacity-80">{formData.departureCountry}</div>
+                <div className="font-bold text-xl leading-tight">
+                  {formData.departureCityId ? getCityById(formData.departureCityId)?.name : '—'}
+                </div>
+                <div className="text-sm opacity-80">
+                  {formData.departureCountryId ? getCountryById(formData.departureCountryId)?.name : '—'}
+                </div>
                 <div className="text-xs opacity-65 mt-1 font-medium">{formData.departureDate}</div>
               </div>
               <div className="flex flex-col items-center opacity-80">
@@ -869,8 +742,12 @@ export default function NewTripPage() {
               </div>
               <div className="text-right">
                 <div className="text-xs uppercase tracking-widest opacity-75 mb-1 font-medium">Arrivée</div>
-                <div className="font-bold text-xl leading-tight">{formData.arrivalCity}</div>
-                <div className="text-sm opacity-80">{formData.arrivalCountry}</div>
+                <div className="font-bold text-xl leading-tight">
+                  {formData.arrivalCityId ? getCityById(formData.arrivalCityId)?.name : '—'}
+                </div>
+                <div className="text-sm opacity-80">
+                  {formData.arrivalCountryId ? getCountryById(formData.arrivalCountryId)?.name : '—'}
+                </div>
                 <div className="text-xs opacity-65 mt-1 font-medium">{formData.arrivalDate}</div>
               </div>
             </div>

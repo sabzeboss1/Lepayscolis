@@ -10,6 +10,7 @@ export interface User {
   kyc_status: 'pending' | 'approved' | 'rejected' | 'not_submitted';
   role: 'user' | 'admin' | 'super_admin';
   locale: 'fr' | 'en';
+  currency_code: string;
   created_at: string;
   updated_at: string;
 }

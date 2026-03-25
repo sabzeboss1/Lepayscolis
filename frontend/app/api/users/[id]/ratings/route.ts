@@ -3,16 +3,16 @@ import { mockRatings } from '@/lib/api/mockData';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Filter ratings for this user
-    const userRatings = mockRatings.filter(r => r.rated_id === id);
-    
+    const userRatings = mockRatings.filter(r => r.to_user_id === id);
+
     // Calculate average rating
-    const totalScore = userRatings.reduce((sum, r) => sum + r.score, 0);
+    const totalScore = userRatings.reduce((sum, r) => sum + r.rating, 0);
     const averageRating = userRatings.length > 0 ? totalScore / userRatings.length : 0;
     
     // Sort by date (newest first)

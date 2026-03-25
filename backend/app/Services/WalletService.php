@@ -67,16 +67,19 @@ class WalletService
         float $amount,
         string $description,
         ?string $referenceType = null,
-        ?string $referenceId = null
+        ?string $referenceId = null,
+        ?float $originalAmount = null,
+        ?string $originalCurrencyCode = null,
+        ?float $exchangeRateUsed = null
     ): WalletTransaction {
-        return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId) {
+        return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId, $originalAmount, $originalCurrencyCode, $exchangeRateUsed) {
             // Lock wallet row for update to prevent race conditions
             $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
-            
+
             // Update balance
             $wallet->balance += $amount;
             $wallet->save();
-            
+
             // Create transaction record
             $transaction = WalletTransaction::create([
                 'wallet_id' => $wallet->id,
@@ -86,6 +89,10 @@ class WalletService
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
                 'balance_after' => $wallet->balance,
+                'currency_code' => $wallet->currency_code ?? 'EUR',
+                'original_amount' => $originalAmount,
+                'original_currency_code' => $originalCurrencyCode,
+                'exchange_rate_used' => $exchangeRateUsed,
             ]);
             
             // Clear balance cache
@@ -138,11 +145,12 @@ class WalletService
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
                 'balance_after' => $wallet->balance,
+                'currency_code' => $wallet->currency_code ?? 'EUR',
             ]);
-            
+
             // Clear balance cache
             $this->clearBalanceCache($wallet->user_id);
-            
+
             return $transaction;
         });
     }
@@ -185,6 +193,7 @@ class WalletService
                 'reference_type' => 'admin',
                 'reference_id' => $admin->id,
                 'balance_after' => $wallet->balance,
+                'currency_code' => $wallet->currency_code ?? 'EUR',
             ]);
             
             // Create audit log entry

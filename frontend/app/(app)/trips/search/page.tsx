@@ -6,6 +6,9 @@ import { Trip } from '@/lib/types/trip';
 import { TripCard } from '@/components/ui/TripCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { CountrySelect } from '@/components/ui/CountrySelect';
+import { CitySelect } from '@/components/ui/CitySelect';
+import { useCountries } from '@/lib/hooks/useCountries';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 
@@ -13,18 +16,20 @@ export default function TripSearchPage() {
   const router = useRouter();
   const { t } = useTranslation();
   
+  const { getCityById, getCountryById } = useCountries();
+
   // Filter state
-  const [departureCity, setDepartureCity] = useState('');
-  const [arrivalCity, setArrivalCity] = useState('');
+  const [departureCountryId, setDepartureCountryId] = useState<number | undefined>();
+  const [departureCityId, setDepartureCityId] = useState<number | undefined>();
+  const [arrivalCountryId, setArrivalCountryId] = useState<number | undefined>();
+  const [arrivalCityId, setArrivalCityId] = useState<number | undefined>();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [minCapacity, setMinCapacity] = useState('');
   const [travelerName, setTravelerName] = useState('');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  
+
   // Debounced search values (300ms delay)
-  const debouncedDepartureCity = useDebounce(departureCity, 300);
-  const debouncedArrivalCity = useDebounce(arrivalCity, 300);
   const debouncedTravelerName = useDebounce(travelerName, 300);
   
   // Results state
@@ -40,12 +45,12 @@ export default function TripSearchPage() {
   const [page, setPage] = useState(1);
   const itemsPerPage = 9;
 
-  // Auto-search when debounced values change (if user has started searching)
+  // Auto-search when filter values change (if user has started searching)
   useEffect(() => {
     if (hasSearched) {
       handleSearch();
     }
-  }, [debouncedDepartureCity, debouncedArrivalCity, debouncedTravelerName, dateFrom, dateTo, minCapacity]);
+  }, [departureCityId, arrivalCityId, debouncedTravelerName, dateFrom, dateTo, minCapacity]);
 
   const handleSearch = useCallback(async () => {
     setLoading(true);
@@ -55,8 +60,15 @@ export default function TripSearchPage() {
 
     try {
       const params = new URLSearchParams();
-      if (debouncedDepartureCity) params.append('departure_city', debouncedDepartureCity);
-      if (debouncedArrivalCity) params.append('arrival_city', debouncedArrivalCity);
+      // Send city names for backward compatibility with backend search
+      if (departureCityId) {
+        const city = getCityById(departureCityId);
+        if (city) params.append('departure_city', city.name);
+      }
+      if (arrivalCityId) {
+        const city = getCityById(arrivalCityId);
+        if (city) params.append('arrival_city', city.name);
+      }
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
       if (minCapacity) params.append('min_capacity', minCapacity);
@@ -85,11 +97,13 @@ export default function TripSearchPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedDepartureCity, debouncedArrivalCity, dateFrom, dateTo, minCapacity, debouncedTravelerName, t]);
+  }, [departureCityId, arrivalCityId, getCityById, dateFrom, dateTo, minCapacity, debouncedTravelerName, t]);
 
   const handleClearFilters = () => {
-    setDepartureCity('');
-    setArrivalCity('');
+    setDepartureCountryId(undefined);
+    setDepartureCityId(undefined);
+    setArrivalCountryId(undefined);
+    setArrivalCityId(undefined);
     setDateFrom('');
     setDateTo('');
     setMinCapacity('');
@@ -107,11 +121,11 @@ export default function TripSearchPage() {
   const sortedTrips = [...trips].sort((a, b) => {
     switch (sortBy) {
       case 'date':
-        return new Date(a.departure.date).getTime() - new Date(b.departure.date).getTime();
+        return new Date(a.departure_date).getTime() - new Date(b.departure_date).getTime();
       case 'price':
-        return a.pricePerKg - b.pricePerKg;
+        return a.price_per_kg - b.price_per_kg;
       case 'rating':
-        return b.traveler.rating - a.traveler.rating;
+        return (b.traveler?.rating ?? 0) - (a.traveler?.rating ?? 0);
       default:
         return 0;
     }
@@ -122,9 +136,11 @@ export default function TripSearchPage() {
   const totalPages = Math.ceil(sortedTrips.length / itemsPerPage);
 
   // Active filters
+  const departureCityName = departureCityId ? getCityById(departureCityId)?.name : '';
+  const arrivalCityName = arrivalCityId ? getCityById(arrivalCityId)?.name : '';
   const activeFilters = [
-    departureCity && { label: `${t('trips.departure')}: ${departureCity}`, clear: () => setDepartureCity('') },
-    arrivalCity && { label: `${t('trips.arrival')}: ${arrivalCity}`, clear: () => setArrivalCity('') },
+    departureCityName && { label: `${t('trips.departure')}: ${departureCityName}`, clear: () => { setDepartureCountryId(undefined); setDepartureCityId(undefined); } },
+    arrivalCityName && { label: `${t('trips.arrival')}: ${arrivalCityName}`, clear: () => { setArrivalCountryId(undefined); setArrivalCityId(undefined); } },
     dateFrom && { label: `From: ${dateFrom}`, clear: () => setDateFrom('') },
     dateTo && { label: `To: ${dateTo}`, clear: () => setDateTo('') },
     minCapacity && { label: `Min ${minCapacity}kg`, clear: () => setMinCapacity('') },
@@ -203,22 +219,30 @@ export default function TripSearchPage() {
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              <Input
-                type="text"
+              <CountrySelect
+                label={t('trips.departureCountry')}
+                value={departureCountryId}
+                onChange={(id) => setDepartureCountryId(id ?? undefined)}
+              />
+              <CitySelect
                 label={t('trips.departureCity')}
-                value={departureCity}
-                onChange={(e) => setDepartureCity(e.target.value)}
-                placeholder={t('trips.departureCity')}
+                countryId={departureCountryId}
+                value={departureCityId}
+                onChange={(id) => setDepartureCityId(id ?? undefined)}
               />
-              
-              <Input
-                type="text"
+
+              <CountrySelect
+                label={t('trips.arrivalCountry')}
+                value={arrivalCountryId}
+                onChange={(id) => setArrivalCountryId(id ?? undefined)}
+              />
+              <CitySelect
                 label={t('trips.arrivalCity')}
-                value={arrivalCity}
-                onChange={(e) => setArrivalCity(e.target.value)}
-                placeholder={t('trips.arrivalCity')}
+                countryId={arrivalCountryId}
+                value={arrivalCityId}
+                onChange={(id) => setArrivalCityId(id ?? undefined)}
               />
-              
+
               <Input
                 type="text"
                 label={t('trips.travelerName')}
@@ -226,7 +250,7 @@ export default function TripSearchPage() {
                 onChange={(e) => setTravelerName(e.target.value)}
                 placeholder={t('trips.travelerNamePlaceholder')}
               />
-              
+
               <Input
                 type="number"
                 label={t('trips.capacity')}
@@ -234,14 +258,14 @@ export default function TripSearchPage() {
                 onChange={(e) => setMinCapacity(e.target.value)}
                 placeholder="Min kg"
               />
-              
+
               <Input
                 type="date"
                 label={`${t('trips.departureDate')} (From)`}
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
               />
-              
+
               <Input
                 type="date"
                 label={`${t('trips.departureDate')} (To)`}

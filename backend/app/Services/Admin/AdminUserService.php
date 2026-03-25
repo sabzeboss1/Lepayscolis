@@ -18,7 +18,7 @@ class AdminUserService
      */
     public function getUsers(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = User::query();
+        $query = User::where('role', 'user');
 
         // Search by name, email, or phone
         if (!empty($filters['search'])) {
@@ -37,11 +37,6 @@ class AdminUserService
             } elseif ($filters['status'] === 'suspended') {
                 $query->whereNotNull('deleted_at');
             }
-        }
-
-        // Filter by role
-        if (!empty($filters['role'])) {
-            $query->where('role', $filters['role']);
         }
 
         // Filter by KYC status
@@ -243,6 +238,52 @@ class AdminUserService
         AuditLog::log($admin, 'remove_admin_role', 'user', $userId, $before, $after);
 
         return $user->fresh();
+    }
+
+    /**
+     * Bulk suspend users.
+     *
+     * @param array $userIds
+     * @param User $admin
+     * @return int Number of users suspended
+     */
+    public function bulkSuspend(array $userIds, User $admin): int
+    {
+        $count = 0;
+        $users = User::whereIn('id', $userIds)->where('role', 'user')->get();
+
+        foreach ($users as $user) {
+            if (!$user->trashed()) {
+                $user->delete();
+                AuditLog::log($admin, 'suspend', 'user', $user->id, ['status' => 'active'], ['status' => 'suspended', 'reason' => 'Bulk action']);
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Bulk activate users.
+     *
+     * @param array $userIds
+     * @param User $admin
+     * @return int Number of users activated
+     */
+    public function bulkActivate(array $userIds, User $admin): int
+    {
+        $count = 0;
+        $users = User::withTrashed()->whereIn('id', $userIds)->where('role', 'user')->get();
+
+        foreach ($users as $user) {
+            if ($user->trashed()) {
+                $user->restore();
+                AuditLog::log($admin, 'activate', 'user', $user->id, ['status' => 'suspended'], ['status' => 'active']);
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**

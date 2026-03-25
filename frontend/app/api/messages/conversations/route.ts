@@ -26,36 +26,38 @@ export async function GET(request: NextRequest) {
 
     allMessages.forEach(message => {
       // Only include conversations involving current user
-      if (message.senderId !== currentUserId && message.recipientId !== currentUserId) {
+      if (message.sender_id !== currentUserId && message.recipient_id !== currentUserId) {
         return;
       }
 
-      const conversationId = message.conversationId;
+      const conversationId = message.conversation_id;
 
       if (!conversationMap.has(conversationId)) {
         // Determine other participant
-        const otherUserId = message.senderId === currentUserId
-          ? message.recipientId
-          : message.senderId;
+        const otherUserId = message.sender_id === currentUserId
+          ? message.recipient_id
+          : message.sender_id;
 
         // Find other user info
         const otherUser = mockUsers.find(u => u.id === otherUserId);
 
         conversationMap.set(conversationId, {
           id: conversationId,
-          participants: [currentUserId, otherUserId] as [string, string],
-          lastMessage: message,
-          unreadCount: 0,
-          updatedAt: message.createdAt,
-          otherUser: otherUser,
+          user1_id: currentUserId,
+          user2_id: otherUserId,
+          last_message: message,
+          unread_count: 0,
+          updated_at: message.created_at,
+          created_at: message.created_at,
+          other_user: otherUser,
         });
       } else {
         const conversation = conversationMap.get(conversationId)!;
 
         // Update last message if this one is newer
-        if (message.createdAt > conversation.lastMessage.createdAt) {
-          conversation.lastMessage = message;
-          conversation.updatedAt = message.createdAt;
+        if (message.created_at > (conversation.last_message?.created_at ?? '')) {
+          conversation.last_message = message;
+          conversation.updated_at = message.created_at;
         }
       }
     });
@@ -63,16 +65,16 @@ export async function GET(request: NextRequest) {
     // Calculate unread counts
     conversationMap.forEach(conversation => {
       const unreadMessages = allMessages.filter(msg =>
-        msg.conversationId === conversation.id &&
-        msg.recipientId === currentUserId &&
+        msg.conversation_id === conversation.id &&
+        msg.recipient_id === currentUserId &&
         !msg.read
       );
-      conversation.unreadCount = unreadMessages.length;
+      conversation.unread_count = unreadMessages.length;
     });
 
     // Convert to array and sort by last message date
     const conversations = Array.from(conversationMap.values())
-      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
     return NextResponse.json({
       conversations,

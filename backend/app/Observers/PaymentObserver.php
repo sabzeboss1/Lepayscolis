@@ -4,18 +4,25 @@ namespace App\Observers;
 
 use App\Events\PaymentStatusChanged;
 use App\Models\Payment;
+use App\Models\PlatformSetting;
 
 class PaymentObserver
 {
     /**
      * Handle the Payment "creating" event.
-     * Calculate platform_fee (15%) and traveler_amount (85%) before saving.
+     * Calculate fees using PlatformSetting double commission model.
      */
     public function creating(Payment $payment): void
     {
-        // Calculate platform fee (15%) and traveler amount (85%)
-        $payment->platform_fee = $payment->amount * 0.15;
-        $payment->traveler_amount = $payment->amount * 0.85;
+        // If base_amount is set, calculate fees from it using PlatformSetting
+        if ($payment->base_amount > 0) {
+            $fees = PlatformSetting::calculateFees($payment->base_amount);
+            $payment->sender_fee = $fees['sender_fee'];
+            $payment->traveler_fee = $fees['traveler_fee'];
+            $payment->amount = $fees['total_sender_pays'];
+            $payment->platform_fee = $fees['platform_revenue'];
+            $payment->traveler_amount = $fees['traveler_receives'];
+        }
     }
 
     /**

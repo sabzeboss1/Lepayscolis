@@ -6,6 +6,8 @@ use App\Http\Requests\Shipment\AcceptShipmentRequest;
 use App\Http\Requests\Shipment\CreateShipmentRequest;
 use App\Http\Requests\Shipment\UpdateShipmentRequest;
 use App\Http\Resources\ShipmentResource;
+use App\Models\City;
+use App\Models\Country;
 use App\Models\Shipment;
 use App\Models\Trip;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +24,7 @@ use Illuminate\Support\Facades\DB;
  * - GET /api/shipments/my: get user's shipments
  * - PUT /api/shipments/{id}: update shipment status
  * - POST /api/shipments/{id}/accept: traveler accepts shipment
+ * - POST /api/shipments/{id}/reject: traveler rejects shipment
  * - POST /api/shipments/{id}/confirm-delivery: confirm delivery
  * 
  * Validates Requirements: 4.1-4.19
@@ -35,7 +38,7 @@ class ShipmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Shipment::with(['sender', 'traveler', 'trip']);
+        $query = Shipment::with(['sender', 'traveler', 'trip', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity']);
 
         // Filter by status
         if ($request->has('status')) {
@@ -69,21 +72,26 @@ class ShipmentController extends Controller
     {
         return DB::transaction(function () use ($request) {
             $user = auth()->user();
-            
+            $data = $request->validated();
+
+            // Auto-populate text fields from country/city IDs
+            $data = $this->resolveLocationNames($data, 'pickup');
+            $data = $this->resolveLocationNames($data, 'delivery');
+
             // Get trip to calculate payment amount
-            $tripId = $request->input('trip_id');
+            $tripId = $data['trip_id'] ?? null;
             if (!$tripId) {
                 return response()->json([
                     'message' => 'Trip ID is required to calculate payment amount.',
                 ], 422);
             }
-            
+
             $trip = Trip::findOrFail($tripId);
-            
+
             // Calculate payment amount
-            $packageWeight = $request->input('package_weight');
+            $packageWeight = $data['package_weight'];
             $paymentAmount = $packageWeight * $trip->price_per_kg;
-            
+
             // Get sender's wallet
             $wallet = $user->wallet;
             if (!$wallet) {
@@ -91,11 +99,11 @@ class ShipmentController extends Controller
                     'message' => 'Wallet not found. Please contact support.',
                 ], 500);
             }
-            
+
             // Check available balance (balance - held_balance)
             $walletService = app(\App\Services\WalletService::class);
             $availableBalance = $walletService->getAvailableBalance($wallet);
-            
+
             if ($availableBalance < $paymentAmount) {
                 return response()->json([
                     'message' => 'Insufficient balance. Please recharge your wallet.',
@@ -104,26 +112,14 @@ class ShipmentController extends Controller
                     'shortfall' => number_format($paymentAmount - $availableBalance, 2),
                 ], 422);
             }
-            
+
             // Create shipment with validated data
-            $shipment = new Shipment([
-                'sender_id' => $user->id,
-                'trip_id' => $tripId,
-                'pickup_country' => $request->input('pickup_country'),
-                'pickup_city' => $request->input('pickup_city'),
-                'pickup_address' => $request->input('pickup_address'),
-                'delivery_country' => $request->input('delivery_country'),
-                'delivery_city' => $request->input('delivery_city'),
-                'delivery_address' => $request->input('delivery_address'),
-                'package_description' => $request->input('package_description'),
-                'package_weight' => $packageWeight,
-                'package_length' => $request->input('package_length'),
-                'package_width' => $request->input('package_width'),
-                'package_height' => $request->input('package_height'),
-                'status' => 'pending',
-                'payment_status' => 'escrowed',
-                'payment_amount' => $paymentAmount,
-            ]);
+            $shipment = new Shipment($data);
+            $shipment->sender_id = $user->id;
+            $shipment->status = 'pending';
+            $shipment->payment_status = 'escrowed';
+            $shipment->payment_amount = $paymentAmount;
+
             $shipment->save();
             
             // Hold funds in wallet
@@ -159,7 +155,7 @@ class ShipmentController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $shipment = Shipment::with(['sender', 'traveler', 'trip.traveler'])
+        $shipment = Shipment::with(['sender', 'traveler', 'trip.traveler', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity'])
             ->findOrFail($id);
 
         return response()->json([
@@ -177,7 +173,7 @@ class ShipmentController extends Controller
     {
         $userId = auth()->id();
 
-        $query = Shipment::with(['sender', 'traveler', 'trip'])
+        $query = Shipment::with(['sender', 'traveler', 'trip', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity'])
             ->where(function ($q) use ($userId) {
                 $q->where('sender_id', $userId)
                   ->orWhere('traveler_id', $userId);
@@ -266,11 +262,18 @@ class ShipmentController extends Controller
         return DB::transaction(function () use ($request, $id) {
             $shipment = Shipment::findOrFail($id);
 
+            // Restore trip capacity if transitioning from accepted to cancelled
+            if ($request->status === 'cancelled' && $shipment->status === 'accepted' && $shipment->trip_id) {
+                $trip = $shipment->trip;
+                $trip->available_capacity += $shipment->package_weight;
+                $trip->save();
+            }
+
             $shipment->status = $request->status;
             $shipment->save();
 
             return response()->json([
-                'message' => 'Shipment status updated successfully.',
+                'message' => __('messages.shipment.updated'),
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });
@@ -372,5 +375,79 @@ class ShipmentController extends Controller
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });
+    }
+
+    /**
+     * Traveler rejects a shipment request.
+     *
+     * POST /api/shipments/{id}/reject
+     * Requires: auth:sanctum
+     */
+    public function reject(string $id): JsonResponse
+    {
+        return DB::transaction(function () use ($id) {
+            $shipment = Shipment::findOrFail($id);
+            $user = auth()->user();
+
+            // Must be the traveler assigned to this shipment or the trip owner
+            $authorized = false;
+            if ($shipment->traveler_id === $user->id) {
+                $authorized = true;
+            } elseif ($shipment->trip_id && $shipment->trip->traveler_id === $user->id) {
+                $authorized = true;
+            }
+
+            if (!$authorized) {
+                return response()->json([
+                    'message' => __('messages.shipment.reject_unauthorized'),
+                ], 403);
+            }
+
+            if (!$shipment->canTransitionTo('cancelled')) {
+                return response()->json([
+                    'message' => __('messages.shipment.cannot_reject'),
+                ], 422);
+            }
+
+            // Restore capacity if shipment was accepted
+            if ($shipment->status === 'accepted' && $shipment->trip_id) {
+                $trip = $shipment->trip;
+                $trip->available_capacity += $shipment->package_weight;
+                $trip->save();
+            }
+
+            $shipment->status = 'cancelled';
+            $shipment->save();
+
+            return response()->json([
+                'message' => __('messages.shipment.rejected'),
+                'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
+            ]);
+        });
+    }
+
+    /**
+     * Resolve country/city names from IDs and populate text fields.
+     */
+    private function resolveLocationNames(array $data, string $prefix): array
+    {
+        $countryKey = "{$prefix}_country_id";
+        $cityKey = "{$prefix}_city_id";
+
+        if (isset($data[$countryKey])) {
+            $country = Country::find($data[$countryKey]);
+            if ($country) {
+                $data["{$prefix}_country"] = $country->name_en;
+            }
+        }
+
+        if (isset($data[$cityKey])) {
+            $city = City::find($data[$cityKey]);
+            if ($city) {
+                $data["{$prefix}_city"] = $city->name_en;
+            }
+        }
+
+        return $data;
     }
 }

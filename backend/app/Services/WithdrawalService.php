@@ -60,7 +60,10 @@ class WithdrawalService
         $maximumAmount = config('wallet.maximum_withdrawal');
         if ($maximumAmount !== null && $amount > $maximumAmount) {
             throw new \InvalidArgumentException(
-                sprintf('Withdrawal amount %.2f EUR exceeds the maximum allowed amount of %.2f EUR', $amount, $maximumAmount)
+                sprintf('Withdrawal amount %.2f %s exceeds the maximum allowed amount of %.2f %s',
+                    $amount, $this->walletService->getWallet($user)->currency_code ?? 'EUR',
+                    $maximumAmount, $this->walletService->getWallet($user)->currency_code ?? 'EUR'
+                )
             );
         }
         

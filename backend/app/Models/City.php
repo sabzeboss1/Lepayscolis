@@ -2,37 +2,49 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class City extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
+        'name_en',
+        'name_fr',
         'country_id',
-        'name',
         'is_active',
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
-    /**
-     * Get the country that owns the city.
-     */
+    // --- Relationships ---
+
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
 
-    /**
-     * Scope a query to only include active cities.
-     */
+    // --- Scopes ---
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeForCountry($query, int $countryId)
+    {
+        return $query->where('country_id', $countryId);
+    }
+
+    // --- Accessor ---
+
+    public function getNameAttribute(): string
+    {
+        $locale = app()->getLocale();
+        return $locale === 'fr' ? $this->name_fr : $this->name_en;
     }
 }

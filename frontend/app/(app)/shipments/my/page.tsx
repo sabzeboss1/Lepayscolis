@@ -37,7 +37,7 @@ export default function MyShipmentsPage() {
       setShipments(response.data || []);
     } catch (err) {
       console.error('Failed to fetch shipments:', err);
-      setError(ErrorHandler.handle(err));
+      setError(ErrorHandler.handle(err).message);
     } finally {
       setIsLoading(false);
     }
@@ -265,7 +265,7 @@ export default function MyShipmentsPage() {
                   <div className="border-t pt-4">
                     <p className="font-medium text-gray-900 mb-2">{t('shipments.matchedTraveler')}</p>
                     <UserCard
-                      user={shipment.traveler}
+                      user={shipment.traveler as any}
                       showContactButton={shipment.status !== 'cancelled' && shipment.status !== 'delivered'}
                       onClick={() => router.push(`/profile/${shipment.traveler?.id}`)}
                     />

@@ -150,14 +150,14 @@ export default function SubmitRatingPage() {
         {/* User Info */}
         <div className="flex items-center gap-4 mb-8 pb-8 border-b">
           <img
-            src={ratedUser.avatar}
+            src={ratedUser.avatar ?? undefined}
             alt={ratedUser.name}
             className="w-16 h-16 rounded-full object-cover"
           />
           <div>
             <h2 className="text-xl font-semibold">{ratedUser.name}</h2>
             <p className="text-gray-600">
-              {shipment.travelerId === ratedUser.id ? t('trips.travelerInfo') : t('shipments.sender')}
+              {shipment.traveler_id === ratedUser.id ? t('trips.travelerInfo') : t('shipments.sender')}
             </p>
           </div>
         </div>
@@ -166,13 +166,13 @@ export default function SubmitRatingPage() {
         <div className="mb-8 pb-8 border-b">
           <h3 className="text-lg font-semibold mb-4">{t('shipments.packageDetails')}</h3>
           <div className="space-y-2 text-gray-700">
-            <p><strong>{t('shipments.description')}:</strong> {shipment.package.description}</p>
-            <p><strong>{t('shipments.weight')}:</strong> {shipment.package.weight} kg</p>
+            <p><strong>{t('shipments.description')}:</strong> {shipment.package_description}</p>
+            <p><strong>{t('shipments.weight')}:</strong> {shipment.package_weight} kg</p>
             <p>
-              <strong>{t('shipments.pickup')}:</strong> {shipment.pickup.city}, {shipment.pickup.country}
+              <strong>{t('shipments.pickup')}:</strong> {shipment.pickup_city}, {shipment.pickup_country}
             </p>
             <p>
-              <strong>{t('shipments.delivery')}:</strong> {shipment.delivery.city}, {shipment.delivery.country}
+              <strong>{t('shipments.delivery')}:</strong> {shipment.delivery_city}, {shipment.delivery_country}
             </p>
           </div>
         </div>

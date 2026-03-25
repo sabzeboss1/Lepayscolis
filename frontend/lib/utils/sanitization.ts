@@ -10,7 +10,8 @@ let DOMPurify: any = null;
 
 // Dynamically import DOMPurify only on client side
 if (typeof window !== 'undefined') {
-  import('dompurify').then((module) => {
+  // @ts-ignore - dompurify is an optional dependency
+  import('dompurify').then((module: any) => {
     DOMPurify = module.default;
   });
 }

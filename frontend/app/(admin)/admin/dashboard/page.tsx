@@ -11,6 +11,7 @@ import PieChart from '@/components/admin/PieChart';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface DashboardMetrics {
   total_users: number;
@@ -123,15 +124,7 @@ export default function AdminDashboardPage() {
   };
 
   const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US';
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(dateLocale, {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const { formatCurrency } = useAdminCurrency();
 
   return (
     <div className="space-y-6">
@@ -193,7 +186,7 @@ export default function AdminDashboardPage() {
 
         <MetricCard
           title={t('admin.dashboard.revenue30Days')}
-          value={metrics ? formatCurrency(metrics.revenue_30_days) : '0 €'}
+          value={metrics ? formatCurrency(metrics.revenue_30_days) : formatCurrency(0)}
           icon={DollarSign}
           href="/admin/payments"
           loading={loading}

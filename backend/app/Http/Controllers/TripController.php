@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Trip\CreateTripRequest;
 use App\Http\Requests\Trip\SearchTripsRequest;
 use App\Http\Requests\Trip\UpdateTripRequest;
+use App\Http\Resources\ShipmentResource;
 use App\Http\Resources\TripResource;
+use App\Models\City;
+use App\Models\Country;
 use App\Models\Trip;
 use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
@@ -23,7 +26,8 @@ use Illuminate\Support\Facades\Log;
  * - GET /api/trips/my: get authenticated user's trips
  * - PUT /api/trips/{id}: update trip (owner only)
  * - DELETE /api/trips/{id}: soft delete trip (owner only)
- * 
+ * - GET /api/trips/{id}/shipments: list trip's shipments (owner only)
+ *
  * Validates Requirements: 3.1-3.16
  */
 class TripController extends Controller
@@ -47,10 +51,25 @@ class TripController extends Controller
     public function index(SearchTripsRequest $request): JsonResponse
     {
         $query = Trip::query()
-            ->with('traveler') // Eager load to prevent N+1 queries
-            ->active();
+            ->with(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity'])
+            ->active()
+            ->verified();
 
-        // Apply search filters
+        // Apply ID-based filters
+        if ($request->filled('departure_country_id')) {
+            $query->where('departure_country_id', $request->departure_country_id);
+        }
+        if ($request->filled('departure_city_id')) {
+            $query->where('departure_city_id', $request->departure_city_id);
+        }
+        if ($request->filled('arrival_country_id')) {
+            $query->where('arrival_country_id', $request->arrival_country_id);
+        }
+        if ($request->filled('arrival_city_id')) {
+            $query->where('arrival_city_id', $request->arrival_city_id);
+        }
+
+        // Apply text search filters (backward compat)
         if ($request->filled('departure')) {
             $query->where('departure_city', 'like', '%' . $request->departure . '%');
         }
@@ -106,6 +125,12 @@ class TripController extends Controller
             $data = $request->validated();
             $data['traveler_id'] = $request->user()->id;
             $data['status'] = 'active';
+            $data['verification_status'] = 'pending';
+
+            // Auto-populate text fields from country/city IDs
+            $data = $this->resolveLocationNames($data, 'departure');
+
+            $data = $this->resolveLocationNames($data, 'arrival');
 
             // Upload travel proof if provided
             if ($request->hasFile('travel_proof')) {
@@ -140,8 +165,8 @@ class TripController extends Controller
 
             DB::commit();
 
-            // Load traveler relationship
-            $trip->load('traveler');
+            // Load relationships
+            $trip->load(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity']);
 
             Log::info('Trip created successfully', [
                 'trip_id' => $trip->id,
@@ -176,12 +201,22 @@ class TripController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $trip = Trip::with('traveler')->find($id);
+        $trip = Trip::with(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity'])->find($id);
 
         if (!$trip) {
             return response()->json([
                 'message' => 'Trip not found'
             ], 404);
+        }
+
+        // Non-verified trips are only visible to their owner or admins
+        if ($trip->verification_status !== 'verified') {
+            $user = auth('sanctum')->user();
+            if (!$user || ($trip->traveler_id !== $user->id && !$user->isAdmin())) {
+                return response()->json([
+                    'message' => 'Trip not found'
+                ], 404);
+            }
         }
 
         return response()->json([
@@ -197,7 +232,7 @@ class TripController extends Controller
     public function myTrips(Request $request): JsonResponse
     {
         $trips = Trip::query()
-            ->with('traveler')
+            ->with(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity'])
             ->where('traveler_id', $request->user()->id)
             ->orderBy('departure_date', 'desc')
             ->paginate(15);
@@ -233,6 +268,14 @@ class TripController extends Controller
 
             $data = $request->validated();
 
+            // Auto-populate text fields if location IDs provided
+            if (isset($data['departure_country_id']) || isset($data['departure_city_id'])) {
+                $data = $this->resolveLocationNames($data, 'departure');
+            }
+            if (isset($data['arrival_country_id']) || isset($data['arrival_city_id'])) {
+                $data = $this->resolveLocationNames($data, 'arrival');
+            }
+
             // Upload new travel proof if provided
             if ($request->hasFile('travel_proof')) {
                 try {
@@ -265,8 +308,8 @@ class TripController extends Controller
 
             DB::commit();
 
-            // Reload traveler relationship
-            $trip->load('traveler');
+            // Reload relationships
+            $trip->load(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity']);
 
             Log::info('Trip updated successfully', [
                 'trip_id' => $trip->id,
@@ -319,5 +362,71 @@ class TripController extends Controller
         return response()->json([
             'message' => 'Trip deleted successfully'
         ]);
+    }
+
+    /**
+     * List shipments for a trip (trip owner only).
+     *
+     * GET /api/trips/{id}/shipments
+     * Requires: auth:sanctum
+     */
+    public function shipments(Request $request, string $id): JsonResponse
+    {
+        $trip = Trip::findOrFail($id);
+
+        // Only trip owner can see all shipments
+        if ($trip->traveler_id !== auth()->id()) {
+            return response()->json([
+                'message' => __('messages.trip.unauthorized'),
+            ], 403);
+        }
+
+        $query = $trip->shipments()->with(['sender', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity']);
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $shipments = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return response()->json([
+            'data' => ShipmentResource::collection($shipments->items()),
+            'meta' => [
+                'current_page' => $shipments->currentPage(),
+                'last_page' => $shipments->lastPage(),
+                'per_page' => $shipments->perPage(),
+                'total' => $shipments->total(),
+            ],
+            'summary' => [
+                'remaining_capacity' => $trip->remainingCapacity(),
+                'accepted_weight' => $trip->acceptedShipmentsWeight(),
+                'accepted_count' => $trip->acceptedShipmentsCount(),
+            ],
+        ]);
+    }
+
+    /**
+     * Resolve country/city names from IDs and populate text fields.
+     */
+    private function resolveLocationNames(array $data, string $prefix): array
+    {
+        $countryKey = "{$prefix}_country_id";
+        $cityKey = "{$prefix}_city_id";
+
+        if (isset($data[$countryKey])) {
+            $country = Country::find($data[$countryKey]);
+            if ($country) {
+                $data["{$prefix}_country"] = $country->name_en;
+            }
+        }
+
+        if (isset($data[$cityKey])) {
+            $city = City::find($data[$cityKey]);
+            if ($city) {
+                $data["{$prefix}_city"] = $city->name_en;
+            }
+        }
+
+        return $data;
     }
 }

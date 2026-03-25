@@ -2,14 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, ZoomIn, ZoomOut, Download, User, Mail, Phone, Calendar, FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-
-interface KYCDocument {
-  id: string;
-  type: 'idCard' | 'passport' | 'driversLicense';
-  front_url: string;
-  back_url?: string;
-  selfie_url: string;
-}
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface KYCSubmission {
   id: string;
@@ -21,9 +14,11 @@ interface KYCSubmission {
   };
   document_type: 'idCard' | 'passport' | 'driversLicense';
   document_number: string;
+  document_front_url: string | null;
+  document_back_url: string | null;
+  selfie_url: string | null;
   submitted_at: string;
   status: 'pending' | 'approved' | 'rejected';
-  documents: KYCDocument[];
   rejection_reason?: string;
 }
 
@@ -44,6 +39,7 @@ export default function KYCReviewModal({
   onReject,
   loading = false
 }: KYCReviewModalProps) {
+  const { t } = useTranslation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -93,39 +89,30 @@ export default function KYCReviewModal({
 
   if (!isOpen || !submission) return null;
 
-  // Organize images by type
+  // Build document images from flat fields
   const documentImages: { label: string; url: string }[] = [];
-  
-  submission.documents.forEach(doc => {
-    if (submission.document_type === 'idCard') {
-      documentImages.push({ label: 'CNI - Recto', url: doc.front_url });
-      if (doc.back_url) {
-        documentImages.push({ label: 'CNI - Verso', url: doc.back_url });
-      }
-    } else if (submission.document_type === 'passport') {
-      documentImages.push({ label: 'Passeport - Première page', url: doc.front_url });
-    } else if (submission.document_type === 'driversLicense') {
-      documentImages.push({ label: 'Permis de conduire', url: doc.front_url });
-    }
-    
-    // Add selfie separately
-    if (doc.selfie_url) {
-      documentImages.push({ label: 'Selfie avec document', url: doc.selfie_url });
-    }
-  });
 
-  const getDocumentTypeLabel = (type: string) => {
-    switch (type) {
-      case 'idCard':
-        return 'Carte d\'Identité Nationale (CNI)';
-      case 'passport':
-        return 'Passeport';
-      case 'driversLicense':
-        return 'Permis de Conduire';
-      default:
-        return type;
+  if (submission.document_front_url) {
+    if (submission.document_type === 'idCard') {
+      documentImages.push({ label: t('admin.kyc.review.idFront'), url: submission.document_front_url });
+    } else if (submission.document_type === 'passport') {
+      documentImages.push({ label: t('admin.kyc.review.passportPage'), url: submission.document_front_url });
+    } else if (submission.document_type === 'driversLicense') {
+      documentImages.push({ label: t('admin.kyc.review.driverLicense'), url: submission.document_front_url });
     }
-  };
+  }
+
+  if (submission.document_back_url) {
+    if (submission.document_type === 'idCard') {
+      documentImages.push({ label: t('admin.kyc.review.idBack'), url: submission.document_back_url });
+    } else {
+      documentImages.push({ label: t('admin.kyc.review.documentBack'), url: submission.document_back_url });
+    }
+  }
+
+  if (submission.selfie_url) {
+    documentImages.push({ label: t('admin.kyc.review.selfieWithDoc'), url: submission.selfie_url });
+  }
 
   const handleApprove = async () => {
     setIsSubmitting(true);
@@ -171,7 +158,7 @@ export default function KYCReviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fadeIn"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isLoading) {
           onClose();
@@ -189,13 +176,13 @@ export default function KYCReviewModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 id="kyc-modal-title" className="text-xl font-semibold text-gray-900">
-            KYC Review - {submission.user.name}
+            {t('admin.kyc.review.title')} - {submission.user.name}
           </h2>
           <button
             onClick={onClose}
             disabled={isLoading}
             className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-            aria-label="Close modal"
+            aria-label={t('common.close')}
           >
             <X className="w-6 h-6" />
           </button>
@@ -207,46 +194,46 @@ export default function KYCReviewModal({
             {/* Left: User Information */}
             <div className="space-y-6">
               <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">User Information</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">{t('admin.kyc.review.userInfo')}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center text-sm">
                     <User className="w-4 h-4 text-gray-400 mr-3" />
-                    <span className="text-gray-600 w-24">Name:</span>
+                    <span className="text-gray-600 w-24">{t('admin.kyc.review.name')}:</span>
                     <span className="text-gray-900 font-medium">{submission.user.name}</span>
                   </div>
                   <div className="flex items-center text-sm">
                     <Mail className="w-4 h-4 text-gray-400 mr-3" />
-                    <span className="text-gray-600 w-24">Email:</span>
+                    <span className="text-gray-600 w-24">{t('admin.kyc.review.email')}:</span>
                     <span className="text-gray-900">{submission.user.email}</span>
                   </div>
                   <div className="flex items-center text-sm">
                     <Phone className="w-4 h-4 text-gray-400 mr-3" />
-                    <span className="text-gray-600 w-24">Phone:</span>
+                    <span className="text-gray-600 w-24">{t('admin.kyc.review.phone')}:</span>
                     <span className="text-gray-900">{submission.user.phone}</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Document Information</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">{t('admin.kyc.review.documentInfo')}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center text-sm">
                     <FileText className="w-4 h-4 text-gray-400 mr-3" />
-                    <span className="text-gray-600 w-24">Type:</span>
+                    <span className="text-gray-600 w-24">{t('admin.kyc.review.type')}:</span>
                     <span className="text-gray-900 font-medium">
-                      {getDocumentTypeLabel(submission.document_type)}
+                      {t(`admin.kyc.documentTypes.${submission.document_type}`)}
                     </span>
                   </div>
                   <div className="flex items-center text-sm">
                     <FileText className="w-4 h-4 text-gray-400 mr-3" />
-                    <span className="text-gray-600 w-24">Number:</span>
+                    <span className="text-gray-600 w-24">{t('admin.kyc.review.number')}:</span>
                     <span className="text-gray-900 font-mono">{submission.document_number}</span>
                   </div>
                   <div className="flex items-center text-sm">
                     <Calendar className="w-4 h-4 text-gray-400 mr-3" />
-                    <span className="text-gray-600 w-24">Submitted:</span>
+                    <span className="text-gray-600 w-24">{t('admin.kyc.review.submitted')}:</span>
                     <span className="text-gray-900">
-                      {new Date(submission.submitted_at).toLocaleDateString('en-US', {
+                      {new Date(submission.submitted_at).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
@@ -261,11 +248,11 @@ export default function KYCReviewModal({
               {/* Reject Form */}
               {showRejectForm && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-red-900 mb-3">Rejection Reason</h3>
+                  <h3 className="text-sm font-semibold text-red-900 mb-3">{t('admin.kyc.review.rejectionReason')}</h3>
                   <textarea
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="Please provide a detailed reason for rejection (minimum 10 characters)..."
+                    placeholder={t('admin.kyc.review.rejectionPlaceholder')}
                     rows={4}
                     disabled={isLoading}
                     className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
@@ -283,7 +270,7 @@ export default function KYCReviewModal({
                         disabled={isLoading}
                         className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </button>
                       <button
                         onClick={handleReject}
@@ -291,7 +278,7 @@ export default function KYCReviewModal({
                         className="px-3 py-1.5 text-sm text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                       >
                         {isLoading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-                        Confirm Rejection
+                        {t('admin.kyc.review.confirmRejection')}
                       </button>
                     </div>
                   </div>
@@ -302,7 +289,7 @@ export default function KYCReviewModal({
             {/* Right: Document Viewer */}
             <div className="space-y-4">
               <div className="bg-gray-900 rounded-lg overflow-hidden relative" style={{ minHeight: '400px' }}>
-                {documentImages.length > 0 && (
+                {documentImages.length > 0 ? (
                   <>
                     <div className="relative">
                       <img
@@ -311,7 +298,7 @@ export default function KYCReviewModal({
                         className="w-full h-auto transition-transform duration-200"
                         style={{ transform: `scale(${zoom})` }}
                       />
-                      
+
                       {/* Image Label */}
                       <div className="absolute top-4 left-4 bg-black bg-opacity-75 rounded-lg px-3 py-1.5">
                         <span className="text-white text-sm font-medium">
@@ -319,14 +306,14 @@ export default function KYCReviewModal({
                         </span>
                       </div>
                     </div>
-                    
+
                     {/* Image Controls */}
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 bg-black bg-opacity-75 rounded-lg px-4 py-2">
                       <button
                         onClick={() => setZoom(Math.max(1, zoom - 0.25))}
                         disabled={zoom <= 1}
                         className="text-white hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label="Zoom out"
+                        aria-label={t('admin.kyc.review.zoomOut')}
                       >
                         <ZoomOut className="w-5 h-5" />
                       </button>
@@ -337,7 +324,7 @@ export default function KYCReviewModal({
                         onClick={() => setZoom(Math.min(3, zoom + 0.25))}
                         disabled={zoom >= 3}
                         className="text-white hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label="Zoom in"
+                        aria-label={t('admin.kyc.review.zoomIn')}
                       >
                         <ZoomIn className="w-5 h-5" />
                       </button>
@@ -345,12 +332,19 @@ export default function KYCReviewModal({
                       <button
                         onClick={() => handleDownload(documentImages[currentImageIndex].url)}
                         className="text-white hover:text-gray-300"
-                        aria-label="Download image"
+                        aria-label={t('admin.kyc.review.download')}
                       >
                         <Download className="w-5 h-5" />
                       </button>
                     </div>
                   </>
+                ) : (
+                  <div className="flex items-center justify-center h-full min-h-[400px]">
+                    <div className="text-center">
+                      <FileText className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                      <p className="text-gray-400">{t('admin.kyc.review.noDocuments')}</p>
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -370,7 +364,7 @@ export default function KYCReviewModal({
                             ? 'bg-blue-600'
                             : 'bg-gray-300 hover:bg-gray-400'
                         }`}
-                        aria-label={`View ${img.label}`}
+                        aria-label={`${t('admin.kyc.review.view')} ${img.label}`}
                       />
                     ))}
                   </div>
@@ -392,7 +386,7 @@ export default function KYCReviewModal({
               className="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
             >
               <XCircle className="w-4 h-4 mr-2" />
-              Reject
+              {t('admin.kyc.review.reject')}
             </button>
             <button
               onClick={handleApprove}
@@ -402,12 +396,12 @@ export default function KYCReviewModal({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
+                  {t('common.processing')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  Approve
+                  {t('admin.kyc.review.approve')}
                 </>
               )}
             </button>
@@ -422,12 +416,12 @@ export default function KYCReviewModal({
               {submission.status === 'approved' ? (
                 <>
                   <CheckCircle className="w-5 h-5 mr-2" />
-                  This KYC submission has been approved
+                  {t('admin.kyc.review.statusApproved')}
                 </>
               ) : (
                 <>
                   <XCircle className="w-5 h-5 mr-2" />
-                  This KYC submission has been rejected
+                  {t('admin.kyc.review.statusRejected')}
                 </>
               )}
             </div>

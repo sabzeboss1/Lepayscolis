@@ -2,11 +2,14 @@
 
 namespace App\Services\Admin;
 
+use App\Models\Currency;
 use App\Models\KYCDocument;
 use App\Models\Payment;
+use App\Models\PlatformSetting;
 use App\Models\Shipment;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\CurrencyService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -31,7 +34,7 @@ class AdminDashboardService
     {
         return Cache::remember('admin_dashboard_metrics', self::METRICS_CACHE_TTL, function () {
             return [
-                'total_users' => User::count(),
+                'total_users' => User::where('role', 'user')->count(),
                 'active_trips' => Trip::whereIn('status', ['upcoming', 'in_progress'])->count(),
                 'pending_shipments' => Shipment::where('status', 'pending')->count(),
                 'revenue_30_days' => $this->getRevenue30Days(),
@@ -113,15 +116,17 @@ class AdminDashboardService
 
             // Recent payments
             $recentPayments = Payment::with('user')
-                ->where('status', 'completed')
+                ->where('status', 'released')
                 ->latest('created_at')
                 ->take(5)
                 ->get();
 
+            $currencyService = app(CurrencyService::class);
             foreach ($recentPayments as $payment) {
+                $formatted = $currencyService->format($payment->amount, $payment->currency_code ?? 'EUR');
                 $activities[] = [
                     'type' => 'payment_completed',
-                    'description' => "Payment completed: €{$payment->amount}",
+                    'description' => "Payment released: {$formatted}",
                     'timestamp' => $payment->created_at,
                     'user' => [
                         'name' => $payment->user->name,
@@ -141,15 +146,28 @@ class AdminDashboardService
     }
 
     /**
-     * Calculate revenue for the last 30 days.
+     * Get the exchange rate for the system default currency.
+     */
+    protected function getTargetRate(): float
+    {
+        $defaultCurrency = PlatformSetting::get('default_currency', 'EUR');
+        return (float) (Currency::findByCode($defaultCurrency)?->exchange_rate ?? 1.0);
+    }
+
+    /**
+     * Calculate revenue for the last 30 days, converted to system default currency.
      *
      * @return float
      */
     protected function getRevenue30Days(): float
     {
-        return Payment::where('status', 'completed')
-            ->where('created_at', '>=', now()->subDays(30))
-            ->sum('amount');
+        $targetRate = $this->getTargetRate();
+
+        return (float) Payment::where('payments.status', 'released')
+            ->where('payments.created_at', '>=', now()->subDays(30))
+            ->join('currencies', 'payments.currency_code', '=', 'currencies.code')
+            ->selectRaw('SUM(payments.platform_fee * (? / currencies.exchange_rate)) as total', [$targetRate])
+            ->value('total') ?? 0.0;
     }
 
     /**
@@ -181,7 +199,7 @@ class AdminDashboardService
 
         for ($i = 0; $i < 30; $i++) {
             $date = $startDate->copy()->addDays($i);
-            $count = User::whereDate('created_at', $date->toDateString())->count();
+            $count = User::where('role', 'user')->whereDate('created_at', $date->toDateString())->count();
             
             $data[] = [
                 'date' => $date->toDateString(),
@@ -193,24 +211,27 @@ class AdminDashboardService
     }
 
     /**
-     * Get revenue data for the last 30 days.
+     * Get revenue data for the last 30 days, converted to system default currency.
      *
      * @return array
      */
     protected function getRevenueData(): array
     {
+        $targetRate = $this->getTargetRate();
         $data = [];
         $startDate = now()->subDays(29);
 
         for ($i = 0; $i < 30; $i++) {
             $date = $startDate->copy()->addDays($i);
-            $amount = Payment::where('status', 'completed')
-                ->whereDate('created_at', $date->toDateString())
-                ->sum('amount');
-            
+            $amount = (float) Payment::where('payments.status', 'released')
+                ->whereDate('payments.created_at', $date->toDateString())
+                ->join('currencies', 'payments.currency_code', '=', 'currencies.code')
+                ->selectRaw('SUM(payments.platform_fee * (? / currencies.exchange_rate)) as total', [$targetRate])
+                ->value('total') ?? 0.0;
+
             $data[] = [
                 'date' => $date->toDateString(),
-                'amount' => (float) $amount,
+                'amount' => $amount,
             ];
         }
 

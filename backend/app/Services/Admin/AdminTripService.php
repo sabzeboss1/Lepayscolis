@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Http\Resources\Admin\AdminTripResource;
 use App\Models\AuditLog;
 use App\Models\Trip;
 use App\Models\User;
@@ -33,16 +34,16 @@ class AdminTripService
      */
     public function getTrips(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Trip::with(['traveler', 'shipments']);
+        $query = Trip::with(['traveler', 'shipments', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity']);
 
-        // Search by origin, destination, or traveler name
+        // Search by departure/arrival city/country or traveler name
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('origin_city', 'like', "%{$search}%")
-                    ->orWhere('origin_country', 'like', "%{$search}%")
-                    ->orWhere('destination_city', 'like', "%{$search}%")
-                    ->orWhere('destination_country', 'like', "%{$search}%")
+                $q->where('departure_city', 'like', "%{$search}%")
+                    ->orWhere('departure_country', 'like', "%{$search}%")
+                    ->orWhere('arrival_city', 'like', "%{$search}%")
+                    ->orWhere('arrival_country', 'like', "%{$search}%")
                     ->orWhereHas('traveler', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     });
@@ -52,6 +53,11 @@ class AdminTripService
         // Filter by status
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
+        }
+
+        // Filter by verification status
+        if (!empty($filters['verification_status'])) {
+            $query->where('verification_status', $filters['verification_status']);
         }
 
         // Sort
@@ -70,17 +76,47 @@ class AdminTripService
     /**
      * Get detailed trip information.
      *
-     * @param int $tripId
+     * @param string $tripId
      * @return array
      */
-    public function getTripDetails(int $tripId): array
+    public function getTripDetails(string $tripId): array
     {
-        $trip = Trip::with(['traveler', 'shipments.sender'])->findOrFail($tripId);
+        $trip = Trip::with([
+            'traveler', 'shipments.sender',
+            'departureCountry', 'departureCity',
+            'arrivalCountry', 'arrivalCity',
+        ])->findOrFail($tripId);
+
+        // Format shipments with available fields
+        $formattedShipments = $trip->shipments->map(fn($s) => [
+            'id'                => $s->id,
+            'tracking_number'   => strtoupper(substr(str_replace('-', '', $s->id), 0, 10)),
+            'sender_name'       => $s->sender?->name ?? 'Unknown',
+            'recipient_city'    => $s->delivery_city,
+            'recipient_country' => $s->delivery_country,
+            'weight'            => (float) $s->package_weight,
+            'status'            => $s->status,
+            'price'             => (float) $s->payment_amount,
+        ])->values();
+
+        // Per-trip analytics
+        $totalShipments = $trip->shipments->count();
+        $totalRevenue   = (float) $trip->shipments->whereIn('payment_status', ['released'])->sum('payment_amount');
+        $delivered      = $trip->shipments->where('status', 'delivered')->count();
+        $completionRate = $totalShipments > 0 ? round(($delivered / $totalShipments) * 100, 1) : 0;
+
+        $analytics = [
+            'total_shipments' => $totalShipments,
+            'total_revenue'   => $totalRevenue,
+            'completion_rate' => $completionRate,
+            'average_rating'  => null,
+        ];
 
         return [
-            'trip' => $trip,
-            'shipments' => $trip->shipments,
-            'timeline' => $this->buildTripTimeline($trip),
+            'trip'      => new AdminTripResource($trip),
+            'shipments' => $formattedShipments,
+            'analytics' => $analytics,
+            'timeline'  => $this->buildTripTimeline($trip),
         ];
     }
 
@@ -92,15 +128,15 @@ class AdminTripService
      * @param User $admin
      * @return Trip
      */
-    public function updateTrip(int $tripId, array $data, User $admin): Trip
+    public function updateTrip(string $tripId, array $data, User $admin): Trip
     {
         $trip = Trip::findOrFail($tripId);
 
-        $before = $trip->only(['departure_date', 'available_space', 'price_per_kg']);
+        $before = $trip->only(['departure_date', 'available_capacity', 'price_per_kg']);
 
         $trip->update($data);
 
-        $after = $trip->only(['departure_date', 'available_space', 'price_per_kg']);
+        $after = $trip->only(['departure_date', 'available_capacity', 'price_per_kg']);
 
         // Create audit log
         AuditLog::log($admin, 'update', 'trip', $tripId, $before, $after);
@@ -116,15 +152,15 @@ class AdminTripService
      * @param User $admin
      * @return Trip
      */
-    public function cancelTrip(int $tripId, string $reason, User $admin): Trip
+    public function cancelTrip(string $tripId, string $reason, User $admin): Trip
     {
         $trip = Trip::with('shipments')->findOrFail($tripId);
 
         DB::transaction(function () use ($trip, $reason, $admin) {
             $before = ['status' => $trip->status];
 
-            // Cancel trip
-            $trip->update(['status' => 'cancelled']);
+            // Cancel trip and store reason
+            $trip->update(['status' => 'cancelled', 'rejection_reason' => $reason]);
 
             // Cancel all associated shipments and process refunds
             foreach ($trip->shipments as $shipment) {
@@ -160,6 +196,113 @@ class AdminTripService
     }
 
     /**
+     * Get paginated trips pending verification.
+     */
+    public function getPendingTrips(int $perPage = 50): LengthAwarePaginator
+    {
+        return Trip::with(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity'])
+            ->pendingVerification()
+            ->latest('created_at')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Verify (approve) a trip.
+     */
+    public function verifyTrip(string $tripId, User $admin): Trip
+    {
+        $trip = Trip::findOrFail($tripId);
+
+        $before = ['verification_status' => $trip->verification_status];
+
+        $trip->update([
+            'verification_status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+            'rejection_reason' => null,
+        ]);
+
+        $after = ['verification_status' => 'verified'];
+
+        AuditLog::log($admin, 'verify', 'trip', $trip->id, $before, $after);
+
+        $this->notificationService->sendTripVerifiedNotification($trip);
+
+        return $trip->fresh();
+    }
+
+    /**
+     * Reject a trip with reason.
+     */
+    public function rejectTrip(string $tripId, string $reason, User $admin): Trip
+    {
+        $trip = Trip::findOrFail($tripId);
+
+        $before = ['verification_status' => $trip->verification_status];
+
+        $trip->update([
+            'verification_status' => 'rejected',
+            'rejection_reason' => $reason,
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+
+        $after = ['verification_status' => 'rejected', 'reason' => $reason];
+
+        AuditLog::log($admin, 'reject', 'trip', $trip->id, $before, $after);
+
+        $this->notificationService->sendTripRejectedNotification($trip, $reason);
+
+        return $trip->fresh();
+    }
+
+    /**
+     * Bulk verify trips.
+     */
+    public function bulkVerifyTrips(array $tripIds, User $admin): array
+    {
+        $verified = [];
+        $failed = [];
+
+        foreach ($tripIds as $tripId) {
+            try {
+                $this->verifyTrip($tripId, $admin);
+                $verified[] = $tripId;
+            } catch (\Exception $e) {
+                $failed[] = $tripId;
+            }
+        }
+
+        return [
+            'verified' => $verified,
+            'failed' => $failed,
+        ];
+    }
+
+    /**
+     * Bulk reject trips.
+     */
+    public function bulkRejectTrips(array $tripIds, string $reason, User $admin): array
+    {
+        $rejected = [];
+        $failed = [];
+
+        foreach ($tripIds as $tripId) {
+            try {
+                $this->rejectTrip($tripId, $reason, $admin);
+                $rejected[] = $tripId;
+            } catch (\Exception $e) {
+                $failed[] = $tripId;
+            }
+        }
+
+        return [
+            'rejected' => $rejected,
+            'failed' => $failed,
+        ];
+    }
+
+    /**
      * Get trip analytics.
      *
      * @return array
@@ -172,11 +315,20 @@ class AdminTripService
             $completionRate = $totalTrips > 0 ? ($completedTrips / $totalTrips) * 100 : 0;
 
             // Popular routes
-            $popularRoutes = Trip::select('origin', 'destination', DB::raw('count(*) as count'))
-                ->groupBy('origin', 'destination')
+            $popularRoutes = Trip::select(
+                    'departure_city', 'departure_country',
+                    'arrival_city', 'arrival_country',
+                    DB::raw('count(*) as count')
+                )
+                ->groupBy('departure_city', 'departure_country', 'arrival_city', 'arrival_country')
                 ->orderBy('count', 'desc')
                 ->take(10)
-                ->get();
+                ->get()
+                ->map(fn($r) => [
+                    'origin' => "{$r->departure_city}, {$r->departure_country}",
+                    'destination' => "{$r->arrival_city}, {$r->arrival_country}",
+                    'count' => $r->count,
+                ]);
 
             return [
                 'total_trips' => $totalTrips,
@@ -198,6 +350,12 @@ class AdminTripService
         $timeline = [
             ['event' => 'Trip created', 'date' => $trip->created_at],
         ];
+
+        if ($trip->verification_status === 'verified' && $trip->verified_at) {
+            $timeline[] = ['event' => 'Trip verified', 'date' => $trip->verified_at];
+        } elseif ($trip->verification_status === 'rejected' && $trip->verified_at) {
+            $timeline[] = ['event' => 'Trip rejected', 'date' => $trip->verified_at];
+        }
 
         if ($trip->status === 'completed') {
             $timeline[] = ['event' => 'Trip completed', 'date' => $trip->updated_at];

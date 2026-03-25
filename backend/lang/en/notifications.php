@@ -15,4 +15,23 @@ return [
         'title' => 'Wallet Credited',
         'body' => 'Your wallet has been credited with €:amount. New balance: €:balance',
     ],
+
+    'trip_verified' => [
+        'title' => 'Trip approved',
+        'body' => 'Your trip from :departure to :arrival has been approved and is now visible to senders.',
+    ],
+    'trip_rejected' => [
+        'title' => 'Trip rejected',
+        'body' => 'Your trip from :departure to :arrival has been rejected. Reason: :reason',
+    ],
+    'trip_cancelled' => [
+        'title' => 'Trip cancelled',
+        'body' => 'Your trip from :departure to :arrival has been cancelled. Reason: :reason',
+    ],
+    'shipment_cancelled' => [
+        'title' => 'Shipment cancelled',
+        'body' => 'Your shipment has been cancelled. Reason: :reason',
+    ],
+    'kyc_approved_body' => 'Your identity verification has been approved. You can now create trips and shipments.',
+    'kyc_rejected_body' => 'Your identity verification has been rejected. Reason: :reason',
 ];

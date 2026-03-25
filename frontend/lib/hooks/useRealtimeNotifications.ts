@@ -63,10 +63,10 @@ export function useRealtimeNotifications() {
         message: notification.message,
         duration,
         action: notification.data?.action_url ? {
-          label: notification.data.action_label || 'Voir',
+          label: notification.data?.action_label || 'Voir',
           onClick: () => {
             if (typeof window !== 'undefined') {
-              window.location.href = notification.data.action_url;
+              window.location.href = notification.data!.action_url;
             }
           },
         } : undefined,

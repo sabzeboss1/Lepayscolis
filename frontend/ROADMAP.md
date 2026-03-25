@@ -146,70 +146,91 @@
 
 > Connecter toutes les pages admin au backend réel.
 
-- [ ] `admin/dashboard/page.tsx` : Stats via `/api/admin/dashboard`
-- [ ] `admin/users/page.tsx` : Liste des utilisateurs via `/api/admin/users` avec pagination
-- [ ] `admin/users/[id]/page.tsx` : Détails utilisateur, suspension, ban
-- [ ] `admin/kyc/page.tsx` : KYC en attente via `/api/admin/kyc`
-- [ ] `admin/kyc/[id]/page.tsx` : Revue KYC, approuver/rejeter
-- [ ] `admin/trips/page.tsx` : Liste des trips via `/api/admin/trips`
-- [ ] `admin/trips/[id]/page.tsx` : Détails trip, validation preuve de voyage
-- [ ] `admin/shipments/page.tsx` : Liste des shipments via `/api/admin/shipments`
-- [ ] `admin/shipments/[id]/page.tsx` : Détails et actions sur les shipments
-- [ ] `admin/payments/page.tsx` : Paiements via `/api/admin/payments`
-- [ ] `admin/payments/[id]/page.tsx` : Détails paiement
-- [ ] `admin/wallets/page.tsx` : Wallets via `/api/admin/wallets`
-- [ ] `admin/withdrawals/page.tsx` : Retraits via `/api/admin/withdrawals` (approuver/rejeter)
-- [ ] `admin/ratings/page.tsx` : Ratings via `/api/admin/ratings` (modération)
-- [ ] `admin/messages/page.tsx` : Messages via `/api/admin/messages`
-- [ ] `admin/analytics/page.tsx` : Analytics via `/api/admin/analytics`
-- [ ] `admin/settings/page.tsx` : Paramètres plateforme via `/api/admin/settings`
-- [ ] `admin/notifications/page.tsx` : Envoi notifications via `/api/admin/notifications`
-- [ ] `admin/audit-logs/page.tsx` : Logs d'audit via `/api/admin/audit-logs`
-- [ ] Supprimer toutes les données mock admin (`lib/api/adminMockData.ts`)
+- [x] `admin/dashboard/page.tsx` : Stats via `/api/admin/dashboard` (metrics, charts, activity)
+- [x] `admin/profile/page.tsx` : Profil admin via `/api/user` (mise à jour profil + avatar)
+- [x] `admin/users/page.tsx` : Liste des utilisateurs via `/api/admin/users` avec pagination, filtres, tri, suspension en masse
+- [x] `admin/users/[id]/page.tsx` : Détails utilisateur, suspension, ban
+- [x] `admin/kyc/page.tsx` : KYC en attente via `/api/admin/kyc` avec approuver/rejeter individuel et en masse
+- [x] `admin/kyc/[id]/page.tsx` : Revue KYC détaillée avec aperçu des documents, zoom, téléchargement, approuver/rejeter
+- [x] `admin/trips/page.tsx` : Liste des trips via `/api/admin/trips` avec pagination et filtres
+- [x] `admin/trips/[id]/page.tsx` : Détails trip, annulation avec motif
+- [x] `admin/shipments/page.tsx` : Liste des shipments via `/api/admin/shipments` avec pagination, filtres, tri
+- [x] `admin/shipments/[id]/page.tsx` : Détails et actions sur les shipments
+- [x] `admin/payments/page.tsx` : Paiements via `/api/admin/payments` avec pagination, filtres, tri
+- [x] `admin/payments/[id]/page.tsx` : Détails paiement, remboursement
+- [x] `admin/wallets/page.tsx` : Wallets via `/api/admin/wallets` avec pagination, filtres, tri
+- [x] `admin/withdrawals/page.tsx` : Retraits via `/api/admin/withdrawals` (approuver/rejeter/compléter)
+- [x] `admin/ratings/page.tsx` : Ratings via `/api/admin/ratings` (modération) avec pagination, filtres, tri
+- [x] `admin/messages/page.tsx` : Messages via `/api/admin/messages` avec pagination et filtres
+- [x] `admin/analytics/page.tsx` : Analytics via `/api/admin/analytics` avec filtres par date et export
+- [x] `admin/settings/page.tsx` : Paramètres plateforme via `/api/admin/settings` (lecture + mise à jour)
+- [x] `admin/notifications/page.tsx` : Envoi notifications via `/api/admin/notifications` + historique
+- [x] `admin/audit-logs/page.tsx` : Logs d'audit via `/api/admin/audit-logs` avec filtres et export CSV
+- [x] `admin/currencies/page.tsx` : Gestion des devises via `/api/admin/currencies` (CRUD complet, taux de change, activation)
+- [x] `admin/countries/page.tsx` : Gestion des pays via `/api/admin/countries` (CRUD complet, activation, devise/locale par défaut)
+- [x] `admin/cities/page.tsx` : Gestion des villes via `/api/admin/cities` (CRUD complet, activation, filtre par pays)
+- [x] Supprimer toutes les données mock admin (`lib/api/adminMockData.ts`)
+- [x] Convertir les 17 routes API admin restantes de mock vers proxy backend via `makeAdminRequest()`
+- [ ] Migrer les pages utilisant `fetch` direct vers `apiClient` pour uniformiser (users, kyc, trips, shipments, payments, wallets, withdrawals, ratings, messages, settings)
 
 ### 12. Suppression des données mock
 
 > Remplacer toutes les données Faker.js par des appels API réels.
 
-- [ ] Supprimer `lib/api/mockData.ts` une fois toutes les pages connectées
-- [ ] Supprimer `lib/api/adminMockData.ts` une fois l'admin connecté
-- [ ] Retirer la dépendance `@faker-js/faker` du `package.json`
-- [ ] Vérifier qu'aucune page n'importe encore de données mock
+- [ ] Supprimer `lib/api/mockData.ts` une fois toutes les pages utilisateur connectées (phases 4-10)
+- [x] Supprimer `lib/api/adminMockData.ts` — toutes les pages admin sont connectées au backend
+- [ ] Retirer la dépendance `@faker-js/faker` du `package.json` (après suppression de `mockData.ts`)
+- [x] Vérifier qu'aucune page admin n'importe encore de données mock admin
 - [ ] Supprimer les demo credentials de l'interface
 
 ### 13. Alignement des types TypeScript avec le backend
 
 > S'assurer que les interfaces frontend correspondent exactement aux réponses API du backend.
 
-- [ ] Mettre à jour `lib/types/api.ts` : ajouter les champs manquants (ex: `locale`, `currency_code`, `verification_status`)
+- [ ] Mettre à jour `lib/types/api.ts` : ajouter les champs manquants (ex: `locale`, `verification_status`)
 - [ ] Ajouter les types pour les nouvelles entités backend (`Country`, `City`, `Currency`)
-- [ ] Mettre à jour le type `Trip` pour inclure `verification_status`, `travel_proof_url` obligatoire, relations pays/villes
-- [ ] Mettre à jour le type `Payment` pour inclure `sender_fee`, `traveler_fee` au lieu de `platform_fee`
-- [ ] Mettre à jour le type `User` pour inclure `currency_code`, `country_id`
+- [ ] Mettre à jour le type `Trip` pour inclure `verification_status`, `travel_proof_url` obligatoire, `currency_code`, relations pays/villes
+- [ ] Mettre à jour le type `Payment` pour inclure `sender_fee`, `traveler_fee` au lieu de `platform_fee`, `currency_code`
+- [x] Mettre à jour le type `User` pour inclure `currency_code`
 - [ ] Ajouter les types pour les réponses paginées Laravel (`PaginatedResponse<T>`)
 - [ ] Vérifier que tous les types correspondent aux Resources Laravel
 
 ### 14. Support multi-devises (frontend)
 
-> Afficher les montants dans la devise de l'utilisateur et gérer les conversions.
+> Afficher les montants dans la devise de l'utilisateur et gérer les conversions. Le backend multi-devises est entièrement implémenté (table `currencies`, `CurrencyService`, `currency_code` sur tous les modèles financiers).
 
+- [x] Page admin de gestion des devises (`admin/currencies`) : CRUD, taux de change, activation/désactivation
+- [x] Endpoints API frontend définis (`currencies.list`, `admin.currencies.*`)
+- [x] Traductions FR/EN pour la gestion des devises admin
+- [x] Type `User` mis à jour avec `currency_code`
+- [x] Menu sidebar admin avec lien vers la gestion des devises
 - [ ] Créer un helper `formatCurrency(amount, currencyCode)` pour afficher les montants
+- [ ] Charger les devises actives via `/api/currencies` pour les formulaires (création trip, inscription)
 - [ ] Afficher les prix des trips dans la devise du voyageur
 - [ ] Afficher le solde wallet et les transactions dans la devise de l'utilisateur
 - [ ] Afficher le détail des frais (commission) dans la devise appropriée
 - [ ] Permettre à l'utilisateur de changer sa devise préférée dans le profil
+- [ ] Ajouter un sélecteur de devise dans le formulaire de création de trip
 
 ### 15. Support pays/villes (frontend)
 
-> Remplacer les champs texte par des sélecteurs de pays/villes depuis l'API.
+> Remplacer les champs texte par des sélecteurs de pays/villes depuis l'API. Le backend pays/villes est entièrement implémenté (tables `countries`/`cities`, endpoints publics et admin, seeder avec 22 pays et 42 villes).
 
-- [ ] Créer un composant `CountrySelect` qui charge les pays depuis `/api/countries`
-- [ ] Créer un composant `CitySelect` dynamique (filtre par pays sélectionné) depuis `/api/countries/{id}/cities`
-- [ ] Remplacer les inputs texte dans le formulaire de création de trip par `CountrySelect` + `CitySelect`
-- [ ] Remplacer les inputs texte dans le formulaire de création de shipment
-- [ ] Remplacer le champ pays dans le formulaire d'inscription
-- [ ] Mettre à jour la page de recherche de trips avec les sélecteurs pays/villes
-- [ ] Remplacer `lib/data/locations.ts` (données locales) par les appels API
+- [x] Page admin de gestion des pays (`admin/countries`) : CRUD, activation, devise/locale par défaut
+- [x] Page admin de gestion des villes (`admin/cities`) : CRUD, activation, filtre par pays
+- [x] Endpoints API frontend définis (`countries.list`, `countries.cities(id)`, `admin.countries.*`, `admin.cities.*`)
+- [x] Traductions FR/EN pour la gestion des pays et villes admin
+- [x] Menu sidebar admin avec liens vers pays et villes (icônes Globe, MapPin)
+- [x] Créer un composant `CountrySelect` qui charge les pays depuis `/api/countries`
+- [x] Créer un composant `CitySelect` dynamique (filtre par pays sélectionné)
+- [x] Hook `useCountries` avec cache pour charger et filtrer les pays/villes
+- [x] Types TypeScript `Country`/`City` (`lib/types/location.ts`)
+- [x] Remplacer les inputs texte dans le formulaire de création de trip par `CountrySelect` + `CitySelect` (envoi d'IDs)
+- [x] Remplacer les inputs texte dans le formulaire de création de shipment (envoi d'IDs)
+- [x] Remplacer le champ pays dans le formulaire d'inscription (sélecteur dynamique)
+- [x] Mettre à jour la page de recherche de trips avec les sélecteurs pays/villes
+- [x] Supprimer `lib/data/locations.ts` (données locales remplacées par API)
+- [x] Clés de traduction `common.selectCountry`/`common.selectCity` ajoutées FR/EN
 
 ### 16. Support preuve de voyage (frontend)
 

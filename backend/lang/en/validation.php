@@ -40,8 +40,16 @@ return [
         'pickup_address_min' => 'The pickup address must be at least 5 characters.',
         'delivery_address_required' => 'The delivery address is required.',
         'delivery_address_min' => 'The delivery address must be at least 5 characters.',
+        'travel_proof_required' => 'A travel proof document is required.',
         'travel_proof_mimes' => 'The travel proof must be a file of type: pdf, jpg, jpeg, png.',
         'travel_proof_max' => 'The travel proof must not exceed 5MB.',
+        'currency_required' => 'The currency is required.',
+        'currency_invalid' => 'The selected currency is not valid.',
+        'country_required' => 'The country is required.',
+        'country_invalid' => 'The selected country is not valid.',
+        'city_required' => 'The city is required.',
+        'city_invalid' => 'The selected city is not valid.',
+        'city_country_mismatch' => 'The selected city does not belong to the selected country.',
     ],
 
     /*
@@ -64,6 +72,10 @@ return [
         'height_max' => 'Package height must not exceed 500 cm.',
         'pickup_address_max' => 'Pickup address must not exceed 500 characters.',
         'delivery_address_max' => 'Delivery address must not exceed 500 characters.',
+        'city_country_mismatch' => 'The selected city does not belong to the selected country.',
+        'insufficient_capacity' => 'The selected trip does not have sufficient capacity for this shipment.',
+        'not_trip_owner' => 'You can only accept shipments for your own trips.',
+        'not_pending' => 'Only pending shipments can be accepted.',
     ],
 
     /*

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Trip;
 
+use App\Models\City;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -15,7 +16,7 @@ use Illuminate\Foundation\Http\FormRequest;
  * - Accepted package types (enveloppes, petits_colis, moyens_colis, grands_colis)
  * - Pickup address (min 5 chars)
  * - Delivery address (min 5 chars)
- * - Travel proof file (optional)
+ * - Travel proof file (required)
  * 
  * Validates Requirements: 3.3-3.7
  */
@@ -37,19 +38,20 @@ class CreateTripRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'departure_city' => ['required', 'string', 'max:255'],
-            'departure_country' => ['required', 'string', 'max:255'],
+            'departure_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'departure_city_id' => ['required', 'integer', 'exists:cities,id'],
             'departure_date' => ['required', 'date', 'after:today'],
-            'arrival_city' => ['required', 'string', 'max:255'],
-            'arrival_country' => ['required', 'string', 'max:255'],
+            'arrival_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'arrival_city_id' => ['required', 'integer', 'exists:cities,id'],
             'arrival_date' => ['required', 'date', 'after:departure_date'],
             'available_capacity' => ['required', 'numeric', 'min:0.1', 'max:100'],
             'price_per_kg' => ['required', 'numeric', 'min:1', 'max:1000'],
+            'currency_code' => ['required', 'string', 'size:3', 'exists:currencies,code'],
             'accepted_package_types' => ['required', 'array', 'min:1'],
             'accepted_package_types.*' => ['required', 'string', 'in:enveloppes,petits_colis,moyens_colis,grands_colis'],
             'pickup_address' => ['required', 'string', 'min:5', 'max:1000'],
             'delivery_address' => ['required', 'string', 'min:5', 'max:1000'],
-            'travel_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // 5MB
+            'travel_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // 5MB
         ];
     }
 
@@ -74,8 +76,40 @@ class CreateTripRequest extends FormRequest
             'pickup_address.min' => __('validation.trip.pickup_address_min'),
             'delivery_address.required' => __('validation.trip.delivery_address_required'),
             'delivery_address.min' => __('validation.trip.delivery_address_min'),
+            'currency_code.required' => __('validation.trip.currency_required'),
+            'currency_code.exists' => __('validation.trip.currency_invalid'),
+            'travel_proof.required' => __('validation.trip.travel_proof_required'),
             'travel_proof.mimes' => __('validation.trip.travel_proof_mimes'),
             'travel_proof.max' => __('validation.trip.travel_proof_max'),
+            'departure_country_id.required' => __('validation.trip.country_required'),
+            'departure_country_id.exists' => __('validation.trip.country_invalid'),
+            'departure_city_id.required' => __('validation.trip.city_required'),
+            'departure_city_id.exists' => __('validation.trip.city_invalid'),
+            'arrival_country_id.required' => __('validation.trip.country_required'),
+            'arrival_country_id.exists' => __('validation.trip.country_invalid'),
+            'arrival_city_id.required' => __('validation.trip.city_required'),
+            'arrival_city_id.exists' => __('validation.trip.city_invalid'),
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $this->validateCityBelongsToCountry($validator, 'departure_city_id', 'departure_country_id');
+            $this->validateCityBelongsToCountry($validator, 'arrival_city_id', 'arrival_country_id');
+        });
+    }
+
+    private function validateCityBelongsToCountry($validator, string $cityField, string $countryField): void
+    {
+        $cityId = $this->input($cityField);
+        $countryId = $this->input($countryField);
+
+        if ($cityId && $countryId) {
+            $city = City::find($cityId);
+            if ($city && $city->country_id !== (int) $countryId) {
+                $validator->errors()->add($cityField, __('validation.trip.city_country_mismatch'));
+            }
+        }
     }
 }

@@ -105,6 +105,21 @@ export const API_ENDPOINTS = {
   },
 
   // ============================================================================
+  // Currency Endpoints (public)
+  // ============================================================================
+  currencies: {
+    list: '/api/currencies',
+  },
+
+  // ============================================================================
+  // Country & City Endpoints (public)
+  // ============================================================================
+  countries: {
+    list: '/api/countries',
+    cities: (id: number) => `/api/countries/${id}/cities`,
+  },
+
+  // ============================================================================
   // Admin Endpoints
   // ============================================================================
   admin: {
@@ -120,6 +135,8 @@ export const API_ENDPOINTS = {
       show: (id: string) => `/api/admin/users/${id}`,
       suspend: (id: string) => `/api/admin/users/${id}/suspend`,
       unsuspend: (id: string) => `/api/admin/users/${id}/unsuspend`,
+      banMessaging: (id: string) => `/api/admin/users/${id}/ban-messaging`,
+      unbanMessaging: (id: string) => `/api/admin/users/${id}/unban-messaging`,
     },
     
     kyc: {
@@ -134,6 +151,8 @@ export const API_ENDPOINTS = {
       show: (id: string) => `/api/admin/withdrawals/${id}`,
       approve: (id: string) => `/api/admin/withdrawals/${id}/approve`,
       reject: (id: string) => `/api/admin/withdrawals/${id}/reject`,
+      processing: (id: string) => `/api/admin/withdrawals/${id}/processing`,
+      complete: (id: string) => `/api/admin/withdrawals/${id}/complete`,
     },
     
     trips: {
@@ -151,19 +170,27 @@ export const API_ENDPOINTS = {
     payments: {
       list: '/api/admin/payments',
       show: (id: string) => `/api/admin/payments/${id}`,
+      refund: (id: string) => `/api/admin/payments/${id}/refund`,
+      analytics: '/api/admin/payments/analytics',
     },
     
     messages: {
       list: '/api/admin/messages',
       show: (id: string) => `/api/admin/messages/${id}`,
+      delete: (id: string) => `/api/admin/messages/${id}`,
     },
-    
+
     ratings: {
       list: '/api/admin/ratings',
       show: (id: string) => `/api/admin/ratings/${id}`,
+      delete: (id: string) => `/api/admin/ratings/${id}`,
+      statistics: '/api/admin/ratings/statistics',
     },
     
-    analytics: '/api/admin/analytics',
+    analytics: {
+      index: '/api/admin/analytics',
+      export: '/api/admin/analytics/export',
+    },
     
     settings: {
       get: '/api/admin/settings',
@@ -171,12 +198,53 @@ export const API_ENDPOINTS = {
     },
     
     notifications: {
-      list: '/api/admin/notifications',
-      send: '/api/admin/notifications',
+      history: '/api/admin/notifications/history',
+      send: '/api/admin/notifications/send',
     },
-    
+
+    admins: {
+      list: '/api/admin/admins',
+      create: '/api/admin/admins',
+      updateRole: (id: number) => `/api/admin/admins/${id}/role`,
+      remove: (id: number) => `/api/admin/admins/${id}`,
+      activity: (id: number) => `/api/admin/admins/${id}/activity`,
+    },
+
     auditLogs: {
       list: '/api/admin/audit-logs',
+      show: (id: string) => `/api/admin/audit-logs/${id}`,
+      export: '/api/admin/audit-logs/export',
+    },
+
+    currencies: {
+      list: '/api/admin/currencies',
+      store: '/api/admin/currencies',
+      update: (code: string) => `/api/admin/currencies/${code}`,
+      updateRate: (code: string) => `/api/admin/currencies/${code}/rate`,
+      toggle: (code: string) => `/api/admin/currencies/${code}/toggle`,
+      delete: (code: string) => `/api/admin/currencies/${code}`,
+    },
+
+    countries: {
+      list: '/api/admin/countries',
+      store: '/api/admin/countries',
+      update: (id: number) => `/api/admin/countries/${id}`,
+      toggle: (id: number) => `/api/admin/countries/${id}/toggle`,
+      delete: (id: number) => `/api/admin/countries/${id}`,
+    },
+
+    cities: {
+      list: '/api/admin/cities',
+      store: '/api/admin/cities',
+      update: (id: number) => `/api/admin/cities/${id}`,
+      toggle: (id: number) => `/api/admin/cities/${id}/toggle`,
+      delete: (id: number) => `/api/admin/cities/${id}`,
+    },
+
+    wallets: {
+      list: '/api/admin/wallets',
+      show: (userId: string) => `/api/admin/wallets/${userId}`,
+      adjust: (userId: string) => `/api/admin/wallets/${userId}/adjust`,
     },
   },
 } as const;

@@ -35,9 +35,9 @@ export default function ProfileEditPage() {
       setFormData({
         name: user.name,
         phone: user.phone,
-        avatar: user.avatar,
+        avatar: user.avatar || '',
       });
-      setAvatarPreview(user.avatar);
+      setAvatarPreview(user.avatar || '');
     }
   }, [user]);
 

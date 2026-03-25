@@ -1,35 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminWithdrawals } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const params = await context.params;
-  const withdrawal = mockAdminWithdrawals.find(w => w.id === params.id);
+  try {
+    const params = await context.params;
 
-  if (!withdrawal) {
-    return NextResponse.json(
-      { error: 'Withdrawal not found' },
-      { status: 404 }
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/withdrawals/${params.id}/complete`,
+      { method: 'POST' }
     );
-  }
 
-  if (withdrawal.status !== 'processing') {
-    return NextResponse.json(
-      { error: 'Only processing withdrawals can be completed' },
-      { status: 400 }
-    );
-  }
+    const data = await response.json();
 
-  // In a real app, update the withdrawal status in the database
-  // For now, just return success
-  return NextResponse.json({ 
-    message: 'Withdrawal completed successfully',
-    data: {
-      id: withdrawal.id,
-      status: 'completed',
-      completed_at: new Date().toISOString()
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
     }
-  });
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || 'Failed to complete withdrawal' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+    );
+  }
 }

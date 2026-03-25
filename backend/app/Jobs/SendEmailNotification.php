@@ -33,9 +33,13 @@ class SendEmailNotification implements ShouldQueue
     public function handle(): void
     {
         try {
+            // Refresh SMTP settings from DB (may have changed since worker started)
+            \App\Providers\MailConfigServiceProvider::applySmtpFromDatabase();
+            Mail::purge('smtp');
+
             // Get the mailable class based on template name
             $mailableClass = $this->getMailableClass($this->template);
-            
+
             if (!$mailableClass) {
                 Log::error('Unknown email template', [
                     'template' => $this->template,

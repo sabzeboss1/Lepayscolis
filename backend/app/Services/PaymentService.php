@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Models\PlatformSetting;
 use App\Models\Shipment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -14,8 +15,9 @@ use Stripe\Transfer;
 
 class PaymentService
 {
-    public function __construct()
-    {
+    public function __construct(
+        private CurrencyService $currencyService
+    ) {
         // Configure Stripe API key from .env
         Stripe::setApiKey(config('stripe.secret'));
     }
@@ -29,32 +31,31 @@ class PaymentService
      */
     public function createPaymentIntent(Shipment $shipment): Payment
     {
-        // Calculate fees
-        $amount = $shipment->payment_amount;
-        $platformFeePercentage = config('stripe.platform_fee_percentage', 15);
-        $platformFee = round($amount * ($platformFeePercentage / 100), 2);
-        $travelerAmount = round($amount - $platformFee, 2);
+        // Calculate fees using double commission model
+        $baseAmount = $shipment->payment_amount;
+        $currencyCode = $shipment->trip->currency_code ?? config('stripe.currency', 'eur');
+        $fees = PlatformSetting::calculateFees($baseAmount);
 
-        // Create Stripe PaymentIntent (amount in cents)
+        // Create Stripe PaymentIntent — charge sender the full amount (base + sender_fee)
         $paymentIntent = PaymentIntent::create([
-            'amount' => (int) ($amount * 100), // Convert to cents
-            'currency' => config('stripe.currency', 'eur'),
+            'amount' => $this->currencyService->getStripeAmount($fees['total_sender_pays'], $currencyCode),
+            'currency' => strtolower($currencyCode),
             'metadata' => [
                 'shipment_id' => $shipment->id,
                 'sender_id' => $shipment->sender_id,
                 'traveler_id' => $shipment->traveler_id,
+                'currency_code' => $currencyCode,
             ],
             'description' => "Payment for shipment {$shipment->id}",
         ]);
 
-        // Create Payment record
+        // Create Payment record — observer will compute fees from base_amount
         $payment = Payment::create([
             'shipment_id' => $shipment->id,
             'payer_id' => $shipment->sender_id,
             'payee_id' => $shipment->traveler_id,
-            'amount' => $amount,
-            'platform_fee' => $platformFee,
-            'traveler_amount' => $travelerAmount,
+            'base_amount' => $baseAmount,
+            'currency_code' => strtoupper($currencyCode),
             'payment_method' => 'card',
             'transaction_id' => $paymentIntent->id,
             'status' => 'processing',
@@ -66,7 +67,10 @@ class PaymentService
         Log::info('Payment intent created', [
             'payment_id' => $payment->id,
             'shipment_id' => $shipment->id,
-            'amount' => $amount,
+            'base_amount' => $baseAmount,
+            'total_charged' => $payment->amount,
+            'sender_fee' => $payment->sender_fee,
+            'traveler_fee' => $payment->traveler_fee,
             'transaction_id' => $paymentIntent->id,
         ]);
 
@@ -111,45 +115,80 @@ class PaymentService
         
         try {
             DB::transaction(function () use ($payment) {
-                // Calculate amounts (15% platform fee, 85% to traveler)
-                $platformFee = $payment->amount * 0.15;
-                $travelerAmount = $payment->amount * 0.85;
-                
+                // Use stored values from double commission model
+                $travelerAmount = (float) $payment->traveler_amount;
+                $paymentCurrency = $payment->currency_code ?? 'EUR';
+
+                $wallet = $payment->payee->wallet;
+                $walletCurrency = $wallet->currency_code ?? 'EUR';
+
                 Log::info('Payment release initiated', [
                     'payment_id' => $payment->id,
                     'shipment_id' => $payment->shipment_id,
+                    'base_amount' => $payment->base_amount,
                     'total_amount' => $payment->amount,
-                    'platform_fee' => $platformFee,
+                    'sender_fee' => $payment->sender_fee,
+                    'traveler_fee' => $payment->traveler_fee,
+                    'platform_fee' => $payment->platform_fee,
                     'traveler_amount' => $travelerAmount,
+                    'payment_currency' => $paymentCurrency,
+                    'wallet_currency' => $walletCurrency,
                     'payee_id' => $payment->payee_id,
                 ]);
-                
+
                 // Get WalletService instance
                 $walletService = app(WalletService::class);
-                
+
+                // Handle cross-currency conversion if needed
+                $creditAmount = $travelerAmount;
+                $originalAmount = null;
+                $originalCurrencyCode = null;
+                $exchangeRateUsed = null;
+
+                if ($paymentCurrency !== $walletCurrency) {
+                    $conversion = $this->currencyService->convert(
+                        $travelerAmount, $paymentCurrency, $walletCurrency
+                    );
+                    $creditAmount = $conversion['converted_amount'];
+                    $originalAmount = $travelerAmount;
+                    $originalCurrencyCode = $paymentCurrency;
+                    $exchangeRateUsed = $conversion['exchange_rate'];
+
+                    Log::info('Cross-currency conversion applied', [
+                        'from' => $paymentCurrency,
+                        'to' => $walletCurrency,
+                        'original_amount' => $travelerAmount,
+                        'converted_amount' => $creditAmount,
+                        'exchange_rate' => $exchangeRateUsed,
+                    ]);
+                }
+
                 // Credit traveler's wallet
                 $walletService->credit(
-                    $payment->payee->wallet,
-                    $travelerAmount,
+                    $wallet,
+                    $creditAmount,
                     "Payment for shipment {$payment->shipment_id}",
                     'shipment',
-                    $payment->shipment_id
+                    $payment->shipment_id,
+                    $originalAmount,
+                    $originalCurrencyCode,
+                    $exchangeRateUsed
                 );
-                
+
                 // Update payment status to released
                 $payment->update([
                     'status' => 'released',
                     'released_at' => now(),
                 ]);
-                
+
                 // Update shipment payment status
                 $payment->shipment->update(['payment_status' => 'released']);
-                
+
                 Log::info('Payment released successfully to wallet', [
                     'payment_id' => $payment->id,
                     'shipment_id' => $payment->shipment_id,
-                    'traveler_amount' => $travelerAmount,
-                    'wallet_id' => $payment->payee->wallet->id,
+                    'traveler_amount' => $creditAmount,
+                    'wallet_id' => $wallet->id,
                 ]);
             });
         } catch (\Exception $e) {

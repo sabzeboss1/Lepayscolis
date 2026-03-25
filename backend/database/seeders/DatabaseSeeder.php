@@ -17,12 +17,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminUserSeeder::class,
             PlatformSettingsSeeder::class,
-        ]);
-
-        // Create test user
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            CurrencySeeder::class,
+            CountrySeeder::class,
+            DemoUserSeeder::class,
         ]);
     }
 }

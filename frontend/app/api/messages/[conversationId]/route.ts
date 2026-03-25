@@ -22,8 +22,8 @@ export async function GET(
 
     // Get messages for this conversation
     const messages = allMessages
-      .filter(msg => msg.conversationId === conversationId)
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      .filter(msg => msg.conversation_id === conversationId)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
     return NextResponse.json({
       messages,

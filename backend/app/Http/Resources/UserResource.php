@@ -34,6 +34,7 @@ class UserResource extends JsonResource
             'kyc_status' => $this->kyc_status,
             'role' => $this->role,
             'locale' => $this->locale,
+            'currency_code' => $this->currency_code,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

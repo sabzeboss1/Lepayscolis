@@ -21,15 +21,20 @@ class PaymentFactory extends Factory
     public function definition(): array
     {
         $shipment = Shipment::factory()->accepted()->create();
-        $amount = fake()->randomFloat(2, 10, 1000);
+        $baseAmount = fake()->randomFloat(2, 10, 1000);
+        $senderFee = round($baseAmount * 0.05, 2);
+        $travelerFee = round($baseAmount * 0.10, 2);
 
         return [
             'shipment_id' => $shipment->id,
             'payer_id' => $shipment->sender_id,
             'payee_id' => $shipment->traveler_id,
-            'amount' => $amount,
-            'platform_fee' => $amount * 0.15,
-            'traveler_amount' => $amount * 0.85,
+            'base_amount' => $baseAmount,
+            'amount' => $baseAmount + $senderFee,
+            'sender_fee' => $senderFee,
+            'traveler_fee' => $travelerFee,
+            'platform_fee' => $senderFee + $travelerFee,
+            'traveler_amount' => $baseAmount - $travelerFee,
             'payment_method' => fake()->randomElement(['card', 'mobile_money']),
             'transaction_id' => 'pi_' . fake()->unique()->uuid(),
             'status' => 'pending',

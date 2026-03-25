@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Http\Resources\Admin\AdminShipmentResource;
 use App\Models\AuditLog;
 use App\Models\Shipment;
 use App\Models\User;
@@ -21,14 +22,15 @@ class AdminShipmentService
 
     public function getShipments(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = Shipment::with(['sender', 'traveler', 'trip']);
+        $query = Shipment::with(['sender', 'traveler', 'trip', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity']);
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('tracking_number', 'like', "%{$search}%")
-                    ->orWhereHas('sender', fn($q) => $q->where('name', 'like', "%{$search}%"))
-                    ->orWhere('recipient_name', 'like', "%{$search}%");
+                $q->where('package_description', 'like', "%{$search}%")
+                    ->orWhere('pickup_city', 'like', "%{$search}%")
+                    ->orWhere('delivery_city', 'like', "%{$search}%")
+                    ->orWhereHas('sender', fn($q) => $q->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -39,39 +41,39 @@ class AdminShipmentService
         return $query->latest('created_at')->paginate($perPage);
     }
 
-    public function getShipmentDetails(int $shipmentId): array
+    public function getShipmentDetails(string $shipmentId): array
     {
-        $shipment = Shipment::with(['sender', 'traveler', 'trip', 'payment'])->findOrFail($shipmentId);
+        $shipment = Shipment::with([
+            'sender', 'traveler', 'trip.traveler',
+            'payment', 'pickupCountry', 'pickupCity',
+            'deliveryCountry', 'deliveryCity',
+        ])->findOrFail($shipmentId);
 
         return [
-            'shipment' => $shipment,
+            'shipment'       => new AdminShipmentResource($shipment),
             'status_history' => $this->getStatusHistory($shipment),
+            'analytics'      => $this->getSingleShipmentAnalytics($shipment),
         ];
     }
 
-    public function resolveDispute(int $shipmentId, string $resolutionNotes, ?float $refundAmount, User $admin): Shipment
+    public function resolveDispute(string $shipmentId, string $resolutionNotes, ?float $refundAmount, User $admin): Shipment
     {
         $shipment = Shipment::findOrFail($shipmentId);
 
         $before = ['status' => $shipment->status];
 
-        $shipment->update([
-            'dispute_resolved' => true,
-            'resolution_notes' => $resolutionNotes,
-        ]);
-
         if ($refundAmount && $shipment->payment) {
             $this->paymentService->refundPayment($shipment->payment->id, $resolutionNotes, $refundAmount);
         }
 
-        $after = ['dispute_resolved' => true, 'refund_amount' => $refundAmount];
+        $after = ['refund_amount' => $refundAmount, 'resolution_notes' => $resolutionNotes];
 
         AuditLog::log($admin, 'resolve_dispute', 'shipment', $shipmentId, $before, $after);
 
         return $shipment->fresh();
     }
 
-    public function cancelShipment(int $shipmentId, string $reason, User $admin): Shipment
+    public function cancelShipment(string $shipmentId, string $reason, User $admin): Shipment
     {
         $shipment = Shipment::with('payment')->findOrFail($shipmentId);
 
@@ -106,19 +108,41 @@ class AdminShipmentService
         });
     }
 
+    protected function getSingleShipmentAnalytics(Shipment $shipment): ?array
+    {
+        if ($shipment->status !== 'delivered') {
+            return null;
+        }
+
+        $days = round(
+            ($shipment->updated_at->timestamp - $shipment->created_at->timestamp) / 86400,
+            1
+        );
+
+        return [
+            'delivery_time_days' => $days,
+            'on_time_delivery'   => $days <= 7,
+        ];
+    }
+
     protected function getStatusHistory(Shipment $shipment): array
     {
-        return [
-            ['status' => 'pending', 'date' => $shipment->created_at],
-            ['status' => $shipment->status, 'date' => $shipment->updated_at],
+        $history = [
+            ['status' => 'pending', 'timestamp' => $shipment->created_at->toIso8601String()],
         ];
+
+        if ($shipment->status !== 'pending') {
+            $history[] = ['status' => $shipment->status, 'timestamp' => $shipment->updated_at->toIso8601String()];
+        }
+
+        return $history;
     }
 
     protected function calculateAverageDeliveryTime(): float
     {
+        // Compatible with both SQLite and MySQL
         $avg = Shipment::where('status', 'delivered')
-            ->whereNotNull('delivered_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(DAY, created_at, delivered_at)) as avg_days')
+            ->selectRaw('AVG(CAST((julianday(updated_at) - julianday(created_at)) AS REAL)) as avg_days')
             ->value('avg_days');
 
         return round($avg ?? 0, 1);

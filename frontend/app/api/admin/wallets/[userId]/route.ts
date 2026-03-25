@@ -1,78 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockAdminWallets, mockAdminUsers } from '@/lib/api/adminMockData';
+import { makeAdminRequest } from '@/lib/api/adminApiHelper';
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ userId: string }> }
 ) {
-  const params = await context.params;
-  const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get('page') || '1');
-  const perPage = parseInt(searchParams.get('per_page') || '25');
+  try {
+    const params = await context.params;
+    const searchParams = request.nextUrl.searchParams.toString();
+    const queryString = searchParams ? `?${searchParams}` : '';
 
-  const wallet = mockAdminWallets.find(w => w.userId === params.userId);
-  const user = mockAdminUsers.find(u => u.id === params.userId);
+    const response = await makeAdminRequest(
+      request,
+      `/api/admin/wallets/${params.userId}${queryString}`,
+      { method: 'GET' }
+    );
 
-  if (!wallet || !user) {
-    return NextResponse.json({ error: 'Wallet not found' }, { status: 404 });
-  }
+    const data = await response.json();
 
-  // Generate mock transactions
-  const allTransactions = [
-    {
-      id: '1',
-      type: 'credit' as const,
-      amount: 150.00,
-      description: 'Payment received for shipment delivery',
-      reference_type: 'shipment',
-      reference_id: 'ship-001',
-      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '2',
-      type: 'debit' as const,
-      amount: 50.00,
-      description: 'Withdrawal to bank account',
-      reference_type: 'withdrawal',
-      reference_id: 'wd-001',
-      created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '3',
-      type: 'adjustment' as const,
-      amount: 25.00,
-      description: 'Admin adjustment - Compensation for service issue',
-      reference_type: null,
-      reference_id: null,
-      created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
     }
-  ];
 
-  const total = allTransactions.length;
-  const start = (page - 1) * perPage;
-  const transactions = allTransactions.slice(start, start + perPage);
+    const d = data.data;
+    const wallet = d.wallet;
+    const aggregates = d.aggregates;
 
-  return NextResponse.json({
-    data: {
-      wallet: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone
+    const transformed = {
+      data: {
+        wallet: {
+          user: d.user,
+          balance: wallet?.balance ?? 0,
+          currency_code: wallet?.currency_code ?? 'EUR',
+          total_credits: aggregates?.total_credits ?? 0,
+          total_debits: aggregates?.total_debits ?? 0,
+          total_adjustments: aggregates?.total_adjustments ?? 0,
         },
-        balance: wallet.balance,
-        total_credits: wallet.totalEarned,
-        total_debits: wallet.totalWithdrawn,
-        total_adjustments: 0 // Not tracked in mock data
+        transactions: (d.transactions ?? []).map((t: any) => ({
+          id: t.id,
+          type: t.type,
+          amount: t.amount,
+          description: t.description,
+          reference_type: t.reference_type,
+          reference_id: t.reference_id,
+          balance_after: t.balance_after,
+          created_at: t.created_at,
+        })),
       },
-      transactions
-    },
-    meta: {
-      current_page: page,
-      per_page: perPage,
-      total,
-      last_page: Math.ceil(total / perPage)
-    }
-  });
+      meta: data.meta ?? { current_page: 1, last_page: 1, per_page: 25, total: 0 },
+    };
+
+    return NextResponse.json(transformed);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || 'Wallet not found' },
+      { status: error.message?.includes('Unauthorized') ? 401 : 404 }
+    );
+  }
 }
