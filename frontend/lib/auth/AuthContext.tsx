@@ -76,16 +76,10 @@ export function AuthProvider({ children, onUserLoaded }: AuthProviderProps) {
 
   /**
    * Login with email and password
-   * Implements Sanctum authentication flow:
-   * 1. Get CSRF cookie
-   * 2. Send login request with credentials
-   * 3. Store token and update user state
+   * Stateless token-based authentication via Sanctum
    */
   const login = async (email: string, password: string): Promise<User> => {
-    // Step 1: Get CSRF cookie from Laravel
-    await apiClient.get(API_ENDPOINTS.auth.csrf);
-
-    // Step 2: Send login request
+    // Send login request
     const response = await apiClient.post<{ token: string; user: User }>(
       API_ENDPOINTS.auth.login,
       { email, password }
@@ -110,8 +104,6 @@ export function AuthProvider({ children, onUserLoaded }: AuthProviderProps) {
    * Automatically logs in user after successful registration
    */
   const register = async (data: RegisterData) => {
-    await apiClient.get(API_ENDPOINTS.auth.csrf);
-
     const response = await apiClient.post<{ token: string; user: User }>(
       API_ENDPOINTS.auth.register,
       {
