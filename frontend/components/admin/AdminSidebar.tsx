@@ -25,7 +25,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Globe
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 

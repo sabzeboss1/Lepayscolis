@@ -51,8 +51,6 @@ Route::get('/currencies', function () {
 });
 Route::get('/countries', [CountryController::class, 'index']);
 Route::get('/countries/{id}/cities', [CountryController::class, 'cities']);
-Route::get('/locations/countries', [\App\Http\Controllers\LocationController::class, 'countries']);
-Route::get('/locations/cities/{country}', [\App\Http\Controllers\LocationController::class, 'cities']);
 
 // Webhook routes (public, no authentication required)
 Route::prefix('webhooks')->group(function () {
@@ -70,14 +68,6 @@ Route::middleware('auth:sanctum')->prefix('kyc')->group(function () {
     Route::get('/', [KYCController::class, 'show']);
     Route::post('/', [KYCController::class, 'store']);
     Route::get('/status', [KYCController::class, 'status']);
-});
-
-// Admin KYC routes (protected, admin only)
-// TODO: Add admin middleware when role system is implemented
-Route::middleware('auth:sanctum')->prefix('admin/kyc')->group(function () {
-    Route::get('/pending', [KYCController::class, 'pending']);
-    Route::post('/{id}/approve', [KYCController::class, 'approve']);
-    Route::post('/{id}/reject', [KYCController::class, 'reject']);
 });
 
 // Trip routes
@@ -387,38 +377,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::put('/{code}/rate', [AdminCurrencyController::class, 'updateRate'])->middleware('throttle:30,1');
         Route::post('/{code}/toggle', [AdminCurrencyController::class, 'toggle'])->middleware('throttle:30,1');
         Route::delete('/{code}', [AdminCurrencyController::class, 'destroy'])->middleware('throttle:30,1');
-    });
-
-    // Location Management
-    Route::prefix('locations')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\LocationManagementController::class, 'index'])->middleware('throttle:60,1');
-
-        // Countries
-        Route::post('/countries', [\App\Http\Controllers\Admin\LocationManagementController::class, 'storeCountry'])->middleware('throttle:30,1');
-        Route::put('/countries/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'updateCountry'])->middleware('throttle:30,1');
-        Route::delete('/countries/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'deleteCountry'])->middleware('throttle:30,1');
-
-        // Cities
-        Route::get('/countries/{countryId}/cities', [\App\Http\Controllers\Admin\LocationManagementController::class, 'getCitiesByCountry'])->middleware('throttle:60,1');
-        Route::post('/cities', [\App\Http\Controllers\Admin\LocationManagementController::class, 'storeCity'])->middleware('throttle:30,1');
-        Route::put('/cities/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'updateCity'])->middleware('throttle:30,1');
-        Route::delete('/cities/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'deleteCity'])->middleware('throttle:30,1');
-    });
-
-    // Location Management
-    Route::prefix('locations')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\LocationManagementController::class, 'index'])->middleware('throttle:60,1');
-
-        // Countries
-        Route::post('/countries', [\App\Http\Controllers\Admin\LocationManagementController::class, 'storeCountry'])->middleware('throttle:30,1');
-        Route::put('/countries/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'updateCountry'])->middleware('throttle:30,1');
-        Route::delete('/countries/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'deleteCountry'])->middleware('throttle:30,1');
-
-        // Cities
-        Route::get('/countries/{countryId}/cities', [\App\Http\Controllers\Admin\LocationManagementController::class, 'getCitiesByCountry'])->middleware('throttle:60,1');
-        Route::post('/cities', [\App\Http\Controllers\Admin\LocationManagementController::class, 'storeCity'])->middleware('throttle:30,1');
-        Route::put('/cities/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'updateCity'])->middleware('throttle:30,1');
-        Route::delete('/cities/{id}', [\App\Http\Controllers\Admin\LocationManagementController::class, 'deleteCity'])->middleware('throttle:30,1');
     });
 
     // Analytics

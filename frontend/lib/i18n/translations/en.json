@@ -519,7 +519,27 @@
     "prohibitedItem7": "Stolen items or items of dubious origin",
     "prohibitedItem8": "Any item illegal in the departure or arrival country",
     "prohibitedItemsConfirmation": "I confirm that my package does not contain any prohibited items and complies with the laws of both countries.",
-    "prohibitedItemsRequired": "You must confirm that your package does not contain prohibited items"
+    "prohibitedItemsRequired": "You must confirm that your package does not contain prohibited items",
+    "value": "Value",
+    "packageType": "Package type",
+    "pickupCityPlaceholder": "E.g: Paris, Dakar, Abidjan...",
+    "pickupCountryPlaceholder": "E.g: France, Senegal, Ivory Coast...",
+    "pickupAddressPlaceholder": "Full pickup address",
+    "deliveryCityPlaceholder": "E.g: New York, London, Montreal...",
+    "deliveryCountryPlaceholder": "E.g: United States, United Kingdom, Canada...",
+    "deliveryAddressPlaceholder": "Full delivery address",
+    "recipientInfo": "Recipient information",
+    "recipientName": "Recipient name",
+    "recipientNamePlaceholder": "Recipient's full name",
+    "recipientPhone": "Recipient phone",
+    "recipientPhonePlaceholder": "+1 234 567 8900",
+    "pickupLocation": "Pickup location",
+    "pickupLocationHelper": "Where will the traveler pick up the package?",
+    "deliveryLocation": "Delivery location",
+    "deliveryLocationHelper": "Where should the package be delivered?",
+    "photos": "Package photos",
+    "photosHelper": "Add up to 5 photos of your package (optional)",
+    "photoUploadError": "Error uploading photos"
   },
   "messages": {
     "title": "Messages",
@@ -544,7 +564,9 @@
     "errorFetchingConversations": "Error loading conversations",
     "errorFetchingMessages": "Error loading messages",
     "errorSendingMessage": "Error sending message",
-    "errorNoRecipient": "Unable to find recipient"
+    "errorNoRecipient": "Unable to find recipient",
+    "cannotContactYourself": "You cannot send a message to yourself",
+    "errorCreatingConversation": "Error creating conversation"
   },
   "profile": {
     "title": "Profile",

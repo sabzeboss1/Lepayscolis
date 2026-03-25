@@ -59,9 +59,9 @@ function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () =
       <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <Weight className="w-4 h-4" />
-          <span>{shipment.package_weight} kg</span>
+          <span>{shipment.weight} kg</span>
         </div>
-        <p className="text-sm text-slate-700 line-clamp-2">{shipment.package_description}</p>
+        <p className="text-sm text-slate-700 line-clamp-2">{shipment.description}</p>
       </div>
 
       <div className="flex items-center justify-between pt-4 border-t border-slate-100">
@@ -69,7 +69,7 @@ function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () =
           <User className="w-4 h-4 text-slate-400" />
           <span className="text-sm text-slate-600">{shipment.sender.name}</span>
         </div>
-        <span className="text-lg font-bold text-orange-600">€{shipment.payment_amount?.toFixed(2) || '—'}</span>
+        <span className="text-lg font-bold text-orange-600">€{shipment.price?.toFixed(2) || '—'}</span>
       </div>
     </div>
   );

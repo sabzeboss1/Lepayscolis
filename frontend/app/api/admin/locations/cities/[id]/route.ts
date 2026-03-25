@@ -4,13 +4,14 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:800
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     const body = await request.json();
-    
-    const response = await fetch(`${BACKEND_URL}/api/admin/locations/cities/${params.id}`, {
+
+    const response = await fetch(`${BACKEND_URL}/api/admin/locations/cities/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -21,7 +22,7 @@ export async function PUT(
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       return NextResponse.json(data, { status: response.status });
     }
@@ -38,12 +39,13 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    const response = await fetch(`${BACKEND_URL}/api/admin/locations/cities/${params.id}`, {
+
+    const response = await fetch(`${BACKEND_URL}/api/admin/locations/cities/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
