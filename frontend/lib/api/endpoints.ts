@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
   // KYC Endpoints
   // ============================================================================
   kyc: {
-    submit: '/api/kyc/submit',
+    submit: '/api/kyc',
     status: '/api/kyc/status',
   },
 

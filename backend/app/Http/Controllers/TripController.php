@@ -123,6 +123,14 @@ class TripController extends Controller
             DB::beginTransaction();
 
             $data = $request->validated();
+            
+            // Debug log
+            \Log::info('Trip creation data received', [
+                'all_data' => $request->all(),
+                'validated_data' => $data,
+                'accepted_package_types' => $data['accepted_package_types'] ?? 'NOT SET'
+            ]);
+            
             $data['traveler_id'] = $request->user()->id;
             $data['status'] = 'active';
             $data['verification_status'] = 'pending';

@@ -24,7 +24,7 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockShipments } from '@/lib/api/mockData';
 
-// In-memory storage (shared with main shipments route)
-const allShipments = [...mockShipments];
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET(
   request: NextRequest,
@@ -10,20 +8,26 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const shipment = allShipments.find(s => s.id === id);
-
-    if (!shipment) {
-      return NextResponse.json(
-        { message: 'Shipment not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      shipment,
+    const authHeader = request.headers.get('authorization');
+    const csrfToken = request.headers.get('x-xsrf-token');
+    
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/shipments/${id}`;
+    
+    const response = await fetch(backendUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': authHeader || '',
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
     });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Get shipment error:', error);
+    console.error('Get shipment details error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -36,7 +40,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('authorization');
+    const csrfToken = request.headers.get('x-xsrf-token');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -45,44 +51,29 @@ export async function PUT(
       );
     }
 
-    const { id } = await params;
-    const shipmentIndex = allShipments.findIndex(s => s.id === id);
-
-    if (shipmentIndex === -1) {
-      return NextResponse.json(
-        { message: 'Shipment not found' },
-        { status: 404 }
-      );
-    }
-
     const body = await request.json();
-    const {
-      package: pkg,
-      pickup,
-      delivery,
-      status,
-      payment,
-    } = body;
-
-    // Update shipment
-    const updatedShipment = {
-      ...allShipments[shipmentIndex],
-      ...(pkg && { package: pkg }),
-      ...(pickup && { pickup }),
-      ...(delivery && { delivery }),
-      ...(status && { status }),
-      ...(payment && { payment }),
-    };
-
-    allShipments[shipmentIndex] = updatedShipment;
-
-    return NextResponse.json({
-      shipment: updatedShipment,
+    
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/shipments/${id}`;
+    
+    const response = await fetch(backendUrl, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
+      body: JSON.stringify(body),
     });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Update shipment error:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: 'Internal server error', error: String(error) },
       { status: 500 }
     );
   }

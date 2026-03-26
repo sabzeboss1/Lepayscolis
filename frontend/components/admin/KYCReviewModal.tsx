@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, ZoomIn, ZoomOut, Download, User, Mail, Phone, Calendar, FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import AuthenticatedImage from './AuthenticatedImage';
 
 interface KYCSubmission {
   id: string;
@@ -139,7 +140,21 @@ export default function KYCReviewModal({
 
   const handleDownload = async (url: string) => {
     try {
-      const response = await fetch(url);
+      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+      
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -151,6 +166,7 @@ export default function KYCReviewModal({
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Download failed:', error);
+      alert('Failed to download file. Please try again.');
     }
   };
 
@@ -292,7 +308,7 @@ export default function KYCReviewModal({
                 {documentImages.length > 0 ? (
                   <>
                     <div className="relative">
-                      <img
+                      <AuthenticatedImage
                         src={documentImages[currentImageIndex].url}
                         alt={documentImages[currentImageIndex].label}
                         className="w-full h-auto transition-transform duration-200"

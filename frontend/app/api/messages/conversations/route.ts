@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockMessages, mockUsers, demoMessagesForNewUser, demoConversations } from '@/lib/api/mockData';
-import type { Conversation } from '@/lib/types';
 
-// In-memory storage for messages
-const allMessages = [...mockMessages, ...demoMessagesForNewUser];
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-
+    const csrfToken = request.headers.get('x-xsrf-token');
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { message: 'Unauthorized' },
@@ -16,70 +14,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Extract user ID from token
-    const token = authHeader.substring(7);
-    const tokenParts = token.split('-');
-    const currentUserId = tokenParts.length >= 3 ? tokenParts.slice(2, -1).join('-') : mockUsers[0].id;
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/messages/conversations`;
 
-    // Group messages by conversation
-    const conversationMap = new Map<string, Conversation>();
-
-    allMessages.forEach(message => {
-      // Only include conversations involving current user
-      if (message.sender_id !== currentUserId && message.recipient_id !== currentUserId) {
-        return;
-      }
-
-      const conversationId = message.conversation_id;
-
-      if (!conversationMap.has(conversationId)) {
-        // Determine other participant
-        const otherUserId = message.sender_id === currentUserId
-          ? message.recipient_id
-          : message.sender_id;
-
-        // Find other user info
-        const otherUser = mockUsers.find(u => u.id === otherUserId);
-
-        conversationMap.set(conversationId, {
-          id: conversationId,
-          user1_id: currentUserId,
-          user2_id: otherUserId,
-          last_message: message,
-          unread_count: 0,
-          updated_at: message.created_at,
-          created_at: message.created_at,
-          other_user: otherUser,
-        });
-      } else {
-        const conversation = conversationMap.get(conversationId)!;
-
-        // Update last message if this one is newer
-        if (message.created_at > (conversation.last_message?.created_at ?? '')) {
-          conversation.last_message = message;
-          conversation.updated_at = message.created_at;
-        }
-      }
+    const response = await fetch(backendUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': authHeader,
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
     });
 
-    // Calculate unread counts
-    conversationMap.forEach(conversation => {
-      const unreadMessages = allMessages.filter(msg =>
-        msg.conversation_id === conversation.id &&
-        msg.recipient_id === currentUserId &&
-        !msg.read
-      );
-      conversation.unread_count = unreadMessages.length;
-    });
+    const data = await response.json();
 
-    // Convert to array and sort by last message date
-    const conversations = Array.from(conversationMap.values())
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-
-    return NextResponse.json({
-      conversations,
-      total: conversations.length,
-    });
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Get conversations error:', error);
     return NextResponse.json(

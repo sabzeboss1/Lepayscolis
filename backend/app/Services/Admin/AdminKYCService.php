@@ -47,10 +47,10 @@ class AdminKYCService
     /**
      * Get detailed KYC submission.
      *
-     * @param int $kycId
+     * @param string $kycId
      * @return KYCDocument
      */
-    public function getKYCDetails(int $kycId): KYCDocument
+    public function getKYCDetails(string $kycId): KYCDocument
     {
         return KYCDocument::with('user')->findOrFail($kycId);
     }
@@ -58,13 +58,13 @@ class AdminKYCService
     /**
      * Approve KYC submission.
      *
-     * @param int $kycId
+     * @param string $kycId
      * @param User $admin
      * @return KYCDocument
      */
-    public function approveKYC(int $kycId, User $admin): KYCDocument
+    public function approveKYC(string $kycId, User $admin): KYCDocument
     {
-        $kyc = KYCDocument::findOrFail($kycId);
+        $kyc = KYCDocument::with('user')->findOrFail($kycId);
 
         $before = ['status' => $kyc->status];
 
@@ -82,23 +82,23 @@ class AdminKYCService
         // Create audit log
         AuditLog::log($admin, 'approve', 'kyc', $kycId, $before, $after);
 
-        // Queue notification
-        $this->notificationService->sendKYCApprovedNotification($kyc->user);
+        // TODO: Queue notification
+        // $this->notificationService->sendKYCApprovedNotification($kyc->user);
 
-        return $kyc->fresh();
+        return $kyc->fresh(['user']);
     }
 
     /**
      * Reject KYC submission.
      *
-     * @param int $kycId
+     * @param string $kycId
      * @param string $reason
      * @param User $admin
      * @return KYCDocument
      */
-    public function rejectKYC(int $kycId, string $reason, User $admin): KYCDocument
+    public function rejectKYC(string $kycId, string $reason, User $admin): KYCDocument
     {
-        $kyc = KYCDocument::findOrFail($kycId);
+        $kyc = KYCDocument::with('user')->findOrFail($kycId);
 
         $before = ['status' => $kyc->status];
 
@@ -114,10 +114,10 @@ class AdminKYCService
         // Create audit log
         AuditLog::log($admin, 'reject', 'kyc', $kycId, $before, $after);
 
-        // Queue notification
-        $this->notificationService->sendKYCRejectedNotification($kyc->user, $reason);
+        // TODO: Queue notification
+        // $this->notificationService->sendKYCRejectedNotification($kyc->user, $reason);
 
-        return $kyc->fresh();
+        return $kyc->fresh(['user']);
     }
 
     /**

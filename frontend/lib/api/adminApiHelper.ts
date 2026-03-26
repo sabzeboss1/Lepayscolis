@@ -4,7 +4,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
  * Helper function to make authenticated requests to Laravel backend from Next.js API routes
- * Extracts admin token from cookies and forwards it to the backend
+ * Extracts auth token from cookies and forwards it to the backend
  */
 export async function makeAdminRequest(
   request: NextRequest,
@@ -12,17 +12,17 @@ export async function makeAdminRequest(
   options: RequestInit = {}
 ): Promise<Response> {
   // Get admin token from cookies
-  const adminToken = request.cookies.get('auth-token')?.value;
+  const authToken = request.cookies.get('auth-token')?.value;
   
-  if (!adminToken) {
-    throw new Error('Unauthorized - No admin token found');
+  if (!authToken) {
+    throw new Error('Unauthorized - No auth token found');
   }
 
   // Merge headers with authentication
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'Authorization': `Bearer ${adminToken}`,
+    'Authorization': `Bearer ${authToken}`,
     ...options.headers,
   };
 
@@ -36,7 +36,7 @@ export async function makeAdminRequest(
 }
 
 /**
- * Extract admin token from request cookies
+ * Extract auth token from request cookies
  */
 export function getAdminToken(request: NextRequest): string | null {
   return request.cookies.get('auth-token')?.value || null;

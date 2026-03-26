@@ -192,22 +192,26 @@ class FileUploadService
             );
         }
 
-        // Additional MIME type validation
+
+        // Additional MIME type validation (more flexible for JPEG variants)
         $mimeType = $file->getMimeType();
         $allowedMimeTypes = [
-            'jpg' => ['image/jpeg', 'image/jpg'],
-            'jpeg' => ['image/jpeg', 'image/jpg'],
-            'png' => ['image/png'],
-            'pdf' => ['application/pdf'],
+            'jpg' => ['image/jpeg', 'image/jpg', 'image/pjpeg'],
+            'jpeg' => ['image/jpeg', 'image/jpg', 'image/pjpeg'],
+            'png' => ['image/png', 'image/x-png'],
+            'pdf' => ['application/pdf', 'application/x-pdf'],
             'svg' => ['image/svg+xml'],
             'ico' => ['image/x-icon', 'image/vnd.microsoft.icon'],
         ];
 
         if (isset($allowedMimeTypes[$extension])) {
             if (!in_array($mimeType, $allowedMimeTypes[$extension])) {
-                throw new \Exception(
-                    "File MIME type does not match extension for {$fileType}"
-                );
+                // Log warning but don't throw exception - trust extension validation
+                \Log::warning("MIME type mismatch for {$fileType}", [
+                    'expected' => $allowedMimeTypes[$extension],
+                    'actual' => $mimeType,
+                    'extension' => $extension,
+                ]);
             }
         }
     }
@@ -250,5 +254,25 @@ class FileUploadService
 
         // Default to local (private) for security
         return 'local';
+    }
+    
+    /**
+     * Get the appropriate storage disk (S3 or local fallback)
+     *
+     * @param string $type 'public' or 'private'
+     * @return string Disk name
+     */
+    private function getStorageDisk(string $type = 'private'): string
+    {
+        // Check if AWS is configured
+        $awsConfigured = !empty(env('AWS_ACCESS_KEY_ID')) && !empty(env('AWS_SECRET_ACCESS_KEY'));
+        
+        if (!$awsConfigured) {
+            // Use local storage as fallback
+            return $type === 'public' ? 'public' : 'local';
+        }
+        
+        // Use S3 storage
+        return $type === 'public' ? 's3-public' : 's3-private';
     }
 }

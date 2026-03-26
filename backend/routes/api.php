@@ -5,12 +5,14 @@ use App\Http\Controllers\KYCController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ShipmentController;
+use App\Http\Controllers\TravelProofController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\SetupController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,6 +39,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 });
+
+// Broadcasting authentication (for Pusher private/presence channels)
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 // Public utility routes
 Route::get('/languages', [UserController::class, 'supportedLanguages']);
@@ -65,19 +70,11 @@ Route::middleware('auth:sanctum')->prefix('kyc')->group(function () {
     Route::get('/status', [KYCController::class, 'status']);
 });
 
-// Admin KYC routes (protected, admin only)
-// TODO: Add admin middleware when role system is implemented
-Route::middleware('auth:sanctum')->prefix('admin/kyc')->group(function () {
-    Route::get('/pending', [KYCController::class, 'pending']);
-    Route::post('/{id}/approve', [KYCController::class, 'approve']);
-    Route::post('/{id}/reject', [KYCController::class, 'reject']);
-});
-
 // Trip routes
 Route::prefix('trips')->group(function () {
     // Public routes
     Route::get('/', [TripController::class, 'index']);
-    
+
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/my', [TripController::class, 'myTrips']);
@@ -87,28 +84,34 @@ Route::prefix('trips')->group(function () {
         Route::middleware('kyc.verified')->group(function () {
             Route::post('/', [TripController::class, 'store']);
         });
-        
+
         // Routes requiring trip ownership
         Route::middleware('trip.owner')->group(function () {
             Route::put('/{id}', [TripController::class, 'update']);
             Route::delete('/{id}', [TripController::class, 'destroy']);
         });
     });
-    
+
     // Public trip details (after /my to avoid route conflict)
     Route::get('/{id}', [TripController::class, 'show']);
 });
+
+// Serve travel proof files (public - anyone can view) - Outside trips group to avoid route conflict
+Route::get('/trips/{id}/travel-proof', [TravelProofController::class, 'show']);
 
 // Shipment routes
 Route::prefix('shipments')->group(function () {
     // Public routes
     Route::get('/', [ShipmentController::class, 'index']);
-    
+
+    // Available shipments for travelers (public - anyone can browse)
+    Route::get('/available', [ShipmentController::class, 'available']);
+
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
         // My shipments route (must come before /{id} to avoid conflict)
         Route::get('/my', [ShipmentController::class, 'myShipments']);
-        
+
         // Routes requiring KYC verification
         Route::middleware('kyc.verified')->group(function () {
             Route::post('/', [ShipmentController::class, 'store']);
@@ -118,7 +121,7 @@ Route::prefix('shipments')->group(function () {
             Route::post('/{id}/reject', [ShipmentController::class, 'reject']);
         });
     });
-    
+
     // Public shipment details (after /my to avoid route conflict)
     Route::get('/{id}', [ShipmentController::class, 'show']);
 });
@@ -126,6 +129,7 @@ Route::prefix('shipments')->group(function () {
 // Message routes (protected, require KYC verification)
 Route::middleware(['auth:sanctum', 'kyc.verified'])->prefix('messages')->group(function () {
     Route::get('/conversations', [MessageController::class, 'conversations']);
+    Route::get('/conversation-with/{userId}', [MessageController::class, 'getOrCreateConversation']);
     Route::get('/unread-count', [MessageController::class, 'unreadCount']);
     Route::get('/{conversationId}', [MessageController::class, 'index']);
     Route::post('/', [MessageController::class, 'store']);
@@ -140,22 +144,31 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->prefix('users')->group(function () {
     // Update own profile
     Route::put('/profile', [UserController::class, 'updateProfile']);
-    
+
     // Upload avatar
     Route::post('/avatar', [UserController::class, 'uploadAvatar']);
-    
+
     // Update FCM token
     Route::post('/fcm-token', [UserController::class, 'updateFcmToken']);
+
+    // Get user stats
+    Route::get('/stats', [\App\Http\Controllers\UserStatsController::class, 'stats']);
+
+    // Get user activity
+    Route::get('/activity', [\App\Http\Controllers\UserStatsController::class, 'activity']);
 });
 
 // Public user profile route (must be after protected routes to avoid conflicts)
 Route::get('/users/{id}', [UserController::class, 'show']);
 
+// User ratings route (public)
+Route::get('/users/{id}/ratings', [\App\Http\Controllers\UserStatsController::class, 'ratings']);
+
 // Rating routes
 Route::prefix('ratings')->group(function () {
     // Public routes
     Route::get('/', [RatingController::class, 'index']);
-    
+
     // Protected routes (require authentication and KYC verification)
     Route::middleware(['auth:sanctum', 'kyc.verified'])->group(function () {
         Route::post('/', [RatingController::class, 'store']);
@@ -215,18 +228,18 @@ Route::prefix('admin')->group(function () {
 
 // Admin protected routes (require authentication and admin role)
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    
+
     // Authentication
     Route::get('/me', [AdminAuthController::class, 'me']);
     Route::post('/logout', [AdminAuthController::class, 'logout']);
-    
+
     // Dashboard
     Route::prefix('dashboard')->group(function () {
         Route::get('/metrics', [AdminDashboardController::class, 'metrics'])->middleware('throttle:60,1');
         Route::get('/charts', [AdminDashboardController::class, 'charts'])->middleware('throttle:60,1');
         Route::get('/activity', [AdminDashboardController::class, 'activity'])->middleware('throttle:60,1');
     });
-    
+
     // User Management
     Route::prefix('users')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->middleware('throttle:60,1');
@@ -241,7 +254,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/{id}/ban-messaging', [AdminUserController::class, 'banMessaging'])->middleware('throttle:30,1');
         Route::post('/{id}/unban-messaging', [AdminUserController::class, 'unbanMessaging'])->middleware('throttle:30,1');
     });
-    
+
     // KYC Management
     Route::prefix('kyc')->group(function () {
         Route::get('/', [AdminKYCController::class, 'index'])->middleware('throttle:60,1');
@@ -250,8 +263,24 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/{id}/reject', [AdminKYCController::class, 'reject'])->middleware('throttle:30,1');
         Route::post('/bulk-approve', [AdminKYCController::class, 'bulkApprove'])->middleware('throttle:30,1');
         Route::post('/bulk-reject', [AdminKYCController::class, 'bulkReject'])->middleware('throttle:30,1');
+
+        // Serve KYC document files (admin only)
+        Route::get('/files/{userId}/{filename}', function ($userId, $filename) {
+            $path = "kyc/{$userId}/{$filename}";
+
+            if (!Storage::disk('local')->exists($path)) {
+                abort(404, 'File not found');
+            }
+
+            $file = Storage::disk('local')->get($path);
+            $mimeType = Storage::disk('local')->mimeType($path);
+
+            return response($file, 200)
+                ->header('Content-Type', $mimeType)
+                ->header('Cache-Control', 'private, max-age=3600');
+        })->where('filename', '.*')->middleware('throttle:60,1');
     });
-    
+
     // Trip Management
     Route::prefix('trips')->group(function () {
         Route::get('/', [AdminTripController::class, 'index'])->middleware('throttle:60,1');
@@ -265,7 +294,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/bulk-verify', [AdminTripController::class, 'bulkVerify'])->middleware('throttle:30,1');
         Route::post('/bulk-reject', [AdminTripController::class, 'bulkReject'])->middleware('throttle:30,1');
     });
-    
+
     // Shipment Management
     Route::prefix('shipments')->group(function () {
         Route::get('/', [AdminShipmentController::class, 'index'])->middleware('throttle:60,1');
@@ -274,7 +303,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/{id}/resolve-dispute', [AdminShipmentController::class, 'resolveDispute'])->middleware('throttle:30,1');
         Route::post('/{id}/cancel', [AdminShipmentController::class, 'cancel'])->middleware('throttle:30,1');
     });
-    
+
     // Wallet Management
     Route::prefix('wallets')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\WalletManagementController::class, 'index'])->middleware('throttle:60,1');
@@ -282,7 +311,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::get('/{userId}', [\App\Http\Controllers\Admin\WalletManagementController::class, 'show'])->middleware('throttle:60,1');
         Route::post('/{userId}/adjust', [\App\Http\Controllers\Admin\WalletManagementController::class, 'adjustBalance'])->middleware('throttle:30,1');
     });
-    
+
     // Withdrawal Management
     Route::prefix('withdrawals')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\WithdrawalManagementController::class, 'index'])->middleware('throttle:60,1');
@@ -291,7 +320,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/{id}/processing', [\App\Http\Controllers\Admin\WithdrawalManagementController::class, 'markProcessing'])->middleware('throttle:30,1');
         Route::post('/{id}/complete', [\App\Http\Controllers\Admin\WithdrawalManagementController::class, 'complete'])->middleware('throttle:30,1');
     });
-    
+
     // Payment Management
     Route::prefix('payments')->group(function () {
         Route::get('/', [AdminPaymentController::class, 'index'])->middleware('throttle:60,1');
@@ -299,14 +328,14 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::get('/{id}', [AdminPaymentController::class, 'show'])->middleware('throttle:60,1');
         Route::post('/{id}/refund', [AdminPaymentController::class, 'refund'])->middleware('throttle:30,1');
     });
-    
+
     // Messaging Moderation
     Route::prefix('messages')->group(function () {
         Route::get('/conversations', [AdminMessageController::class, 'conversations'])->middleware('throttle:60,1');
         Route::get('/conversations/{id}', [AdminMessageController::class, 'show'])->middleware('throttle:60,1');
         Route::delete('/{id}', [AdminMessageController::class, 'destroy'])->middleware('throttle:30,1');
     });
-    
+
     // Rating Management
     Route::prefix('ratings')->group(function () {
         Route::get('/', [AdminRatingController::class, 'index'])->middleware('throttle:60,1');
@@ -314,7 +343,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::get('/{id}', [AdminRatingController::class, 'show'])->middleware('throttle:60,1');
         Route::delete('/{id}', [AdminRatingController::class, 'destroy'])->middleware('throttle:30,1');
     });
-    
+
     // Platform Settings
     Route::prefix('settings')->group(function () {
         Route::get('/', [AdminSettingsController::class, 'index'])->middleware('throttle:60,1');
@@ -349,7 +378,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/{code}/toggle', [AdminCurrencyController::class, 'toggle'])->middleware('throttle:30,1');
         Route::delete('/{code}', [AdminCurrencyController::class, 'destroy'])->middleware('throttle:30,1');
     });
-    
+
     // Analytics
     Route::prefix('analytics')->group(function () {
         Route::get('/', [AdminAnalyticsController::class, 'index'])->middleware('throttle:60,1');
@@ -360,14 +389,14 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::get('/engagement', [AdminAnalyticsController::class, 'engagement'])->middleware('throttle:60,1');
         Route::post('/export', [AdminAnalyticsController::class, 'export'])->middleware('throttle:30,1');
     });
-    
+
     // Audit Logs
     Route::prefix('audit-logs')->group(function () {
         Route::get('/', [AdminAuditLogController::class, 'index'])->middleware('throttle:60,1');
         Route::get('/{id}', [AdminAuditLogController::class, 'show'])->middleware('throttle:60,1');
         Route::post('/export', [AdminAuditLogController::class, 'export'])->middleware('throttle:30,1');
     });
-    
+
     // Data Export
     Route::prefix('export')->group(function () {
         Route::post('/users', [AdminExportController::class, 'users'])->middleware('throttle:30,1');
@@ -381,7 +410,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
 // Super Admin routes (require super_admin role)
 Route::middleware(['auth:sanctum', 'super-admin'])->prefix('admin')->group(function () {
-    
+
     // Admin User Management
     Route::prefix('admins')->group(function () {
         Route::get('/', [AdminUserManagementController::class, 'index'])->middleware('throttle:60,1');
@@ -390,10 +419,10 @@ Route::middleware(['auth:sanctum', 'super-admin'])->prefix('admin')->group(funct
         Route::delete('/{id}', [AdminUserManagementController::class, 'destroy'])->middleware('throttle:30,1');
         Route::get('/{id}/activity', [AdminUserManagementController::class, 'activity'])->middleware('throttle:60,1');
     });
-    
+
     // Assign admin role (also in super admin section)
     Route::post('/users/{id}/assign-admin', [AdminUserController::class, 'assignAdmin'])->middleware('throttle:30,1');
-    
+
     // Platform Notifications
     Route::prefix('notifications')->group(function () {
         Route::post('/send', [AdminNotificationController::class, 'send'])->middleware('throttle:30,1');

@@ -70,9 +70,10 @@ class AdminUserService
             'ratings_given_count' => $user->ratingsGiven()->count(),
         ];
 
-        // Get recent transactions
+        // Get recent transactions (payments where user is payer or payee)
         $transactions = DB::table('payments')
-            ->where('user_id', $userId)
+            ->where('payer_id', $userId)
+            ->orWhere('payee_id', $userId)
             ->latest('created_at')
             ->take(10)
             ->get();

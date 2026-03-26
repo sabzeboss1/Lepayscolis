@@ -3,11 +3,12 @@ import type { Metadata } from 'next';
 import { DestinationsPageClient } from './DestinationsPageClient';
 
 export const metadata: Metadata = {
-  title: 'Popular Destinations - LePaysExpressColis',
-  description: 'Explore popular routes between Russia and Africa. Find travelers and senders connecting Moscow, St. Petersburg, Cairo, Lagos, and more.',
+  title: 'Destinations Populaires - Tuma Plus',
+  description:
+    'Explorez les routes populaires entre la Russie et l\'Afrique. Trouvez des voyageurs et expéditeurs connectant Moscou, Saint-Pétersbourg, Dakar, Lagos et plus.',
   openGraph: {
-    title: 'Popular Destinations - LePaysExpressColis',
-    description: 'Connecting Russia and Africa',
+    title: 'Destinations Populaires - Tuma Plus',
+    description: 'Connecter la Russie et l\'Afrique',
     type: 'website',
   },
 };

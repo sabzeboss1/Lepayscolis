@@ -3,11 +3,12 @@ import type { Metadata } from 'next';
 import { FAQPageClient } from './FAQPageClient';
 
 export const metadata: Metadata = {
-  title: 'FAQ - LePaysExpressColis',
-  description: 'Find answers to frequently asked questions about sending packages, traveling with packages, payments, and safety on LePaysExpressColis.',
+  title: 'FAQ - Tuma Plus',
+  description:
+    'Trouvez les réponses à vos questions sur l\'envoi de colis, les voyages, les paiements et la sécurité sur Tuma Plus.',
   openGraph: {
-    title: 'FAQ - LePaysExpressColis',
-    description: 'Frequently Asked Questions',
+    title: 'FAQ - Tuma Plus',
+    description: 'Questions Fréquentes',
     type: 'website',
   },
 };

@@ -65,30 +65,85 @@ class ShipmentController extends Controller
      * 
      * POST /api/shipments
      * Requires: auth:sanctum, kyc.verified
+     * 
+     * NEW FLOW: Blocks funds in sender's wallet before creating shipment
      */
     public function store(CreateShipmentRequest $request): JsonResponse
     {
         return DB::transaction(function () use ($request) {
+            $user = auth()->user();
             $data = $request->validated();
 
             // Auto-populate text fields from country/city IDs
             $data = $this->resolveLocationNames($data, 'pickup');
             $data = $this->resolveLocationNames($data, 'delivery');
 
-            $shipment = new Shipment($data);
-            $shipment->sender_id = auth()->id();
-            $shipment->status = 'pending';
-            $shipment->payment_status = 'pending';
+            // Get trip to calculate payment amount
+            $tripId = $data['trip_id'] ?? null;
+            if (!$tripId) {
+                return response()->json([
+                    'message' => 'Trip ID is required to calculate payment amount.',
+                ], 422);
+            }
 
-            // Payment amount will be calculated when shipment is accepted
-            // For now, set to 0
-            $shipment->payment_amount = 0;
+            $trip = Trip::findOrFail($tripId);
+
+            // Calculate payment amount
+            $packageWeight = $data['package_weight'];
+            $paymentAmount = $packageWeight * $trip->price_per_kg;
+
+            // Get sender's wallet
+            $wallet = $user->wallet;
+            if (!$wallet) {
+                return response()->json([
+                    'message' => 'Wallet not found. Please contact support.',
+                ], 500);
+            }
+
+            // Check available balance (balance - held_balance)
+            $walletService = app(\App\Services\WalletService::class);
+            $availableBalance = $walletService->getAvailableBalance($wallet);
+
+            if ($availableBalance < $paymentAmount) {
+                return response()->json([
+                    'message' => 'Insufficient balance. Please recharge your wallet.',
+                    'required_amount' => number_format($paymentAmount, 2),
+                    'available_balance' => number_format($availableBalance, 2),
+                    'shortfall' => number_format($paymentAmount - $availableBalance, 2),
+                ], 422);
+            }
+
+            // Create shipment with validated data
+            $shipment = new Shipment($data);
+            $shipment->sender_id = $user->id;
+            $shipment->status = 'pending';
+            $shipment->payment_status = 'escrowed';
+            $shipment->payment_amount = $paymentAmount;
 
             $shipment->save();
+            
+            // Hold funds in wallet
+            try {
+                $walletService->hold(
+                    $wallet,
+                    $paymentAmount,
+                    "Funds held for shipment #{$shipment->id}",
+                    'shipment',
+                    $shipment->id
+                );
+            } catch (\Exception $e) {
+                // If hold fails, delete the shipment
+                $shipment->delete();
+                
+                return response()->json([
+                    'message' => 'Failed to hold funds. Please try again.',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
 
             return response()->json([
-                'message' => 'Shipment created successfully.',
-                'data' => new ShipmentResource($shipment),
+                'message' => 'Shipment created successfully. Funds have been held in your wallet.',
+                'data' => new ShipmentResource($shipment->load('trip')),
             ], 201);
         });
     }
@@ -142,6 +197,59 @@ class ShipmentController extends Controller
             ],
         ]);
     }
+    /**
+     * List available shipments for travelers (pending shipments without trip).
+     *
+     * GET /api/shipments/available
+     * Requires: auth:sanctum
+     */
+    public function available(Request $request): JsonResponse
+    {
+        $query = Shipment::with(['sender'])
+            ->where('status', 'pending')
+            ->whereNull('trip_id')
+            ->whereNull('traveler_id');
+
+        // Filter by pickup country
+        if ($request->has('pickup_country')) {
+            $query->where('pickup_country', 'like', '%' . $request->pickup_country . '%');
+        }
+
+        // Filter by delivery country
+        if ($request->has('delivery_country')) {
+            $query->where('delivery_country', 'like', '%' . $request->delivery_country . '%');
+        }
+
+        // Filter by pickup city
+        if ($request->has('pickup_city')) {
+            $query->where('pickup_city', 'like', '%' . $request->pickup_city . '%');
+        }
+
+        // Filter by delivery city
+        if ($request->has('delivery_city')) {
+            $query->where('delivery_city', 'like', '%' . $request->delivery_city . '%');
+        }
+
+        // Filter by max weight
+        if ($request->has('max_weight')) {
+            $query->where('package_weight', '<=', $request->max_weight);
+        }
+
+        // Paginate results (15 per page)
+        $shipments = $query->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return response()->json([
+            'data' => ShipmentResource::collection($shipments->items()),
+            'meta' => [
+                'current_page' => $shipments->currentPage(),
+                'last_page' => $shipments->lastPage(),
+                'per_page' => $shipments->perPage(),
+                'total' => $shipments->total(),
+            ],
+        ]);
+    }
+
 
     /**
      * Update shipment status.
@@ -207,11 +315,13 @@ class ShipmentController extends Controller
      * 
      * POST /api/shipments/{id}/confirm-delivery
      * Requires: auth:sanctum, shipment.access
+     * 
+     * NEW FLOW: When receiver confirms, funds are debited from sender and credited to traveler
      */
     public function confirmDelivery(string $id): JsonResponse
     {
         return DB::transaction(function () use ($id) {
-            $shipment = Shipment::findOrFail($id);
+            $shipment = Shipment::with(['sender.wallet', 'traveler.wallet'])->findOrFail($id);
 
             // Only sender or traveler can confirm delivery
             $user = auth()->user();
@@ -223,11 +333,45 @@ class ShipmentController extends Controller
 
             // Confirm delivery
             $shipment->confirmDelivery();
-
-            // Payment release will be handled by PaymentObserver
+            
+            // Process wallet transactions
+            $walletService = app(\App\Services\WalletService::class);
+            
+            try {
+                // 1. Release held funds and debit sender's wallet
+                $walletService->releaseAndDebit(
+                    $shipment->sender->wallet,
+                    $shipment->payment_amount,
+                    "Payment for shipment #{$shipment->id} - Delivered",
+                    'shipment',
+                    $shipment->id
+                );
+                
+                // 2. Calculate platform fee (15%) and traveler amount (85%)
+                $platformFee = $shipment->payment_amount * 0.15;
+                $travelerAmount = $shipment->payment_amount * 0.85;
+                
+                // 3. Credit traveler's wallet (85% of payment)
+                $walletService->credit(
+                    $shipment->traveler->wallet,
+                    $travelerAmount,
+                    "Payment received for shipment #{$shipment->id}",
+                    'shipment',
+                    $shipment->id
+                );
+                
+                // 4. Update shipment payment status
+                $shipment->update(['payment_status' => 'released']);
+                
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Delivery confirmed but payment processing failed. Please contact support.',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
 
             return response()->json([
-                'message' => 'Delivery confirmed successfully.',
+                'message' => 'Delivery confirmed successfully. Payment has been processed.',
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });

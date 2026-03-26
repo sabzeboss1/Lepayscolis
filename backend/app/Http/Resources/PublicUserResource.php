@@ -26,9 +26,10 @@ class PublicUserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'avatar' => $this->avatar,
-            'rating' => $this->rating,
-            'completed_deliveries' => $this->completed_deliveries,
-            'is_recommended' => $this->is_recommended,
+            'rating' => (float) $this->rating,
+            'completed_deliveries' => (int) $this->completed_deliveries,
+            'is_recommended' => (bool) $this->is_recommended,
+            'kyc_status' => $this->kyc_status, // Needed for verification badge display
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

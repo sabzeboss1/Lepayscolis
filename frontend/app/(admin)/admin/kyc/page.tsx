@@ -113,25 +113,60 @@ export default function KYCPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      await fetch(`/api/admin/kyc/${id}/approve`, {
-        method: 'POST'
+      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
+      
+      const response = await fetch(`/api/admin/kyc/${id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to approve KYC');
+      }
+      
       fetchSubmissions();
+      setShowReviewModal(false);
     } catch (error) {
       console.error('Failed to approve KYC:', error);
+      alert('Failed to approve KYC. Please try again.');
     }
   };
 
   const handleReject = async (id: string, reason: string) => {
     try {
-      await fetch(`/api/admin/kyc/${id}/reject`, {
+      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
+      
+      const response = await fetch(`/api/admin/kyc/${id}/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify({ reason })
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to reject KYC');
+      }
+      
       fetchSubmissions();
+      setShowReviewModal(false);
     } catch (error) {
       console.error('Failed to reject KYC:', error);
+      alert('Failed to reject KYC. Please try again.');
     }
   };
 

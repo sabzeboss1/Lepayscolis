@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('wallet_transactions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('wallet_id')->constrained()->onDelete('cascade');
-            $table->enum('type', ['credit', 'debit', 'refund', 'adjustment']);
+            $table->id();
+            $table->foreignId('wallet_id')->constrained()->onDelete('cascade');
+            $table->enum('type', ['credit', 'debit', 'hold', 'hold_cancelled', 'refund', 'adjustment']);
             $table->decimal('amount', 10, 2);
             $table->text('description');
             $table->string('reference_type')->nullable();

@@ -40,7 +40,7 @@ class CreateTripRequest extends FormRequest
         return [
             'departure_country_id' => ['required', 'integer', 'exists:countries,id'],
             'departure_city_id' => ['required', 'integer', 'exists:cities,id'],
-            'departure_date' => ['required', 'date', 'after:today'],
+            'departure_date' => ['required', 'date', 'after_or_equal:today'],
             'arrival_country_id' => ['required', 'integer', 'exists:countries,id'],
             'arrival_city_id' => ['required', 'integer', 'exists:cities,id'],
             'arrival_date' => ['required', 'date', 'after:departure_date'],

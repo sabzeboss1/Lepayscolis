@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockMessages, mockUsers } from '@/lib/api/mockData';
 
-// In-memory storage (shared with conversations route)
-const allMessages = [...mockMessages];
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
+    const { conversationId } = await params;
     const authHeader = request.headers.get('authorization');
+    const csrfToken = request.headers.get('x-xsrf-token');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -18,17 +18,21 @@ export async function GET(
       );
     }
 
-    const { conversationId } = await params;
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/messages/${conversationId}`;
 
-    // Get messages for this conversation
-    const messages = allMessages
-      .filter(msg => msg.conversation_id === conversationId)
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-    return NextResponse.json({
-      messages,
-      total: messages.length,
+    const response = await fetch(backendUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': authHeader,
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
     });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Get messages error:', error);
     return NextResponse.json(

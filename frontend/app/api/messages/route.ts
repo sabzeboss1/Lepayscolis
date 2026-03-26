@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateMockMessage, mockMessages, mockUsers } from '@/lib/api/mockData';
 
-// In-memory storage (shared with other message routes)
-const allMessages = [...mockMessages];
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
+    const csrfToken = request.headers.get('x-xsrf-token');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -16,41 +15,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { conversationId, recipientId, content } = body;
 
-    // Validate input
-    if (!conversationId || !recipientId || !content) {
-      return NextResponse.json(
-        { message: 'Conversation ID, recipient ID, and content are required' },
-        { status: 400 }
-      );
-    }
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/messages`;
 
-    if (content.trim().length === 0) {
-      return NextResponse.json(
-        { message: 'Message content cannot be empty' },
-        { status: 400 }
-      );
-    }
-
-    // Mock: use first user as sender
-    const senderId = mockUsers[0].id;
-
-    // Create new message
-    const newMessage = generateMockMessage({
-      conversation_id: conversationId,
-      sender_id: senderId,
-      recipient_id: recipientId,
-      content: content.trim(),
-      read: false,
-      created_at: new Date().toISOString(),
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
+      body: JSON.stringify(body),
     });
 
-    allMessages.push(newMessage);
-
-    return NextResponse.json({
-      message: newMessage,
-    }, { status: 201 });
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Send message error:', error);
     return NextResponse.json(

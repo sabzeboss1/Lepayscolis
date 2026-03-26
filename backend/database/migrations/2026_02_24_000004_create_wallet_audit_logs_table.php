@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('wallet_audit_logs', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->foreignId('admin_id')->constrained('users')->onDelete('cascade');
             $table->string('action');
             $table->string('target_type');
