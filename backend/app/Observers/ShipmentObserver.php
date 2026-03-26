@@ -58,9 +58,7 @@ class ShipmentObserver
     /**
      * Handle the Shipment "updated" event.
      * Broadcast status changes via WebSocket.
-     * Create payment when shipment is accepted.
-     * Queue payment release when shipment is delivered.
-     * Refund payment when shipment is cancelled with escrowed payment.
+     * Release held funds when shipment is cancelled.
      */
     public function updated(Shipment $shipment): void
     {
@@ -71,21 +69,9 @@ class ShipmentObserver
             
             event(new ShipmentStatusChanged($shipment, $oldStatus, $newStatus));
 
-            // Create payment when shipment is accepted
-            if ($newStatus === 'accepted') {
-                $this->createPaymentForAcceptedShipment($shipment);
-            }
-
-            // Queue payment release when shipment is delivered
-            // Requirements: 7.7
-            if ($newStatus === 'delivered') {
-                $this->queuePaymentRelease($shipment);
-            }
-
-            // Refund payment when shipment is cancelled with escrowed payment
-            // Requirements: 7.11-7.13
+            // Release held funds when shipment is cancelled
             if ($newStatus === 'cancelled') {
-                $this->refundPaymentIfEscrowed($shipment);
+                $this->releaseHeldFunds($shipment);
             }
         }
     }
@@ -112,168 +98,63 @@ class ShipmentObserver
     }
 
     /**
-     * Create payment for accepted shipment.
-     * Requirements: 7.1-7.4
+     * Release held funds when shipment is cancelled.
+     * Funds are returned to sender's available balance.
      */
-    private function createPaymentForAcceptedShipment(Shipment $shipment): void
+    private function releaseHeldFunds(Shipment $shipment): void
     {
         try {
-            // Ensure shipment has required data
-            if (!$shipment->traveler_id || !$shipment->payment_amount) {
-                Log::warning('Cannot create payment for shipment without traveler or payment amount', [
-                    'shipment_id' => $shipment->id,
-                    'traveler_id' => $shipment->traveler_id,
-                    'payment_amount' => $shipment->payment_amount,
-                ]);
-                return;
-            }
-
-            // Check if payment already exists
-            if ($shipment->payment()->exists()) {
-                Log::info('Payment already exists for shipment', [
-                    'shipment_id' => $shipment->id,
-                ]);
-                return;
-            }
-
-            // Create payment using PaymentService
-            $paymentService = app(PaymentService::class);
-            $payment = $paymentService->createPaymentIntent($shipment);
-
-            Log::info('Payment created for accepted shipment', [
-                'shipment_id' => $shipment->id,
-                'payment_id' => $payment->id,
-                'amount' => $payment->amount,
-                'platform_fee' => $payment->platform_fee,
-                'traveler_amount' => $payment->traveler_amount,
-                'status' => $payment->status,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to create payment for accepted shipment', [
-                'shipment_id' => $shipment->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            
-            // Don't throw exception to prevent shipment update from failing
-            // The payment creation can be retried manually if needed
-        }
-    }
-
-    /**
-     * Queue payment release job with 7-day delay when shipment is delivered.
-     * Requirements: 7.7
-     */
-    private function queuePaymentRelease(Shipment $shipment): void
-    {
-        try {
-            // Ensure payment relationship is loaded
-            if (!$shipment->relationLoaded('payment')) {
-                $shipment->load('payment');
-            }
-
-            // Get the payment for this shipment
-            $payment = $shipment->payment;
-
-            if (!$payment) {
-                Log::warning('Cannot queue payment release - no payment found for shipment', [
-                    'shipment_id' => $shipment->id,
-                ]);
-                return;
-            }
-
-            // Only queue release if payment is in escrowed status
-            if ($payment->status !== 'escrowed') {
-                Log::warning('Cannot queue payment release - payment not in escrowed status', [
-                    'shipment_id' => $shipment->id,
-                    'payment_id' => $payment->id,
-                    'payment_status' => $payment->status,
-                ]);
-                return;
-            }
-
-            // Queue the ReleaseEscrowPayment job with 7-day delay
-            \App\Jobs\ReleaseEscrowPayment::dispatch($payment)
-                ->delay(now()->addDays(7));
-
-            Log::info('Payment release job queued with 7-day delay', [
-                'shipment_id' => $shipment->id,
-                'payment_id' => $payment->id,
-                'scheduled_for' => now()->addDays(7)->toDateTimeString(),
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to queue payment release job', [
-                'shipment_id' => $shipment->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            
-            // Don't throw exception to prevent shipment update from failing
-            // The job can be queued manually if needed
-        }
-    }
-
-    /**
-     * Refund payment when shipment is cancelled with escrowed payment.
-     * Requirements: 7.11-7.13
-     */
-    private function refundPaymentIfEscrowed(Shipment $shipment): void
-    {
-        try {
-            // Ensure payment relationship is loaded
-            if (!$shipment->relationLoaded('payment')) {
-                $shipment->load('payment');
-            }
-
-            // Get the payment for this shipment
-            $payment = $shipment->payment;
-
-            if (!$payment) {
-                Log::info('No payment to refund - no payment found for cancelled shipment', [
-                    'shipment_id' => $shipment->id,
-                ]);
-                return;
-            }
-
-            // Only refund if payment is in escrowed status
-            if ($payment->status !== 'escrowed') {
-                Log::info('No refund needed - payment not in escrowed status', [
-                    'shipment_id' => $shipment->id,
-                    'payment_id' => $payment->id,
-                    'payment_status' => $payment->status,
-                ]);
-                return;
-            }
-
-            // Check if shipment payment_status is escrowed
+            // Only release if payment status is 'escrowed'
             if ($shipment->payment_status !== 'escrowed') {
-                Log::warning('Payment status mismatch - shipment payment_status not escrowed', [
+                Log::info('No held funds to release - payment status not escrowed', [
                     'shipment_id' => $shipment->id,
-                    'payment_id' => $payment->id,
-                    'shipment_payment_status' => $shipment->payment_status,
-                    'payment_status' => $payment->status,
+                    'payment_status' => $shipment->payment_status,
                 ]);
                 return;
             }
 
-            // Refund the payment using PaymentService
-            $paymentService = app(PaymentService::class);
-            $paymentService->refundPayment($payment);
+            // Ensure sender relationship is loaded
+            if (!$shipment->relationLoaded('sender')) {
+                $shipment->load('sender.wallet');
+            }
 
-            Log::info('Payment refunded for cancelled shipment', [
+            $wallet = $shipment->sender->wallet;
+            
+            if (!$wallet) {
+                Log::error('Cannot release held funds - sender wallet not found', [
+                    'shipment_id' => $shipment->id,
+                    'sender_id' => $shipment->sender_id,
+                ]);
+                return;
+            }
+
+            // Cancel hold and release funds
+            $walletService = app(\App\Services\WalletService::class);
+            $walletService->cancelHold(
+                $wallet,
+                $shipment->payment_amount,
+                "Funds released - Shipment #{$shipment->id} cancelled",
+                'shipment',
+                $shipment->id
+            );
+            
+            // Update shipment payment status
+            $shipment->updateQuietly(['payment_status' => 'refunded']);
+
+            Log::info('Held funds released for cancelled shipment', [
                 'shipment_id' => $shipment->id,
-                'payment_id' => $payment->id,
-                'amount' => $payment->amount,
+                'amount' => $shipment->payment_amount,
+                'sender_id' => $shipment->sender_id,
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to refund payment for cancelled shipment', [
+            Log::error('Failed to release held funds for cancelled shipment', [
                 'shipment_id' => $shipment->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
             
             // Don't throw exception to prevent shipment update from failing
-            // The refund can be processed manually if needed
+            // The funds can be released manually if needed
         }
     }
 }

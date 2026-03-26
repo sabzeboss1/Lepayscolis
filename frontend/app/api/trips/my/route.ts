@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockTrips, mockUsers, demoTripsForNewUser } from '@/lib/api/mockData';
 
-// In-memory storage (shared with main trips route)
-const allTrips = [...mockTrips, ...demoTripsForNewUser];
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
+    const csrfToken = request.headers.get('x-xsrf-token');
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -15,19 +14,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Extract user ID from token (mock implementation)
-    const token = authHeader.substring(7);
-    // Token format: mock-token-{userId}-{timestamp}
-    const tokenParts = token.split('-');
-    const userId = tokenParts.length >= 3 ? tokenParts.slice(2, -1).join('-') : mockUsers[0].id;
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/trips/my`;
 
-    // Filter trips by user
-    const userTrips = allTrips.filter(trip => trip.traveler_id === userId);
-
-    return NextResponse.json({
-      trips: userTrips,
-      total: userTrips.length,
+    const response = await fetch(backendUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': authHeader,
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
     });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Get my trips error:', error);
     return NextResponse.json(

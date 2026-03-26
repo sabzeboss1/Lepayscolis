@@ -29,10 +29,17 @@ export default function MyTripsPage() {
     setIsLoading(true);
     setError(null);
     try {
+      // Get auth tokens from cookies
+      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
+      
       const response = await fetch('/api/trips/my', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+          'Authorization': `Bearer ${token}`,
+          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
+          'Accept': 'application/json',
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -58,12 +65,19 @@ export default function MyTripsPage() {
     if (!confirm(t('trips.confirmCancel') + '?')) return;
 
     try {
+      // Get auth tokens from cookies
+      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
+      
       const response = await fetch(`/api/trips/${tripId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+          'Authorization': `Bearer ${token}`,
+          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
+          'Accept': 'application/json',
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {

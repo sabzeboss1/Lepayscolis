@@ -56,6 +56,14 @@ class KYCController extends Controller
     public function store(SubmitKYCRequest $request): JsonResponse
     {
         try {
+            \Log::info('KYC submission started', [
+                'user_id' => $request->user()->id,
+                'document_type' => $request->input('document_type'),
+                'has_document_front' => $request->hasFile('document_front'),
+                'has_document_back' => $request->hasFile('document_back'),
+                'has_selfie' => $request->hasFile('selfie'),
+            ]);
+
             $files = [
                 'document_front' => $request->file('document_front'),
                 'selfie' => $request->file('selfie'),
@@ -72,11 +80,32 @@ class KYCController extends Controller
                 $files
             );
 
+            \Log::info('KYC submission successful', [
+                'user_id' => $request->user()->id,
+                'kyc_document_id' => $kycDocument->id,
+            ]);
+
             return response()->json([
                 'message' => 'KYC document submitted successfully',
                 'data' => new KYCDocumentResource($kycDocument->load(['user', 'reviewer'])),
             ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::warning('KYC validation failed', [
+                'user_id' => $request->user()->id,
+                'errors' => $e->errors(),
+            ]);
+            
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
+            \Log::error('KYC submission failed', [
+                'user_id' => $request->user()->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return response()->json([
                 'message' => 'Failed to submit KYC document',
                 'error' => $e->getMessage(),

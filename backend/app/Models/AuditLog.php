@@ -49,7 +49,7 @@ class AuditLog extends Model
      * @param User $admin
      * @param string $action
      * @param string $resourceType
-     * @param int $resourceId
+     * @param string|int $resourceId
      * @param array|null $before
      * @param array|null $after
      * @return self
@@ -58,7 +58,7 @@ class AuditLog extends Model
         User $admin,
         string $action,
         string $resourceType,
-        int $resourceId,
+        string|int $resourceId,
         ?array $before = null,
         ?array $after = null
     ): self {

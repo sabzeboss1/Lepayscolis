@@ -5,15 +5,93 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { UserCard } from '@/components/ui/UserCard';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import { Shipment, PaginatedResponse } from '@/lib/types/api';
+import {
+  Package,
+  Plus,
+  ArrowRight,
+  MapPin,
+  Weight,
+  Clock,
+  CheckCircle2,
+  Truck,
+  XCircle,
+  CircleDot,
+  PackageOpen,
+  Eye,
+  AlertCircle,
+} from 'lucide-react';
 
 type ShipmentStatus = 'all' | 'pending' | 'accepted' | 'paid' | 'in_transit' | 'delivered' | 'cancelled';
 type SortOption = 'date' | 'weight' | 'status';
+
+const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; bg: string; text: string; border: string }> = {
+  pending: {
+    label: 'En attente',
+    icon: <Clock className="w-3 h-3" />,
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    border: 'border-amber-200',
+  },
+  accepted: {
+    label: 'Accepté',
+    icon: <CircleDot className="w-3 h-3" />,
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+  },
+  paid: {
+    label: 'Payé',
+    icon: <CheckCircle2 className="w-3 h-3" />,
+    bg: 'bg-indigo-50',
+    text: 'text-indigo-700',
+    border: 'border-indigo-200',
+  },
+  in_transit: {
+    label: 'En transit',
+    icon: <Truck className="w-3 h-3" />,
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    border: 'border-purple-200',
+  },
+  delivered: {
+    label: 'Livré',
+    icon: <CheckCircle2 className="w-3 h-3" />,
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+    border: 'border-emerald-200',
+  },
+  cancelled: {
+    label: 'Annulé',
+    icon: <XCircle className="w-3 h-3" />,
+    bg: 'bg-red-50',
+    text: 'text-red-700',
+    border: 'border-red-200',
+  },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? { label: status, icon: null, bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+      {cfg.icon}
+      {cfg.label}
+    </span>
+  );
+}
+
+const STATUS_FILTERS: { key: ShipmentStatus; label: string }[] = [
+  { key: 'all', label: 'Tout' },
+  { key: 'pending', label: 'En attente' },
+  { key: 'accepted', label: 'Accepté' },
+  { key: 'in_transit', label: 'En transit' },
+  { key: 'delivered', label: 'Livré' },
+  { key: 'cancelled', label: 'Annulé' },
+];
 
 export default function MyShipmentsPage() {
   const { t } = useTranslation();
@@ -36,7 +114,6 @@ export default function MyShipmentsPage() {
       const response = await apiClient.get<PaginatedResponse<Shipment>>(API_ENDPOINTS.shipments.my);
       setShipments(response.data || []);
     } catch (err) {
-      console.error('Failed to fetch shipments:', err);
       setError(ErrorHandler.handle(err).message);
     } finally {
       setIsLoading(false);
@@ -44,275 +121,252 @@ export default function MyShipmentsPage() {
   };
 
   const handleCancelShipment = async (shipmentId: string) => {
-    if (!confirm(t('common.confirm') + '?')) return;
-
+    if (!confirm('Confirmer l\'annulation ?')) return;
     try {
       await apiClient.post(API_ENDPOINTS.shipments.cancel(shipmentId));
-      // Refresh shipments list
       fetchMyShipments();
     } catch (err) {
-      console.error('Failed to cancel shipment:', err);
       alert(ErrorHandler.handle(err));
     }
   };
 
-  const handleEditShipment = (shipmentId: string) => {
-    router.push(`/shipments/edit/${shipmentId}`);
-  };
-
-  const handleViewDetails = (shipmentId: string) => {
-    router.push(`/shipments/${shipmentId}`);
-  };
-
   const getFilteredAndSortedShipments = () => {
-    let filtered = shipments;
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(shipment => shipment.status === statusFilter);
-    }
-
-    // Apply sorting
-    const sorted = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case 'date':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'weight':
-          return b.weight - a.weight;
-        case 'status':
-          return a.status.localeCompare(b.status);
-        default:
-          return 0;
-      }
-    });
-
-    return sorted;
-  };
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    let filtered = statusFilter !== 'all' ? shipments.filter((s) => s.status === statusFilter) : shipments;
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'date') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (sortBy === 'weight') return b.weight - a.weight;
+      if (sortBy === 'status') return a.status.localeCompare(b.status);
+      return 0;
     });
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'accepted':
-        return 'bg-blue-100 text-blue-800';
-      case 'in_transit':
-        return 'bg-purple-100 text-purple-800';
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getPaymentStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'held':
-        return 'bg-blue-100 text-blue-800';
-      case 'released':
-        return 'bg-green-100 text-green-800';
-      case 'refunded':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gray-600">{t('common.loading')}</p>
-        </div>
-      </div>
-    );
-  }
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 
   const filteredShipments = getFilteredAndSortedShipments();
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">{t('shipments.myShipments')}</h1>
-        <Button
-          variant="primary"
-          onClick={() => router.push('/shipments/new')}
-        >
-          {t('shipments.create')}
-        </Button>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                <Package className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 font-heading">Mes expéditions</h1>
+                <p className="text-sm text-slate-500">{shipments.length} expédition{shipments.length !== 1 ? 's' : ''} au total</p>
+              </div>
+            </div>
+            <Button variant="primary" onClick={() => router.push('/shipments/new')}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Nouvelle expédition</span>
+              <span className="sm:hidden">Nouveau</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-          {error}
-        </div>
-      )}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+        {error && (
+          <div className="mb-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {error}
+          </div>
+        )}
 
-      {/* Filters and Sorting */}
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('trips.filterResults')}
-          </label>
-          <div className="flex gap-2 flex-wrap">
-            {(['all', 'pending', 'accepted', 'in_transit', 'delivered', 'cancelled'] as ShipmentStatus[]).map((status) => (
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-5">
+          {/* Status filter - scrollable */}
+          <div className="flex gap-1 bg-slate-100 rounded-xl p-1 overflow-x-auto flex-1">
+            {STATUS_FILTERS.map((f) => (
               <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  statusFilter === status
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                key={f.key}
+                onClick={() => setStatusFilter(f.key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all shrink-0 ${
+                  statusFilter === f.key
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                {status === 'all' ? t('common.all') : t(`shipments.${status === 'in_transit' ? 'inTransit' : status}`)}
+                {f.label}
               </button>
             ))}
           </div>
-        </div>
 
-        <div className="w-full md:w-64">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('trips.sortBy')}
-          </label>
+          {/* Sort */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
           >
-            <option value="date">{t('trips.sortByDate')}</option>
-            <option value="weight">{t('shipments.weight')}</option>
-            <option value="status">{t('shipments.status')}</option>
+            <option value="date">Par date</option>
+            <option value="weight">Par poids</option>
+            <option value="status">Par statut</option>
           </select>
         </div>
-      </div>
 
-      {/* Shipments List */}
-      {filteredShipments.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-gray-600 mb-4">
-            {statusFilter === 'all' 
-              ? t('dashboard.noPendingShipments')
-              : t('shipments.noShipmentsFound')
-            }
-          </p>
-          <Button
-            variant="primary"
-            onClick={() => router.push('/shipments/new')}
-          >
-            {t('shipments.create')}
-          </Button>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {filteredShipments.map((shipment) => (
-            <Card key={shipment.id} className="p-6">
-              <div className="flex flex-col gap-4">
-                {/* Header with status badges */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-semibold">
-                      {shipment.pickup_city} → {shipment.delivery_city}
-                    </h3>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(
-                        shipment.status
-                      )}`}
-                    >
-                      {t(`shipments.${shipment.status === 'in_transit' ? 'inTransit' : shipment.status}`)}
-                    </span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">
-                    €{shipment.price.toFixed(2)}
-                  </span>
+        {/* Loading skeleton */}
+        {isLoading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 animate-pulse">
+                <div className="flex justify-between mb-3">
+                  <div className="h-5 bg-slate-100 rounded-full w-28" />
+                  <div className="h-5 bg-slate-100 rounded w-16" />
                 </div>
+                <div className="h-4 bg-slate-100 rounded w-2/3 mb-2" />
+                <div className="h-3 bg-slate-100 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        )}
 
-                {/* Package details */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="font-medium text-gray-900">{t('shipments.packageDetails')}</p>
-                    <p className="text-gray-600">{shipment.description}</p>
-                    <p className="text-gray-600">{shipment.weight} kg</p>
-                    <p className="text-gray-600">{shipment.package_type}</p>
-                  </div>
+        {/* Empty state */}
+        {!isLoading && filteredShipments.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+              <PackageOpen className="w-8 h-8 text-slate-400" />
+            </div>
+            <p className="text-slate-500 mb-5">
+              {statusFilter === 'all'
+                ? "Vous n'avez pas encore d'expédition."
+                : 'Aucune expédition trouvée pour ce statut.'}
+            </p>
+            <Button variant="primary" onClick={() => router.push('/shipments/new')}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              Créer une expédition
+            </Button>
+          </div>
+        )}
 
-                  <div>
-                    <p className="font-medium text-gray-900">{t('shipments.pickup')}</p>
-                    <p className="text-gray-600">{shipment.pickup_city}, {shipment.pickup_country}</p>
-                    <p className="text-gray-600 text-xs">{shipment.pickup_address}</p>
-                  </div>
-
-                  <div>
-                    <p className="font-medium text-gray-900">{t('shipments.delivery')}</p>
-                    <p className="text-gray-600">{shipment.delivery_city}, {shipment.delivery_country}</p>
-                    <p className="text-gray-600 text-xs">{shipment.delivery_address}</p>
-                  </div>
-                </div>
-
-                {/* Matched traveler */}
-                {shipment.traveler && (
-                  <div className="border-t pt-4">
-                    <p className="font-medium text-gray-900 mb-2">{t('shipments.matchedTraveler')}</p>
-                    <UserCard
-                      user={shipment.traveler as any}
-                      showContactButton={shipment.status !== 'cancelled' && shipment.status !== 'delivered'}
-                      onClick={() => router.push(`/profile/${shipment.traveler?.id}`)}
-                    />
-                  </div>
-                )}
-
-                {/* Recipient info */}
-                <div className="border-t pt-4">
-                  <p className="font-medium text-gray-900 mb-2">{t('shipments.recipientInfo')}</p>
-                  <p className="text-gray-600">{shipment.recipient_name}</p>
-                  <p className="text-gray-600 text-sm">{shipment.recipient_phone}</p>
-                </div>
-
-                {/* Submission date */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      {t('common.submit')}: {formatDate(shipment.created_at)}
+        {/* Shipments list */}
+        {!isLoading && filteredShipments.length > 0 && (
+          <div className="space-y-3">
+            {filteredShipments.map((shipment) => (
+              <div
+                key={shipment.id}
+                className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-orange-200 hover:shadow-md transition-all duration-200"
+              >
+                <div className="p-5">
+                  {/* Header row */}
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex-1 min-w-0">
+                      {/* Route */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-orange-500 shrink-0" />
+                          <span className="font-semibold text-slate-900 text-sm truncate">
+                            {shipment.pickup_city}
+                          </span>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-blue-500 shrink-0" />
+                          <span className="font-semibold text-slate-900 text-sm truncate">
+                            {shipment.delivery_city}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <StatusBadge status={shipment.status} />
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                          <Weight className="w-3.5 h-3.5" />
+                          {shipment.weight} kg
+                        </span>
+                        {shipment.package_type && (
+                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                            {shipment.package_type}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-xl font-bold text-orange-500">
+                        €{shipment.price.toFixed(2)}
+                      </span>
+                      <p className="text-xs text-slate-400 mt-0.5">{formatDate(shipment.created_at)}</p>
                     </div>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 justify-end border-t pt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewDetails(shipment.id)}
-                  >
-                    {t('common.viewDetails')}
-                  </Button>
-                  
-                  {shipment.status === 'pending' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCancelShipment(shipment.id)}
-                    >
-                      {t('common.cancel')}
-                    </Button>
+                  {/* Package description */}
+                  {shipment.description && (
+                    <p className="text-xs text-slate-500 mb-4 truncate">{shipment.description}</p>
                   )}
+
+                  {/* Location detail */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-slate-500 mb-1">Collecte</p>
+                      <p className="text-sm text-slate-800 font-medium">
+                        {shipment.pickup_city}, {shipment.pickup_country}
+                      </p>
+                      {shipment.pickup_address && (
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">{shipment.pickup_address}</p>
+                      )}
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-slate-500 mb-1">Livraison</p>
+                      <p className="text-sm text-slate-800 font-medium">
+                        {shipment.delivery_city}, {shipment.delivery_country}
+                      </p>
+                      {shipment.delivery_address && (
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">{shipment.delivery_address}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Recipient */}
+                  {(shipment.recipient_name || shipment.recipient_phone) && (
+                    <div className="flex items-center gap-2 mb-4 text-xs text-slate-600">
+                      <span className="font-medium">Destinataire :</span>
+                      <span>{shipment.recipient_name}</span>
+                      {shipment.recipient_phone && (
+                        <span className="text-slate-400">· {shipment.recipient_phone}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Traveler info */}
+                  {shipment.traveler && (
+                  <div className="border-t border-slate-100 pt-4 mb-4">
+                    <p className="text-xs font-medium text-slate-500 mb-3">Voyageur assigné</p>
+                    <UserCard
+                      user={shipment.traveler as any}
+                      showContactButton={!['cancelled', 'delivered'].includes(shipment.status)}
+                      onClick={() => router.push(`/profile/${shipment.traveler?.id}`)}
+                    />
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100 justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/shipments/${shipment.id}`)}
+                      className="flex items-center gap-1.5"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      Voir les détails
+                    </Button>
+                    {shipment.status === 'pending' && (
+                      <button
+                        onClick={() => handleCancelShipment(shipment.id)}
+                        className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors px-3 py-2"
+                      >
+                        Annuler
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </Card>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

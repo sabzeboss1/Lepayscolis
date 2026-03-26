@@ -315,7 +315,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
             )}
           </div>
 
-          {/* Activity History */}
+          {/* Activity Statistics */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.users.detail.activityHistory')}</h2>
             {!activityHistory ? (

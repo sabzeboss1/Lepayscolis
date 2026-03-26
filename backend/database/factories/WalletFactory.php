@@ -14,9 +14,9 @@ class WalletFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
             'user_id' => User::factory(),
             'balance' => $this->faker->randomFloat(2, 0, 1000),
+            'held_balance' => 0.00,
             'created_at' => now(),
             'updated_at' => now(),
         ];

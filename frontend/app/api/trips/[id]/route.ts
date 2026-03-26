@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockTrips } from '@/lib/api/mockData';
 
-// In-memory storage (shared with main trips route)
-const allTrips = [...mockTrips];
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET(
   request: NextRequest,
@@ -10,20 +8,26 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const trip = allTrips.find(t => t.id === id);
-
-    if (!trip) {
-      return NextResponse.json(
-        { message: 'Trip not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      trip,
+    const authHeader = request.headers.get('authorization');
+    const csrfToken = request.headers.get('x-xsrf-token');
+    
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/trips/${id}`;
+    
+    const response = await fetch(backendUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': authHeader || '',
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
     });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Get trip error:', error);
+    console.error('Get trip details error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -36,7 +40,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('authorization');
+    const csrfToken = request.headers.get('x-xsrf-token');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -45,44 +51,69 @@ export async function PUT(
       );
     }
 
-    const { id } = await params;
-    const tripIndex = allTrips.findIndex(t => t.id === id);
-
-    if (tripIndex === -1) {
-      return NextResponse.json(
-        { message: 'Trip not found' },
-        { status: 404 }
-      );
-    }
-
-    const body = await request.json();
-    const {
-      departure,
-      arrival,
-      availableCapacity,
-      pricePerKg,
-      status,
-    } = body;
-
-    // Update trip
-    const updatedTrip = {
-      ...allTrips[tripIndex],
-      ...(departure && { departure }),
-      ...(arrival && { arrival }),
-      ...(availableCapacity !== undefined && { availableCapacity }),
-      ...(pricePerKg !== undefined && { pricePerKg }),
-      ...(status && { status }),
-    };
-
-    allTrips[tripIndex] = updatedTrip;
-
-    return NextResponse.json({
-      trip: updatedTrip,
+    // Get the FormData from the request
+    const formData = await request.formData();
+    
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/trips/${id}`;
+    
+    const response = await fetch(backendUrl, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': authHeader,
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
+      body: formData,
     });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Update trip error:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: 'Internal server error', error: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const authHeader = request.headers.get('authorization');
+    const csrfToken = request.headers.get('x-xsrf-token');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Forward the request to Laravel backend
+    const backendUrl = `${BACKEND_URL}/api/trips/${id}`;
+    
+    const response = await fetch(backendUrl, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': authHeader,
+        'X-XSRF-TOKEN': csrfToken || '',
+      },
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Delete trip error:', error);
+    return NextResponse.json(
+      { message: 'Internal server error', error: String(error) },
       { status: 500 }
     );
   }

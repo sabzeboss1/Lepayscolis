@@ -12,7 +12,97 @@ import { Trip, Shipment, Conversation } from '@/lib/types';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { PaginatedResponse } from '@/lib/types/api';
+import {
+  Plane,
+  Package,
+  MessageCircle,
+  Star,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  ShieldCheck,
+  PlaneTakeoff,
+  Search,
+  PackagePlus,
+  ChevronRight,
+  ArrowRight,
+  Loader2,
+  MapPin,
+} from 'lucide-react';
 
+/* ── helpers ─────────────────────────────────── */
+function getDayGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bonjour';
+  if (h < 18) return 'Bon après-midi';
+  return 'Bonsoir';
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
+/* ── sub-components ───────────────────────────── */
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  accentColor,
+  bgColor,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: React.ReactNode;
+  accentColor: string;
+  bgColor: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-4 rounded-2xl p-5 border"
+      style={{ background: bgColor, borderColor: `${accentColor}22` }}
+    >
+      <div
+        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: `${accentColor}18` }}
+      >
+        <Icon className="w-5 h-5" style={{ color: accentColor }} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-medium uppercase tracking-wide mb-0.5" style={{ color: accentColor }}>
+          {label}
+        </p>
+        <div className="text-lg font-bold text-navy">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 gap-3">
+      <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center">
+        <Icon className="w-5 h-5 text-muted-text" />
+      </div>
+      <p className="text-sm text-muted-text text-center">{text}</p>
+    </div>
+  );
+}
+
+function LoadingRows() {
+  return (
+    <div className="space-y-3">
+      {[1, 2].map((i) => (
+        <div key={i} className="h-16 rounded-xl bg-soft-gray animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+/* ── main page ────────────────────────────────── */
 export default function DashboardPage() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const { needsKYC, isKYCPending, isKYCRejected } = useKYCCheck();
@@ -34,7 +124,6 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch user's trips (paginated response)
         const tripsResponse = await apiClient.get<PaginatedResponse<Trip>>(
           API_ENDPOINTS.trips.my
         );
@@ -42,7 +131,6 @@ export default function DashboardPage() {
           (tripsResponse.data || []).filter((trip) => trip.status === 'active')
         );
 
-        // Fetch user's shipments (paginated response)
         const shipmentsResponse = await apiClient.get<PaginatedResponse<Shipment>>(
           API_ENDPOINTS.shipments.my
         );
@@ -50,13 +138,10 @@ export default function DashboardPage() {
           (shipmentsResponse.data || []).filter((s) => s.status === 'pending')
         );
 
-        // Fetch recent conversations
         const conversationsResponse = await apiClient.get<{ data: Conversation[] }>(
           API_ENDPOINTS.messages.conversations
         );
-        setRecentConversations(
-          (conversationsResponse.data || []).slice(0, 3)
-        );
+        setRecentConversations((conversationsResponse.data || []).slice(0, 3));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -64,386 +149,549 @@ export default function DashboardPage() {
       }
     };
 
-    if (user) {
-      fetchDashboardData();
-    }
+    if (user) fetchDashboardData();
   }, [user]);
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">{t('common.loading')}</p>
+      <div className="min-h-screen flex items-center justify-center bg-soft-gray">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-royal-blue" />
+          <p className="text-sm text-body-text">{t('common.loading')}</p>
         </div>
       </div>
     );
   }
 
+  /* kyc config */
+  const kycConfig = isKYCRejected
+    ? {
+        icon: XCircle,
+        iconColor: '#ef4444',
+        bg: 'rgba(239,68,68,0.06)',
+        border: 'rgba(239,68,68,0.2)',
+        titleColor: '#b91c1c',
+        textColor: '#dc2626',
+        title: t('dashboard.kycRejected') || 'Vérification KYC rejetée',
+        description: 'Votre vérification a été rejetée. Soumettez à nouveau vos documents pour accéder à toutes les fonctionnalités.',
+        btnLabel: 'Resoumettre les documents',
+        btnVariant: 'primary' as const,
+      }
+    : isKYCPending
+    ? {
+        icon: Clock,
+        iconColor: '#f59e0b',
+        bg: 'rgba(245,158,11,0.06)',
+        border: 'rgba(245,158,11,0.2)',
+        titleColor: '#92400e',
+        textColor: '#b45309',
+        title: t('dashboard.kycPending') || 'Vérification KYC en cours',
+        description: 'Vos documents sont en cours d\'examen. Cela prend généralement 1 à 2 jours ouvrables.',
+        btnLabel: 'Voir le statut',
+        btnVariant: 'outline' as const,
+      }
+    : {
+        icon: ShieldCheck,
+        iconColor: '#2563eb',
+        bg: 'rgba(37,99,235,0.05)',
+        border: 'rgba(37,99,235,0.2)',
+        titleColor: '#1e40af',
+        textColor: '#1d4ed8',
+        title: t('dashboard.kycRequired') || 'Complétez votre vérification KYC',
+        description: 'Vous devez vérifier votre identité pour publier des voyages et créer des expéditions.',
+        btnLabel: 'Compléter la vérification',
+        btnVariant: 'primary' as const,
+      };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* KYC Status Banner */}
+    <div className="min-h-screen bg-soft-gray">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+        {/* ── KYC Banner ── */}
         {needsKYC && (
-          <div className={`mb-6 p-5 rounded-2xl border-2 shadow-sm transition-all hover:shadow-md ${isKYCRejected
-            ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-300'
-            : isKYCPending
-              ? 'bg-gradient-to-r from-amber-50 to-orange-100 border-amber-300'
-              : 'bg-gradient-to-r from-blue-50 to-indigo-100 border-blue-300'
-            }`}>
-            <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isKYCRejected ? 'bg-red-200' : isKYCPending ? 'bg-amber-200' : 'bg-blue-200'
-                }`}>
-                {isKYCRejected ? '!' : isKYCPending ? '...' : '#'}
-              </div>
-              <div className="flex-1">
-                <h3 className={`font-semibold mb-1 ${isKYCRejected
-                  ? 'text-red-800'
-                  : isKYCPending
-                    ? 'text-orange-800'
-                    : 'text-blue-800'
-                  }`}>
-                  {isKYCRejected
-                    ? t('dashboard.kycRejected') || 'KYC Verification Rejected'
-                    : isKYCPending
-                      ? t('dashboard.kycPending') || 'KYC Verification Pending'
-                      : t('dashboard.kycRequired') || 'Complete KYC Verification'}
-                </h3>
-                <p className={`text-sm mb-3 ${isKYCRejected
-                  ? 'text-red-700'
-                  : isKYCPending
-                    ? 'text-orange-700'
-                    : 'text-blue-700'
-                  }`}>
-                  {isKYCRejected
-                    ? 'Your verification was rejected. Please resubmit your documents to access all features.'
-                    : isKYCPending
-                      ? 'Your documents are under review. This usually takes 1-2 business days.'
-                      : 'You need to complete identity verification to publish trips and create shipments.'}
-                </p>
-                {isKYCPending ? (
-                  <Button variant="outline" size="sm" onClick={() => router.push('/kyc')}>
-                    View KYC Status
-                  </Button>
-                ) : (
-                  <Button variant="primary" size="sm" onClick={() => router.push('/kyc')}>
-                    {isKYCRejected ? 'Resubmit Documents' : 'Complete Verification'}
-                  </Button>
-                )}
-              </div>
+          <div
+            className="flex items-start gap-4 p-5 rounded-2xl border"
+            style={{ background: kycConfig.bg, borderColor: kycConfig.border }}
+            role="alert"
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+              style={{ background: `${kycConfig.iconColor}15` }}
+            >
+              <kycConfig.icon className="w-5 h-5" style={{ color: kycConfig.iconColor }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm mb-0.5" style={{ color: kycConfig.titleColor }}>
+                {kycConfig.title}
+              </p>
+              <p className="text-sm mb-3" style={{ color: kycConfig.textColor }}>
+                {kycConfig.description}
+              </p>
+              <Button
+                variant={kycConfig.btnVariant}
+                size="sm"
+                onClick={() => router.push('/kyc')}
+              >
+                {kycConfig.btnLabel}
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Welcome Message */}
-        <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1">
-            <span className="text-gray-900">{t('dashboard.welcome', { name: '' })}</span>
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{user.name}</span>
-          </h1>
-          <p className="text-gray-500 text-sm sm:text-base">
-            {activeTrips.length > 0
-              ? `${activeTrips.length} voyage(s) actif(s) - ${pendingShipments.length} expedition(s)`
-              : 'Publiez un voyage ou recherchez des voyageurs'}
-          </p>
-          {user.is_recommended && (
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-50 to-amber-100 border border-yellow-300 rounded-lg px-3 py-2 mt-3 shadow-sm">
-              <span className="text-lg">*</span>
-              <p className="text-yellow-800 font-semibold text-xs">Membre recommande</p>
-            </div>
-          )}
-        </div>
+        {/* ── Welcome Banner ── */}
+        <div
+          className="rounded-2xl p-6 sm:p-8 relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, var(--color-navy) 0%, #1e3a8a 60%, #1d4ed8 100%)',
+          }}
+        >
+          {/* decorative */}
+          <div
+            className="absolute top-[-40px] right-[-40px] w-48 h-48 rounded-full opacity-10 animate-blob"
+            style={{ background: 'var(--color-vibrant-orange)' }}
+          />
+          <div
+            className="absolute bottom-[-30px] right-[20%] w-32 h-32 rounded-full opacity-5 animate-blob animation-delay-2000"
+            style={{ background: 'var(--color-ocean-blue)' }}
+          />
 
-        {/* Quick Actions - Compact on mobile */}
-        <div className="mb-6">
-          <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3">
-            {t('dashboard.quickActions')}
-          </h2>
-
-          {/* Mobile: Horizontal compact layout */}
-          <div className="flex gap-3 overflow-x-auto pb-2 sm:hidden">
-            <Card hoverable onClick={() => router.push('/trips/new')} className="cursor-pointer flex-shrink-0 w-32 border border-blue-200 hover:border-blue-400">
-              <div className="flex flex-col items-center text-center p-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-2 shadow">
-                  <span className="text-lg">+</span>
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              {/* Avatar + greeting */}
+              <div className="flex items-center gap-3 mb-2">
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
+                  style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.2)' }}
+                >
+                  {user.name.charAt(0).toUpperCase()}
                 </div>
-                <h3 className="text-xs font-bold text-gray-900">Publier voyage</h3>
-              </div>
-            </Card>
-
-            <Card hoverable onClick={() => router.push('/trips/search')} className="cursor-pointer flex-shrink-0 w-32 border border-orange-200 hover:border-orange-400">
-              <div className="flex flex-col items-center text-center p-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mb-2 shadow">
-                  <span className="text-lg">?</span>
-                </div>
-                <h3 className="text-xs font-bold text-gray-900">Chercher voyage</h3>
-              </div>
-            </Card>
-
-            <Card hoverable onClick={() => router.push('/shipments/new')} className="cursor-pointer flex-shrink-0 w-32 border border-green-200 hover:border-green-400">
-              <div className="flex flex-col items-center text-center p-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center mb-2 shadow">
-                  <span className="text-lg">+</span>
-                </div>
-                <h3 className="text-xs font-bold text-gray-900">Expedition</h3>
-              </div>
-            </Card>
-          </div>
-
-          {/* Desktop/Tablet: Original grid layout */}
-          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card hoverable onClick={() => router.push('/trips/new')} className="cursor-pointer group border-2 border-transparent hover:border-blue-300 transition-all">
-              <div className="flex flex-col items-center text-center p-5">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform">
-                  <span className="text-2xl text-white">+</span>
-                </div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">
-                  {t('dashboard.publishTrip')}
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Gagnez de l'argent en voyageant
-                </p>
-              </div>
-            </Card>
-
-            <Card hoverable onClick={() => router.push('/trips/search')} className="cursor-pointer group border-2 border-transparent hover:border-orange-300 transition-all">
-              <div className="flex flex-col items-center text-center p-5">
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform">
-                  <span className="text-2xl text-white">?</span>
-                </div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">
-                  {t('dashboard.searchTrips')}
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Trouvez un voyageur
-                </p>
-              </div>
-            </Card>
-
-            <Card hoverable onClick={() => router.push('/shipments/new')} className="cursor-pointer group border-2 border-transparent hover:border-green-300 transition-all sm:col-span-2 lg:col-span-1">
-              <div className="flex flex-col items-center text-center p-5">
-                <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform">
-                  <span className="text-2xl text-white">+</span>
-                </div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">
-                  {t('dashboard.createShipment')}
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Creer une expedition
-                </p>
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          {/* User Statistics - Sidebar on desktop */}
-          <div className="lg:col-span-4 xl:col-span-3">
-            <Card className="h-full bg-gradient-to-br from-white to-gray-50">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                {t('dashboard.statistics')}
-              </h2>
-              <p className="text-gray-500 text-sm mb-4">Votre activite en un coup d'oeil</p>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow">
-                    <span className="text-xl text-white">*</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-blue-700 font-medium uppercase tracking-wide">{t('profile.rating')}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <RatingStars rating={Number(user.rating) || 0} size="sm" />
-                      <span className="text-2xl font-bold text-blue-600">
-                        {(Number(user.rating) || 0).toFixed(1)}
+                <div>
+                  <p className="text-white/60 text-xs font-medium uppercase tracking-wide">
+                    {getDayGreeting()}
+                  </p>
+                  <h1
+                    className="text-white text-xl sm:text-2xl font-bold leading-tight"
+                    style={{ fontFamily: 'Prompt, sans-serif' }}
+                  >
+                    {user.name}
+                    {user.is_recommended && (
+                      <span
+                        className="ml-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full align-middle"
+                        style={{
+                          background: 'rgba(249,115,22,0.2)',
+                          color: '#fdba74',
+                          border: '1px solid rgba(249,115,22,0.3)',
+                        }}
+                      >
+                        <Star className="w-3 h-3" />
+                        Recommandé
                       </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow">
-                    <span className="text-xl text-white">#</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-green-700 font-medium uppercase tracking-wide">
-                      {t('profile.completedDeliveries')}
-                    </p>
-                    <p className="text-2xl font-bold text-green-600 mt-1">
-                      {user.completed_deliveries}
-                      <span className="text-sm font-normal text-green-500 ml-1">colis</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-orange-100">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow ${user.kyc_status === 'approved'
-                    ? 'bg-gradient-to-br from-green-400 to-green-600'
-                    : user.kyc_status === 'pending'
-                      ? 'bg-gradient-to-br from-amber-400 to-orange-500'
-                      : 'bg-gradient-to-br from-red-400 to-red-600'
-                    }`}>
-                    <span className="text-xl text-white">
-                      {user.kyc_status === 'approved' ? 'V' : user.kyc_status === 'pending' ? '...' : 'X'}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-orange-700 font-medium uppercase tracking-wide">
-                      {t('profile.kycStatus')}
-                    </p>
-                    <p className={`text-lg font-bold mt-1 ${user.kyc_status === 'approved' ? 'text-green-600'
-                      : user.kyc_status === 'pending' ? 'text-orange-600'
-                        : 'text-red-600'
-                      }`}>
-                      {user.kyc_status === 'approved' ? t('profile.kycApproved') :
-                        user.kyc_status === 'pending' ? t('profile.kycPending') :
-                          t('profile.kycRejected')}
-                    </p>
-                  </div>
+                    )}
+                  </h1>
                 </div>
               </div>
-            </Card>
+
+              <p className="text-white/50 text-sm ml-14">
+                {loading
+                  ? '…'
+                  : activeTrips.length > 0
+                  ? `${activeTrips.length} voyage(s) actif(s) · ${pendingShipments.length} expédition(s) en attente`
+                  : 'Publiez un voyage ou recherchez un voyageur'}
+              </p>
+            </div>
+
+            {/* CTA */}
+            <div className="flex gap-2 sm:shrink-0">
+              <Button
+                size="sm"
+                onClick={() => router.push('/trips/new')}
+                className="!bg-vibrant-orange hover:!bg-warm-orange !text-white !rounded-xl font-semibold"
+                style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+              >
+                <PlaneTakeoff className="w-4 h-4 mr-1.5" />
+                Publier un voyage
+              </Button>
+            </div>
           </div>
+        </div>
 
-          {/* Active Trips and Pending Shipments - Main content */}
-          <div className="lg:col-span-8 xl:col-span-9 space-y-6">
-            {/* Active Trips */}
-            <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {t('dashboard.activeTrips')}
-                </h2>
-                <Button variant="ghost" size="sm" onClick={() => router.push('/trips/my')}>
-                  {t('common.viewDetails')}
-                </Button>
+        {/* ── Stats Row ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard
+            icon={Star}
+            label="Note"
+            accentColor="#f59e0b"
+            bgColor="#fffbeb"
+            value={
+              <div className="flex items-center gap-2">
+                <RatingStars rating={Number(user.rating) || 0} size="sm" />
+                <span>{(Number(user.rating) || 0).toFixed(1)}</span>
               </div>
+            }
+          />
+          <StatCard
+            icon={CheckCircle2}
+            label="Livraisons complétées"
+            accentColor="#10b981"
+            bgColor="#f0fdf4"
+            value={
+              <span>
+                {user.completed_deliveries}
+                <span className="text-sm font-normal text-muted-text ml-1">colis</span>
+              </span>
+            }
+          />
+          <StatCard
+            icon={ShieldCheck}
+            label="Statut KYC"
+            accentColor={
+              user.kyc_status === 'approved'
+                ? '#10b981'
+                : user.kyc_status === 'pending'
+                ? '#f59e0b'
+                : user.kyc_status === 'rejected'
+                ? '#ef4444'
+                : '#2563eb'
+            }
+            bgColor={
+              user.kyc_status === 'approved'
+                ? '#f0fdf4'
+                : user.kyc_status === 'pending'
+                ? '#fffbeb'
+                : user.kyc_status === 'rejected'
+                ? '#fef2f2'
+                : '#eff6ff'
+            }
+            value={
+              <span
+                style={{
+                  color:
+                    user.kyc_status === 'approved'
+                      ? '#10b981'
+                      : user.kyc_status === 'pending'
+                      ? '#f59e0b'
+                      : user.kyc_status === 'rejected'
+                      ? '#ef4444'
+                      : '#2563eb',
+                }}
+              >
+                {user.kyc_status === 'approved'
+                  ? 'Approuvé'
+                  : user.kyc_status === 'pending'
+                  ? 'En attente'
+                  : user.kyc_status === 'rejected'
+                  ? 'Rejeté'
+                  : 'Requis'}
+              </span>
+            }
+          />
+        </div>
+
+        {/* ── Quick Actions ── */}
+        <div>
+          <h2 className="text-sm font-semibold text-body-text uppercase tracking-wide mb-3">
+            Actions rapides
+          </h2>
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            {/* Publish trip */}
+            <button
+              onClick={() => router.push('/trips/new')}
+              className="group flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white border border-light-border hover:border-royal-blue hover:shadow-md transition-all duration-200 cursor-pointer"
+            >
+              <div
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200"
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  boxShadow: '0 4px 14px rgba(37,99,235,0.3)',
+                }}
+              >
+                <PlaneTakeoff className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-navy leading-tight">
+                Publier un voyage
+              </p>
+              <p className="hidden sm:block text-xs text-muted-text mt-1">
+                Gagnez en voyageant
+              </p>
+            </button>
+
+            {/* Search trips */}
+            <button
+              onClick={() => router.push('/trips/search')}
+              className="group flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white border border-light-border hover:border-vibrant-orange hover:shadow-md transition-all duration-200 cursor-pointer"
+            >
+              <div
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200"
+                style={{
+                  background: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)',
+                  boxShadow: '0 4px 14px rgba(249,115,22,0.3)',
+                }}
+              >
+                <Search className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-navy leading-tight">
+                Chercher un voyageur
+              </p>
+              <p className="hidden sm:block text-xs text-muted-text mt-1">
+                Trouvez le bon profil
+              </p>
+            </button>
+
+            {/* Create shipment */}
+            <button
+              onClick={() => router.push('/shipments/new')}
+              className="group flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white border border-light-border hover:border-success-green hover:shadow-md transition-all duration-200 cursor-pointer"
+            >
+              <div
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200"
+                style={{
+                  background: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
+                  boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                }}
+              >
+                <PackagePlus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-navy leading-tight">
+                Créer une expédition
+              </p>
+              <p className="hidden sm:block text-xs text-muted-text mt-1">
+                Envoyez un colis
+              </p>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Trips + Shipments Grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+
+          {/* Active Trips */}
+          <Card className="!rounded-2xl !p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-light-border">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ background: 'rgba(37,99,235,0.1)' }}
+                >
+                  <Plane className="w-3.5 h-3.5" style={{ color: 'var(--color-royal-blue)' }} />
+                </div>
+                <h2 className="text-sm font-semibold text-navy">
+                  Voyages actifs
+                </h2>
+                {!loading && activeTrips.length > 0 && (
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: 'rgba(37,99,235,0.1)',
+                      color: 'var(--color-royal-blue)',
+                    }}
+                  >
+                    {activeTrips.length}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => router.push('/trips/my')}
+                className="flex items-center gap-1 text-xs font-medium hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--color-royal-blue)' }}
+              >
+                Voir tout
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="p-4">
               {loading ? (
-                <p className="text-gray-600">{t('common.loading')}</p>
+                <LoadingRows />
               ) : activeTrips.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {activeTrips.slice(0, 3).map((trip) => (
-                    <div
+                    <button
                       key={trip.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       onClick={() => router.push(`/trips/${trip.id}`)}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-soft-gray transition-colors group text-left"
                     >
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900">
-                          {trip.departure_city} &rarr; {trip.arrival_city}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {new Date(trip.departure_date).toLocaleDateString()} - {new Date(trip.arrival_date).toLocaleDateString()}
-                        </p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ background: 'rgba(37,99,235,0.08)' }}
+                        >
+                          <MapPin className="w-3.5 h-3.5" style={{ color: 'var(--color-royal-blue)' }} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-navy truncate">
+                            {trip.departure_city} → {trip.arrival_city}
+                          </p>
+                          <p className="text-xs text-muted-text">
+                            {formatDate(trip.departure_date)} – {formatDate(trip.arrival_date)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">
-                          {trip.available_capacity} kg
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {trip.price_per_kg}/kg
-                        </p>
+                      <div className="text-right shrink-0 ml-3">
+                        <p className="text-sm font-semibold text-navy">{trip.available_capacity} kg</p>
+                        <p className="text-xs text-muted-text">{trip.price_per_kg}/kg</p>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600 text-center py-4">
-                  {t('dashboard.noActiveTrips')}
-                </p>
+                <EmptyState icon={Plane} text={t('dashboard.noActiveTrips') || 'Aucun voyage actif'} />
               )}
-            </Card>
+            </div>
+          </Card>
 
-            {/* Pending Shipments */}
-            <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {t('dashboard.pendingShipments')}
+          {/* Pending Shipments */}
+          <Card className="!rounded-2xl !p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-light-border">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ background: 'rgba(249,115,22,0.1)' }}
+                >
+                  <Package className="w-3.5 h-3.5" style={{ color: 'var(--color-vibrant-orange)' }} />
+                </div>
+                <h2 className="text-sm font-semibold text-navy">
+                  Expéditions en attente
                 </h2>
-                <Button variant="ghost" size="sm" onClick={() => router.push('/shipments/my')}>
-                  {t('common.viewDetails')}
-                </Button>
+                {!loading && pendingShipments.length > 0 && (
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: 'rgba(249,115,22,0.1)',
+                      color: 'var(--color-vibrant-orange)',
+                    }}
+                  >
+                    {pendingShipments.length}
+                  </span>
+                )}
               </div>
+              <button
+                onClick={() => router.push('/shipments/my')}
+                className="flex items-center gap-1 text-xs font-medium hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--color-vibrant-orange)' }}
+              >
+                Voir tout
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="p-4">
               {loading ? (
-                <p className="text-gray-600">{t('common.loading')}</p>
+                <LoadingRows />
               ) : pendingShipments.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {pendingShipments.slice(0, 3).map((shipment) => (
-                    <div
+                    <button
                       key={shipment.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       onClick={() => router.push(`/shipments/${shipment.id}`)}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-soft-gray transition-colors group text-left"
                     >
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900">
-                          {shipment.package_description}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {shipment.pickup_city} &rarr; {shipment.delivery_city}
-                        </p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ background: 'rgba(249,115,22,0.08)' }}
+                        >
+                          <Package className="w-3.5 h-3.5" style={{ color: 'var(--color-vibrant-orange)' }} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-navy truncate">
+                            {shipment.package_description}
+                          </p>
+                          <p className="text-xs text-muted-text truncate">
+                            {shipment.pickup_city} → {shipment.delivery_city}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">
-                          {shipment.package_weight} kg
-                        </p>
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
-                          {t('shipments.pending')}
+                      <div className="text-right shrink-0 ml-3">
+                        <p className="text-sm font-semibold text-navy">{shipment.package_weight} kg</p>
+                        <span
+                          className="inline-block text-xs font-medium px-2 py-0.5 rounded-full"
+                          style={{
+                            background: 'rgba(245,158,11,0.12)',
+                            color: '#b45309',
+                          }}
+                        >
+                          En attente
                         </span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600 text-center py-4">
-                  {t('dashboard.noPendingShipments')}
-                </p>
+                <EmptyState icon={Package} text={t('dashboard.noPendingShipments') || 'Aucune expédition en attente'} />
               )}
-            </Card>
-          </div>
+            </div>
+          </Card>
         </div>
 
-        {/* Recent Messages */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {t('dashboard.recentMessages')}
-            </h2>
-            <Button variant="ghost" size="sm" onClick={() => router.push('/messages')}>
-              {t('common.viewDetails')}
-            </Button>
-          </div>
-          {loading ? (
-            <p className="text-gray-600">{t('common.loading')}</p>
-          ) : recentConversations.length > 0 ? (
-            <div className="space-y-3">
-              {recentConversations.map((conversation) => (
-                <div
-                  key={conversation.id}
-                  className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/messages?conversation=${conversation.id}`)}
-                >
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                    {conversation.other_user?.name?.charAt(0).toUpperCase() || '?'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">
-                      {conversation.other_user?.name || 'Unknown'}
-                    </p>
-                    <p className="text-sm text-gray-600 truncate">
-                      {conversation.last_message?.content || ''}
-                    </p>
-                  </div>
-                  {conversation.unread_count > 0 && (
-                    <span className="inline-flex items-center justify-center w-6 h-6 bg-orange-500 text-white text-xs font-bold rounded-full">
-                      {conversation.unread_count}
-                    </span>
-                  )}
-                </div>
-              ))}
+        {/* ── Recent Messages ── */}
+        <Card className="!rounded-2xl !p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-light-border">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(16,185,129,0.1)' }}
+              >
+                <MessageCircle className="w-3.5 h-3.5" style={{ color: 'var(--color-success-green)' }} />
+              </div>
+              <h2 className="text-sm font-semibold text-navy">Messages récents</h2>
             </div>
-          ) : (
-            <p className="text-gray-600 text-center py-4">
-              {t('dashboard.noRecentMessages')}
-            </p>
-          )}
+            <button
+              onClick={() => router.push('/messages')}
+              className="flex items-center gap-1 text-xs font-medium hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--color-success-green)' }}
+            >
+              Voir tout
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="p-4">
+            {loading ? (
+              <LoadingRows />
+            ) : recentConversations.length > 0 ? (
+              <div className="space-y-2">
+                {recentConversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    onClick={() => router.push(`/messages?conversation=${conversation.id}`)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-soft-gray transition-colors text-left"
+                  >
+                    {/* Avatar */}
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                      style={{
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                      }}
+                    >
+                      {conversation.other_user?.name?.charAt(0).toUpperCase() || '?'}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-navy truncate">
+                        {conversation.other_user?.name || 'Inconnu'}
+                      </p>
+                      <p className="text-xs text-muted-text truncate">
+                        {conversation.last_message?.content || '…'}
+                      </p>
+                    </div>
+
+                    {conversation.unread_count > 0 && (
+                      <span
+                        className="w-5 h-5 flex items-center justify-center text-white text-xs font-bold rounded-full shrink-0"
+                        style={{ background: 'var(--color-vibrant-orange)' }}
+                      >
+                        {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <EmptyState icon={MessageCircle} text={t('dashboard.noRecentMessages') || 'Aucun message récent'} />
+            )}
+          </div>
         </Card>
+
       </div>
     </div>
   );

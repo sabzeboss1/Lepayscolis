@@ -43,7 +43,7 @@ class AdminKYCController extends Controller
     /**
      * Get KYC submission details
      */
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $kyc = $this->kycService->getKYCDetails($id);
 
@@ -55,7 +55,7 @@ class AdminKYCController extends Controller
     /**
      * Approve KYC submission
      */
-    public function approve(Request $request, int $id): JsonResponse
+    public function approve(Request $request, string $id): JsonResponse
     {
         $kyc = $this->kycService->approveKYC($id, $request->user());
 
@@ -68,7 +68,7 @@ class AdminKYCController extends Controller
     /**
      * Reject KYC submission
      */
-    public function reject(RejectKYCRequest $request, int $id): JsonResponse
+    public function reject(RejectKYCRequest $request, string $id): JsonResponse
     {
         $kyc = $this->kycService->rejectKYC($id, $request->reason, $request->user());
 

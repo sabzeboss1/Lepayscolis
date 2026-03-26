@@ -6,13 +6,13 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🚪 [Admin Logout API] Received logout request');
     
-    const token = request.cookies.get('admin-token')?.value;
+    const token = request.cookies.get('auth-token')?.value;
 
     if (token) {
       console.log('🔑 [Admin Logout API] Token found, calling backend logout');
       
       // Forward request to Laravel backend
-      await fetch(`${BACKEND_URL}/api/admin/logout`, {
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create response and clear admin-token cookie
+    // Create response and clear auth-token cookie
     const response = NextResponse.json({ message: 'Logged out successfully' }, { status: 200 });
     
-    console.log('🍪 [Admin Logout API] Clearing admin-token cookie');
-    response.cookies.delete('admin-token');
+    console.log('🍪 [Admin Logout API] Clearing auth-token cookie');
+    response.cookies.delete('auth-token');
 
     console.log('✅ [Admin Logout API] Logout successful');
     return response;
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       { message: 'Logged out' },
       { status: 200 }
     );
-    response.cookies.delete('admin-token');
+    response.cookies.delete('auth-token');
     
     return response;
   }

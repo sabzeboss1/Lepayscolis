@@ -64,14 +64,15 @@ export interface Shipment {
   delivery_country: string;
   delivery_city: string;
   delivery_address: string;
-  recipient_name: string;
-  recipient_phone: string;
-  package_type: string;
-  weight: number;
-  description: string;
-  value: number;
+  package_description: string;
+  package_weight: number;
+  package_length: number;
+  package_width: number;
+  package_height: number;
   photo_urls: string[];
   status: 'pending' | 'accepted' | 'paid' | 'in_transit' | 'delivered' | 'cancelled';
+  payment_amount: number;
+  payment_status: 'pending' | 'processing' | 'escrowed' | 'released' | 'refunded';
   price: number;
   created_at: string;
   updated_at: string;
@@ -128,6 +129,8 @@ export interface Wallet {
   id: string;
   user_id: string;
   balance: number;
+  held_balance: number;
+  available_balance: number;
   currency: string;
   created_at: string;
   updated_at: string;
@@ -136,11 +139,12 @@ export interface Wallet {
 export interface WalletTransaction {
   id: string;
   wallet_id: string;
-  type: 'credit' | 'debit';
+  type: 'credit' | 'debit' | 'hold' | 'hold_cancelled' | 'adjustment';
   amount: number;
   description: string;
   reference_type?: string;
   reference_id?: string;
+  balance_after: number;
   created_at: string;
 }
 
@@ -270,18 +274,18 @@ export interface CreateTripRequest {
 }
 
 export interface CreateShipmentRequest {
+  trip_id: string;
   pickup_country: string;
   pickup_city: string;
   pickup_address: string;
   delivery_country: string;
   delivery_city: string;
   delivery_address: string;
-  recipient_name: string;
-  recipient_phone: string;
-  package_type: string;
-  weight: number;
-  description: string;
-  value: number;
+  package_description: string;
+  package_weight: number;
+  package_length: number;
+  package_width: number;
+  package_height: number;
   photo_urls: string[];
 }
 

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('withdrawal_requests', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->decimal('fee', 10, 2)->default(0.00);

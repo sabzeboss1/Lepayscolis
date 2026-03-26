@@ -3,11 +3,13 @@ import type { Metadata } from 'next';
 import { HowItWorksPageClient } from './HowItWorksPageClient';
 
 export const metadata: Metadata = {
-  title: 'How It Works - LePaysExpressColis',
-  description: 'Learn how LePaysExpressColis connects senders and travelers for safe, affordable parcel delivery between Russia and Africa.',
+  title: 'Comment ça marche - Tuma Plus',
+  description:
+    'Découvrez comment Tuma Plus connecte expéditeurs et voyageurs pour une livraison sûre et abordable entre la Russie et l\'Afrique.',
   openGraph: {
-    title: 'How It Works - LePaysExpressColis',
-    description: 'Step-by-step guide for senders and travelers',
+    title: 'Comment ça marche - Tuma Plus',
+    description:
+      'Guide étape par étape pour les expéditeurs et les voyageurs',
     type: 'website',
   },
 };

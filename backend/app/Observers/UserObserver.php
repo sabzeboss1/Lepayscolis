@@ -29,6 +29,7 @@ class UserObserver
             'user_id' => $user->id,
             'balance' => 0.00,
             'currency_code' => $user->currency_code ?? 'EUR',
+            'held_balance' => 0.00,
         ]);
     }
 }
