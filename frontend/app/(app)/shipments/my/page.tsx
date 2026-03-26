@@ -134,7 +134,7 @@ export default function MyShipmentsPage() {
     let filtered = statusFilter !== 'all' ? shipments.filter((s) => s.status === statusFilter) : shipments;
     return [...filtered].sort((a, b) => {
       if (sortBy === 'date') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      if (sortBy === 'weight') return b.weight - a.weight;
+      if (sortBy === 'weight') return b.package_weight - a.package_weight;
       if (sortBy === 'status') return a.status.localeCompare(b.status);
       return 0;
     });
@@ -274,13 +274,8 @@ export default function MyShipmentsPage() {
                         <StatusBadge status={shipment.status} />
                         <span className="inline-flex items-center gap-1 text-xs text-slate-500">
                           <Weight className="w-3.5 h-3.5" />
-                          {shipment.weight} kg
+                          {shipment.package_weight} kg
                         </span>
-                        {shipment.package_type && (
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                            {shipment.package_type}
-                          </span>
-                        )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -292,8 +287,8 @@ export default function MyShipmentsPage() {
                   </div>
 
                   {/* Package description */}
-                  {shipment.description && (
-                    <p className="text-xs text-slate-500 mb-4 truncate">{shipment.description}</p>
+                  {shipment.package_description && (
+                    <p className="text-xs text-slate-500 mb-4 truncate">{shipment.package_description}</p>
                   )}
 
                   {/* Location detail */}
@@ -318,16 +313,6 @@ export default function MyShipmentsPage() {
                     </div>
                   </div>
 
-                  {/* Recipient */}
-                  {(shipment.recipient_name || shipment.recipient_phone) && (
-                    <div className="flex items-center gap-2 mb-4 text-xs text-slate-600">
-                      <span className="font-medium">Destinataire :</span>
-                      <span>{shipment.recipient_name}</span>
-                      {shipment.recipient_phone && (
-                        <span className="text-slate-400">· {shipment.recipient_phone}</span>
-                      )}
-                    </div>
-                  )}
 
                   {/* Traveler info */}
                   {shipment.traveler && (

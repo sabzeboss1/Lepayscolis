@@ -65,6 +65,7 @@ class AdminDashboardService
 
             foreach ($recentUsers as $user) {
                 $activities[] = [
+                    'id' => "user_registered-{$user->id}",
                     'type' => 'user_registered',
                     'description' => "New user registered: {$user->name}",
                     'timestamp' => $user->created_at,
@@ -84,6 +85,7 @@ class AdminDashboardService
 
             foreach ($recentTrips as $trip) {
                 $activities[] = [
+                    'id' => "trip_created-{$trip->id}",
                     'type' => 'trip_created',
                     'description' => "New trip: {$trip->departure_city} → {$trip->arrival_city}",
                     'timestamp' => $trip->created_at,
@@ -103,6 +105,7 @@ class AdminDashboardService
 
             foreach ($recentShipments as $shipment) {
                 $activities[] = [
+                    'id' => "shipment_created-{$shipment->id}",
                     'type' => 'shipment_created',
                     'description' => "New shipment: {$shipment->pickup_city} → {$shipment->delivery_city}",
                     'timestamp' => $shipment->created_at,
@@ -125,6 +128,7 @@ class AdminDashboardService
             foreach ($recentPayments as $payment) {
                 $formatted = $currencyService->format($payment->amount, $payment->currency_code ?? 'EUR');
                 $activities[] = [
+                    'id' => "payment_completed-{$payment->id}",
                     'type' => 'payment_completed',
                     'description' => "Payment released: {$formatted}",
                     'timestamp' => $payment->created_at,

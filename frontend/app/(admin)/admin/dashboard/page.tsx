@@ -36,6 +36,7 @@ interface ChartData {
 }
 
 interface ActivityItem {
+  id?: string;
   type: string;
   description: string;
   timestamp: string;
@@ -74,7 +75,7 @@ export default function AdminDashboardPage() {
       // Map backend activity to ActivityFeed component format
       setActivities(
         activityRes.data.map((item) => ({
-          id: `${item.type}-${item.timestamp}`,
+          id: item.id || `${item.type}-${item.timestamp}`,
           type: item.type as Activity['type'],
           description: item.description,
           timestamp: item.timestamp,

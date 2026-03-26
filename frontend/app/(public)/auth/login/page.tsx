@@ -169,6 +169,17 @@ export default function LoginPage() {
 
       {/* ── Right form panel ── */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-white relative">
+        {/* Back to home */}
+        <Link
+          href="/"
+          className="absolute top-6 right-6 inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" />
+          </svg>
+          Accueil
+        </Link>
+
         {/* Mobile logo */}
         <div className="lg:hidden mb-8">
           <img src="/logo.png" alt="Tuma Plus" className="h-12 w-auto object-contain mx-auto" />

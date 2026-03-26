@@ -12,6 +12,7 @@ import { LiveRegion } from '@/components/ui/LiveRegion';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import { ApiError } from '@/lib/api/client';
 import { formatPhoneToE164, getPhonePlaceholder, getPhoneHelperText } from '@/lib/utils/phoneFormatter';
+import { useCountries } from '@/lib/hooks/useCountries';
 import Link from 'next/link';
 import {
   Package,
@@ -41,19 +42,6 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-const COUNTRIES = [
-  { value: 'FR', label: 'France' },
-  { value: 'CI', label: "Côte d'Ivoire" },
-  { value: 'SN', label: 'Sénégal' },
-  { value: 'ML', label: 'Mali' },
-  { value: 'BF', label: 'Burkina Faso' },
-  { value: 'BJ', label: 'Bénin' },
-  { value: 'TG', label: 'Togo' },
-  { value: 'NE', label: 'Niger' },
-  { value: 'GN', label: 'Guinée' },
-  { value: 'CM', label: 'Cameroun' },
-];
-
 const TRUST_BULLETS = [
   { icon: ShieldCheck, text: 'Voyageurs vérifiés et assurés' },
   { icon: Plane, text: 'Livraison Russie ↔ Afrique' },
@@ -63,6 +51,7 @@ const TRUST_BULLETS = [
 export default function RegisterPage() {
   const router = useRouter();
   const { register: registerUser } = useAuth();
+  const { countries, isLoading: isLoadingCountries } = useCountries();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -194,7 +183,18 @@ export default function RegisterPage() {
       </div>
 
       {/* ── Right form panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-6 py-10 bg-white overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-6 py-10 bg-white overflow-y-auto relative">
+        {/* Back to home */}
+        <Link
+          href="/"
+          className="absolute top-6 right-6 inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" />
+          </svg>
+          Accueil
+        </Link>
+
         {/* Mobile logo */}
         <div className="lg:hidden mb-6">
           <img src="/logo.png" alt="Tuma Plus" className="h-12 w-auto object-contain mx-auto" />
@@ -272,10 +272,10 @@ export default function RegisterPage() {
                   }}
                   {...register('country')}
                 >
-                  <option value="">Sélectionner un pays</option>
-                  {COUNTRIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
+                  <option value="">{isLoadingCountries ? 'Chargement...' : 'Sélectionner un pays'}</option>
+                  {countries.map((c) => (
+                    <option key={c.id} value={c.code}>
+                      {c.name}
                     </option>
                   ))}
                 </select>

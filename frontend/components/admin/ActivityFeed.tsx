@@ -177,7 +177,7 @@ export default function ActivityFeed({
           <div className="space-y-4">
             {activities.map((activity, index) => (
               <div 
-                key={activity.id} 
+                key={`${activity.id}-${index}`}
                 className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
               >
                 {/* Icon with pulse animation for recent items */}

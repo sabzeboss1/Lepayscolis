@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
@@ -22,8 +23,18 @@ export default function AdminLayout({
     router.push('/auth/login');
   };
 
-  // Show loading while verifying authentication
-  if (isLoading) {
+  // Redirect unauthenticated or non-admin users
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) {
+      router.replace('/auth/login?redirect=/admin/dashboard');
+    } else if (!isAdmin) {
+      router.replace('/dashboard');
+    }
+  }, [user, isLoading, isAdmin, router]);
+
+  // Show loading while verifying authentication or redirecting
+  if (isLoading || !user || !isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -32,18 +43,6 @@ export default function AdminLayout({
         </div>
       </div>
     );
-  }
-
-  // Not authenticated — redirect to login
-  if (!user) {
-    router.replace('/auth/login?redirect=/admin/dashboard');
-    return null;
-  }
-
-  // Authenticated but not admin — redirect to user dashboard
-  if (!isAdmin) {
-    router.replace('/dashboard');
-    return null;
   }
 
   // Admin layout with sidebar and header

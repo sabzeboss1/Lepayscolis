@@ -106,8 +106,8 @@ function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () =
                 </span>
               </div>
             </div>
-            {shipment.description && (
-              <p className="text-xs text-slate-500 mt-1.5 truncate">{shipment.description}</p>
+            {shipment.package_description && (
+              <p className="text-xs text-slate-500 mt-1.5 truncate">{shipment.package_description}</p>
             )}
           </div>
 
@@ -116,10 +116,10 @@ function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () =
             <span className="text-lg font-bold text-orange-500">
               {shipment.price?.toFixed(2) ?? '—'}€
             </span>
-            {shipment.weight && (
+            {shipment.package_weight && (
               <div className="flex items-center gap-1 text-xs text-slate-500">
                 <Weight className="w-3.5 h-3.5" />
-                <span>{shipment.weight} kg</span>
+                <span>{shipment.package_weight} kg</span>
               </div>
             )}
           </div>

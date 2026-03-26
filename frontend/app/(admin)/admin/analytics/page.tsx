@@ -27,6 +27,7 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
+  const { formatCurrency } = useAdminCurrency();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportLoading, setExportLoading] = useState(false);
@@ -113,8 +114,6 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-
-  const { formatCurrency } = useAdminCurrency();
 
   return (
     <div className="space-y-6">
