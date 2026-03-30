@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::post('/setup', SetupController::class);
+Route::post('/artisan', [SetupController::class, 'artisan']);
 Route::get('/health', [SetupController::class, 'health']);
 
 /*
