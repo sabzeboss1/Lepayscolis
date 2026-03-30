@@ -11,6 +11,7 @@
         "laravel/framework": "^11.31",
         "laravel/sanctum": "*",
         "laravel/tinker": "^2.9",
+        "opcodesio/log-viewer": "^3.24",
         "pusher/pusher-php-server": "^7.2",
         "stripe/stripe-php": "^19.3"
     },

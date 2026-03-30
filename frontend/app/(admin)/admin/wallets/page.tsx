@@ -17,6 +17,7 @@ interface Wallet {
     phone: string;
   };
   balance: number;
+  currency_code?: string;
   total_credits: number;
   total_debits: number;
   last_transaction_at?: string;
@@ -100,7 +101,7 @@ export default function WalletsPage() {
                 : 'text-gray-900'
           }`}
         >
-          {formatCurrency(wallet.balance)}
+          {formatCurrency(wallet.balance, wallet.currency_code)}
         </span>
       ),
     },
@@ -109,7 +110,7 @@ export default function WalletsPage() {
       label: t('admin.wallets.columns.totalCredits'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-green-600">{formatCurrency(wallet.total_credits)}</span>
+        <span className="text-sm text-green-600">{formatCurrency(wallet.total_credits, wallet.currency_code)}</span>
       ),
     },
     {
@@ -117,7 +118,7 @@ export default function WalletsPage() {
       label: t('admin.wallets.columns.totalDebits'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-red-600">{formatCurrency(wallet.total_debits)}</span>
+        <span className="text-sm text-red-600">{formatCurrency(wallet.total_debits, wallet.currency_code)}</span>
       ),
     },
     {

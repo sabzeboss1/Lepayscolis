@@ -209,7 +209,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
               <p className={`text-2xl font-bold mt-2 ${
                 wallet.balance > 0 ? 'text-green-600' : wallet.balance < 0 ? 'text-red-600' : 'text-gray-900'
               }`}>
-                {formatCurrency(wallet.balance)}
+                {formatCurrency(wallet.balance, wallet.currency_code)}
               </p>
             </div>
             <Wallet className="w-8 h-8 text-blue-600" />
@@ -220,7 +220,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalCredits')}</p>
-              <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(wallet.total_credits)}</p>
+              <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(wallet.total_credits, wallet.currency_code)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
@@ -230,7 +230,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalDebits')}</p>
-              <p className="text-2xl font-bold text-red-600 mt-2">{formatCurrency(wallet.total_debits)}</p>
+              <p className="text-2xl font-bold text-red-600 mt-2">{formatCurrency(wallet.total_debits, wallet.currency_code)}</p>
             </div>
             <TrendingDown className="w-8 h-8 text-red-600" />
           </div>
@@ -240,7 +240,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalAdjustments')}</p>
-              <p className="text-2xl font-bold text-blue-600 mt-2">{formatCurrency(wallet.total_adjustments)}</p>
+              <p className="text-2xl font-bold text-blue-600 mt-2">{formatCurrency(wallet.total_adjustments, wallet.currency_code)}</p>
             </div>
             <DollarSign className="w-8 h-8 text-blue-600" />
           </div>
@@ -279,7 +279,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`text-sm font-semibold ${getTypeColor(tx.type)}`}>
-                        {tx.type === 'debit' ? '-' : '+'}{formatCurrency(Math.abs(tx.amount))}
+                        {tx.type === 'debit' ? '-' : '+'}{formatCurrency(Math.abs(tx.amount), wallet.currency_code)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -374,7 +374,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {t('admin.wallets.detail.currentBalance')}: {formatCurrency(wallet.balance)}
+                  {t('admin.wallets.detail.currentBalance')}: {formatCurrency(wallet.balance, wallet.currency_code)}
                 </p>
               </div>
 

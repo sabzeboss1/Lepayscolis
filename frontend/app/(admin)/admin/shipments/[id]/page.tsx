@@ -33,6 +33,7 @@ interface Shipment {
     traveler_name?: string;
   } | null;
   payment_amount: number;
+  currency_code?: string;
   payment_status: string;
   payment?: { id: string; amount: number; status: string } | null;
   status: 'pending' | 'accepted' | 'in_transit' | 'delivered' | 'cancelled';
@@ -353,7 +354,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
               <div>
                 <label className="text-xs font-medium text-gray-500">{t('admin.shipments.detail.paymentAmount')}</label>
                 <div className="mt-1 text-lg font-semibold text-gray-900">
-                  {formatCurrency(shipment.payment_amount)}
+                  {formatCurrency(shipment.payment_amount, shipment.currency_code)}
                 </div>
               </div>
               <div>

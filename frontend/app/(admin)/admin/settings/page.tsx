@@ -47,7 +47,6 @@ interface PlatformSettings {
   stripe_public_key: string;
   stripe_secret_key: string;
   stripe_webhook_secret: string;
-  payment_currency: string;
 
   // Payment - Orange Money
   orange_money_api_key?: string;
@@ -104,7 +103,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('general');
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingTab, setSavingTab] = useState<TabType | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [uploading, setUploading] = useState<'logo' | 'favicon' | null>(null);
   const [currencies, setCurrencies] = useState<CurrencyItem[]>([]);
@@ -167,7 +166,6 @@ export default function SettingsPage() {
     stripe_public_key: '',
     stripe_secret_key: '',
     stripe_webhook_secret: '',
-    payment_currency: 'EUR',
 
     orange_money_api_key: '',
     orange_money_merchant_id: '',
@@ -209,17 +207,36 @@ export default function SettingsPage() {
     sms_notifications_enabled: false,
   });
 
-  const handleSave = async () => {
+  const TAB_FIELDS: Record<TabType, (keyof PlatformSettings)[]> = {
+    general: ['platform_name', 'platform_url', 'support_email', 'support_phone', 'sender_fee_percentage', 'traveler_fee_percentage'],
+    smtp: ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption', 'smtp_from_address', 'smtp_from_name'],
+    payment: ['stripe_public_key', 'stripe_secret_key', 'stripe_webhook_secret', 'orange_money_api_key', 'orange_money_merchant_id', 'orange_money_enabled', 'mtn_money_api_key', 'mtn_money_subscription_key', 'mtn_money_enabled', 'bank_name', 'bank_iban', 'bank_bic', 'bank_transfer_enabled', 'cash_payment_enabled', 'withdrawal_fee', 'min_withdrawal_amount', 'max_withdrawal_amount'],
+    branding: ['logo_url', 'favicon_url', 'primary_color', 'secondary_color'],
+    currency: ['default_currency', 'supported_currencies'],
+    security: ['kyc_required', 'two_factor_enabled', 'session_timeout', 'max_login_attempts'],
+    notifications: ['email_notifications_enabled', 'push_notifications_enabled', 'sms_notifications_enabled'],
+    shipping: ['min_shipment_price', 'max_shipment_price'],
+  };
+
+  const handleSaveTab = async (tab: TabType) => {
     if (!settings) return;
 
-    setSaving(true);
+    setSavingTab(tab);
     setMessage(null);
 
     try {
+      const fields = TAB_FIELDS[tab];
+      const tabData: Record<string, any> = {};
+      for (const key of fields) {
+        if (settings[key] !== undefined) {
+          tabData[key] = settings[key];
+        }
+      }
+
       const response = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(tabData),
       });
 
       if (!response.ok) {
@@ -233,7 +250,7 @@ export default function SettingsPage() {
       console.error('Failed to save settings:', error);
       setMessage({ type: 'error', text: t('admin.settings.error') });
     } finally {
-      setSaving(false);
+      setSavingTab(null);
     }
   };
 
@@ -307,25 +324,14 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <SettingsIcon className="w-8 h-8 text-gray-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('admin.settings.title')}</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              {t('admin.settings.subtitle')}
-            </p>
-          </div>
+      <div className="flex items-center space-x-3">
+        <SettingsIcon className="w-8 h-8 text-gray-600" />
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.settings.title')}</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            {t('admin.settings.subtitle')}
+          </p>
         </div>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
-          <Save className="w-4 h-4" />
-          {saving ? t('admin.settings.saving') : t('admin.settings.save')}
-        </button>
       </div>
 
       {/* Success/Error Message */}
@@ -425,7 +431,7 @@ export default function SettingsPage() {
                     min="0"
                     max="100"
                     value={settings.sender_fee_percentage}
-                    onChange={(e) => updateSetting('sender_fee_percentage', parseFloat(e.target.value))}
+                    onChange={(e) => updateSetting('sender_fee_percentage', parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">{t('admin.settings.general.senderFeeHelp')}</p>
@@ -441,11 +447,22 @@ export default function SettingsPage() {
                     min="0"
                     max="100"
                     value={settings.traveler_fee_percentage}
-                    onChange={(e) => updateSetting('traveler_fee_percentage', parseFloat(e.target.value))}
+                    onChange={(e) => updateSetting('traveler_fee_percentage', parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">{t('admin.settings.general.travelerFeeHelp')}</p>
                 </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => handleSaveTab('general')}
+                  disabled={savingTab === 'general'}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingTab === 'general' ? t('admin.settings.saving') : t('admin.settings.save')}
+                </button>
               </div>
             </div>
           )}
@@ -476,7 +493,7 @@ export default function SettingsPage() {
                   <input
                     type="number"
                     value={settings.smtp_port}
-                    onChange={(e) => updateSetting('smtp_port', parseInt(e.target.value))}
+                    onChange={(e) => updateSetting('smtp_port', parseInt(e.target.value) || 0)}
                     placeholder="587"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -550,6 +567,17 @@ export default function SettingsPage() {
                 <p className="text-sm text-blue-800">
                   <strong>Note:</strong> {t('admin.settings.smtp.gmailNote')}
                 </p>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => handleSaveTab('smtp')}
+                  disabled={savingTab === 'smtp'}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingTab === 'smtp' ? t('admin.settings.saving') : t('admin.settings.save')}
+                </button>
               </div>
             </div>
           )}
@@ -799,7 +827,7 @@ export default function SettingsPage() {
                         type="number"
                         step="0.01"
                         value={settings.withdrawal_fee}
-                        onChange={(e) => updateSetting('withdrawal_fee', parseFloat(e.target.value))}
+                        onChange={(e) => updateSetting('withdrawal_fee', parseFloat(e.target.value) || 0)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -812,7 +840,7 @@ export default function SettingsPage() {
                         type="number"
                         step="0.01"
                         value={settings.min_withdrawal_amount}
-                        onChange={(e) => updateSetting('min_withdrawal_amount', parseFloat(e.target.value))}
+                        onChange={(e) => updateSetting('min_withdrawal_amount', parseFloat(e.target.value) || 0)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -825,12 +853,23 @@ export default function SettingsPage() {
                         type="number"
                         step="0.01"
                         value={settings.max_withdrawal_amount}
-                        onChange={(e) => updateSetting('max_withdrawal_amount', parseFloat(e.target.value))}
+                        onChange={(e) => updateSetting('max_withdrawal_amount', parseFloat(e.target.value) || 0)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => handleSaveTab('payment')}
+                  disabled={savingTab === 'payment'}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingTab === 'payment' ? t('admin.settings.saving') : t('admin.settings.save')}
+                </button>
               </div>
             </div>
           )}
@@ -979,6 +1018,17 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => handleSaveTab('branding')}
+                  disabled={savingTab === 'branding'}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingTab === 'branding' ? t('admin.settings.saving') : t('admin.settings.save')}
+                </button>
+              </div>
             </div>
           )}
 
@@ -1027,6 +1077,17 @@ export default function SettingsPage() {
                       </label>
                     ))}
                   </div>
+                </div>
+
+                <div className="flex justify-end pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => handleSaveTab('currency')}
+                    disabled={savingTab === 'currency'}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    {savingTab === 'currency' ? t('admin.settings.saving') : t('admin.settings.save')}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1078,7 +1139,7 @@ export default function SettingsPage() {
                     <input
                       type="number"
                       value={settings.session_timeout}
-                      onChange={(e) => updateSetting('session_timeout', parseInt(e.target.value))}
+                      onChange={(e) => updateSetting('session_timeout', parseInt(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <p className="text-xs text-gray-500 mt-1">{t('admin.settings.security.sessionTimeoutHint')}</p>
@@ -1091,10 +1152,21 @@ export default function SettingsPage() {
                     <input
                       type="number"
                       value={settings.max_login_attempts}
-                      onChange={(e) => updateSetting('max_login_attempts', parseInt(e.target.value))}
+                      onChange={(e) => updateSetting('max_login_attempts', parseInt(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
+                </div>
+
+                <div className="flex justify-end pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => handleSaveTab('security')}
+                    disabled={savingTab === 'security'}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    {savingTab === 'security' ? t('admin.settings.saving') : t('admin.settings.save')}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1154,6 +1226,17 @@ export default function SettingsPage() {
                   </label>
                 </div>
               </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => handleSaveTab('notifications')}
+                  disabled={savingTab === 'notifications'}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingTab === 'notifications' ? t('admin.settings.saving') : t('admin.settings.save')}
+                </button>
+              </div>
             </div>
           )}
 
@@ -1171,7 +1254,7 @@ export default function SettingsPage() {
                     type="number"
                     step="0.01"
                     value={settings.min_shipment_price}
-                    onChange={(e) => updateSetting('min_shipment_price', parseFloat(e.target.value))}
+                    onChange={(e) => updateSetting('min_shipment_price', parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -1184,7 +1267,7 @@ export default function SettingsPage() {
                     type="number"
                     step="0.01"
                     value={settings.max_shipment_price}
-                    onChange={(e) => updateSetting('max_shipment_price', parseFloat(e.target.value))}
+                    onChange={(e) => updateSetting('max_shipment_price', parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -1194,6 +1277,17 @@ export default function SettingsPage() {
                 <p className="text-sm text-yellow-800">
                   <strong>Note:</strong> {t('admin.settings.shipping.priceNote')}
                 </p>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => handleSaveTab('shipping')}
+                  disabled={savingTab === 'shipping'}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingTab === 'shipping' ? t('admin.settings.saving') : t('admin.settings.save')}
+                </button>
               </div>
             </div>
           )}

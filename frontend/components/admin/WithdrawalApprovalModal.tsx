@@ -229,19 +229,19 @@ export default function WithdrawalApprovalModal({
                   <DollarSign className="w-4 h-4 text-gray-400 mr-3" />
                   <span className="text-gray-600">{t('admin.withdrawals.modal.withdrawalAmount')}:</span>
                 </div>
-                <span className="text-gray-900 font-medium">{withdrawal.formatted_amount || formatCurrency(withdrawal.amount)}</span>
+                <span className="text-gray-900 font-medium">{withdrawal.formatted_amount || formatCurrency(withdrawal.amount, withdrawal.currency)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
                   <DollarSign className="w-4 h-4 text-gray-400 mr-3" />
                   <span className="text-gray-600">{t('admin.withdrawals.modal.processingFee')}:</span>
                 </div>
-                <span className="text-gray-900">-{withdrawal.formatted_fee || formatCurrency(withdrawal.fee)}</span>
+                <span className="text-gray-900">-{withdrawal.formatted_fee || formatCurrency(withdrawal.fee, withdrawal.currency)}</span>
               </div>
               <div className="pt-3 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-900">{t('admin.withdrawals.modal.netAmount')}:</span>
-                  <span className="text-lg font-bold text-gray-900">{withdrawal.formatted_net_amount || formatCurrency(withdrawal.net_amount)}</span>
+                  <span className="text-lg font-bold text-gray-900">{withdrawal.formatted_net_amount || formatCurrency(withdrawal.net_amount, withdrawal.currency)}</span>
                 </div>
               </div>
             </div>

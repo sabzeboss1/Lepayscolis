@@ -42,7 +42,6 @@ class AdminSettingsService
             'stripe_public_key' => '',
             'stripe_secret_key' => '',
             'stripe_webhook_secret' => '',
-            'payment_currency' => 'EUR',
             'orange_money_api_key' => '',
             'orange_money_merchant_id' => '',
             'orange_money_enabled' => false,

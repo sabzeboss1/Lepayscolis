@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,6 +15,8 @@ class WithdrawalRequestResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $currency = PlatformSetting::get('default_currency', 'EUR');
+
         return [
             'id' => $this->id,
             'user' => [
@@ -22,10 +25,11 @@ class WithdrawalRequestResource extends JsonResource
                 'email' => $this->user_email ?? 'N/A',
             ],
             'amount' => $this->amount,
-            'amount_formatted' => number_format($this->amount, 2) . ' USD',
+            'currency' => $currency,
+            'amount_formatted' => number_format($this->amount, 2) . ' ' . $currency,
             'fee' => $this->fee,
             'net_amount' => $this->amount - $this->fee,
-            'net_amount_formatted' => number_format($this->amount - $this->fee, 2) . ' USD',
+            'net_amount_formatted' => number_format($this->amount - $this->fee, 2) . ' ' . $currency,
             'bank_details' => [
                 'bank_name' => $this->bank_name,
                 'account_number' => $this->account_number,

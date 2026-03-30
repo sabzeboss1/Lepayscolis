@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,7 +19,7 @@ class WalletTransactionResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'amount' => $this->amount,
-            'amount_formatted' => number_format($this->amount, 2) . ' USD',
+            'amount_formatted' => number_format($this->amount, 2) . ' ' . PlatformSetting::get('default_currency', 'EUR'),
             'description' => $this->description,
             'reference_type' => $this->reference_type,
             'reference_id' => $this->reference_id,

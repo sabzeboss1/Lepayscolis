@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 import { Locale } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/auth';
 
@@ -21,6 +22,7 @@ export const HeaderPublic: React.FC<HeaderPublicProps> = ({ locale: initialLocal
   const { t } = useTranslation(locale);
   const pathname = usePathname();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
+  const { logo_url } = usePlatformBranding();
 
   // Handle scroll for sticky header
   useEffect(() => {
@@ -83,12 +85,10 @@ export const HeaderPublic: React.FC<HeaderPublicProps> = ({ locale: initialLocal
             className="flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md p-1"
             aria-label="LePaysExpressColis Home"
           >
-            <Image
-              src="/logo.png"
+            <img
+              src={logo_url}
               alt="LePaysExpressColis"
-              width={64}
-              height={64}
-              className="w-14 h-14 md:w-16 md:h-16 hover:opacity-80 transition-opacity"
+              className="w-14 h-14 md:w-16 md:h-16 hover:opacity-80 transition-opacity object-contain"
             />
           </Link>
 

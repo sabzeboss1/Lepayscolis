@@ -14,6 +14,7 @@ import { ApiError } from '@/lib/api/client';
 import { formatPhoneToE164, getPhonePlaceholder, getPhoneHelperText } from '@/lib/utils/phoneFormatter';
 import { useCountries } from '@/lib/hooks/useCountries';
 import Link from 'next/link';
+import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 import {
   Package,
   Plane,
@@ -51,6 +52,7 @@ const TRUST_BULLETS = [
 export default function RegisterPage() {
   const router = useRouter();
   const { register: registerUser } = useAuth();
+  const { logo_url } = usePlatformBranding();
   const { countries, isLoading: isLoadingCountries } = useCountries();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -125,7 +127,7 @@ export default function RegisterPage() {
 
         {/* Logo */}
         <div className="relative z-10">
-          <img src="/logo.png" alt="Tuma Plus" className="h-14 w-auto object-contain" />
+          <img src={logo_url} alt="Tuma Plus" className="h-14 w-auto object-contain" />
         </div>
 
         {/* Main content */}
@@ -197,7 +199,7 @@ export default function RegisterPage() {
 
         {/* Mobile logo */}
         <div className="lg:hidden mb-6">
-          <img src="/logo.png" alt="Tuma Plus" className="h-12 w-auto object-contain mx-auto" />
+          <img src={logo_url} alt="Tuma Plus" className="h-12 w-auto object-contain mx-auto" />
         </div>
 
         <div className="w-full max-w-[440px]">

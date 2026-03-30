@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,7 +15,7 @@ class PaymentTransactionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $currency = $this->currency_code ?? 'EUR';
+        $currency = $this->currency_code ?? PlatformSetting::get('default_currency', 'EUR');
 
         return [
             'id' => $this->id,
