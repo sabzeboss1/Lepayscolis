@@ -107,6 +107,103 @@ class SetupController extends Controller
     }
 
     /**
+     * Execute a whitelisted Artisan command.
+     * Protected by SETUP_TOKEN.
+     */
+    public function artisan(Request $request): JsonResponse
+    {
+        $setupToken = config('app.setup_token');
+
+        if (!$setupToken || $request->header('X-Setup-Token') !== $setupToken) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $command = $request->input('command');
+
+        if (!$command || !is_string($command)) {
+            return response()->json(['message' => 'Missing "command" field'], 422);
+        }
+
+        // Whitelist of safe commands
+        $allowed = [
+            'migrate',
+            'migrate:status',
+            'migrate:fresh',
+            'db:seed',
+            'cache:clear',
+            'config:clear',
+            'config:cache',
+            'route:clear',
+            'route:cache',
+            'view:clear',
+            'view:cache',
+            'event:clear',
+            'event:cache',
+            'optimize',
+            'optimize:clear',
+            'storage:link',
+            'queue:restart',
+            'schedule:list',
+            'key:generate',
+            'vendor:publish',
+        ];
+
+        // Parse command name (first word) from the input
+        $parts = explode(' ', trim($command));
+        $commandName = $parts[0];
+
+        if (!in_array($commandName, $allowed)) {
+            return response()->json([
+                'message' => "Command \"{$commandName}\" is not allowed",
+                'allowed' => $allowed,
+            ], 403);
+        }
+
+        // Commands that support --force
+        $forceableCommands = [
+            'migrate', 'migrate:fresh', 'migrate:status',
+            'db:seed', 'key:generate', 'storage:link',
+            'config:cache', 'route:cache', 'view:cache',
+            'event:cache', 'optimize',
+        ];
+
+        // Parse arguments: flags like --force, --seed, --class=SomeSeeder
+        $arguments = in_array($commandName, $forceableCommands) ? ['--force' => true] : [];
+        for ($i = 1; $i < count($parts); $i++) {
+            $arg = $parts[$i];
+            if (str_starts_with($arg, '--')) {
+                $arg = ltrim($arg, '-');
+                if (str_contains($arg, '=')) {
+                    [$key, $val] = explode('=', $arg, 2);
+                    $arguments["--{$key}"] = $val;
+                } else {
+                    $arguments["--{$arg}"] = true;
+                }
+            }
+        }
+
+        try {
+            // Ensure all commands (including package commands) are registered
+            $kernel = app(\Illuminate\Contracts\Console\Kernel::class);
+            $kernel->bootstrap();
+
+            $exitCode = Artisan::call($commandName, $arguments);
+            $output = Artisan::output();
+
+            return response()->json([
+                'command' => $command,
+                'exit_code' => $exitCode,
+                'output' => trim($output),
+            ], $exitCode === 0 ? 200 : 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'command' => $command,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Health check endpoint - no auth required.
      */
     public function health(): JsonResponse
