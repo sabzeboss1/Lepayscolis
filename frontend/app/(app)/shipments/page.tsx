@@ -79,6 +79,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () => void }) {
+  const { formatCurrency } = useUserCurrency();
   return (
     <button
       onClick={onClick}
