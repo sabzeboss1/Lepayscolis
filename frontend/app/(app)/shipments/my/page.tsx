@@ -9,6 +9,7 @@ import { UserCard } from '@/components/ui/UserCard';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import { Shipment, PaginatedResponse } from '@/lib/types/api';
 import {
   Package,
@@ -97,6 +98,7 @@ export default function MyShipmentsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
+  const { formatCurrency } = useUserCurrency();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -280,7 +282,7 @@ export default function MyShipmentsPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <span className="text-xl font-bold text-orange-500">
-                        €{shipment.price.toFixed(2)}
+                        {formatCurrency(shipment.price)}
                       </span>
                       <p className="text-xs text-slate-400 mt-0.5">{formatDate(shipment.created_at)}</p>
                     </div>

@@ -60,7 +60,17 @@ export default function KYCPage() {
       const data = await response.json();
 
       if (data && data.data && Array.isArray(data.data)) {
-        setSubmissions(data.data);
+        // Map API response to flatten documents array into top-level fields
+        const mapped = data.data.map((item: any) => {
+          const doc = item.documents?.[0];
+          return {
+            ...item,
+            document_front_url: doc?.front_url || null,
+            document_back_url: doc?.back_url || null,
+            selfie_url: doc?.selfie_url || null,
+          };
+        });
+        setSubmissions(mapped);
       } else {
         setSubmissions([]);
       }

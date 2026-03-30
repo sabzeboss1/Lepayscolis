@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
 
+// Parse API URL from env to auto-configure image domains
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const parsedApiUrl = new URL(apiUrl);
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
+      {
+        protocol: parsedApiUrl.protocol.replace(':', '') as 'http' | 'https',
+        hostname: parsedApiUrl.hostname,
+        port: parsedApiUrl.port || undefined,
+        pathname: '/storage/**',
+      },
       {
         protocol: 'https',
         hostname: 'api.dicebear.com',

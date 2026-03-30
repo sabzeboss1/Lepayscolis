@@ -12,6 +12,7 @@ export interface Trip {
   arrival_date: string;
   available_capacity: number;
   price_per_kg: number;
+  currency_code?: string;
   accepted_package_types: string[];
   pickup_address: string;
   delivery_address: string;

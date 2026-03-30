@@ -36,7 +36,7 @@ export default function WithdrawPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const [balance, setBalance] = useState(0);
-  const [currency, setCurrency] = useState('EUR');
+  const [currency, setCurrency] = useState(user?.currency_code || 'EUR');
   const [amount, setAmount] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);

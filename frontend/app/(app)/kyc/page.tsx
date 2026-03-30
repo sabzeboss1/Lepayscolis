@@ -142,7 +142,7 @@ export default function KYCVerificationPage() {
       const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
       const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_ENDPOINTS.kyc.submit}`, {
+      const response = await fetch(`${apiClient.baseUrl}${API_ENDPOINTS.kyc.submit}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { apiClient } from '@/lib/api/client';
 
 interface PlatformBranding {
   logo_url: string;
@@ -26,7 +27,7 @@ export function PlatformBrandingProvider({ children }: { children: ReactNode }) 
   useEffect(() => {
     const fetchBranding = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const apiUrl = apiClient.baseUrl;
         const res = await fetch(`${apiUrl}/api/platform/branding`);
         if (res.ok) {
           const result = await res.json();

@@ -6,6 +6,7 @@ import { CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import type { Payment, ApiResponse, Shipment } from '@/lib/types/api';
 
 /**
@@ -24,6 +25,7 @@ export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const { currencyCode } = useUserCurrency();
   
   const [isLoading, setIsLoading] = useState(true);
   const [payment, setPayment] = useState<Payment | null>(null);
@@ -76,7 +78,7 @@ export default function PaymentSuccessPage() {
         payee_id: shipmentResponse.data.traveler_id,
         payee: shipmentResponse.data.traveler,
         amount: shipmentResponse.data.price,
-        currency: 'EUR',
+        currency: currencyCode,
         status: 'held', // Payment is held in escrow after successful checkout
         stripe_payment_intent_id: sessionId || '',
         created_at: shipmentResponse.data.created_at,

@@ -89,7 +89,8 @@ export function useCachedApi<T>(
     } finally {
       setIsLoading(false);
     }
-  }, [key, fetcher, options]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   /**
    * Revalidate (force refresh) the data
@@ -111,7 +112,8 @@ export function useCachedApi<T>(
     if (enabled) {
       fetchData();
     }
-  }, [enabled, fetchData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, key]);
 
   return {
     data,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockUsers } from '@/lib/api/mockData';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET(
   request: NextRequest,
@@ -7,18 +8,24 @@ export async function GET(
 ) {
   try {
     const { id: userId } = await params;
+    const authToken = request.cookies.get('auth-token')?.value;
 
-    // Find user
-    const user = mockUsers.find(u => u.id === userId);
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
     }
 
-    return NextResponse.json({ user });
-  } catch (error) {
+    const response = await fetch(`${BACKEND_URL}/api/users/${userId}`, { headers });
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
     console.error('Error fetching user:', error);
     return NextResponse.json(
       { error: 'Failed to fetch user' },
@@ -32,34 +39,48 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: userId } = await params;
-    const body = await request.json();
+    const authToken = request.cookies.get('auth-token')?.value;
 
-    // Find user
-    const userIndex = mockUsers.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+    if (!authToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Update user data
-    const updatedUser = {
-      ...mockUsers[userIndex],
-      name: body.name || mockUsers[userIndex].name,
-      phone: body.phone || mockUsers[userIndex].phone,
-      avatar: body.avatar || mockUsers[userIndex].avatar,
-    };
+    const contentType = request.headers.get('content-type') || '';
+    let backendResponse: Response;
 
-    // In a real app, this would update the database
-    mockUsers[userIndex] = updatedUser;
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      // Laravel requires POST with _method=PUT for multipart file uploads
+      formData.append('_method', 'PUT');
+      backendResponse = await fetch(`${BACKEND_URL}/api/users/profile`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: formData,
+      });
+    } else {
+      const body = await request.json();
+      backendResponse = await fetch(`${BACKEND_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(body),
+      });
+    }
 
-    return NextResponse.json({
-      user: updatedUser,
-      message: 'Profile updated successfully',
-    });
-  } catch (error) {
+    const data = await backendResponse.json();
+
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
     console.error('Error updating user:', error);
     return NextResponse.json(
       { error: 'Failed to update user' },

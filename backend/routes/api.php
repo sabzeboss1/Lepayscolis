@@ -156,6 +156,9 @@ Route::middleware('auth:sanctum')->prefix('users')->group(function () {
     // Upload avatar
     Route::post('/avatar', [UserController::class, 'uploadAvatar']);
 
+    // Change password
+    Route::put('/password', [UserController::class, 'changePassword']);
+
     // Update FCM token
     Route::post('/fcm-token', [UserController::class, 'updateFcmToken']);
 
