@@ -20,6 +20,7 @@ interface Shipment {
   delivery_country: string;
   weight: number;
   price: number;
+  currency_code?: string;
   status: 'pending' | 'accepted' | 'in_transit' | 'delivered' | 'cancelled';
   created_at: string;
 }
@@ -140,7 +141,7 @@ export default function ShipmentsPage() {
       label: t('admin.shipments.columns.price'),
       sortable: true,
       render: (shipment) => (
-        <span className="text-sm text-gray-900">{formatCurrency(shipment.price)}</span>
+        <span className="text-sm text-gray-900">{formatCurrency(shipment.price, shipment.currency_code)}</span>
       ),
     },
     {

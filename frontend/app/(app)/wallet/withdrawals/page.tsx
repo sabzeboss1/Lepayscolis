@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import type { WithdrawalRequest, PaginatedResponse } from '@/lib/types/api';
 import {
   ArrowLeft,
@@ -93,6 +94,7 @@ export default function WithdrawalsPage() {
   const { t, locale } = useTranslation();
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { formatCurrency } = useUserCurrency();
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,13 +144,6 @@ export default function WithdrawalsPage() {
       ErrorHandler.log(err, { endpoint: `withdrawals/${id}`, method: 'DELETE' });
     }
   };
-
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-    }).format(amount);
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {

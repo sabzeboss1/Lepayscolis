@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -64,6 +65,7 @@ class AdminShipmentResource extends JsonResource
             ],
             'status' => $this->status,
             'payment_amount' => $this->payment_amount,
+            'currency_code' => $this->currency_code ?? PlatformSetting::get('default_currency', 'EUR'),
             'payment_status' => $this->payment_status,
             'payment' => $this->whenLoaded('payment', fn() => [
                 'id' => $this->payment->id,

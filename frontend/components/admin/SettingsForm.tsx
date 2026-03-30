@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { Loader2, AlertCircle, AlertTriangle, RotateCcw } from 'lucide-react';
+import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 
 interface SettingsFormData {
   platform_fee_percentage: number;
@@ -35,6 +36,17 @@ export default function SettingsForm({
   onReset,
   loading = false
 }: SettingsFormProps) {
+  const { defaultCurrency } = useAdminCurrency();
+  const currencySymbol = useMemo(() => {
+    try {
+      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: defaultCurrency })
+        .formatToParts(0)
+        .find(p => p.type === 'currency')?.value || defaultCurrency;
+    } catch {
+      return defaultCurrency;
+    }
+  }, [defaultCurrency]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -147,7 +159,7 @@ export default function SettingsForm({
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 text-sm">€</span>
+                  <span className="text-gray-500 text-sm">{currencySymbol}</span>
                 </div>
                 <input
                   id="withdrawal_fee"
@@ -157,7 +169,7 @@ export default function SettingsForm({
                     required: 'Withdrawal fee is required',
                     min: {
                       value: 0,
-                      message: 'Fee must be at least €0.00'
+                      message: 'Fee must be at least 0'
                     },
                     valueAsNumber: true
                   })}
@@ -188,7 +200,7 @@ export default function SettingsForm({
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-sm">€</span>
+                    <span className="text-gray-500 text-sm">{currencySymbol}</span>
                   </div>
                   <input
                     id="min_withdrawal_amount"
@@ -198,7 +210,7 @@ export default function SettingsForm({
                       required: 'Minimum withdrawal is required',
                       min: {
                         value: 0,
-                        message: 'Amount must be at least €0.00'
+                        message: 'Amount must be at least 0'
                       },
                       validate: (value) => {
                         const max = watchedValues.max_withdrawal_amount;
@@ -232,7 +244,7 @@ export default function SettingsForm({
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-sm">€</span>
+                    <span className="text-gray-500 text-sm">{currencySymbol}</span>
                   </div>
                   <input
                     id="max_withdrawal_amount"
@@ -242,7 +254,7 @@ export default function SettingsForm({
                       required: 'Maximum withdrawal is required',
                       min: {
                         value: 0,
-                        message: 'Amount must be at least €0.00'
+                        message: 'Amount must be at least 0'
                       },
                       validate: (value) => {
                         const min = watchedValues.min_withdrawal_amount;
@@ -284,7 +296,7 @@ export default function SettingsForm({
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 text-sm">€</span>
+                  <span className="text-gray-500 text-sm">{currencySymbol}</span>
                 </div>
                 <input
                   id="min_shipment_price"
@@ -294,7 +306,7 @@ export default function SettingsForm({
                     required: 'Minimum shipment price is required',
                     min: {
                       value: 0,
-                      message: 'Price must be at least €0.00'
+                      message: 'Price must be at least 0'
                     },
                     validate: (value) => {
                       const max = watchedValues.max_shipment_price;
@@ -328,7 +340,7 @@ export default function SettingsForm({
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 text-sm">€</span>
+                  <span className="text-gray-500 text-sm">{currencySymbol}</span>
                 </div>
                 <input
                   id="max_shipment_price"
@@ -338,7 +350,7 @@ export default function SettingsForm({
                     required: 'Maximum shipment price is required',
                     min: {
                       value: 0,
-                      message: 'Price must be at least €0.00'
+                      message: 'Price must be at least 0'
                     },
                     validate: (value) => {
                       const min = watchedValues.min_shipment_price;

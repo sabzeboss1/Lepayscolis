@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,6 +15,8 @@ class WalletResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $currency = PlatformSetting::get('default_currency', 'EUR');
+
         return [
             'user' => [
                 'id' => $this->id,
@@ -21,7 +24,8 @@ class WalletResource extends JsonResource
                 'email' => $this->email,
             ],
             'balance' => $this->balance ?? 0,
-            'balance_formatted' => number_format($this->balance ?? 0, 2) . ' USD',
+            'currency_code' => $currency,
+            'balance_formatted' => number_format($this->balance ?? 0, 2) . ' ' . $currency,
             'total_credits' => $this->when(isset($this->total_credits), $this->total_credits),
             'total_debits' => $this->when(isset($this->total_debits), $this->total_debits),
             'transaction_count' => $this->when(isset($this->transaction_count), $this->transaction_count),

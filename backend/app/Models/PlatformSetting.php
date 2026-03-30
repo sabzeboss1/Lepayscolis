@@ -85,7 +85,7 @@ class PlatformSetting extends Model
         self::updateOrCreate(
             ['key' => $key],
             [
-                'value' => (string) $value,
+                'value' => is_array($value) ? json_encode($value) : (string) $value,
                 'type' => $type,
                 'updated_by' => $updatedBy,
             ]

@@ -6,6 +6,7 @@ import { Shipment } from '@/lib/types/api';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import {
   Search,
   SlidersHorizontal,
@@ -35,6 +36,7 @@ function SkeletonCard() {
 }
 
 function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () => void }) {
+  const { formatCurrency } = useUserCurrency();
   return (
     <div
       onClick={onClick}
@@ -69,7 +71,7 @@ function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () =
           <User className="w-4 h-4 text-slate-400" />
           <span className="text-sm text-slate-600">{shipment.sender.name}</span>
         </div>
-        <span className="text-lg font-bold text-orange-600">€{shipment.price?.toFixed(2) || '—'}</span>
+        <span className="text-lg font-bold text-orange-600">{shipment.price ? formatCurrency(shipment.price) : '—'}</span>
       </div>
     </div>
   );

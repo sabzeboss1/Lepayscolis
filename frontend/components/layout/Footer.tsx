@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 import { Locale } from '@/lib/i18n/config';
 import { ShieldCheck, CreditCard, UserCheck, Plane, Package } from 'lucide-react';
 
@@ -46,6 +47,7 @@ const TRUST_BADGES = [
 export const Footer: React.FC<FooterProps> = ({ locale: initialLocale }) => {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const { t } = useTranslation(locale);
+  const { logo_url } = usePlatformBranding();
   const year = new Date().getFullYear();
 
   const QUICK_LINKS = [
@@ -72,11 +74,9 @@ export const Footer: React.FC<FooterProps> = ({ locale: initialLocale }) => {
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1 space-y-4">
             <Link href="/" className="inline-flex items-center gap-2 group focus-visible:ring-2 focus-visible:ring-royal-blue rounded-lg">
-              <Image
-                src="/logo.png"
+              <img
+                src={logo_url}
                 alt="LePaysExpressColis"
-                width={44}
-                height={44}
                 className="w-11 h-11 object-contain group-hover:opacity-80 transition-opacity"
               />
               <span className="text-base font-bold text-navy" style={{ fontFamily: 'Prompt, sans-serif' }}>

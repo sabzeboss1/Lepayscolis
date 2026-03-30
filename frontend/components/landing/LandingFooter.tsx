@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
+import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 
 const FOOTER_LINKS = {
   'À propos': [
@@ -26,6 +27,8 @@ const FOOTER_LINKS = {
 };
 
 export function LandingFooter() {
+  const { logo_url } = usePlatformBranding();
+
   return (
     <footer className="bg-navy text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -35,7 +38,7 @@ export function LandingFooter() {
           <div className="col-span-2">
             <Link href="/" className="inline-block mb-5">
               <img
-                src="/logo.png"
+                src={logo_url}
                 alt="Tuma Plus"
                 className="h-10 w-auto brightness-0 invert"
               />

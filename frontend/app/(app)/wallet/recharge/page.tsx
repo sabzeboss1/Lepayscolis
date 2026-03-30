@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { KYCBlocker } from '@/components/features/KYCBlocker';
 import { ArrowLeft, CreditCard, Wallet, AlertCircle } from 'lucide-react';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 
 const PRESET_AMOUNTS = [10, 20, 50, 100, 200, 500];
 
 export default function RechargeWalletPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { currencySymbol, formatCurrency } = useUserCurrency();
   const [amount, setAmount] = useState<number | ''>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export default function RechargeWalletPage() {
     e.preventDefault();
     
     if (!amount || amount < 5) {
-      setError('Le montant minimum est de 5€');
+      setError(`Le montant minimum est de 5${currencySymbol}`);
       return;
     }
 
@@ -38,7 +40,7 @@ export default function RechargeWalletPage() {
       // Pour l'instant, on simule juste
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      alert(`Recharge de ${amount}€ en cours de traitement. Cette fonctionnalité sera bientôt disponible avec Stripe.`);
+      alert(`Recharge de ${formatCurrency(amount as number)} en cours de traitement. Cette fonctionnalité sera bientôt disponible avec Stripe.`);
       router.push('/wallet');
     } catch (err) {
       setError('Une erreur est survenue. Veuillez réessayer.');
@@ -84,7 +86,7 @@ export default function RechargeWalletPage() {
               <div className="text-sm text-blue-900">
                 <p className="font-medium mb-1">Paiement sécurisé</p>
                 <p className="text-blue-700">
-                  Vos paiements sont traités de manière sécurisée. Le montant minimum est de 5€.
+                  Vos paiements sont traités de manière sécurisée. Le montant minimum est de 5{currencySymbol}.
                 </p>
               </div>
             </div>
@@ -106,7 +108,7 @@ export default function RechargeWalletPage() {
                         : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                     }`}
                   >
-                    {preset}€
+                    {preset}{currencySymbol}
                   </button>
                 ))}
               </div>
@@ -156,7 +158,7 @@ export default function RechargeWalletPage() {
               <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-slate-600">Montant à payer</span>
-                  <span className="text-2xl font-bold text-slate-900">{amount}€</span>
+                  <span className="text-2xl font-bold text-slate-900">{formatCurrency(amount as number)}</span>
                 </div>
                 <p className="text-xs text-slate-500">
                   Ce montant sera ajouté à votre solde disponible

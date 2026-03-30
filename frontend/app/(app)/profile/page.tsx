@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import { Button } from '@/components/ui/Button';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { useRouter } from 'next/navigation';
@@ -45,6 +46,7 @@ interface UserStats {
 export default function ProfilePage() {
   const { user, isLoading } = useAuth();
   const { t } = useTranslation();
+  const { formatCurrency } = useUserCurrency();
   const router = useRouter();
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [isLoadingRatings, setIsLoadingRatings] = useState(true);
@@ -378,17 +380,17 @@ export default function ProfilePage() {
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl p-4 mb-4">
                 <p className="text-xs text-green-700 mb-1 font-medium">Gains totaux</p>
                 <p className="text-3xl font-bold text-green-700">
-                  {(stats?.totalEarnings ?? 0).toFixed(2)} <span className="text-lg">€</span>
+                  {formatCurrency(stats?.totalEarnings ?? 0)}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-400 mb-0.5">Ce mois</p>
-                  <p className="font-bold text-gray-900 text-base">{(stats?.earningsThisMonth ?? 0).toFixed(2)} €</p>
+                  <p className="font-bold text-gray-900 text-base">{formatCurrency(stats?.earningsThisMonth ?? 0)}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-400 mb-0.5">En attente</p>
-                  <p className="font-bold text-gray-900 text-base">{(stats?.pendingEarnings ?? 0).toFixed(2)} €</p>
+                  <p className="font-bold text-gray-900 text-base">{formatCurrency(stats?.pendingEarnings ?? 0)}</p>
                 </div>
               </div>
               <Button variant="primary" fullWidth onClick={() => router.push('/wallet')}>
@@ -598,7 +600,7 @@ export default function ProfilePage() {
                       </div>
                       {activity.amount && (
                         <span className={`text-sm font-bold ${colors.amount} flex-shrink-0`}>
-                          +{activity.amount.toFixed(2)} €
+                          +{formatCurrency(activity.amount)}
                         </span>
                       )}
                     </div>

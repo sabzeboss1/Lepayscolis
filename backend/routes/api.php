@@ -51,6 +51,14 @@ Route::get('/currencies', function () {
 });
 Route::get('/countries', [CountryController::class, 'index']);
 Route::get('/countries/{id}/cities', [CountryController::class, 'cities']);
+Route::get('/platform/branding', function () {
+    $keys = ['logo_url', 'favicon_url', 'primary_color', 'secondary_color', 'platform_name'];
+    $settings = [];
+    foreach ($keys as $key) {
+        $settings[$key] = \App\Models\PlatformSetting::get($key);
+    }
+    return response()->json(['data' => $settings]);
+})->middleware('throttle:60,1');
 
 // Webhook routes (public, no authentication required)
 Route::prefix('webhooks')->group(function () {
@@ -147,6 +155,9 @@ Route::middleware('auth:sanctum')->prefix('users')->group(function () {
 
     // Upload avatar
     Route::post('/avatar', [UserController::class, 'uploadAvatar']);
+
+    // Change password
+    Route::put('/password', [UserController::class, 'changePassword']);
 
     // Update FCM token
     Route::post('/fcm-token', [UserController::class, 'updateFcmToken']);

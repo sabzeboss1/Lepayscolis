@@ -3,3 +3,4 @@ backend/storage/
 backend/vendor/
 frontend/package-lock.json
 .devdbrc
+backend/composer.lock

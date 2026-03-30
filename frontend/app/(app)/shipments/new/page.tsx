@@ -13,6 +13,7 @@ import { FileUpload } from '@/components/ui/FileUpload';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import { z } from 'zod';
 import {
   Package,
@@ -80,6 +81,7 @@ export default function NewShipmentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { formatCurrency, currencySymbol } = useUserCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -184,7 +186,7 @@ export default function NewShipmentPage() {
     // Check wallet balance
     if (estimatedCost && walletBalance !== null && walletBalance < estimatedCost) {
       setErrors({ 
-        submit: `Solde insuffisant. Requis: €${estimatedCost.toFixed(2)}, Disponible: €${walletBalance.toFixed(2)}` 
+        submit: `Solde insuffisant. Requis: ${formatCurrency(estimatedCost)}, Disponible: ${formatCurrency(walletBalance)}` 
       });
       return;
     }
@@ -276,14 +278,14 @@ export default function NewShipmentPage() {
                     </div>
                     <div>
                       <p className="text-xs text-slate-600">Solde disponible</p>
-                      <p className="text-lg font-bold text-slate-900">€{walletBalance.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-slate-900">{formatCurrency(walletBalance)}</p>
                     </div>
                   </div>
                   {estimatedCost !== null && (
                     <div className="text-right">
                       <p className="text-xs text-slate-600">Coût estimé</p>
                       <p className={`text-lg font-bold ${walletBalance >= estimatedCost ? 'text-emerald-600' : 'text-red-600'}`}>
-                        €{estimatedCost.toFixed(2)}
+                        {formatCurrency(estimatedCost)}
                       </p>
                     </div>
                   )}

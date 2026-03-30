@@ -51,6 +51,13 @@ export class ApiClient {
   }
 
   /**
+   * Get the base URL of the API
+   */
+  get baseUrl(): string {
+    return this.config.baseUrl;
+  }
+
+  /**
    * Get authentication token from cookies (single token for all roles)
    */
   private getAuthToken(): string | null {

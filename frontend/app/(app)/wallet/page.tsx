@@ -77,7 +77,7 @@ export default function WalletPage() {
   const [balance, setBalance] = useState(0);
   const [heldBalance, setHeldBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
-  const [currency, setCurrency] = useState('EUR');
+  const [currency, setCurrency] = useState(user?.currency_code || 'EUR');
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);

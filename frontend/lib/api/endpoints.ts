@@ -13,8 +13,8 @@ export const API_ENDPOINTS = {
     register: '/api/auth/register',
     logout: '/api/auth/logout',
     me: '/api/auth/me',
-    updateProfile: '/api/user',
-    uploadAvatar: '/api/avatar',
+    updateProfile: '/api/users/profile',
+    uploadAvatar: '/api/users/avatar',
   },
 
   // ============================================================================

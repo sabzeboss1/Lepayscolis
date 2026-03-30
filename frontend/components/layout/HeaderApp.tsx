@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { NotificationDropdown } from '@/components/features/NotificationDropdown';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 import { Locale } from '@/lib/i18n/config';
 import { User } from '@/lib/types/user';
 import {
@@ -70,6 +71,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { t } = useTranslation(locale);
+  const { logo_url } = usePlatformBranding();
   const pathname = usePathname();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -128,11 +130,9 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
               className="flex items-center shrink-0 focus-visible:ring-2 focus-visible:ring-royal-blue rounded-lg"
               aria-label="Accueil — LePaysExpressColis"
             >
-              <Image
-                src="/logo.png"
+              <img
+                src={logo_url}
                 alt="LePaysExpressColis"
-                width={48}
-                height={48}
                 className="w-10 h-10 md:w-11 md:h-11 object-contain hover:opacity-85 transition-opacity"
               />
               <span

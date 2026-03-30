@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
@@ -76,6 +77,7 @@ class UserController extends Controller
                 'sometimes',
                 'string',
                 'max:20',
+                'regex:/^\+[1-9]\d{1,14}$/',
                 Rule::unique('users', 'phone')->ignore($user->id),
             ],
             'locale' => 'sometimes|string|in:fr,en',
@@ -130,6 +132,35 @@ class UserController extends Controller
         return response()->json([
             'message' => __('messages.profile.updated'),
             'user' => new UserResource($user->fresh()),
+        ]);
+    }
+
+    /**
+     * Change authenticated user's password
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'Le mot de passe actuel est incorrect.',
+            ], 422);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['new_password']),
+        ]);
+
+        Log::info('User password changed', ['user_id' => $user->id]);
+
+        return response()->json([
+            'message' => 'Mot de passe modifié avec succès.',
         ]);
     }
 

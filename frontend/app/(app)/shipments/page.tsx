@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import {
@@ -78,6 +79,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () => void }) {
+  const { formatCurrency } = useUserCurrency();
   return (
     <button
       onClick={onClick}
@@ -114,7 +116,7 @@ function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () =
           {/* Right side */}
           <div className="flex flex-col items-end gap-2 shrink-0">
             <span className="text-lg font-bold text-orange-500">
-              {shipment.price?.toFixed(2) ?? '—'}€
+              {shipment.price ? formatCurrency(shipment.price) : '—'}
             </span>
             {shipment.package_weight && (
               <div className="flex items-center gap-1 text-xs text-slate-500">
@@ -150,6 +152,7 @@ function SkeletonCard() {
 export default function ShipmentsPage() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { formatCurrency } = useUserCurrency();
   const router = useRouter();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);

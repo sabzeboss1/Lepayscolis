@@ -19,6 +19,7 @@ interface DashboardMetrics {
   pending_shipments: number;
   revenue_30_days: number;
   revenue_30_days_formatted: string;
+  currency?: string;
   pending_kyc: number;
   pending_withdrawals: number;
   alerts: Array<{
@@ -187,7 +188,7 @@ export default function AdminDashboardPage() {
 
         <MetricCard
           title={t('admin.dashboard.revenue30Days')}
-          value={metrics ? formatCurrency(metrics.revenue_30_days) : formatCurrency(0)}
+          value={metrics ? formatCurrency(metrics.revenue_30_days, metrics.currency) : formatCurrency(0)}
           icon={DollarSign}
           href="/admin/payments"
           loading={loading}

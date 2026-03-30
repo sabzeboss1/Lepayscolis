@@ -18,6 +18,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { apiClient } from '@/lib/api/client';
+import AuthenticatedImage from '@/components/admin/AuthenticatedImage';
 
 interface KYCSubmission {
   id: string;
@@ -74,7 +76,15 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
         setError(result.message || t('admin.kyc.detail.notFound'));
         return;
       }
-      setSubmission(result.data);
+      // Flatten documents array into top-level fields
+      const item = result.data;
+      const doc = item.documents?.[0];
+      setSubmission({
+        ...item,
+        document_front_url: item.document_front_url || doc?.front_url || null,
+        document_back_url: item.document_back_url || doc?.back_url || null,
+        selfie_url: item.selfie_url || doc?.selfie_url || null,
+      });
     } catch {
       setError(t('admin.kyc.detail.loadFailed'));
     } finally {
@@ -120,7 +130,16 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
 
   const handleDownload = async (url: string) => {
     try {
-      const response = await fetch(url);
+      const fullUrl = url.startsWith('http') ? url : `${apiClient.baseUrl}${url}`;
+      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+
+      const response = await fetch(fullUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -390,7 +409,7 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
               {/* Main Viewer */}
               <div className="bg-gray-900 rounded-lg overflow-hidden relative" style={{ minHeight: '500px' }}>
                 <div className="relative flex items-center justify-center" style={{ minHeight: '500px' }}>
-                  <img
+                  <AuthenticatedImage
                     src={documentImages[currentImageIndex].url}
                     alt={documentImages[currentImageIndex].label}
                     className="max-w-full max-h-[70vh] object-contain transition-transform duration-200"

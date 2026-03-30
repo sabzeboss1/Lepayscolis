@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 interface AuthenticatedImageProps {
   src: string;
@@ -24,7 +25,10 @@ export default function AuthenticatedImage({ src, alt, className, style }: Authe
         const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
         const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
         
-        const response = await fetch(src, {
+        // Prepend backend base URL if src is a relative path
+        const url = src.startsWith('http') ? src : `${apiClient.baseUrl}${src}`;
+
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',

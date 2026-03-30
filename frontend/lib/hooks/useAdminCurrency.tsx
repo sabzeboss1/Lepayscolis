@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { apiClient } from '@/lib/api/client';
 
 interface ExchangeRate {
   code: string;
@@ -28,7 +29,7 @@ export function AdminCurrencyProvider({ children }: { children: ReactNode }) {
     const fetchData = async () => {
       try {
         // Fetch settings and currencies in parallel
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const apiUrl = apiClient.baseUrl;
         const [settingsRes, currenciesRes] = await Promise.all([
           fetch('/api/admin/settings'),
           fetch(`${apiUrl}/api/currencies`),

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, Globe, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 
 const NAV_LINKS = [
   { label: 'Accueil', href: '/' },
@@ -16,6 +17,7 @@ const NAV_LINKS = [
 export function LandingHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { logo_url } = usePlatformBranding();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,7 +40,7 @@ export function LandingHeader() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <img
-              src="/logo.png"
+              src={logo_url}
               alt="Tuma Plus Logo"
               className="h-12 w-auto object-contain"
             />

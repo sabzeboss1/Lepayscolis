@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { apiClient } from '@/lib/api/client';
 import type { Shipment, Trip } from '@/lib/types/api';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import {
   Package,
   MapPin,
@@ -22,6 +23,7 @@ export default function ShipmentDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuth();
+  const { formatCurrency } = useUserCurrency();
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [myTrips, setMyTrips] = useState<Trip[]>([]);
   const [selectedTripId, setSelectedTripId] = useState('');
@@ -171,9 +173,9 @@ export default function ShipmentDetailsPage() {
           <div className="border-t border-slate-100 pt-5">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">Montant du paiement</span>
-              <span className="text-2xl font-bold text-orange-600">€{shipment.payment_amount.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-orange-600">{formatCurrency(shipment.payment_amount)}</span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">Vous recevrez 85% (€{(shipment.payment_amount * 0.85).toFixed(2)})</p>
+            <p className="text-xs text-slate-500 mt-1">Vous recevrez 85% ({formatCurrency(shipment.payment_amount * 0.85)})</p>
           </div>
         </div>
 

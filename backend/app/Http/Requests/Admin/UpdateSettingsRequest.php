@@ -41,7 +41,6 @@ class UpdateSettingsRequest extends FormRequest
             'stripe_public_key' => ['sometimes', 'string', 'max:255'],
             'stripe_secret_key' => ['sometimes', 'string', 'max:255'],
             'stripe_webhook_secret' => ['sometimes', 'string', 'max:255'],
-            'payment_currency' => ['sometimes', 'string', 'max:10'],
 
             // Payment - Mobile Money
             'orange_money_api_key' => ['sometimes', 'string', 'max:255'],
