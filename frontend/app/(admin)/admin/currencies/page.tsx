@@ -95,7 +95,7 @@ export default function AdminCurrenciesPage() {
 
     setSavingRate(true);
     try {
-      await apiClient.put(API_ENDPOINTS.admin.currencies.updateRate(code), {
+      await apiClient.put<any>(API_ENDPOINTS.admin.currencies.updateRate(code), {
         exchange_rate: rate,
       });
       showSuccess(t('admin.currencies.success.rateUpdated'));
@@ -112,7 +112,7 @@ export default function AdminCurrenciesPage() {
   // ── Toggle active/inactive ──
   const toggleCurrency = async (code: string) => {
     try {
-      await apiClient.post(API_ENDPOINTS.admin.currencies.toggle(code));
+      await apiClient.post<any>(API_ENDPOINTS.admin.currencies.toggle(code));
       const currency = currencies.find(c => c.code === code);
       showSuccess(
         currency?.is_active
@@ -132,7 +132,7 @@ export default function AdminCurrenciesPage() {
     setCreateErrors({});
 
     try {
-      await apiClient.post(API_ENDPOINTS.admin.currencies.store, {
+      await apiClient.post<any>(API_ENDPOINTS.admin.currencies.store, {
         code: createForm.code.toUpperCase(),
         symbol: createForm.symbol,
         name: createForm.name,
@@ -158,7 +158,7 @@ export default function AdminCurrenciesPage() {
   const handleDelete = async (code: string) => {
     setDeleting(true);
     try {
-      await apiClient.delete(API_ENDPOINTS.admin.currencies.delete(code));
+      await apiClient.delete<any>(API_ENDPOINTS.admin.currencies.delete(code));
       showSuccess(t('admin.currencies.success.deleted'));
       setDeletingCode(null);
       await fetchCurrencies();

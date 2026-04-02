@@ -217,7 +217,7 @@ export default function ProfileEditPage() {
     try {
       const formattedPhone = buildPhoneNumber();
 
-      await apiClient.put(API_ENDPOINTS.auth.updateProfile, {
+      await apiClient.put<any>(API_ENDPOINTS.auth.updateProfile, {
         name: formData.name,
         phone: formattedPhone,
         currency_code: formData.currency_code,

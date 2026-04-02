@@ -68,7 +68,7 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
     setLoading(true);
     setError(null);
     try {
-      const data = await apiClient.get(API_ENDPOINTS.admin.payments.show(paymentId));
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.payments.show(paymentId));
       setPayment(data.data);
     } catch (err) {
       console.error('Failed to fetch payment details:', err);
@@ -82,7 +82,7 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
     if (!paymentId || !refundReason.trim() || refundReason.length < 10) return;
     setRefundSubmitting(true);
     try {
-      await apiClient.post(API_ENDPOINTS.admin.payments.refund(paymentId), {
+      await apiClient.post<any>(API_ENDPOINTS.admin.payments.refund(paymentId), {
         reason: refundReason,
         ...(refundAmount ? { amount: parseFloat(refundAmount) } : {}),
       });

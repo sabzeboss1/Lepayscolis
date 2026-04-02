@@ -139,7 +139,7 @@ export default function AdminProfilePage() {
         return;
       }
 
-      await apiClient.put(API_ENDPOINTS.auth.updateProfile, updateData);
+      await apiClient.put<any>(API_ENDPOINTS.auth.updateProfile, updateData);
       await refreshUser();
 
       showMessage('success', t('admin.profile.success.profileUpdated'));
@@ -395,7 +395,7 @@ export default function AdminProfilePage() {
                 key={loc}
                 onClick={() => {
                   setLocale(loc);
-                  apiClient.put(API_ENDPOINTS.auth.updateProfile, { locale: loc }).catch(() => {});
+                  apiClient.put<any>(API_ENDPOINTS.auth.updateProfile, { locale: loc }).catch(() => {});
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
                   locale === loc

@@ -125,7 +125,7 @@ export default function MyShipmentsPage() {
   const handleCancelShipment = async (shipmentId: string) => {
     if (!confirm('Confirmer l\'annulation ?')) return;
     try {
-      await apiClient.post(API_ENDPOINTS.shipments.cancel(shipmentId));
+      await apiClient.post<any>(API_ENDPOINTS.shipments.cancel(shipmentId));
       fetchMyShipments();
     } catch (err) {
       alert(ErrorHandler.handle(err));

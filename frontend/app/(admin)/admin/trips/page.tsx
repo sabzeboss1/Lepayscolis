@@ -101,7 +101,7 @@ export default function TripsPage() {
       if (actionKey === 'verify') {
         await Promise.all(
           selectedIds.map(id =>
-            apiClient.post(API_ENDPOINTS.admin.trips.verify(id))
+            apiClient.post<any>(API_ENDPOINTS.admin.trips.verify(id))
           )
         );
       } else if (actionKey === 'reject') {
@@ -109,7 +109,7 @@ export default function TripsPage() {
         if (!reason || reason.length < 10) return;
         await Promise.all(
           selectedIds.map(id =>
-            apiClient.post(API_ENDPOINTS.admin.trips.reject(id), { reason })
+            apiClient.post<any>(API_ENDPOINTS.admin.trips.reject(id), { reason })
           )
         );
       }

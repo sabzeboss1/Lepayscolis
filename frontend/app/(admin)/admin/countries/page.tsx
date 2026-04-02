@@ -117,7 +117,7 @@ export default function AdminCountriesPage() {
 
   const toggleCountry = async (country: Country) => {
     try {
-      await apiClient.post(API_ENDPOINTS.admin.countries.toggle(country.id));
+      await apiClient.post<any>(API_ENDPOINTS.admin.countries.toggle(country.id));
       showSuccess(country.is_active ? t('admin.countries.success.deactivated') : t('admin.countries.success.activated'));
       await fetchCountries();
     } catch (err: any) {
@@ -130,7 +130,7 @@ export default function AdminCountriesPage() {
     setCreating(true);
     setCreateErrors({});
     try {
-      await apiClient.post(API_ENDPOINTS.admin.countries.store, {
+      await apiClient.post<any>(API_ENDPOINTS.admin.countries.store, {
         code: createForm.code.toUpperCase(),
         name_en: createForm.name_en,
         name_fr: createForm.name_fr,
@@ -171,7 +171,7 @@ export default function AdminCountriesPage() {
     setSaving(true);
     setEditErrors({});
     try {
-      await apiClient.put(API_ENDPOINTS.admin.countries.update(editingCountry.id), {
+      await apiClient.put<any>(API_ENDPOINTS.admin.countries.update(editingCountry.id), {
         code: editForm.code.toUpperCase(),
         name_en: editForm.name_en,
         name_fr: editForm.name_fr,
@@ -194,7 +194,7 @@ export default function AdminCountriesPage() {
   const handleDelete = async (country: Country) => {
     setDeleting(true);
     try {
-      await apiClient.delete(API_ENDPOINTS.admin.countries.delete(country.id));
+      await apiClient.delete<any>(API_ENDPOINTS.admin.countries.delete(country.id));
       showSuccess(t('admin.countries.success.deleted'));
       setDeletingCountry(null);
       await fetchCountries();

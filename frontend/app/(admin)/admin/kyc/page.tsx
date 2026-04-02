@@ -128,7 +128,7 @@ export default function KYCPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      await apiClient.post(API_ENDPOINTS.admin.kyc.approve(id));
+      await apiClient.post<any>(API_ENDPOINTS.admin.kyc.approve(id));
       fetchSubmissions();
       setShowReviewModal(false);
     } catch (error) {
@@ -139,7 +139,7 @@ export default function KYCPage() {
 
   const handleReject = async (id: string, reason: string) => {
     try {
-      await apiClient.post(API_ENDPOINTS.admin.kyc.reject(id), { reason });
+      await apiClient.post<any>(API_ENDPOINTS.admin.kyc.reject(id), { reason });
       fetchSubmissions();
       setShowReviewModal(false);
     } catch (error) {

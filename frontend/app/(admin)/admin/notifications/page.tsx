@@ -39,7 +39,7 @@ export default function NotificationsPage() {
         page: currentPage,
         per_page: perPage,
       };
-      const data = await apiClient.get(API_ENDPOINTS.admin.notifications.history, { params });
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.notifications.history, { params });
       setHistory(data.data || []);
       setTotal(data.meta?.total || 0);
     } catch {
@@ -56,7 +56,7 @@ export default function NotificationsPage() {
   const handleSendNotification = async (notificationData: any) => {
     setSendError(null);
     setSendSuccess(null);
-    const data = await apiClient.post(API_ENDPOINTS.admin.notifications.send, {
+    const data = await apiClient.post<any>(API_ENDPOINTS.admin.notifications.send, {
       recipient_type: notificationData.recipient_type,
       title: notificationData.title,
       message: notificationData.message,
