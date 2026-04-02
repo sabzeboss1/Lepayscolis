@@ -5,6 +5,8 @@ import { Shield, Download } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface AuditLog {
   id: string;
@@ -43,28 +45,22 @@ export default function AuditLogsPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: itemsPerPage.toString(),
-        ...(filterValues.action && typeof filterValues.action === 'string' && { action: filterValues.action }),
-        ...(filterValues.resource && typeof filterValues.resource === 'string' && { resource_type: filterValues.resource }),
-        ...(filterValues.search && typeof filterValues.search === 'string' && { search: filterValues.search }),
-      });
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: itemsPerPage,
+      };
+
+      if (filterValues.action && typeof filterValues.action === 'string') params.action = filterValues.action;
+      if (filterValues.resource && typeof filterValues.resource === 'string') params.resource_type = filterValues.resource;
+      if (filterValues.search && typeof filterValues.search === 'string') params.search = filterValues.search;
 
       const dateRange = filterValues.dateRange;
       if (dateRange && typeof dateRange === 'object' && 'from' in dateRange) {
-        if (dateRange.from) params.append('date_from', dateRange.from);
-        if (dateRange.to) params.append('date_to', dateRange.to);
+        if (dateRange.from) params.date_from = dateRange.from;
+        if (dateRange.to) params.date_to = dateRange.to;
       }
 
-      const response = await fetch(`/api/admin/audit-logs?${params}`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
+      const result = await apiClient.get(API_ENDPOINTS.admin.auditLogs.list, { params });
       setLogs(result.data || []);
       setTotalLogs(result.meta?.total || 0);
     } catch (error) {
@@ -109,19 +105,7 @@ export default function AuditLogsPage() {
         if (dateRange.to) exportFilters.date_to = dateRange.to;
       }
 
-      const response = await fetch('/api/admin/audit-logs/export', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(exportFilters),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = await apiClient.post(API_ENDPOINTS.admin.auditLogs.export, exportFilters);
 
       if (result.download_url) {
         const a = document.createElement('a');

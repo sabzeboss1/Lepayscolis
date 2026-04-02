@@ -7,6 +7,8 @@ import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Payment {
   id: string;
@@ -58,24 +60,19 @@ export default function PaymentsPage() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
         sort_by: sortKey,
         sort_direction: sortDirection,
-        ...(filters.status && { status: filters.status }),
-        ...(filters.method && { method: filters.method }),
-        ...(filters.date_from && { date_from: filters.date_from }),
-        ...(filters.date_to && { date_to: filters.date_to }),
-      });
+      };
 
-      const response = await fetch(`/api/admin/payments?${params}`);
+      if (filters.status) params.status = filters.status;
+      if (filters.method) params.method = filters.method;
+      if (filters.date_from) params.date_from = filters.date_from;
+      if (filters.date_to) params.date_to = filters.date_to;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.payments.list, { params });
       setPayments(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (err) {

@@ -65,7 +65,11 @@ export class ApiClient {
 
     const cookies = document.cookie.split(';');
     const authCookie = cookies.find(c => c.trim().startsWith('auth-token='));
-    return authCookie ? authCookie.split('=')[1] : null;
+    if (!authCookie) return null;
+    
+    const token = authCookie.split('=')[1];
+    // Decode URL-encoded token if necessary
+    return token ? decodeURIComponent(token) : null;
   }
 
   /**

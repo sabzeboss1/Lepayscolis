@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Trip } from '@/lib/types/trip';
+import { formatCurrency } from '@/lib/utils/formatting';
 
 type TripStatus = 'all' | 'active' | 'completed' | 'cancelled';
 type SortOption = 'date' | 'price' | 'capacity';
@@ -267,7 +268,7 @@ export default function MyTripsPage() {
                     </div>
                     <div>
                       <span className="font-medium">{t('trips.pricePerKg')}:</span>{' '}
-                      <span className="text-gray-700">${trip.price_per_kg}</span>
+                      <span className="text-gray-700">{formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}</span>
                     </div>
                     {trip.travel_proof_url && (
                       <div className="flex items-center gap-1 text-green-600">

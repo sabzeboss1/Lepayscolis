@@ -132,11 +132,17 @@ export const API_ENDPOINTS = {
     
     users: {
       list: '/api/admin/users',
+      create: '/api/admin/users',
       show: (id: string) => `/api/admin/users/${id}`,
+      update: (id: string) => `/api/admin/users/${id}`,
+      delete: (id: string) => `/api/admin/users/${id}`,
       suspend: (id: string) => `/api/admin/users/${id}/suspend`,
-      unsuspend: (id: string) => `/api/admin/users/${id}/unsuspend`,
+      activate: (id: string) => `/api/admin/users/${id}/activate`,
+      bulkSuspend: '/api/admin/users/bulk-suspend',
+      bulkActivate: '/api/admin/users/bulk-activate',
       banMessaging: (id: string) => `/api/admin/users/${id}/ban-messaging`,
       unbanMessaging: (id: string) => `/api/admin/users/${id}/unban-messaging`,
+      assignAdmin: (id: string) => `/api/admin/users/${id}/assign-admin`,
     },
     
     kyc: {
@@ -159,12 +165,25 @@ export const API_ENDPOINTS = {
       list: '/api/admin/trips',
       show: (id: string) => `/api/admin/trips/${id}`,
       cancel: (id: string) => `/api/admin/trips/${id}/cancel`,
+      verify: (id: string) => `/api/admin/trips/${id}/verify`,
+      reject: (id: string) => `/api/admin/trips/${id}/reject`,
+      update: (id: string) => `/api/admin/trips/${id}`,
     },
     
     shipments: {
       list: '/api/admin/shipments',
       show: (id: string) => `/api/admin/shipments/${id}`,
       cancel: (id: string) => `/api/admin/shipments/${id}/cancel`,
+    },
+    
+    shipmentRequests: {
+      list: '/api/admin/shipment-requests',
+      show: (id: string) => `/api/admin/shipment-requests/${id}`,
+      pending: '/api/admin/shipment-requests/pending',
+      approve: (id: string) => `/api/admin/shipment-requests/${id}/approve`,
+      reject: (id: string) => `/api/admin/shipment-requests/${id}/reject`,
+      delete: (id: string) => `/api/admin/shipment-requests/${id}`,
+      analytics: '/api/admin/shipment-requests/analytics',
     },
     
     payments: {
@@ -175,8 +194,8 @@ export const API_ENDPOINTS = {
     },
     
     messages: {
-      list: '/api/admin/messages',
-      show: (id: string) => `/api/admin/messages/${id}`,
+      list: '/api/admin/messages/conversations',
+      show: (id: string) => `/api/admin/messages/conversations/${id}`,
       delete: (id: string) => `/api/admin/messages/${id}`,
     },
 

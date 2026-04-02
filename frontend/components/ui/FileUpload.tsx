@@ -44,9 +44,18 @@ export const FileUpload = ({
       type.startsWith('.') && type === fileExtension
     );
     
-    const isValidMimeType = acceptedTypes.some(type => 
-      !type.startsWith('.') && (type === fileMimeType || fileMimeType.includes(type.split('/')[1]))
-    );
+    const isValidMimeType = acceptedTypes.some(type => {
+      if (type.startsWith('.')) return false; // Skip extensions
+      
+      // Handle wildcard MIME types like "image/*"
+      if (type.includes('/*')) {
+        const baseType = type.split('/')[0];
+        return fileMimeType.startsWith(baseType + '/');
+      }
+      
+      // Handle exact MIME type match
+      return type === fileMimeType;
+    });
     
     if (!isValidExtension && !isValidMimeType) {
       setUploadError(`Type de fichier non accepté. Formats acceptés : ${accept}`);

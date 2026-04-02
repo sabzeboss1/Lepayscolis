@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Trash2, RefreshCw, Activity, X, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Admin {
   id: number;
@@ -52,16 +54,14 @@ export default function AdminsPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/admin/admins');
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || t('admin.admins.fetchFailed'));
+      const data = await apiClient.get(API_ENDPOINTS.admin.admins.list);
       setAdmins(data.data || []);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     fetchAdmins();
@@ -88,8 +88,7 @@ export default function AdminsPage() {
     setModal('activity');
     setActivityLoading(true);
     try {
-      const response = await fetch(`/api/admin/admins/${admin.id}/activity`);
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.admins.activity(admin.id));
       setActivityLogs(data.data || []);
     } catch {
       setActivityLogs([]);
@@ -109,13 +108,7 @@ export default function AdminsPage() {
     setCreating(true);
     setCreateErrors({});
     try {
-      const response = await fetch('/api/admin/admins', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createForm),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || t('admin.admins.createModal.errors.createFailed'));
+      await apiClient.post(API_ENDPOINTS.admin.admins.create, createForm);
       setSuccess(t('admin.admins.createSuccess'));
       closeModal();
       fetchAdmins();
@@ -130,13 +123,7 @@ export default function AdminsPage() {
     if (!selectedAdmin) return;
     setUpdating(true);
     try {
-      const response = await fetch(`/api/admin/admins/${selectedAdmin.id}/role`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || t('admin.admins.updateRoleFailed'));
+      await apiClient.put(API_ENDPOINTS.admin.admins.updateRole(selectedAdmin.id), { role: newRole });
       setSuccess(t('admin.admins.updateRoleSuccess'));
       closeModal();
       fetchAdmins();
@@ -152,15 +139,10 @@ export default function AdminsPage() {
     if (!selectedAdmin) return;
     setRemoving(true);
     try {
-      const response = await fetch(`/api/admin/admins/${selectedAdmin.id}`, { method: 'DELETE' });
-      if (response.status === 204 || response.ok) {
-        setSuccess(t('admin.admins.removeSuccess'));
-        closeModal();
-        fetchAdmins();
-      } else {
-        const data = await response.json();
-        throw new Error(data.message || t('admin.admins.removeFailed'));
-      }
+      await apiClient.delete(API_ENDPOINTS.admin.admins.remove(selectedAdmin.id));
+      setSuccess(t('admin.admins.removeSuccess'));
+      closeModal();
+      fetchAdmins();
     } catch (e: any) {
       setError(e.message);
       closeModal();

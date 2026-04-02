@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Package, User, MapPin, Ban, TrendingUp } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Shipment {
   id: string;
@@ -55,6 +57,7 @@ interface Analytics {
 export default function ShipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { t } = useTranslation();
+  const { formatCurrency } = useAdminCurrency(); // Move hook to top, before any conditional returns
   const [shipmentId, setShipmentId] = useState<string | null>(null);
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [statusHistory, setStatusHistory] = useState<StatusHistoryItem[]>([]);
@@ -76,8 +79,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
     if (!shipmentId) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/shipments/${shipmentId}`);
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.shipments.show(shipmentId));
       setShipment(data.data?.shipment ?? null);
       setStatusHistory(data.data?.status_history ?? []);
       setAnalytics(data.data?.analytics ?? null);
@@ -92,11 +94,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
     if (!shipmentId || cancelReason.trim().length < 10) return;
     setCancelLoading(true);
     try {
-      await fetch(`/api/admin/shipments/${shipmentId}/cancel`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: cancelReason }),
-      });
+      await apiClient.post(API_ENDPOINTS.admin.shipments.cancel(shipmentId), { reason: cancelReason });
       await fetchShipmentDetails();
       setShowCancelDialog(false);
       setCancelReason('');
@@ -137,8 +135,6 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
       </span>
     );
   };
-
-  const { formatCurrency } = useAdminCurrency();
 
   const hasDimensions = shipment.package_length || shipment.package_width || shipment.package_height;
 

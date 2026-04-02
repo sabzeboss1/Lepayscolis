@@ -7,6 +7,8 @@ import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Wallet {
   id: string;
@@ -41,19 +43,14 @@ export default function WalletsPage() {
   const fetchWallets = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
-        ...(filters.search && { search: filters.search }),
-      });
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
+      };
 
-      const response = await fetch(`/api/admin/wallets?${params}`);
+      if (filters.search) params.search = filters.search;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.wallets.list, { params });
       setWallets(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {

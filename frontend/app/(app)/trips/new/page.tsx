@@ -13,6 +13,7 @@ import { KYCBlocker } from '@/components/features/KYCBlocker';
 import { CountrySelect } from '@/components/ui/CountrySelect';
 import { CitySelect } from '@/components/ui/CitySelect';
 import { useCountries } from '@/lib/hooks/useCountries';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import { z } from 'zod';
 import {
   MapPin,
@@ -37,6 +38,8 @@ import {
   ChevronRight,
   AlertCircle,
   Clock,
+  Download,
+  Printer,
 } from 'lucide-react';
 
 // Zod schema for trip validation
@@ -52,7 +55,34 @@ const tripSchema = z.object({
   acceptedPackageTypes: z.array(z.string()).min(1, 'Select at least one package type'),
   pickupAddress: z.string().min(5, 'Pickup address is required'),
   deliveryAddress: z.string().min(5, 'Delivery address is required'),
-}).refine(
+})
+.refine(
+  (data) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const departureDate = new Date(data.departureDate);
+    departureDate.setHours(0, 0, 0, 0);
+    return departureDate >= today;
+  },
+  {
+    message: 'Departure date must be in the future',
+    path: ['departureDate'],
+  }
+)
+.refine(
+  (data) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const arrivalDate = new Date(data.arrivalDate);
+    arrivalDate.setHours(0, 0, 0, 0);
+    return arrivalDate >= today;
+  },
+  {
+    message: 'Arrival date must be in the future',
+    path: ['arrivalDate'],
+  }
+)
+.refine(
   (data) => new Date(data.departureDate) < new Date(data.arrivalDate),
   {
     message: 'Departure date must be before arrival date',
@@ -78,6 +108,7 @@ export default function NewTripPage() {
   const { user } = useAuth();
   const { isKYCApproved } = useKYCCheck();
   const { getCountryById, getCityById } = useCountries();
+  const { currencySymbol, formatCurrency, currencyCode } = useUserCurrency();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -141,9 +172,38 @@ export default function NewTripPage() {
     } else if (step === 2) {
       if (!formData.departureDate) newErrors.departureDate = t('errors.required');
       if (!formData.arrivalDate) newErrors.arrivalDate = t('errors.required');
+      
+      // Vérifier que la date de départ est dans le futur
+      if (formData.departureDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const departureDate = new Date(formData.departureDate);
+        departureDate.setHours(0, 0, 0, 0);
+        
+        if (departureDate < today) {
+          newErrors.departureDate = t('errors.dateMustBeInFuture');
+        }
+      }
+      
+      // Vérifier que la date d'arrivée est après la date de départ
       if (formData.departureDate && formData.arrivalDate) {
-        if (new Date(formData.departureDate) >= new Date(formData.arrivalDate)) {
+        const departureDate = new Date(formData.departureDate);
+        const arrivalDate = new Date(formData.arrivalDate);
+        
+        if (departureDate >= arrivalDate) {
           newErrors.arrivalDate = t('errors.dateMustBeAfter');
+        }
+      }
+      
+      // Vérifier que la date d'arrivée est aussi dans le futur
+      if (formData.arrivalDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const arrivalDate = new Date(formData.arrivalDate);
+        arrivalDate.setHours(0, 0, 0, 0);
+        
+        if (arrivalDate < today) {
+          newErrors.arrivalDate = t('errors.dateMustBeInFuture');
         }
       }
     } else if (step === 3) {
@@ -206,6 +266,12 @@ export default function NewTripPage() {
 
       const formDataToSend = new FormData();
 
+      console.log('Currency code being sent:', currencyCode);
+      console.log('User currency_code:', user?.currency_code);
+
+      // S'assurer qu'on a une devise valide
+      const validCurrencyCode = currencyCode || 'EUR';
+
       // Ajouter les champs en snake_case (format attendu par le backend)
       formDataToSend.append('departure_country_id', String(formData.departureCountryId!));
       formDataToSend.append('departure_city_id', String(formData.departureCityId!));
@@ -215,6 +281,7 @@ export default function NewTripPage() {
       formDataToSend.append('arrival_date', formData.arrivalDate!);
       formDataToSend.append('available_capacity', formData.availableCapacity!.toString());
       formDataToSend.append('price_per_kg', formData.pricePerKg!.toString());
+      formDataToSend.append('currency_code', validCurrencyCode); // Ajouter la devise
       formData.acceptedPackageTypes!.forEach((type, index) => {
         formDataToSend.append(`accepted_package_types[${index}]`, type);
       });
@@ -394,6 +461,9 @@ export default function NewTripPage() {
       return days > 0 ? days : null;
     };
     const duration = getDuration();
+    
+    // Date minimale = aujourd'hui
+    const today = new Date().toISOString().split('T')[0];
 
     return (
       <div className="space-y-6">
@@ -416,6 +486,7 @@ export default function NewTripPage() {
               value={formData.departureDate || ''}
               onChange={(e) => handleInputChange('departureDate', e.target.value)}
               error={errors.departureDate}
+              min={today}
               required
             />
           </div>
@@ -430,6 +501,7 @@ export default function NewTripPage() {
               value={formData.arrivalDate || ''}
               onChange={(e) => handleInputChange('arrivalDate', e.target.value)}
               error={errors.arrivalDate}
+              min={formData.departureDate || today}
               required
             />
           </div>
@@ -632,7 +704,7 @@ export default function NewTripPage() {
             />
             <Input
               type="number"
-              label={t('trips.pricePerKg')}
+              label={`${t('trips.pricePerKg')} (${currencySymbol})`}
               value={formData.pricePerKg?.toString() || ''}
               onChange={(e) => handleInputChange('pricePerKg', parseFloat(e.target.value))}
               error={errors.pricePerKg}
@@ -641,50 +713,51 @@ export default function NewTripPage() {
           </div>
         </div>
 
-        {/* Revenue Preview */}
-        {revenue && (
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-5">
+        {/* User Earnings Preview */}
+        {formData.pricePerKg && formData.availableCapacity && (
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-900 text-sm">{t('trips.revenueBreakdown')}</h3>
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              <h3 className="font-semibold text-green-900 text-sm">Vos gains estimés</h3>
             </div>
 
-            {/* Progress bar */}
+            {/* Progress bar showing user's share */}
             <div className="mb-4">
-              <div className="h-2.5 bg-blue-100 rounded-full overflow-hidden">
+              <div className="h-2.5 bg-green-100 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-500"
-                  style={{ width: `${revenue.travelerPercent}%` }}
+                  style={{ width: `${TRAVELER_COMMISSION * 100}%` }}
                 />
               </div>
               <div className="flex justify-between text-xs mt-1.5">
                 <span className="text-green-600 font-medium">
-                  {t('trips.yourEarnings')} ({revenue.travelerPercent}%)
+                  Vous recevez {(TRAVELER_COMMISSION * 100).toFixed(0)}%
                 </span>
                 <span className="text-gray-500">
-                  {t('trips.platformFee')} ({revenue.platformPercent}%)
+                  Commission plateforme {(PLATFORM_COMMISSION * 100).toFixed(0)}%
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-white/80 rounded-xl p-3 border border-green-100">
-                <Wallet className="w-4 h-4 text-green-500 mx-auto mb-1" />
-                <div className="text-xs text-gray-500 mb-0.5">{t('trips.yourEarnings')}</div>
-                <div className="font-bold text-green-700">${revenue.traveler}</div>
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="bg-white/80 rounded-xl p-4 border border-green-100">
+                <Wallet className="w-5 h-5 text-green-500 mx-auto mb-2" />
+                <div className="text-xs text-gray-500 mb-1">Vos gains</div>
+                <div className="font-bold text-green-700 text-lg">
+                  {formatCurrency((formData.pricePerKg * formData.availableCapacity * TRAVELER_COMMISSION))}
+                </div>
               </div>
-              <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
-                <Building2 className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-                <div className="text-xs text-gray-500 mb-0.5">{t('trips.platformFee')}</div>
-                <div className="font-bold text-gray-500">${revenue.platform}</div>
-              </div>
-              <div className="bg-white/80 rounded-xl p-3 border border-blue-100">
-                <TrendingUp className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-                <div className="text-xs text-gray-500 mb-0.5">{t('trips.totalRevenue')}</div>
-                <div className="font-bold text-blue-700">${revenue.total}</div>
+              <div className="bg-white/80 rounded-xl p-4 border border-blue-100">
+                <TrendingUp className="w-5 h-5 text-blue-400 mx-auto mb-2" />
+                <div className="text-xs text-gray-500 mb-1">Revenus totaux</div>
+                <div className="font-bold text-blue-700 text-lg">
+                  {formatCurrency(formData.pricePerKg * formData.availableCapacity)}
+                </div>
               </div>
             </div>
-            <p className="text-xs text-gray-400 text-center mt-3 italic">{t('trips.revenueNote')}</p>
+            <p className="text-xs text-gray-400 text-center mt-3 italic">
+              * Estimation basée sur une utilisation complète de votre capacité
+            </p>
           </div>
         )}
       </div>
@@ -693,22 +766,113 @@ export default function NewTripPage() {
 
   // ─── Step 4: Confirmation ─────────────────────────────────────────────────
   const renderStep4 = () => {
-    const revenue =
-      formData.pricePerKg && formData.availableCapacity
-        ? {
-            total: (formData.pricePerKg * formData.availableCapacity).toFixed(2),
-            platform: (formData.pricePerKg * formData.availableCapacity * PLATFORM_COMMISSION).toFixed(2),
-            traveler: (formData.pricePerKg * formData.availableCapacity * TRAVELER_COMMISSION).toFixed(2),
-            platformPercent: (PLATFORM_COMMISSION * 100).toFixed(0),
-            travelerPercent: (TRAVELER_COMMISSION * 100).toFixed(0),
-          }
-        : null;
-
     const packageTypeLabels: Record<string, string> = {
       enveloppes: t('trips.packageTypes.enveloppes'),
       petits_colis: t('trips.packageTypes.petitsColis'),
       moyens_colis: t('trips.packageTypes.moyensColis'),
       grands_colis: t('trips.packageTypes.grandsColis'),
+    };
+
+    const generatePDF = () => {
+      // Créer le contenu HTML pour le PDF
+      const content = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Récapitulatif du voyage</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #f97316; padding-bottom: 20px; }
+            .route { background: linear-gradient(135deg, #f97316, #2563eb); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+            .section { margin-bottom: 20px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; }
+            .section h3 { margin-top: 0; color: #374151; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            .metric { text-align: center; padding: 10px; background: #f9fafb; border-radius: 6px; }
+            .package-type { display: inline-block; background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 12px; margin: 2px; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Récapitulatif du voyage</h1>
+            <p>LePaysExpressColis - ${new Date().toLocaleDateString('fr-FR')}</p>
+          </div>
+          
+          <div class="route">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3>Départ</h3>
+                <p><strong>${formData.departureCityId ? getCityById(formData.departureCityId)?.name : '—'}</strong></p>
+                <p>${formData.departureCountryId ? getCountryById(formData.departureCountryId)?.name : '—'}</p>
+                <p>${formData.departureDate}</p>
+              </div>
+              <div style="text-align: center;">✈️</div>
+              <div style="text-align: right;">
+                <h3>Arrivée</h3>
+                <p><strong>${formData.arrivalCityId ? getCityById(formData.arrivalCityId)?.name : '—'}</strong></p>
+                <p>${formData.arrivalCountryId ? getCountryById(formData.arrivalCountryId)?.name : '—'}</p>
+                <p>${formData.arrivalDate}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Types de colis acceptés</h3>
+            ${(formData.acceptedPackageTypes || []).map(type => 
+              `<span class="package-type">${packageTypeLabels[type] || type}</span>`
+            ).join('')}
+          </div>
+
+          <div class="section">
+            <h3>Adresses</h3>
+            <div class="grid">
+              <div>
+                <h4>Adresse de collecte</h4>
+                <p>${formData.pickupAddress}</p>
+              </div>
+              <div>
+                <h4>Adresse de livraison</h4>
+                <p>${formData.deliveryAddress}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Détails du voyage</h3>
+            <div class="grid">
+              <div class="metric">
+                <h4>Capacité disponible</h4>
+                <p><strong>{formData.availableCapacity} kg</strong></p>
+              </div>
+              <div class="metric">
+                <h4>Prix par kg</h4>
+                <p><strong>{formatCurrency(formData.pricePerKg || 0)}</strong></p>
+              </div>
+            </div>
+          </div>
+
+          ${travelProof ? `
+          <div class="section">
+            <h3>Justificatif de voyage</h3>
+            <p>✅ ${travelProof.name}</p>
+          </div>
+          ` : ''}
+        </body>
+        </html>
+      `;
+
+      // Ouvrir une nouvelle fenêtre avec le contenu
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(content);
+        printWindow.document.close();
+        printWindow.focus();
+        
+        // Attendre que le contenu soit chargé puis imprimer
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      }
     };
 
     return (
@@ -793,27 +957,15 @@ export default function NewTripPage() {
 
             {/* Metrics */}
             <div className="px-5 py-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <div className="grid grid-cols-2 gap-3 text-center">
                 <div className="bg-gray-50 rounded-xl p-3">
                   <div className="text-xs text-gray-400 mb-0.5">Capacité</div>
                   <div className="font-bold text-gray-900">{formData.availableCapacity} kg</div>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <div className="text-xs text-gray-400 mb-0.5">Prix / kg</div>
-                  <div className="font-bold text-gray-900">${formData.pricePerKg}</div>
+                  <div className="font-bold text-gray-900">{formatCurrency(formData.pricePerKg || 0)}</div>
                 </div>
-                {revenue && (
-                  <>
-                    <div className="bg-green-50 rounded-xl p-3">
-                      <div className="text-xs text-green-600 mb-0.5">{t('trips.yourEarnings')}</div>
-                      <div className="font-bold text-green-700">${revenue.traveler}</div>
-                    </div>
-                    <div className="bg-blue-50 rounded-xl p-3">
-                      <div className="text-xs text-blue-600 mb-0.5">Total estimé</div>
-                      <div className="font-bold text-blue-700">${revenue.total}</div>
-                    </div>
-                  </>
-                )}
               </div>
             </div>
 
@@ -838,6 +990,41 @@ export default function NewTripPage() {
             {errors.submit}
           </div>
         )}
+
+        {/* PDF Generation */}
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-blue-900 text-sm">Récapitulatif PDF</h3>
+                <p className="text-blue-700 text-xs">Générez un récapitulatif de votre voyage</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generatePDF}
+                className="border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                <Printer className="w-4 h-4 mr-1.5" />
+                Imprimer
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generatePDF}
+                className="border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                <Download className="w-4 h-4 mr-1.5" />
+                PDF
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };

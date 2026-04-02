@@ -7,6 +7,8 @@ import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Rating {
   id: string;
@@ -48,16 +50,15 @@ export default function RatingsPage() {
   const fetchRatings = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
-        ...(filters.search && typeof filters.search === 'string' && { search: filters.search }),
-        ...(filters.rating && typeof filters.rating === 'string' && { rating: filters.rating }),
-      });
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
+      };
 
-      const response = await fetch(`/api/admin/ratings?${params}`);
-      const data = await response.json();
+      if (filters.search && typeof filters.search === 'string') params.search = filters.search;
+      if (filters.rating && typeof filters.rating === 'string') params.rating = filters.rating;
 
+      const data = await apiClient.get(API_ENDPOINTS.admin.ratings.list, { params });
       setRatings(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {
@@ -105,8 +106,8 @@ export default function RatingsPage() {
       label: t('admin.ratings.reviewer'),
       render: (rating) => (
         <div>
-          <div className="font-medium text-gray-900">{rating.reviewer.name}</div>
-          <div className="text-sm text-gray-500">{rating.reviewer.email}</div>
+          <div className="font-medium text-gray-900">{rating.reviewer?.name || 'Unknown'}</div>
+          <div className="text-sm text-gray-500">{rating.reviewer?.email || 'N/A'}</div>
         </div>
       )
     },
@@ -115,8 +116,8 @@ export default function RatingsPage() {
       label: t('admin.ratings.reviewedUser'),
       render: (rating) => (
         <div>
-          <div className="font-medium text-gray-900">{rating.reviewed_user.name}</div>
-          <div className="text-sm text-gray-500">{rating.reviewed_user.email}</div>
+          <div className="font-medium text-gray-900">{rating.reviewed_user?.name || 'Unknown'}</div>
+          <div className="text-sm text-gray-500">{rating.reviewed_user?.email || 'N/A'}</div>
         </div>
       )
     },
@@ -130,15 +131,19 @@ export default function RatingsPage() {
       key: 'related_resource',
       label: t('admin.ratings.relatedTo'),
       render: (rating) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(`/admin/shipments/${rating.related_resource.id}`);
-          }}
-          className="text-sm text-blue-600 hover:text-blue-800"
-        >
-          {t('admin.ratings.shipment')}: {rating.related_resource.reference}
-        </button>
+        rating.related_resource ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/admin/shipments/${rating.related_resource.id}`);
+            }}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            {t('admin.ratings.shipment')}: {rating.related_resource.reference || rating.related_resource.id}
+          </button>
+        ) : (
+          <span className="text-sm text-gray-500">N/A</span>
+        )
       )
     },
     {

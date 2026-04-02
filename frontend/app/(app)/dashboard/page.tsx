@@ -30,6 +30,7 @@ import {
   Loader2,
   MapPin,
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils/formatting';
 
 /* ── helpers ─────────────────────────────────── */
 function getDayGreeting() {
@@ -528,7 +529,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right shrink-0 ml-3">
                         <p className="text-sm font-semibold text-navy">{trip.available_capacity} kg</p>
-                        <p className="text-xs text-muted-text">{trip.price_per_kg}/kg</p>
+                        <p className="text-xs text-muted-text">{formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg</p>
                       </div>
                     </button>
                   ))}

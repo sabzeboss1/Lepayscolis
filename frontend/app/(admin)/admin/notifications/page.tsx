@@ -5,6 +5,8 @@ import { Bell, Send } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import NotificationForm from '@/components/admin/NotificationForm';
 import TablePagination from '@/components/admin/TablePagination';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface NotificationHistory {
   id: string;
@@ -33,12 +35,11 @@ export default function NotificationsPage() {
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
-      });
-      const response = await fetch(`/api/admin/notifications/history?${params}`);
-      const data = await response.json();
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
+      };
+      const data = await apiClient.get(API_ENDPOINTS.admin.notifications.history, { params });
       setHistory(data.data || []);
       setTotal(data.meta?.total || 0);
     } catch {
@@ -55,21 +56,13 @@ export default function NotificationsPage() {
   const handleSendNotification = async (notificationData: any) => {
     setSendError(null);
     setSendSuccess(null);
-    const response = await fetch('/api/admin/notifications/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        recipient_type: notificationData.recipient_type,
-        title: notificationData.title,
-        message: notificationData.message,
-        ...(notificationData.recipient_type === 'individual' && { user_id: Number(notificationData.recipient_id) }),
-        ...(notificationData.recipient_type === 'group' && notificationData.group_filter && { group_filter: notificationData.group_filter }),
-      }),
+    const data = await apiClient.post(API_ENDPOINTS.admin.notifications.send, {
+      recipient_type: notificationData.recipient_type,
+      title: notificationData.title,
+      message: notificationData.message,
+      ...(notificationData.recipient_type === 'individual' && { user_id: Number(notificationData.recipient_id) }),
+      ...(notificationData.recipient_type === 'group' && notificationData.group_filter && { group_filter: notificationData.group_filter }),
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || t('admin.notifications.sendFailed'));
-    }
     setSendSuccess(t('admin.notifications.sendSuccess', { count: data.recipient_count }));
     setShowForm(false);
     fetchHistory();

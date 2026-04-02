@@ -779,6 +779,7 @@
       "kycVerification": "KYC Verification",
       "trips": "Trips",
       "shipments": "Shipments",
+      "shipmentRequests": "Shipment Requests",
       "financial": "Financial",
       "wallets": "Wallets",
       "withdrawals": "Withdrawals",

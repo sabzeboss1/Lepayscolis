@@ -7,6 +7,7 @@ import { TripCard } from '@/components/ui/TripCard';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import { useCurrencies } from '@/lib/hooks/useCurrencies';
 import {
   Search,
   SlidersHorizontal,
@@ -56,6 +57,7 @@ function SkeletonCard() {
 export default function TripSearchPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { convertToEUR } = useCurrencies();
 
   /* filter state */
   const [departureCity, setDepartureCity] = useState('');
@@ -87,14 +89,13 @@ export default function TripSearchPage() {
     setPage(1);
     try {
       const params = new URLSearchParams();
-      if (debouncedDeparture) params.append('departure_city', debouncedDeparture);
-      if (debouncedArrival)   params.append('arrival_city', debouncedArrival);
-      if (dateFrom)           params.append('date_from', dateFrom);
-      if (dateTo)             params.append('date_to', dateTo);
-      if (minCapacity)        params.append('min_capacity', minCapacity);
-      if (debouncedTraveler)  params.append('traveler_name', debouncedTraveler);
+      if (debouncedDeparture) params.append('departure', debouncedDeparture);
+      if (debouncedArrival)   params.append('arrival', debouncedArrival);
+      if (dateFrom)           params.append('dateFrom', dateFrom);
+      if (dateTo)             params.append('dateTo', dateTo);
+      if (minCapacity)        params.append('minCapacity', minCapacity);
 
-      const res = await fetch(`/api/trips/search?${params}`, {
+      const res = await fetch(`/api/trips?${params}`, {
         headers: { Accept: 'application/json' },
         credentials: 'include',
       });
@@ -106,7 +107,7 @@ export default function TripSearchPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedDeparture, debouncedArrival, dateFrom, dateTo, minCapacity, debouncedTraveler, t]);
+  }, [debouncedDeparture, debouncedArrival, dateFrom, dateTo, minCapacity, t]);
 
   /* initial load */
   useEffect(() => { handleSearch(); }, []); // eslint-disable-line
@@ -114,7 +115,7 @@ export default function TripSearchPage() {
   /* auto-search when debounced values change */
   useEffect(() => {
     if (hasSearched) handleSearch();
-  }, [debouncedDeparture, debouncedArrival, debouncedTraveler, dateFrom, dateTo, minCapacity]); // eslint-disable-line
+  }, [debouncedDeparture, debouncedArrival, dateFrom, dateTo, minCapacity]); // eslint-disable-line
 
   const handleClear = () => {
     setDepartureCity(''); setArrivalCity('');
@@ -126,7 +127,12 @@ export default function TripSearchPage() {
   /* sort + paginate */
   const sorted = [...trips].sort((a, b) => {
     if (sortBy === 'date')   return new Date(a.departure_date).getTime() - new Date(b.departure_date).getTime();
-    if (sortBy === 'price')  return a.price_per_kg - b.price_per_kg;
+    if (sortBy === 'price') {
+      // Convert both prices to EUR for fair comparison
+      const priceA = convertToEUR(a.price_per_kg, a.currency_code || 'EUR');
+      const priceB = convertToEUR(b.price_per_kg, b.currency_code || 'EUR');
+      return priceA - priceB;
+    }
     if (sortBy === 'rating') return (b.traveler?.rating || 0) - (a.traveler?.rating || 0);
     return 0;
   });
@@ -291,15 +297,8 @@ export default function TripSearchPage() {
             {/* Advanced filter fields */}
             {showAdvanced && (
               <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    {
-                      label: 'Nom du voyageur',
-                      value: travelerName,
-                      onChange: setTravelerName,
-                      placeholder: 'Ex: Jean Martin',
-                      type: 'text',
-                    },
                     {
                       label: 'Capacité min. (kg)',
                       value: minCapacity,
@@ -328,7 +327,7 @@ export default function TripSearchPage() {
                     </div>
                   ))}
 
-                  <div className="grid grid-cols-2 gap-2 sm:col-span-1">
+                  <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: 'Départ à partir de', value: dateFrom, onChange: setDateFrom },
                       { label: "Départ jusqu'au", value: dateTo, onChange: setDateTo },

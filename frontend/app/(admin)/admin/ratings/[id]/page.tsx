@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, User, Star, Trash2, Calendar } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Rating {
   id: string;
@@ -56,8 +58,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/ratings/${ratingId}`);
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.ratings.show(ratingId));
       setRating(data.data);
     } catch (error) {
       console.error('Failed to fetch rating details:', error);
@@ -72,11 +73,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
     }
 
     try {
-      await fetch(`/api/admin/ratings/${ratingId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: deleteReason })
-      });
+      await apiClient.delete(API_ENDPOINTS.admin.ratings.delete(ratingId), { reason: deleteReason });
       router.push('/admin/ratings');
     } catch (error) {
       console.error('Failed to delete rating:', error);
@@ -129,7 +126,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{t('admin.ratings.detailTitle')}</h1>
             <p className="text-sm text-gray-600 mt-1">
-              {rating.reviewer.name} {t('admin.ratings.rated')} {rating.reviewed_user.name}
+              {rating.reviewer?.name || 'Unknown'} {t('admin.ratings.rated')} {rating.reviewed_user?.name || 'Unknown'}
             </p>
           </div>
         </div>
@@ -180,17 +177,17 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
                 <User className="w-4 h-4 text-gray-400 mr-3" />
                 <span className="text-gray-600 w-24">{t('admin.ratings.name')}:</span>
                 <button
-                  onClick={() => router.push(`/admin/users/${rating.reviewer.id}`)}
+                  onClick={() => router.push(`/admin/users/${rating.reviewer?.id}`)}
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
-                  {rating.reviewer.name}
+                  {rating.reviewer?.name || 'Unknown'}
                 </button>
               </div>
               <div className="flex items-center text-sm">
                 <span className="text-gray-600 w-24 ml-7">{t('admin.ratings.email')}:</span>
-                <span className="text-gray-900">{rating.reviewer.email}</span>
+                <span className="text-gray-900">{rating.reviewer?.email || 'N/A'}</span>
               </div>
-              {rating.reviewer.phone && (
+              {rating.reviewer?.phone && (
                 <div className="flex items-center text-sm">
                   <span className="text-gray-600 w-24 ml-7">{t('admin.ratings.phone')}:</span>
                   <span className="text-gray-900">{rating.reviewer.phone}</span>
@@ -207,17 +204,17 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
                 <User className="w-4 h-4 text-gray-400 mr-3" />
                 <span className="text-gray-600 w-24">{t('admin.ratings.name')}:</span>
                 <button
-                  onClick={() => router.push(`/admin/users/${rating.reviewed_user.id}`)}
+                  onClick={() => router.push(`/admin/users/${rating.reviewed_user?.id}`)}
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
-                  {rating.reviewed_user.name}
+                  {rating.reviewed_user?.name || 'Unknown'}
                 </button>
               </div>
               <div className="flex items-center text-sm">
                 <span className="text-gray-600 w-24 ml-7">{t('admin.ratings.email')}:</span>
-                <span className="text-gray-900">{rating.reviewed_user.email}</span>
+                <span className="text-gray-900">{rating.reviewed_user?.email || 'N/A'}</span>
               </div>
-              {rating.reviewed_user.phone && (
+              {rating.reviewed_user?.phone && (
                 <div className="flex items-center text-sm">
                   <span className="text-gray-600 w-24 ml-7">{t('admin.ratings.phone')}:</span>
                   <span className="text-gray-900">{rating.reviewed_user.phone}</span>
@@ -230,14 +227,14 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
                     <div className="mt-1 flex items-center">
                       <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
                       <span className="text-sm font-semibold text-gray-900">
-                        {Number(rating.reviewed_user.average_rating || 0).toFixed(1)}
+                        {Number(rating.reviewed_user?.average_rating || 0).toFixed(1)}
                       </span>
                     </div>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-gray-500">{t('admin.ratings.totalRatings')}</label>
                     <div className="mt-1 text-sm font-semibold text-gray-900">
-                      {rating.reviewed_user.total_ratings || 0}
+                      {rating.reviewed_user?.total_ratings || 0}
                     </div>
                   </div>
                 </div>
@@ -246,7 +243,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Related Resource */}
-          {rating.related_resource.id && (
+          {rating.related_resource?.id && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.ratings.relatedShipment')}</h2>
               <div className="space-y-3">
