@@ -7,6 +7,7 @@ import { TripCard } from '@/components/ui/TripCard';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import { apiClient } from '@/lib/api/client';
 import {
   Search,
   SlidersHorizontal,
@@ -87,19 +88,14 @@ export default function TripSearchPage() {
     setPage(1);
     try {
       const params = new URLSearchParams();
-      if (debouncedDeparture) params.append('departure_city', debouncedDeparture);
-      if (debouncedArrival)   params.append('arrival_city', debouncedArrival);
-      if (dateFrom)           params.append('date_from', dateFrom);
-      if (dateTo)             params.append('date_to', dateTo);
-      if (minCapacity)        params.append('min_capacity', minCapacity);
+      if (debouncedDeparture) params.append('departure', debouncedDeparture);
+      if (debouncedArrival)   params.append('arrival', debouncedArrival);
+      if (dateFrom)           params.append('dateFrom', dateFrom);
+      if (dateTo)             params.append('dateTo', dateTo);
+      if (minCapacity)        params.append('minCapacity', minCapacity);
       if (debouncedTraveler)  params.append('traveler_name', debouncedTraveler);
 
-      const res = await fetch(`/api/trips/search?${params}`, {
-        headers: { Accept: 'application/json' },
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error(res.status === 401 ? t('errors.unauthorized') : t('trips.searchError'));
-      const data = await res.json();
+      const data = await apiClient.get<any>(`/api/trips?${params}`);
       setTrips(data.data || data.trips || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.networkError'));

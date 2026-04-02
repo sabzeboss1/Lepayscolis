@@ -27,7 +27,7 @@ function formatDate(dateStr: string) {
 }
 
 export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '' }) => {
-  const { formatCurrency, currencySymbol } = useUserCurrency();
+  const { formatCurrency } = useUserCurrency();
   return (
     <div
       onClick={onClick}
@@ -109,14 +109,23 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '
             )}
           </div>
 
-          <div
-            className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-bold"
-            style={{
-              background: 'rgba(249,115,22,0.1)',
-              color: 'var(--color-vibrant-orange)',
-            }}
-          >
-            {trip.price_per_kg.toFixed(2)} {currencySymbol}/kg
+          <div className="inline-flex flex-col items-end gap-0.5">
+            <div
+              className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-bold"
+              style={{
+                background: 'rgba(249,115,22,0.1)',
+                color: 'var(--color-vibrant-orange)',
+              }}
+            >
+              {trip.price_converted
+                ? formatCurrency(trip.price_converted.amount, trip.price_converted.currency_code)
+                : formatCurrency(trip.price_per_kg, trip.currency_code)}/kg
+            </div>
+            {trip.price_converted && (
+              <span className="text-[10px] text-muted-text">
+                {formatCurrency(trip.price_per_kg, trip.currency_code)}/kg
+              </span>
+            )}
           </div>
         </div>
 

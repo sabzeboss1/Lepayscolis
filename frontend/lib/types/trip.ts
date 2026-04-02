@@ -13,6 +13,11 @@ export interface Trip {
   available_capacity: number;
   price_per_kg: number;
   currency_code?: string;
+  price_converted?: {
+    amount: number;
+    currency_code: string;
+    exchange_rate: number;
+  } | null;
   accepted_package_types: string[];
   pickup_address: string;
   delivery_address: string;

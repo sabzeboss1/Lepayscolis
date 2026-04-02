@@ -5,6 +5,7 @@ namespace App\Http\Resources\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class KYCSubmissionResource extends JsonResource
 {
@@ -15,23 +16,25 @@ class KYCSubmissionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Helper function to generate KYC file URL
+        // Helper function to generate KYC file URL (signed for browser access)
         $generateFileUrl = function($url) {
             if (!$url) return null;
-            
+
             // If it's already a full URL (S3), return as is
             if (str_starts_with($url, 'http')) {
                 return $url;
             }
-            
-            // For local storage, extract the path and generate API URL
-            // URL format: kyc/{userId}/{filename}
+
+            // For local storage, generate a temporary signed URL (valid 1 hour)
             if (preg_match('#kyc/(\d+)/(.+)$#', $url, $matches)) {
                 $userId = $matches[1];
                 $filename = $matches[2];
-                return url("/api/admin/kyc/files/{$userId}/{$filename}");
+                return URL::temporarySignedRoute('admin.kyc.file', now()->addHour(), [
+                    'userId' => $userId,
+                    'filename' => $filename,
+                ]);
             }
-            
+
             return $url;
         };
         

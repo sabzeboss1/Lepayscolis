@@ -9,12 +9,15 @@ import { RatingStars } from '@/components/ui/RatingStars';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useRealtimeTripStatus } from '@/lib/hooks/useRealtimeStatusUpdates';
 import { useAuth } from '@/lib/auth';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
+import { apiClient } from '@/lib/api/client';
 
 export default function TripDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { formatCurrency } = useUserCurrency();
   const tripId = params.id as string;
 
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -31,35 +34,17 @@ export default function TripDetailPage() {
   useEffect(() => {
     const fetchTrip = async () => {
       try {
-        // Get auth tokens from cookies
-        const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-        const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
-        
-        const response = await fetch(`/api/trips/${tripId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError(t('errors.notFound'));
-          } else if (response.status === 401) {
-            setError(t('errors.unauthorized'));
-          } else {
-            setError(t('errors.serverError'));
-          }
-          return;
-        }
-
-        const data = await response.json();
+        const data = await apiClient.get<any>(`/api/trips/${tripId}`);
         // Handle both wrapped and unwrapped responses
         setTrip(data.data || data.trip || data);
-      } catch (err) {
-        setError(t('errors.networkError'));
+      } catch (err: any) {
+        if (err?.status === 404) {
+          setError(t('errors.notFound'));
+        } else if (err?.status === 401) {
+          setError(t('errors.unauthorized'));
+        } else {
+          setError(t('errors.networkError'));
+        }
         console.error('Fetch trip error:', err);
       } finally {
         setLoading(false);
@@ -81,37 +66,17 @@ export default function TripDetailPage() {
     }
 
     try {
-      // Get auth tokens from cookies
-      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
-      
-      // Get or create conversation with the traveler
-      const response = await fetch(`/api/messages/conversation-with/${trip.traveler_id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-          'Accept': 'application/json',
-        },
-        credentials: 'include',
-      });
+      const data = await apiClient.get<any>(`/api/messages/conversation-with/${trip.traveler_id}`);
 
-      if (!response.ok) {
-        const error = await response.json();
-        alert(error.message || t('messages.errorCreatingConversation'));
-        return;
-      }
-
-      const data = await response.json();
-      
       // Redirect to the conversation
       if (data.data?.id) {
         router.push(`/messages/${data.data.id}`);
       } else {
         router.push('/messages');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating conversation:', error);
-      alert(t('messages.errorCreatingConversation') || 'Erreur lors de la création de la conversation');
+      alert(error?.message || t('messages.errorCreatingConversation') || 'Erreur lors de la création de la conversation');
     }
   };
 
@@ -214,8 +179,15 @@ export default function TripDetailPage() {
 
             <div className="text-right">
               <p className="text-3xl font-bold text-orange-500">
-                ${trip.price_per_kg.toFixed(2)}/kg
+                {trip.price_converted
+                  ? formatCurrency(trip.price_converted.amount, trip.price_converted.currency_code)
+                  : formatCurrency(trip.price_per_kg, trip.currency_code)}/kg
               </p>
+              {trip.price_converted && (
+                <p className="text-sm text-gray-400 mt-0.5">
+                  {formatCurrency(trip.price_per_kg, trip.currency_code)}/kg
+                </p>
+              )}
               <p className="text-sm text-gray-600 mt-1">
                 {trip.available_capacity} kg available
               </p>
