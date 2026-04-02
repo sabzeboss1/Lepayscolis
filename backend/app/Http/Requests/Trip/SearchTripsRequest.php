@@ -40,6 +40,7 @@ class SearchTripsRequest extends FormRequest
             'dateFrom' => ['nullable', 'date'],
             'dateTo' => ['nullable', 'date', 'after_or_equal:dateFrom'],
             'minCapacity' => ['nullable', 'numeric', 'min:0.1', 'max:100'],
+            'traveler_name' => ['nullable', 'string', 'max:255'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

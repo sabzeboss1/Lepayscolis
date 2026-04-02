@@ -90,6 +90,12 @@ class TripController extends Controller
             $query->where('available_capacity', '>=', $request->minCapacity);
         }
 
+        if ($request->filled('traveler_name')) {
+            $query->whereHas('traveler', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->traveler_name . '%');
+            });
+        }
+
         // Order by departure date (upcoming first)
         $query->orderBy('departure_date', 'asc');
 

@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
         pathname: '/storage/**',
       },
       {
+        protocol: parsedApiUrl.protocol.replace(':', '') as 'http' | 'https',
+        hostname: parsedApiUrl.hostname,
+        port: parsedApiUrl.port || undefined,
+        pathname: '/api/**',
+      },
+      {
         protocol: 'https',
         hostname: 'api.dicebear.com',
         pathname: '/**',

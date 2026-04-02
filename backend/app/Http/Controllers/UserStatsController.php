@@ -110,9 +110,9 @@ class UserStatsController extends Controller
             $activities[] = [
                 'type' => 'shipment_delivered',
                 'title' => 'Colis livré avec succès',
-                'description' => "{$shipment->pickup_location} → {$shipment->delivery_location} • {$shipment->package_weight} kg",
+                'description' => "{$shipment->pickup_city} → {$shipment->delivery_city} • {$shipment->package_weight} kg",
                 'date' => $shipment->updated_at->toIso8601String(),
-                'amount' => $shipment->price,
+                'amount' => (float) $shipment->payment_amount,
                 'icon' => 'check_circle',
                 'color' => 'green',
             ];
@@ -137,7 +137,7 @@ class UserStatsController extends Controller
         }
         
         // Get recent ratings received
-        $recentRatings = Rating::where('rated_user_id', $user->id)
+        $recentRatings = Rating::where('to_user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
@@ -168,7 +168,7 @@ class UserStatsController extends Controller
             $activities[] = [
                 'type' => 'shipment_accepted',
                 'title' => 'Colis accepté',
-                'description' => "{$shipment->pickup_location} → {$shipment->delivery_location} • {$shipment->package_weight} kg",
+                'description' => "{$shipment->pickup_city} → {$shipment->delivery_city} • {$shipment->package_weight} kg",
                 'date' => $shipment->updated_at->toIso8601String(),
                 'amount' => null,
                 'icon' => 'package',
@@ -198,8 +198,8 @@ class UserStatsController extends Controller
      */
     public function ratings(Request $request, string $userId): JsonResponse
     {
-        $ratings = Rating::with(['rater'])
-            ->where('rated_user_id', $userId)
+        $ratings = Rating::with(['fromUser'])
+            ->where('to_user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -207,14 +207,17 @@ class UserStatsController extends Controller
             'ratings' => $ratings->map(function($rating) {
                 return [
                     'id' => $rating->id,
+                    'from_user_id' => $rating->from_user_id,
+                    'to_user_id' => $rating->to_user_id,
+                    'shipment_id' => $rating->shipment_id,
                     'rating' => $rating->rating,
                     'comment' => $rating->comment,
                     'created_at' => $rating->created_at->toIso8601String(),
-                    'rater' => [
-                        'id' => $rating->rater->id,
-                        'name' => $rating->rater->name,
-                        'avatar' => $rating->rater->avatar,
-                    ]
+                    'from_user' => $rating->fromUser ? [
+                        'id' => $rating->fromUser->id,
+                        'name' => $rating->fromUser->name,
+                        'avatar' => $rating->fromUser->avatar,
+                    ] : null,
                 ];
             })
         ]);

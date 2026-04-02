@@ -14,6 +14,7 @@ use App\Http\Controllers\SetupController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -238,6 +239,22 @@ Route::prefix('admin')->group(function () {
     Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:5,15');
 });
 
+// Serve KYC document files via signed URL (no auth needed, signature provides security)
+Route::get('/admin/kyc/files/{userId}/{filename}', function ($userId, $filename) {
+    $path = "kyc/{$userId}/{$filename}";
+
+    if (!Storage::disk('local')->exists($path)) {
+        abort(404, 'File not found');
+    }
+
+    $file = Storage::disk('local')->get($path);
+    $mimeType = Storage::disk('local')->mimeType($path);
+
+    return response($file, 200)
+        ->header('Content-Type', $mimeType)
+        ->header('Cache-Control', 'private, max-age=3600');
+})->where('filename', '.*')->name('admin.kyc.file')->middleware(['signed', 'throttle:60,1']);
+
 // Admin protected routes (require authentication and admin role)
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
 
@@ -276,21 +293,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/bulk-approve', [AdminKYCController::class, 'bulkApprove'])->middleware('throttle:30,1');
         Route::post('/bulk-reject', [AdminKYCController::class, 'bulkReject'])->middleware('throttle:30,1');
 
-        // Serve KYC document files (admin only)
-        Route::get('/files/{userId}/{filename}', function ($userId, $filename) {
-            $path = "kyc/{$userId}/{$filename}";
-
-            if (!Storage::disk('local')->exists($path)) {
-                abort(404, 'File not found');
-            }
-
-            $file = Storage::disk('local')->get($path);
-            $mimeType = Storage::disk('local')->mimeType($path);
-
-            return response($file, 200)
-                ->header('Content-Type', $mimeType)
-                ->header('Cache-Control', 'private, max-age=3600');
-        })->where('filename', '.*')->middleware('throttle:60,1');
     });
 
     // Trip Management
