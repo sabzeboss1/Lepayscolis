@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, User, CreditCard, Calendar, DollarSign, ExternalLink, RefreshCw } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface PaymentDetail {
   id: string;
@@ -66,9 +68,7 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/admin/payments/${paymentId}`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.payments.show(paymentId));
       setPayment(data.data);
     } catch (err) {
       console.error('Failed to fetch payment details:', err);
@@ -82,18 +82,10 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
     if (!paymentId || !refundReason.trim() || refundReason.length < 10) return;
     setRefundSubmitting(true);
     try {
-      const response = await fetch(`/api/admin/payments/${paymentId}/refund`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reason: refundReason,
-          ...(refundAmount ? { amount: parseFloat(refundAmount) } : {}),
-        }),
+      await apiClient.post(API_ENDPOINTS.admin.payments.refund(paymentId), {
+        reason: refundReason,
+        ...(refundAmount ? { amount: parseFloat(refundAmount) } : {}),
       });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to process refund');
-      }
       fetchPaymentDetails();
       setShowRefundDialog(false);
       setRefundReason('');

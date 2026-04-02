@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Ban, MapPin, Calendar, User, Package, TrendingUp, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Ban, MapPin, Calendar, User, Package, TrendingUp, CheckCircle, XCircle, Loader2, FileText, Download } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Trip {
   id: string;
@@ -47,6 +49,7 @@ interface Analytics {
 export default function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { t } = useTranslation();
+  const { formatCurrency } = useAdminCurrency(); // Move hook to top
   const [tripId, setTripId] = useState<string | null>(null);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -78,8 +81,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     if (!tripId) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/trips/${tripId}`);
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.trips.show(tripId));
       setTrip(data.data?.trip ?? null);
       setShipments(data.data?.shipments ?? []);
       setAnalytics(data.data?.analytics ?? null);
@@ -94,11 +96,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     if (!tripId || cancelReason.length < 10) return;
     setIsCancelling(true);
     try {
-      await fetch(`/api/admin/trips/${tripId}/cancel`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: cancelReason })
-      });
+      await apiClient.post(API_ENDPOINTS.admin.trips.cancel(tripId), { reason: cancelReason });
       fetchTripDetails();
       setShowCancelDialog(false);
       setCancelReason('');
@@ -113,7 +111,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     if (!tripId) return;
     setIsVerifying(true);
     try {
-      await fetch(`/api/admin/trips/${tripId}/verify`, { method: 'POST' });
+      await apiClient.post(API_ENDPOINTS.admin.trips.verify(tripId));
       fetchTripDetails();
     } catch (error) {
       console.error('Failed to verify trip:', error);
@@ -126,11 +124,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     if (!tripId || rejectReason.length < 10) return;
     setIsRejecting(true);
     try {
-      await fetch(`/api/admin/trips/${tripId}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: rejectReason })
-      });
+      await apiClient.post(API_ENDPOINTS.admin.trips.reject(tripId), { reason: rejectReason });
       fetchTripDetails();
       setShowRejectDialog(false);
       setRejectReason('');
@@ -140,8 +134,6 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
       setIsRejecting(false);
     }
   };
-
-  const { formatCurrency } = useAdminCurrency();
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, string> = {
@@ -436,6 +428,67 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           </div>
+
+          {/* Travel Proof Document */}
+          {trip.travel_proof_url && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                <FileText className="w-4 h-4 mr-2" />
+                Justificatif de voyage
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Statut du document</label>
+                  <div className="mt-1">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Document téléchargé
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <a
+                    href={`/api/trips/${trip.id}/travel-proof`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors w-full justify-center mb-2"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Télécharger le document
+                  </a>
+                  <button
+                    onClick={() => window.open(`/api/trips/${trip.id}/travel-proof`, '_blank')}
+                    className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors w-full justify-center"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Prévisualiser
+                  </button>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Vérifiez ce document pour valider le voyage du voyageur
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* No Travel Proof Warning */}
+          {!trip.travel_proof_url && trip.verification_status === 'pending' && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                <FileText className="w-4 h-4 mr-2" />
+                Justificatif de voyage
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    Aucun document téléchargé
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Le voyageur n'a pas fourni de justificatif de voyage. Contactez-le pour obtenir ce document avant de vérifier le voyage.
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Analytics */}
           {analytics && (

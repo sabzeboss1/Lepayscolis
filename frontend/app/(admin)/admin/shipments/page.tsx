@@ -7,6 +7,8 @@ import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Shipment {
   id: string;
@@ -48,21 +50,16 @@ export default function ShipmentsPage() {
   const fetchShipments = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
         sort_by: sortBy,
-        ...(filters.search && { search: filters.search }),
-        ...(filters.status && { status: filters.status }),
-      });
+      };
 
-      const response = await fetch(`/api/admin/shipments?${params}`);
+      if (filters.search) params.search = filters.search;
+      if (filters.status) params.status = filters.status;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.shipments.list, { params });
       setShipments(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {

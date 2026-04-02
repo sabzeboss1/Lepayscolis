@@ -14,7 +14,6 @@ use App\Http\Controllers\SetupController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -136,6 +135,31 @@ Route::prefix('shipments')->group(function () {
     Route::get('/{id}', [ShipmentController::class, 'show']);
 });
 
+// Shipment Requests routes (new bidding system)
+Route::prefix('shipment-requests')->group(function () {
+    // Public routes - travelers can browse requests
+    Route::get('/', [\App\Http\Controllers\ShipmentRequestController::class, 'index']);
+    Route::get('/{id}', [\App\Http\Controllers\ShipmentRequestController::class, 'show']);
+
+    // Protected routes (require authentication and KYC verification)
+    Route::middleware(['auth:sanctum', 'kyc.verified'])->group(function () {
+        // Sender routes
+        Route::post('/', [\App\Http\Controllers\ShipmentRequestController::class, 'store']);
+        Route::get('/my/requests', [\App\Http\Controllers\ShipmentRequestController::class, 'myRequests']);
+        Route::put('/{id}', [\App\Http\Controllers\ShipmentRequestController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\ShipmentRequestController::class, 'destroy']);
+
+        // Bidding routes
+        Route::post('/{id}/bids', [\App\Http\Controllers\ShipmentBidController::class, 'store']);
+        Route::get('/{id}/bids', [\App\Http\Controllers\ShipmentBidController::class, 'index']);
+        Route::post('/{shipmentRequestId}/bids/{bidId}/accept', [\App\Http\Controllers\ShipmentBidController::class, 'accept']);
+        
+        // Traveler bid management
+        Route::get('/my/bids', [\App\Http\Controllers\ShipmentBidController::class, 'myBids']);
+        Route::post('/bids/{id}/withdraw', [\App\Http\Controllers\ShipmentBidController::class, 'withdraw']);
+    });
+});
+
 // Message routes (protected, require KYC verification)
 Route::middleware(['auth:sanctum', 'kyc.verified'])->prefix('messages')->group(function () {
     Route::get('/conversations', [MessageController::class, 'conversations']);
@@ -239,22 +263,6 @@ Route::prefix('admin')->group(function () {
     Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:5,15');
 });
 
-// Serve KYC document files via signed URL (no auth needed, signature provides security)
-Route::get('/admin/kyc/files/{userId}/{filename}', function ($userId, $filename) {
-    $path = "kyc/{$userId}/{$filename}";
-
-    if (!Storage::disk('local')->exists($path)) {
-        abort(404, 'File not found');
-    }
-
-    $file = Storage::disk('local')->get($path);
-    $mimeType = Storage::disk('local')->mimeType($path);
-
-    return response($file, 200)
-        ->header('Content-Type', $mimeType)
-        ->header('Cache-Control', 'private, max-age=3600');
-})->where('filename', '.*')->name('admin.kyc.file')->middleware(['signed', 'throttle:60,1']);
-
 // Admin protected routes (require authentication and admin role)
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
 
@@ -316,6 +324,17 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::get('/{id}', [AdminShipmentController::class, 'show'])->middleware('throttle:60,1');
         Route::post('/{id}/resolve-dispute', [AdminShipmentController::class, 'resolveDispute'])->middleware('throttle:30,1');
         Route::post('/{id}/cancel', [AdminShipmentController::class, 'cancel'])->middleware('throttle:30,1');
+    });
+
+    // Shipment Request Management
+    Route::prefix('shipment-requests')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'index'])->middleware('throttle:60,1');
+        Route::get('/analytics', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'analytics'])->middleware('throttle:60,1');
+        Route::get('/pending', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'pending'])->middleware('throttle:60,1');
+        Route::get('/{id}', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'show'])->middleware('throttle:60,1');
+        Route::post('/{id}/approve', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'approve'])->middleware('throttle:30,1');
+        Route::post('/{id}/reject', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'reject'])->middleware('throttle:30,1');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'destroy'])->middleware('throttle:30,1');
     });
 
     // Wallet Management

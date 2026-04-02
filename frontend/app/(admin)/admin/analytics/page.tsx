@@ -6,6 +6,8 @@ import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 import LineChart from '@/components/admin/LineChart';
 import BarChart from '@/components/admin/BarChart';
 import PieChart from '@/components/admin/PieChart';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface AnalyticsData {
   totals: {
@@ -43,18 +45,11 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (dateRange.from) params.append('date_from', dateRange.from);
-      if (dateRange.to) params.append('date_to', dateRange.to);
+      const params: Record<string, any> = {};
+      if (dateRange.from) params.date_from = dateRange.from;
+      if (dateRange.to) params.date_to = dateRange.to;
 
-      const queryString = params.toString();
-      const response = await fetch(`/api/admin/analytics${queryString ? `?${queryString}` : ''}`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.analytics.index, { params });
       setAnalytics(data.data);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
@@ -66,23 +61,11 @@ export default function AnalyticsPage() {
   const handleExport = async (type: string) => {
     setExportLoading(true);
     try {
-      const response = await fetch('/api/admin/analytics/export', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type,
-          date_from: dateRange.from || undefined,
-          date_to: dateRange.to || undefined,
-        }),
+      const result = await apiClient.post(API_ENDPOINTS.admin.analytics.export, {
+        type,
+        date_from: dateRange.from || undefined,
+        date_to: dateRange.to || undefined,
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
 
       if (result.download_url) {
         const a = document.createElement('a');

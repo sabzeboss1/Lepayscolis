@@ -8,6 +8,8 @@ import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import BulkActions, { BulkAction } from '@/components/admin/BulkActions';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Trip {
   id: string;
@@ -56,19 +58,21 @@ export default function TripsPage() {
   const fetchTrips = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
         sort_by: sortBy,
-        ...(filters.search && { search: filters.search }),
-        ...(filters.status && { status: filters.status }),
-        ...(filters.verification_status && { verification_status: filters.verification_status })
-      });
-      const response = await fetch(`/api/admin/trips?${params}`);
+      };
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (filters.search) params.search = filters.search;
+      if (filters.status) params.status = filters.status;
+      if (filters.verification_status) params.verification_status = filters.verification_status;
 
-      const data = await response.json();
+      const data = await apiClient.get<{ data: Trip[]; meta: { total: number } }>(
+        API_ENDPOINTS.admin.trips.list,
+        { params }
+      );
+
       setTrips(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {
@@ -97,7 +101,7 @@ export default function TripsPage() {
       if (actionKey === 'verify') {
         await Promise.all(
           selectedIds.map(id =>
-            fetch(`/api/admin/trips/${id}/verify`, { method: 'POST' })
+            apiClient.post(API_ENDPOINTS.admin.trips.verify(id))
           )
         );
       } else if (actionKey === 'reject') {
@@ -105,11 +109,7 @@ export default function TripsPage() {
         if (!reason || reason.length < 10) return;
         await Promise.all(
           selectedIds.map(id =>
-            fetch(`/api/admin/trips/${id}/reject`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ reason })
-            })
+            apiClient.post(API_ENDPOINTS.admin.trips.reject(id), { reason })
           )
         );
       }

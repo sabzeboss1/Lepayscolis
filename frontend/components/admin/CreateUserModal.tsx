@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, AlertCircle, Loader2, User, Mail, Phone, Lock } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface CreateUserFormData {
   name: string;
@@ -65,28 +67,17 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/users/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          password: data.password,
-        }),
+      await apiClient.post(API_ENDPOINTS.admin.users.list, {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || t('admin.users.createModal.errors.createFailed'));
-      }
 
       onSuccess();
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('admin.users.createModal.errors.createFailed'));
+    } catch (err: any) {
+      setError(err.message || t('admin.users.createModal.errors.createFailed'));
     } finally {
       setIsSubmitting(false);
     }

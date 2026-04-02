@@ -6,19 +6,33 @@ import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Conversation {
   id: string;
-  participants: Array<{
+  user1: {
     id: string;
     name: string;
     email: string;
-  }>;
-  last_message: {
-    content: string;
-    sent_at: string;
+    messaging_banned: boolean;
+    messaging_ban_reason?: string;
   };
-  message_count: number;
+  user2: {
+    id: string;
+    name: string;
+    email: string;
+    messaging_banned: boolean;
+    messaging_ban_reason?: string;
+  };
+  last_message?: {
+    content: string;
+    created_at: string;
+  };
+  messages_count?: number;
+  shipment_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function MessagesPage() {
@@ -36,15 +50,16 @@ export default function MessagesPage() {
   const fetchConversations = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
-        ...(filters.search && typeof filters.search === 'string' && { search: filters.search }),
-      });
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
+      };
 
-      const response = await fetch(`/api/admin/messages?${params}`);
-      const data = await response.json();
+      if (filters.search && typeof filters.search === 'string') {
+        params.search = filters.search;
+      }
 
+      const data = await apiClient.get(API_ENDPOINTS.admin.messages.list, { params });
       setConversations(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {
@@ -70,15 +85,20 @@ export default function MessagesPage() {
       key: 'participants',
       label: t('admin.messages.participants'),
       render: (conversation) => (
-        <div>
-          {conversation.participants.map((participant, index) => (
-            <div key={participant.id || index}>
-              <span className="font-medium text-gray-900">{participant.name}</span>
-              {index < conversation.participants.length - 1 && (
-                <span className="text-gray-500"> & </span>
-              )}
-            </div>
-          ))}
+        <div className="space-y-1">
+          <div>
+            <span className="font-medium text-gray-900">{conversation.user1?.name || 'Unknown'}</span>
+            {conversation.user1?.messaging_banned && (
+              <span className="ml-2 text-xs text-red-600">(Banned)</span>
+            )}
+          </div>
+          <div className="text-gray-500">& </div>
+          <div>
+            <span className="font-medium text-gray-900">{conversation.user2?.name || 'Unknown'}</span>
+            {conversation.user2?.messaging_banned && (
+              <span className="ml-2 text-xs text-red-600">(Banned)</span>
+            )}
+          </div>
         </div>
       )
     },
@@ -87,18 +107,24 @@ export default function MessagesPage() {
       label: t('admin.messages.lastMessage'),
       render: (conversation) => (
         <div>
-          <div className="text-sm text-gray-900 truncate max-w-md">
-            {conversation.last_message.content}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            {new Date(conversation.last_message.sent_at).toLocaleString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
+          {conversation.last_message ? (
+            <>
+              <div className="text-sm text-gray-900 truncate max-w-md">
+                {conversation.last_message.content}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {new Date(conversation.last_message.created_at).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            </>
+          ) : (
+            <span className="text-sm text-gray-500">No messages</span>
+          )}
         </div>
       )
     },
@@ -106,7 +132,7 @@ export default function MessagesPage() {
       key: 'message_count',
       label: t('admin.messages.messageCount'),
       render: (conversation) => (
-        <span className="text-sm text-gray-900">{conversation.message_count}</span>
+        <span className="text-sm text-gray-900">{conversation.messages_count || 0}</span>
       )
     },
   ];

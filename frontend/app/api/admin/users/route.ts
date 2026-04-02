@@ -1,52 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { makeAdminRequest } from '@/lib/api/adminApiHelper';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    // Get all cookies from the request
+    const cookieHeader = request.headers.get('cookie') || '';
     
-    // Build query parameters for backend
-    const params = new URLSearchParams();
+    console.log('🔍 [API Route] Cookie header:', cookieHeader);
+    console.log('🔍 [API Route] All headers:', Object.fromEntries(request.headers.entries()));
     
-    if (searchParams.get('page')) params.append('page', searchParams.get('page')!);
-    if (searchParams.get('per_page')) params.append('per_page', searchParams.get('per_page')!);
-    if (searchParams.get('search')) params.append('search', searchParams.get('search')!);
-    if (searchParams.get('status')) params.append('status', searchParams.get('status')!);
-    if (searchParams.get('role')) params.append('role', searchParams.get('role')!);
-    if (searchParams.get('kyc_status')) params.append('kyc_status', searchParams.get('kyc_status')!);
-    if (searchParams.get('sort_by')) params.append('sort_by', searchParams.get('sort_by')!);
-    if (searchParams.get('sort_direction')) params.append('sort_direction', searchParams.get('sort_direction')!);
-
-    // Call Laravel backend API with authentication
-    const response = await makeAdminRequest(
-      request,
-      `/api/admin/users?${params.toString()}`,
-      { method: 'GET' }
-    );
-
-    const data = await response.json();
+    // Forward the request to Laravel with all headers including cookies
+    const url = new URL('/api/admin/users', BACKEND_URL);
     
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
-    }
+    // Copy query parameters
+    request.nextUrl.searchParams.forEach((value, key) => {
+      url.searchParams.append(key, value);
+    });
     
-    return NextResponse.json(data);
-  } catch (error: any) {
-    console.error('Failed to fetch users from backend:', error);
+    console.log('🔍 [API Route] Forwarding to:', url.toString());
     
-    // Return error response
-    return NextResponse.json(
-      { 
-        message: error.message || 'Failed to fetch users',
-        data: [],
-        meta: {
-          total: 0,
-          page: 1,
-          per_page: 50,
-          total_pages: 0
-        }
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Cookie': cookieHeader,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
       },
-      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+    });
+    
+    console.log('🔍 [API Route] Backend response status:', response.status);
+    
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
+  } catch (error: any) {
+    console.error('❌ [API Route] Failed to fetch users from backend:', error);
+    return NextResponse.json(
+      { message: error.message || 'Failed to fetch users' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const body = await request.json();
+    
+    const response = await fetch(`${BACKEND_URL}/api/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Cookie': cookieHeader,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
+  } catch (error: any) {
+    console.error('Failed to create user:', error);
+    return NextResponse.json(
+      { message: error.message || 'Failed to create user' },
+      { status: 500 }
     );
   }
 }

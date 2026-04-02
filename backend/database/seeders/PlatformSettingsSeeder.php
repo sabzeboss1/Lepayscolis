@@ -71,8 +71,8 @@ class PlatformSettingsSeeder extends Seeder
             ['key' => 'secondary_color', 'value' => '#F97316', 'type' => 'string', 'description' => 'Couleur secondaire'],
 
             // Currency
-            ['key' => 'default_currency', 'value' => 'EUR', 'type' => 'string', 'description' => 'Devise par défaut'],
-            ['key' => 'supported_currencies', 'value' => json_encode(['EUR', 'USD', 'GBP', 'XAF', 'XOF', 'RUB', 'CAD']), 'type' => 'json', 'description' => 'Devises supportées'],
+            ['key' => 'default_currency', 'value' => 'RUB', 'type' => 'string', 'description' => 'Devise par défaut'],
+            ['key' => 'supported_currencies', 'value' => json_encode(['RUB', 'XAF']), 'type' => 'json', 'description' => 'Devises supportées'],
 
             // Security
             ['key' => 'kyc_required', 'value' => 'true', 'type' => 'boolean', 'description' => 'KYC obligatoire'],

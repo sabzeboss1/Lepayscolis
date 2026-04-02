@@ -9,6 +9,8 @@ import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import BulkActions, { BulkAction } from '@/components/admin/BulkActions';
 import CreateUserModal from '@/components/admin/CreateUserModal';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface User {
   id: string;
@@ -50,23 +52,21 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
         sort_by: sortKey,
         sort_direction: sortDirection,
-        ...(filters.search && { search: filters.search }),
-        ...(filters.status && { status: filters.status }),
-        ...(filters.kyc_status && { kyc_status: filters.kyc_status })
-      });
+      };
 
-      const response = await fetch(`/api/admin/users?${params}`);
+      if (filters.search) params.search = filters.search;
+      if (filters.status) params.status = filters.status;
+      if (filters.kyc_status) params.kyc_status = filters.kyc_status;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get<{ data: User[]; meta: { total: number } }>(
+        API_ENDPOINTS.admin.users.list,
+        { params }
+      );
 
       if (data && data.data && Array.isArray(data.data)) {
         setUsers(data.data);
@@ -125,16 +125,12 @@ export default function UsersPage() {
 
     try {
       if (actionKey === 'suspend') {
-        await fetch('/api/admin/users/bulk-suspend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_ids: selectedIds })
+        await apiClient.post(API_ENDPOINTS.admin.users.bulkSuspend, { 
+          user_ids: selectedIds 
         });
       } else if (actionKey === 'activate') {
-        await fetch('/api/admin/users/bulk-activate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_ids: selectedIds })
+        await apiClient.post(API_ENDPOINTS.admin.users.bulkActivate, { 
+          user_ids: selectedIds 
         });
       }
 

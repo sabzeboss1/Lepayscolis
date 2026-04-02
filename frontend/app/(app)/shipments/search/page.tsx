@@ -19,16 +19,248 @@ import {
   MapPin,
   Weight,
   User,
+  Clock,
+  DollarSign,
+  Users,
+  Megaphone,
 } from 'lucide-react';
+
+interface ShipmentRequest {
+  id: string;
+  title: string;
+  description: string;
+  weight: number;
+  max_budget: number;
+  currency_code: string;
+  status: string;
+  pickup_country: { id: number; name_en: string; name_fr: string; name?: string };
+  pickup_city: { id: number; name_en: string; name_fr: string; name?: string };
+  delivery_country: { id: number; name_en: string; name_fr: string; name?: string };
+  delivery_city: { id: number; name_en: string; name_fr: string; name?: string };
+  needed_by: string | null;
+  created_at: string;
+  bids_count?: number;
+  sender: { name: string; avatar?: string };
+}
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 animate-pulse">
-      <div className="flex items-center gap-3">
-        <div className="flex-1 space-y-2">
-          <div className="h-2.5 bg-slate-100 rounded w-1/3" />
-          <div className="h-4 bg-slate-100 rounded w-2/3" />
-          <div className="h-2.5 bg-slate-100 rounded w-1/4" />
+    <div
+      className="relative bg-white rounded-2xl overflow-hidden animate-pulse"
+      style={{ border: '1px solid var(--color-light-border)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+    >
+      {/* accent bar */}
+      <div className="h-0.5 bg-slate-100" />
+      <div className="p-5 space-y-4">
+        {/* badge + status row */}
+        <div className="flex items-center justify-between">
+          <div className="h-5 w-20 bg-slate-100 rounded-full" />
+          <div className="h-5 w-16 bg-slate-100 rounded-full" />
+        </div>
+        {/* title */}
+        <div className="space-y-1.5">
+          <div className="h-5 bg-slate-100 rounded w-3/4" />
+          <div className="h-4 bg-slate-100 rounded w-1/2" />
+        </div>
+        {/* route */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-8 bg-slate-100 rounded-xl" />
+          <div className="w-6 h-6 bg-slate-100 rounded-full shrink-0" />
+          <div className="flex-1 h-8 bg-slate-100 rounded-xl" />
+        </div>
+        {/* description */}
+        <div className="space-y-1.5">
+          <div className="h-3 bg-slate-100 rounded w-full" />
+          <div className="h-3 bg-slate-100 rounded w-5/6" />
+        </div>
+        {/* footer */}
+        <div className="flex items-center gap-2 pt-3 border-t border-slate-50">
+          <div className="h-6 w-16 bg-slate-100 rounded-full" />
+          <div className="h-6 w-24 bg-slate-100 rounded-full" />
+          <div className="h-6 w-20 bg-slate-100 rounded-full ml-auto" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ShipmentRequestCard({ request, onClick }: { request: ShipmentRequest; onClick: () => void }) {
+  const { formatCurrency } = useUserCurrency();
+  const senderInitial = request.sender.name.charAt(0).toUpperCase();
+
+  return (
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
+      className="relative bg-white rounded-2xl overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+      style={{
+        border: '1px solid var(--color-light-border)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'; }}
+    >
+      {/* Top gradient accent */}
+      <div
+        className="h-0.5 w-full"
+        style={{ background: 'linear-gradient(90deg, var(--color-royal-blue), var(--color-vibrant-orange))' }}
+        aria-hidden="true"
+      />
+
+      <div className="p-5">
+        {/* ── Header row: badge + status ── */}
+        <div className="flex items-center justify-between mb-3">
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide"
+            style={{ background: 'rgba(249,115,22,0.1)', color: '#c2410c' }}
+          >
+            <Megaphone className="w-3 h-3" />
+            Annonce
+          </span>
+          <div className="flex items-center gap-2">
+            {request.bids_count !== undefined && (
+              <span
+                className="inline-flex items-center gap-1 text-[11px] font-medium"
+                style={{ color: 'var(--color-muted-text)' }}
+              >
+                <Users className="w-3 h-3" />
+                {request.bids_count} soumission{request.bids_count !== 1 ? 's' : ''}
+              </span>
+            )}
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+              style={{ background: 'rgba(16,185,129,0.1)', color: '#059669' }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+              Ouverte
+            </span>
+          </div>
+        </div>
+
+        {/* ── Title ── */}
+        <h3
+          className="text-base font-bold mb-3 transition-colors line-clamp-2"
+          style={{ color: 'var(--color-navy)', fontFamily: 'var(--font-heading)', lineHeight: 1.3 }}
+        >
+          <span className="group-hover:underline decoration-orange-500 underline-offset-2">
+            {request.title}
+          </span>
+        </h3>
+
+        {/* ── Route ── */}
+        <div
+          className="flex items-center gap-2 p-3 rounded-xl mb-3"
+          style={{ background: 'var(--color-soft-gray)', border: '1px solid var(--color-light-border)' }}
+        >
+          {/* Pickup */}
+          <div className="flex-1 min-w-0">
+            <p
+              className="text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate"
+              style={{ color: 'var(--color-muted-text)' }}
+            >
+              {request.pickup_country?.name || request.pickup_country?.name_fr || '—'}
+            </p>
+            <p className="text-sm font-bold truncate" style={{ color: 'var(--color-navy)' }}>
+              {request.pickup_city?.name || request.pickup_city?.name_fr || '—'}
+            </p>
+          </div>
+
+          {/* Arrow */}
+          <div className="shrink-0 flex flex-col items-center gap-0.5">
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(249,115,22,0.12)' }}
+            >
+              <Package className="w-3 h-3" style={{ color: 'var(--color-vibrant-orange)' }} />
+            </div>
+            <div
+              className="w-8 h-px"
+              style={{ background: 'linear-gradient(90deg, var(--color-royal-blue), var(--color-vibrant-orange))' }}
+            />
+          </div>
+
+          {/* Delivery */}
+          <div className="flex-1 min-w-0 text-right">
+            <p
+              className="text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate"
+              style={{ color: 'var(--color-muted-text)' }}
+            >
+              {request.delivery_country?.name || request.delivery_country?.name_fr || '—'}
+            </p>
+            <p className="text-sm font-bold truncate" style={{ color: 'var(--color-navy)' }}>
+              {request.delivery_city?.name || request.delivery_city?.name_fr || '—'}
+            </p>
+          </div>
+        </div>
+
+        {/* ── Description ── */}
+        {request.description && (
+          <p
+            className="text-xs leading-relaxed line-clamp-2 mb-4"
+            style={{ color: 'var(--color-body-text)' }}
+          >
+            {request.description}
+          </p>
+        )}
+
+        {/* ── Footer pills + sender ── */}
+        <div
+          className="flex items-center flex-wrap gap-2 pt-3"
+          style={{ borderTop: '1px solid var(--color-light-border)' }}
+        >
+          {/* Weight */}
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+            style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--color-royal-blue)' }}
+          >
+            <Package className="w-3 h-3" />
+            {request.weight} kg
+          </span>
+
+          {/* Budget */}
+          {request.max_budget > 0 && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+              style={{ background: 'rgba(249,115,22,0.1)', color: 'var(--color-vibrant-orange)' }}
+            >
+              <DollarSign className="w-3 h-3" />
+              Max {formatCurrency(request.max_budget, request.currency_code)}
+            </span>
+          )}
+
+          {/* Deadline */}
+          {request.needed_by && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+              style={{ background: 'rgba(148,163,184,0.12)', color: 'var(--color-body-text)' }}
+            >
+              <Clock className="w-3 h-3" />
+              {new Date(request.needed_by).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            </span>
+          )}
+
+          {/* Sender */}
+          <div className="ml-auto flex items-center gap-1.5">
+            {request.sender.avatar ? (
+              <img
+                src={request.sender.avatar}
+                alt={request.sender.name}
+                className="w-5 h-5 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+                style={{ background: 'linear-gradient(135deg, var(--color-royal-blue), #1e40af)' }}
+              >
+                {senderInitial}
+              </div>
+            )}
+            <span className="text-[11px] font-medium" style={{ color: 'var(--color-muted-text)' }}>
+              {request.sender.name}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -37,41 +269,141 @@ function SkeletonCard() {
 
 function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () => void }) {
   const { formatCurrency } = useUserCurrency();
+  const senderInitial = shipment.sender?.name?.charAt(0).toUpperCase() || 'U';
+
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-lg transition-all cursor-pointer group"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
+      className="relative bg-white rounded-2xl overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+      style={{
+        border: '1px solid var(--color-light-border)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'; }}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <MapPin className="w-4 h-4 text-emerald-600" />
-            <span className="text-sm font-semibold text-slate-900">{shipment.pickup_city}, {shipment.pickup_country}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-semibold text-slate-900">{shipment.delivery_city}, {shipment.delivery_country}</span>
-          </div>
-        </div>
-        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
-          <Package className="w-5 h-5 text-orange-600" />
-        </div>
-      </div>
+      {/* Top gradient accent */}
+      <div
+        className="h-0.5 w-full"
+        style={{ background: 'linear-gradient(90deg, var(--color-royal-blue), var(--color-vibrant-orange))' }}
+        aria-hidden="true"
+      />
 
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <Weight className="w-4 h-4" />
-          <span>{shipment.package_weight} kg</span>
+      <div className="p-5">
+        {/* ── Header row: badge + status ── */}
+        <div className="flex items-center justify-between mb-3">
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide"
+            style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--color-royal-blue)' }}
+          >
+            <Package className="w-3 h-3" />
+            Expédition
+          </span>
+          <span
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+            style={{ background: 'rgba(16,185,129,0.1)', color: '#059669' }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+            Disponible
+          </span>
         </div>
-        <p className="text-sm text-slate-700 line-clamp-2">{shipment.package_description}</p>
-      </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-        <div className="flex items-center gap-2">
-          <User className="w-4 h-4 text-slate-400" />
-          <span className="text-sm text-slate-600">{shipment.sender.name}</span>
+        {/* ── Route ── */}
+        <div
+          className="flex items-center gap-2 p-3 rounded-xl mb-3"
+          style={{ background: 'var(--color-soft-gray)', border: '1px solid var(--color-light-border)' }}
+        >
+          {/* Pickup */}
+          <div className="flex-1 min-w-0">
+            <p
+              className="text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate"
+              style={{ color: 'var(--color-muted-text)' }}
+            >
+              {shipment.pickup_country || '—'}
+            </p>
+            <p className="text-sm font-bold truncate" style={{ color: 'var(--color-navy)' }}>
+              {shipment.pickup_city || '—'}
+            </p>
+          </div>
+
+          {/* Arrow */}
+          <div className="shrink-0 flex flex-col items-center gap-0.5">
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(37,99,235,0.1)' }}
+            >
+              <Package className="w-3 h-3" style={{ color: 'var(--color-royal-blue)' }} />
+            </div>
+            <div
+              className="w-8 h-px"
+              style={{ background: 'linear-gradient(90deg, var(--color-royal-blue), var(--color-vibrant-orange))' }}
+            />
+          </div>
+
+          {/* Delivery */}
+          <div className="flex-1 min-w-0 text-right">
+            <p
+              className="text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate"
+              style={{ color: 'var(--color-muted-text)' }}
+            >
+              {shipment.delivery_country || '—'}
+            </p>
+            <p className="text-sm font-bold truncate" style={{ color: 'var(--color-navy)' }}>
+              {shipment.delivery_city || '—'}
+            </p>
+          </div>
         </div>
-        <span className="text-lg font-bold text-orange-600">{shipment.price ? formatCurrency(shipment.price) : '—'}</span>
+
+        {/* ── Description ── */}
+        {shipment.package_description && (
+          <p
+            className="text-xs leading-relaxed line-clamp-2 mb-4"
+            style={{ color: 'var(--color-body-text)' }}
+          >
+            {shipment.package_description}
+          </p>
+        )}
+
+        {/* ── Footer pills + price ── */}
+        <div
+          className="flex items-center flex-wrap gap-2 pt-3"
+          style={{ borderTop: '1px solid var(--color-light-border)' }}
+        >
+          {/* Weight */}
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+            style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--color-royal-blue)' }}
+          >
+            <Weight className="w-3 h-3" />
+            {shipment.package_weight} kg
+          </span>
+
+          {/* Sender */}
+          <div className="flex items-center gap-1.5">
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+              style={{ background: 'linear-gradient(135deg, var(--color-royal-blue), #1e40af)' }}
+            >
+              {senderInitial}
+            </div>
+            <span className="text-[11px] font-medium" style={{ color: 'var(--color-muted-text)' }}>
+              {shipment.sender.name}
+            </span>
+          </div>
+
+          {/* Price */}
+          {shipment.price > 0 && (
+            <span
+              className="ml-auto text-sm font-bold"
+              style={{ color: 'var(--color-vibrant-orange)', fontFamily: 'var(--font-heading)' }}
+            >
+              {formatCurrency(shipment.price)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -81,6 +413,7 @@ export default function ShipmentSearchPage() {
   const router = useRouter();
   const { t } = useTranslation();
 
+  const [activeTab, setActiveTab] = useState<'shipments' | 'requests'>('requests'); // Par défaut sur les annonces
   const [pickupCity, setPickupCity] = useState('');
   const [deliveryCity, setDeliveryCity] = useState('');
   const [maxWeight, setMaxWeight] = useState('');
@@ -90,6 +423,7 @@ export default function ShipmentSearchPage() {
   const debouncedDelivery = useDebounce(deliveryCity, 300);
 
   const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [shipmentRequests, setShipmentRequests] = useState<ShipmentRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
@@ -107,33 +441,44 @@ export default function ShipmentSearchPage() {
       if (debouncedDelivery) params.append('delivery_city', debouncedDelivery);
       if (maxWeight) params.append('max_weight', maxWeight);
 
-      const res = await fetch(`/api/shipments/available?${params}`, {
-        headers: { Accept: 'application/json' },
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error(res.status === 401 ? 'Non autorisé' : 'Erreur de recherche');
-      const data = await res.json();
-      setShipments(data.data || []);
+      if (activeTab === 'shipments') {
+        const res = await fetch(`/api/shipments/available?${params}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(res.status === 401 ? 'Non autorisé' : 'Erreur de recherche');
+        const data = await res.json();
+        setShipments(data.data || []);
+      } else {
+        const res = await fetch(`/api/shipment-requests?${params}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(res.status === 401 ? 'Non autorisé' : 'Erreur de recherche');
+        const data = await res.json();
+        setShipmentRequests(data.data || []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur réseau');
     } finally {
       setLoading(false);
     }
-  }, [debouncedPickup, debouncedDelivery, maxWeight]);
+  }, [debouncedPickup, debouncedDelivery, maxWeight, activeTab]);
 
   useEffect(() => { handleSearch(); }, []); // eslint-disable-line
 
   useEffect(() => {
     if (hasSearched) handleSearch();
-  }, [debouncedPickup, debouncedDelivery, maxWeight]); // eslint-disable-line
+  }, [debouncedPickup, debouncedDelivery, maxWeight, activeTab]); // eslint-disable-line
 
   const handleClear = () => {
     setPickupCity(''); setDeliveryCity(''); setMaxWeight('');
-    setShipments([]); setHasSearched(false); setError('');
+    setShipments([]); setShipmentRequests([]); setHasSearched(false); setError('');
   };
 
-  const paginated = shipments.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-  const totalPages = Math.ceil(shipments.length / PER_PAGE);
+  const currentData = activeTab === 'shipments' ? shipments : shipmentRequests;
+  const paginated = currentData.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const totalPages = Math.ceil(currentData.length / PER_PAGE);
 
   const chips = [
     pickupCity && { label: `Départ : ${pickupCity}`, clear: () => setPickupCity('') },
@@ -181,6 +526,32 @@ export default function ShipmentSearchPage() {
             <p className="text-white/60 text-sm sm:text-base">
               Gagnez de l'argent en transportant des colis sur votre trajet
             </p>
+          </div>
+
+          {/* Onglets */}
+          <div className="flex items-center gap-1 mb-6 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === 'requests'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-white/70 hover:text-white/90'
+              }`}
+            >
+              <Megaphone className="w-4 h-4" />
+              Annonces d'expédition
+            </button>
+            <button
+              onClick={() => setActiveTab('shipments')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === 'shipments'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-white/70 hover:text-white/90'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              Expéditions directes
+            </button>
           </div>
 
           <div
@@ -313,8 +684,11 @@ export default function ShipmentSearchPage() {
         {hasSearched && !loading && (
           <div className="flex items-center justify-between mb-6">
             <p className="text-sm font-medium text-slate-700">
-              <span className="font-bold text-slate-900">{shipments.length}</span>{' '}
-              {shipments.length === 1 ? 'colis trouvé' : 'colis trouvés'}
+              <span className="font-bold text-slate-900">{currentData.length}</span>{' '}
+              {activeTab === 'requests' 
+                ? (currentData.length === 1 ? 'annonce trouvée' : 'annonces trouvées')
+                : (currentData.length === 1 ? 'colis trouvé' : 'colis trouvés')
+              }
             </p>
           </div>
         )}
@@ -332,12 +706,20 @@ export default function ShipmentSearchPage() {
           </div>
         )}
 
-        {hasSearched && !loading && shipments.length === 0 && (
+        {hasSearched && !loading && currentData.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 bg-orange-50">
-              <Package className="w-7 h-7 text-orange-600" />
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
+              activeTab === 'requests' ? 'bg-orange-50' : 'bg-blue-50'
+            }`}>
+              {activeTab === 'requests' ? (
+                <Megaphone className="w-7 h-7 text-orange-600" />
+              ) : (
+                <Package className="w-7 h-7 text-blue-600" />
+              )}
             </div>
-            <h3 className="text-base font-semibold text-slate-900 mb-1">Aucun colis trouvé</h3>
+            <h3 className="text-base font-semibold text-slate-900 mb-1">
+              {activeTab === 'requests' ? 'Aucune annonce trouvée' : 'Aucun colis trouvé'}
+            </h3>
             <p className="text-sm text-slate-500 max-w-xs mb-5">
               Essayez d'ajuster vos critères ou revenez plus tard
             </p>
@@ -350,13 +732,22 @@ export default function ShipmentSearchPage() {
         {!loading && paginated.length > 0 && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8">
-              {paginated.map((shipment) => (
-                <ShipmentCard
-                  key={shipment.id}
-                  shipment={shipment}
-                  onClick={() => router.push(`/shipments/${shipment.id}`)}
-                />
-              ))}
+              {activeTab === 'requests' 
+                ? (paginated as ShipmentRequest[]).map((request) => (
+                    <ShipmentRequestCard
+                      key={request.id}
+                      request={request}
+                      onClick={() => router.push(`/shipment-requests/${request.id}`)}
+                    />
+                  ))
+                : (paginated as Shipment[]).map((shipment) => (
+                    <ShipmentCard
+                      key={shipment.id}
+                      shipment={shipment}
+                      onClick={() => router.push(`/shipments/${shipment.id}`)}
+                    />
+                  ))
+              }
             </div>
 
             {totalPages > 1 && (

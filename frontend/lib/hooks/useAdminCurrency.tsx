@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface ExchangeRate {
   code: string;
@@ -29,24 +30,18 @@ export function AdminCurrencyProvider({ children }: { children: ReactNode }) {
     const fetchData = async () => {
       try {
         // Fetch settings and currencies in parallel
-        const apiUrl = apiClient.baseUrl;
-        const [settingsRes, currenciesRes] = await Promise.all([
-          fetch('/api/admin/settings'),
-          fetch(`${apiUrl}/api/currencies`),
+        const [settingsData, currenciesData] = await Promise.all([
+          apiClient.get<{ data: { default_currency?: string } }>(API_ENDPOINTS.admin.settings.get),
+          apiClient.get<{ data: ExchangeRate[] }>(API_ENDPOINTS.currencies.list),
         ]);
 
-        if (settingsRes.ok) {
-          const result = await settingsRes.json();
-          const currency = result.data?.default_currency;
-          if (currency) {
-            setDefaultCurrency(currency);
-          }
+        if (settingsData?.data?.default_currency) {
+          setDefaultCurrency(settingsData.data.default_currency);
         }
 
-        if (currenciesRes.ok) {
-          const result = await currenciesRes.json();
+        if (currenciesData?.data) {
           const rateMap: Record<string, number> = {};
-          (result.data || []).forEach((c: ExchangeRate) => {
+          currenciesData.data.forEach((c: ExchangeRate) => {
             rateMap[c.code] = Number(c.exchange_rate);
           });
           setRates(rateMap);

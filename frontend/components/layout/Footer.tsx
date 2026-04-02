@@ -64,8 +64,8 @@ export const Footer: React.FC<FooterProps> = ({ locale: initialLocale }) => {
   ];
 
   return (
-    /* bottom spacing on mobile for the tab bar */
-    <footer className="pb-[calc(56px+env(safe-area-inset-bottom,0px))] lg:pb-0" style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+    /* Hidden on mobile, visible on desktop */
+    <footer className="hidden lg:block" style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
 
       {/* ── Main footer grid ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-8">

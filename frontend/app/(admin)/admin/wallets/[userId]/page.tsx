@@ -6,6 +6,8 @@ import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, X } from 'luci
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface WalletDetails {
   user: {
@@ -61,16 +63,12 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     if (!userId) return;
     setLoading(true);
     try {
-      const qs = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
-      });
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
+      };
 
-      const response = await fetch(`/api/admin/wallets/${userId}?${qs}`);
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.message || 'Failed to fetch');
-
+      const data = await apiClient.get(API_ENDPOINTS.admin.wallets.show(userId), { params });
       setWallet(data.data.wallet);
       setTransactions(data.data.transactions ?? []);
       setTotal(data.meta?.total ?? 0);
@@ -87,18 +85,11 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     setAdjusting(true);
     setAdjustError(null);
     try {
-      const response = await fetch(`/api/admin/wallets/${userId}/adjust`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: parseFloat(adjustAmount),
-          type: adjustType,
-          reason: adjustReason,
-        }),
+      await apiClient.post(API_ENDPOINTS.admin.wallets.adjust(userId), {
+        amount: parseFloat(adjustAmount),
+        type: adjustType,
+        reason: adjustReason,
       });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Adjustment failed');
 
       fetchWalletDetails();
       closeAdjustModal();
@@ -165,7 +156,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     );
   }
 
-  if (!wallet) {
+  if (!wallet || !wallet.user) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">{t('admin.wallets.detail.notFound')}</p>
