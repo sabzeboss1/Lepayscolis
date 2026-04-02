@@ -6,6 +6,7 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { FileUpload } from '@/components/ui/FileUpload';
+import { CameraCapture } from '@/components/ui/CameraCapture';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { FileUploadService, DEFAULT_UPLOAD_OPTIONS } from '@/lib/services/FileUploadService';
@@ -81,13 +82,14 @@ const WHY_KYC = [
 ];
 
 export default function KYCVerificationPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t } = useTranslation();
   const [kycDocument, setKycDocument] = useState<KYCDocument | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>('passport');
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [documentBackFile, setDocumentBackFile] = useState<File | null>(null);
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -100,12 +102,17 @@ export default function KYCVerificationPage() {
   const fetchKYCDocument = async () => {
     try {
       setIsLoading(true);
-      const response = await apiClient.get<{ document: KYCDocument }>(API_ENDPOINTS.kyc.status);
-      setKycDocument(response.document);
+      const response = await apiClient.get<{ data: KYCDocument }>('/api/kyc');
+      console.log('fetchKYCDocument response:', response);
+      setKycDocument(response.data);
     } catch (err: any) {
       if (err.status !== 404) {
         console.error('Error fetching KYC document:', err);
         setError('Erreur lors du chargement du statut KYC');
+      } else {
+        // 404 means no document submitted yet, which is normal
+        console.log('No KYC document found (404), setting to null');
+        setKycDocument(null);
       }
     } finally {
       setIsLoading(false);
@@ -159,17 +166,32 @@ export default function KYCVerificationPage() {
       }
 
       const data = await response.json();
+      console.log('KYC submission response:', data);
       setKycDocument(data.data);
       setSuccess(t('kyc.submitSuccess'));
       setDocumentFile(null);
       setDocumentBackFile(null);
       setSelfieFile(null);
+      
+      // Recharger les données KYC et utilisateur pour s'assurer que tout est à jour
+      await Promise.all([
+        fetchKYCDocument(),
+        refreshUser?.()
+      ]);
+      
+      console.log('KYC document after refresh:', kycDocument);
     } catch (err: any) {
       setError(err.message || t('kyc.submitError'));
       console.error('Error submitting KYC document:', err);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSelfieCapture = (file: File) => {
+    setSelfieFile(file);
+    setShowCamera(false);
+    setError(null);
   };
 
   const handleFileChange = (
@@ -211,7 +233,23 @@ export default function KYCVerificationPage() {
   }
 
   // ─── Status helpers ───────────────────────────────────────────────────────
-  const kycStatus = user?.kyc_status || 'not_submitted';
+  // Determine the actual KYC status based on both user status and document existence
+  const getActualKycStatus = () => {
+    console.log('getActualKycStatus - kycDocument:', kycDocument);
+    console.log('getActualKycStatus - user kyc_status:', user?.kyc_status);
+    
+    // If no document has been submitted, always show 'not_submitted'
+    if (!kycDocument) {
+      console.log('No KYC document found, returning not_submitted');
+      return 'not_submitted';
+    }
+    
+    // If document exists, use the document status
+    console.log('KYC document found with status:', kycDocument.status);
+    return kycDocument.status;
+  };
+
+  const kycStatus = getActualKycStatus();
 
   const statusConfig = {
     approved: {
@@ -282,14 +320,17 @@ export default function KYCVerificationPage() {
             {t('kyc.title')}
           </h1>
           <p className="text-blue-200 text-sm max-w-md mx-auto leading-relaxed">
-            Complétez votre vérification d'identité pour accéder à toutes les fonctionnalités
+            {kycDocument 
+              ? "Gérez votre vérification d'identité" 
+              : "Complétez votre vérification d'identité pour accéder à toutes les fonctionnalités"
+            }
           </p>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {/* ─── Status Card ─────────────────────────────────────────────────── */}
-        {user && (
+        {(kycDocument || user?.kyc_status === 'approved') && (
           <div className={`rounded-2xl border ${cfg.border} ${cfg.bg} p-5`}>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Statut actuel</p>
             <div className="flex items-center gap-4">
@@ -505,18 +546,54 @@ export default function KYCVerificationPage() {
                   </div>
                 </div>
 
-                <FileUpload
-                  accept="image/jpeg,image/jpg,image/png"
-                  onChange={handleFileChange(
-                    setSelfieFile,
-                    ['image/jpeg', 'image/jpg', 'image/png', 'image/pjpeg'],
-                    ['jpg', 'jpeg', 'png'],
-                    'Type de fichier invalide pour le selfie. Utilisez JPG ou PNG.',
-                  )}
-                  value={selfieFile}
-                  maxSize={5}
-                  helperText="Formats acceptés: JPG, PNG (max 5 MB)"
-                />
+                {/* Selfie capture options */}
+                {!selfieFile ? (
+                  <div className="flex justify-center">
+                    {/* Camera capture button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowCamera(true)}
+                      className="group p-6 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50 hover:bg-blue-100 hover:border-blue-400 transition-all duration-200 text-center w-full max-w-sm"
+                    >
+                      <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-700 transition-colors">
+                        <Camera className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="font-semibold text-blue-900 text-lg mb-2">Prendre un selfie</div>
+                      <div className="text-sm text-blue-600">Utilisez la caméra de votre appareil</div>
+                    </button>
+                  </div>
+                ) : (
+                  /* Selfie preview */
+                  <div className="border-2 border-green-200 rounded-xl bg-green-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
+                          <CheckCircle2 className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-green-900 text-sm">Selfie capturé</div>
+                          <div className="text-xs text-green-600">{selfieFile.name}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowCamera(true)}
+                          className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+                        >
+                          Reprendre
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelfieFile(null)}
+                          className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Upload progress summary */}
@@ -606,6 +683,20 @@ export default function KYCVerificationPage() {
           </ul>
         </div>
       </div>
+
+      {/* Camera Capture Modal */}
+      <CameraCapture
+        isOpen={showCamera}
+        onCapture={handleSelfieCapture}
+        onCancel={() => setShowCamera(false)}
+        title="Selfie avec document"
+        instructions={[
+          "Tenez votre document d'identité à côté de votre visage",
+          "Assurez-vous que votre visage et le document sont clairement visibles",
+          "Prenez la photo dans un endroit bien éclairé",
+          "Le document doit être lisible sur la photo"
+        ]}
+      />
     </div>
   );
 }

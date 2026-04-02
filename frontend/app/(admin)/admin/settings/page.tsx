@@ -15,6 +15,8 @@ import {
   X
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 type TabType = 'general' | 'smtp' | 'payment' | 'branding' | 'currency' | 'security' | 'notifications' | 'shipping';
 
@@ -118,13 +120,7 @@ export default function SettingsPage() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/settings');
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = await apiClient.get<{ data: PlatformSettings }>(API_ENDPOINTS.admin.settings.get);
       setSettings(result.data || getDefaultSettings());
     } catch (error) {
       console.error('Failed to fetch settings:', error);
@@ -136,12 +132,8 @@ export default function SettingsPage() {
 
   const fetchCurrencies = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/currencies`);
-      if (response.ok) {
-        const result = await response.json();
-        setCurrencies(result.data || []);
-      }
+      const result = await apiClient.get<{ data: CurrencyItem[] }>(API_ENDPOINTS.currencies.list);
+      setCurrencies(result.data || []);
     } catch (error) {
       console.error('Failed to fetch currencies:', error);
     }
@@ -233,16 +225,7 @@ export default function SettingsPage() {
         }
       }
 
-      const response = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tabData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to save settings');
-      }
+      await apiClient.put(API_ENDPOINTS.admin.settings.update, tabData);
 
       setMessage({ type: 'success', text: t('admin.settings.success') });
       setTimeout(() => setMessage(null), 3000);
@@ -270,16 +253,10 @@ export default function SettingsPage() {
       formData.append('file', file);
       formData.append('type', type);
 
-      const response = await fetch('/api/admin/settings/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || `Failed to upload ${type}`);
-      }
+      const data = await apiClient.uploadFile<{ url: string; message: string }>(
+        '/api/admin/settings/upload',
+        file
+      );
 
       // Update local state with the new URL
       const settingKey = type === 'logo' ? 'logo_url' : 'favicon_url';

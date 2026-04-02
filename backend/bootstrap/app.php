@@ -26,6 +26,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
 
+        // Redirect guests to JSON response instead of login page for API routes
+        $middleware->redirectGuestsTo(function ($request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return null; // Don't redirect, let exception handler deal with it
+            }
+            return route('login');
+        });
+
         // Register custom middleware aliases
         $middleware->alias([
             'kyc.verified' => \App\Http\Middleware\EnsureKYCVerified::class,
@@ -36,5 +44,21 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Handle authentication exceptions for API routes
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthenticated.'
+                ], 401);
+            }
+        });
+
+        // Handle model not found exceptions
+        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Resource not found.'
+                ], 404);
+            }
+        });
     })->create();

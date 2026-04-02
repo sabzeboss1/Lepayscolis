@@ -9,6 +9,7 @@ import {
   FileCheck,
   Plane,
   Package,
+  PackageSearch,
   Wallet,
   CreditCard,
   Coins,
@@ -64,6 +65,7 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
         { labelKey: 'admin.sidebar.kycVerification', href: '/admin/kyc', icon: FileCheck },
         { labelKey: 'admin.sidebar.trips', href: '/admin/trips', icon: Plane },
         { labelKey: 'admin.sidebar.shipments', href: '/admin/shipments', icon: Package },
+        { labelKey: 'admin.sidebar.shipmentRequests', href: '/admin/shipment-requests', icon: PackageSearch },
         { labelKey: 'admin.sidebar.countries', href: '/admin/countries', icon: Globe },
         { labelKey: 'admin.sidebar.cities', href: '/admin/cities', icon: MapPin }
       ]

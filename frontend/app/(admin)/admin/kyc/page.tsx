@@ -7,6 +7,8 @@ import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import BulkActions, { BulkAction } from '@/components/admin/BulkActions';
 import KYCReviewModal from '@/components/admin/KYCReviewModal';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface KYCSubmission {
   id: string;
@@ -49,15 +51,18 @@ export default function KYCPage() {
   const fetchSubmissions = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
         sort_by: sortBy,
-        ...(filters.status && { status: filters.status })
-      });
+      };
 
-      const response = await fetch(`/api/admin/kyc?${params}`);
-      const data = await response.json();
+      if (filters.status) params.status = filters.status;
+
+      const data = await apiClient.get<{ data: any[]; meta: { total: number } }>(
+        API_ENDPOINTS.admin.kyc.list,
+        { params }
+      );
 
       if (data && data.data && Array.isArray(data.data)) {
         // Map API response to flatten documents array into top-level fields
@@ -123,25 +128,7 @@ export default function KYCPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
-      
-      const response = await fetch(`/api/admin/kyc/${id}/approve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to approve KYC');
-      }
-      
+      await apiClient.post(API_ENDPOINTS.admin.kyc.approve(id));
       fetchSubmissions();
       setShowReviewModal(false);
     } catch (error) {
@@ -152,26 +139,7 @@ export default function KYCPage() {
 
   const handleReject = async (id: string, reason: string) => {
     try {
-      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
-      
-      const response = await fetch(`/api/admin/kyc/${id}/reject`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ reason })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to reject KYC');
-      }
-      
+      await apiClient.post(API_ENDPOINTS.admin.kyc.reject(id), { reason });
       fetchSubmissions();
       setShowReviewModal(false);
     } catch (error) {
@@ -185,16 +153,11 @@ export default function KYCPage() {
 
     try {
       if (actionKey === 'approve') {
-        await fetch('/api/admin/kyc/bulk-approve', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: selectedIds })
-        });
+        await apiClient.post('/api/admin/kyc/bulk-approve', { ids: selectedIds });
       } else if (actionKey === 'reject') {
-        await fetch('/api/admin/kyc/bulk-reject', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: selectedIds, reason: 'Bulk rejection by admin' })
+        await apiClient.post('/api/admin/kyc/bulk-reject', { 
+          ids: selectedIds, 
+          reason: 'Bulk rejection by admin' 
         });
       }
 

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, User, Ban, CheckCircle, Trash2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface Message {
   id: string;
@@ -19,13 +21,20 @@ interface Message {
 
 interface Conversation {
   id: string;
-  participants: Array<{
+  user1: {
     id: string;
     name: string;
     email: string;
     messaging_banned: boolean;
     messaging_ban_reason?: string;
-  }>;
+  };
+  user2: {
+    id: string;
+    name: string;
+    email: string;
+    messaging_banned: boolean;
+    messaging_ban_reason?: string;
+  };
   messages: Message[];
 }
 
@@ -57,8 +66,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/messages/${conversationId}`);
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.messages.show(conversationId));
       setConversation(data.data);
     } catch (error) {
       console.error('Failed to fetch conversation details:', error);
@@ -73,11 +81,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
     }
 
     try {
-      await fetch(`/api/admin/users/${selectedUserId}/ban-messaging`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: banReason })
-      });
+      await apiClient.post(API_ENDPOINTS.admin.users.banMessaging(selectedUserId), { reason: banReason });
       fetchConversationDetails();
       setShowBanDialog(false);
       setSelectedUserId(null);
@@ -89,9 +93,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
 
   const handleUnbanUser = async (userId: string) => {
     try {
-      await fetch(`/api/admin/users/${userId}/unban-messaging`, {
-        method: 'POST'
-      });
+      await apiClient.post(API_ENDPOINTS.admin.users.unbanMessaging(userId));
       fetchConversationDetails();
     } catch (error) {
       console.error('Failed to unban user:', error);
@@ -104,11 +106,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
     }
 
     try {
-      await fetch(`/api/admin/messages/${selectedMessageId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: deleteReason })
-      });
+      await apiClient.delete(API_ENDPOINTS.admin.messages.delete(selectedMessageId), { reason: deleteReason });
       fetchConversationDetails();
       setShowDeleteDialog(false);
       setSelectedMessageId(null);
@@ -126,7 +124,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
     );
   }
 
-  if (!conversation) {
+  if (!conversation || !conversation.user1 || !conversation.user2) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">{t('admin.messages.conversationNotFound')}</p>
@@ -148,7 +146,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{t('admin.messages.conversation')}</h1>
             <p className="text-sm text-gray-600 mt-1">
-              {conversation.participants.map(p => p.name).join(' & ')}
+              {conversation.user1.name} & {conversation.user2.name}
             </p>
           </div>
         </div>
@@ -156,7 +154,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
 
       {/* Participants */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {conversation.participants.map((participant) => (
+        {[conversation.user1, conversation.user2].filter(Boolean).map((participant) => (
           <div key={participant.id} className="bg-white rounded-lg shadow p-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-3">

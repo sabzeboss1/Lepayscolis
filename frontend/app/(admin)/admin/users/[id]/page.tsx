@@ -8,6 +8,8 @@ import { useLocale } from '@/lib/i18n/LocaleContext';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import UserForm from '@/components/admin/UserForm';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface User {
   id: string;
@@ -61,8 +63,10 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/users/${userId}`);
-      const data = await response.json();
+      const data = await apiClient.get<{ data: User & { activity_history?: ActivityHistory } }>(
+        API_ENDPOINTS.admin.users.show(userId)
+      );
+      
       setUser(data.data);
       setActivityHistory(data.data.activity_history || null);
     } catch (error) {
@@ -76,11 +80,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await fetch(`/api/admin/users/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      await apiClient.put(API_ENDPOINTS.admin.users.show(userId), formData);
       fetchUserDetails();
       setShowEditForm(false);
     } catch (error) {
@@ -92,10 +92,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await fetch(`/api/admin/users/${userId}/suspend`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'Suspended by admin' })
+      await apiClient.post(API_ENDPOINTS.admin.users.suspend(userId), { 
+        reason: 'Suspended by admin' 
       });
       fetchUserDetails();
       setShowSuspendDialog(false);
@@ -108,9 +106,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await fetch(`/api/admin/users/${userId}/activate`, {
-        method: 'POST'
-      });
+      await apiClient.post(API_ENDPOINTS.admin.users.activate(userId));
       fetchUserDetails();
     } catch (error) {
       console.error('Failed to activate user:', error);
@@ -121,9 +117,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE'
-      });
+      await apiClient.delete(API_ENDPOINTS.admin.users.show(userId));
       router.push('/admin/users');
     } catch (error) {
       console.error('Failed to delete user:', error);
@@ -134,10 +128,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await fetch(`/api/admin/users/${userId}/assign-admin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'admin' })
+      await apiClient.post(API_ENDPOINTS.admin.users.assignAdmin(userId), { 
+        role: 'admin' 
       });
       fetchUserDetails();
       setShowAssignAdminDialog(false);

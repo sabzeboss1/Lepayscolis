@@ -14,6 +14,8 @@ class City extends Model
         'is_active',
     ];
 
+    protected $appends = ['name'];
+
     protected function casts(): array
     {
         return [
@@ -45,6 +47,7 @@ class City extends Model
     public function getNameAttribute(): string
     {
         $locale = app()->getLocale();
-        return $locale === 'fr' ? $this->name_fr : $this->name_en;
+        $name = $locale === 'fr' ? $this->name_fr : $this->name_en;
+        return $name ?? $this->name_en ?? $this->name_fr ?? '';
     }
 }

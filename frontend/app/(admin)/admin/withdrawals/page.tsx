@@ -7,6 +7,8 @@ import TablePagination from '@/components/admin/TablePagination';
 import WithdrawalApprovalModal from '@/components/admin/WithdrawalApprovalModal';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface WithdrawalRequest {
   id: string;
@@ -64,22 +66,17 @@ export default function WithdrawalsPage() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        per_page: perPage.toString(),
+      const params: Record<string, any> = {
+        page: currentPage,
+        per_page: perPage,
         sort_by: sortKey,
         sort_direction: sortDirection,
-        ...(filters.status && { status: filters.status }),
-        ...(filters.search && { search: filters.search }),
-      });
+      };
 
-      const response = await fetch(`/api/admin/withdrawals?${params}`);
+      if (filters.status) params.status = filters.status;
+      if (filters.search) params.search = filters.search;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get(API_ENDPOINTS.admin.withdrawals.list, { params });
       setWithdrawals(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
       setTotalPendingAmount(data.meta?.total_pending_amount || 0);
@@ -114,42 +111,22 @@ export default function WithdrawalsPage() {
   };
 
   const handleApprove = async (id: string) => {
-    const response = await fetch(`/api/admin/withdrawals/${id}/approve`, { method: 'POST' });
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to approve');
-    }
+    await apiClient.post(API_ENDPOINTS.admin.withdrawals.approve(id));
     fetchWithdrawals();
   };
 
   const handleReject = async (id: string, reason: string) => {
-    const response = await fetch(`/api/admin/withdrawals/${id}/reject`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason }),
-    });
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to reject');
-    }
+    await apiClient.post(API_ENDPOINTS.admin.withdrawals.reject(id), { reason });
     fetchWithdrawals();
   };
 
   const handleProcessing = async (id: string) => {
-    const response = await fetch(`/api/admin/withdrawals/${id}/processing`, { method: 'POST' });
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to mark as processing');
-    }
+    await apiClient.post(API_ENDPOINTS.admin.withdrawals.processing(id));
     fetchWithdrawals();
   };
 
   const handleComplete = async (id: string) => {
-    const response = await fetch(`/api/admin/withdrawals/${id}/complete`, { method: 'POST' });
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to complete');
-    }
+    await apiClient.post(API_ENDPOINTS.admin.withdrawals.complete(id));
     fetchWithdrawals();
   };
 

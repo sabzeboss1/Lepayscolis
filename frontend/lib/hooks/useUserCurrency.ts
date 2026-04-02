@@ -11,6 +11,9 @@ export function useUserCurrency() {
   const { user } = useAuth();
   const currencyCode = user?.currency_code || 'EUR';
 
+  console.log('useUserCurrency - user:', user);
+  console.log('useUserCurrency - currencyCode:', currencyCode);
+
   const formatCurrency = useCallback(
     (amount: number, overrideCurrency?: string) => {
       const code = overrideCurrency || currencyCode;

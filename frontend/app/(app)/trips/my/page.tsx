@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
-import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
-import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Trip } from '@/lib/types/trip';
+import { apiClient } from '@/lib/api/client';
+import { formatCurrency } from '@/lib/utils/formatting';
 
 type TripStatus = 'all' | 'active' | 'completed' | 'cancelled';
 type SortOption = 'date' | 'price' | 'capacity';
@@ -16,7 +16,6 @@ type SortOption = 'date' | 'price' | 'capacity';
 export default function MyTripsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { formatCurrency } = useUserCurrency();
   const { user } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,11 +47,10 @@ export default function MyTripsPage() {
 
     try {
       await apiClient.delete(`/api/trips/${tripId}`);
-      // Refresh trips list
       fetchMyTrips();
     } catch (err: any) {
       console.error('Failed to cancel trip:', err);
-      alert(err?.message || t('trips.cancelError'));
+      alert(err instanceof Error ? err.message : t('trips.cancelError'));
     }
   };
 
@@ -233,7 +231,7 @@ export default function MyTripsPage() {
                       <span className="text-gray-700">
                         {trip.price_converted
                           ? formatCurrency(trip.price_converted.amount, trip.price_converted.currency_code)
-                          : formatCurrency(trip.price_per_kg, trip.currency_code)}
+                          : formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}
                       </span>
                     </div>
                     {trip.travel_proof_url && (

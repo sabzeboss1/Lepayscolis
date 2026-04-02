@@ -60,6 +60,7 @@ class ShipmentResource extends JsonResource
             'delivery_address' => $this->delivery_address,
             'status' => $this->status,
             'payment_amount' => $this->payment_amount,
+            'price' => $this->payment_amount, // Alias pour le frontend
             'payment_status' => $this->payment_status,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
