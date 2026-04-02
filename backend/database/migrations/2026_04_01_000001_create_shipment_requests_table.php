@@ -51,7 +51,7 @@ return new class extends Migration
             
             $table->timestamps();
             
-            $table->index(['status', 'pickup_country_id', 'delivery_country_id']);
+            $table->index(['status', 'pickup_country_id', 'delivery_country_id'], 'ship_req_status_pickup_delivery_idx');
             $table->index(['sender_id', 'status']);
         });
     }
