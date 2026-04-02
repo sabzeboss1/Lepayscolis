@@ -22,61 +22,93 @@ class DemoUserSeeder extends Seeder
     {
         $password = Hash::make('password');
 
-        // Get some countries and cities for trips/shipments
-        $france = Country::where('code', 'FR')->first();
-        $senegal = Country::where('code', 'SN')->first();
+        // Get countries and cities
         $cameroon = Country::where('code', 'CM')->first();
-        $ivoryCoast = Country::where('code', 'CI')->first();
+        $russia   = Country::where('code', 'RU')->first();
 
-        $paris = City::where('name_en', 'Paris')->first();
-        $dakar = City::where('name_en', 'Dakar')->first();
-        $douala = City::where('name_en', 'Douala')->first();
-        $abidjan = City::where('name_en', 'Abidjan')->first();
-        $marseille = City::where('name_en', 'Marseille')->first();
-        $yaounde = City::where('name_en', 'Yaoundé')->first();
+        $douala      = City::where('name_en', 'Douala')->first();
+        $yaounde     = City::where('name_en', 'Yaoundé')->first();
+        $bafoussam   = City::where('name_en', 'Bafoussam')->first();
+        $moscow      = City::where('name_en', 'Moscow')->first();
+        $stPetersburg = City::where('name_en', 'Saint Petersburg')->first();
+        $kazan       = City::where('name_en', 'Kazan')->first();
 
-        // ── 1. Users with APPROVED KYC (active, with activity) ──
+        // ── 1. Users with APPROVED KYC ──
 
         $user1 = User::firstOrCreate(
-            ['email' => 'amadou.diallo@example.com'],
+            ['email' => 'jean.mbarga@example.com'],
             [
-                'name' => 'Amadou Diallo',
+                'name' => 'Jean Mbarga',
                 'password' => $password,
-                'phone' => '+221770001001',
+                'phone' => '+237690001001',
                 'role' => 'user',
                 'kyc_status' => 'approved',
                 'rating' => 4.7,
                 'completed_deliveries' => 12,
                 'is_recommended' => true,
                 'locale' => 'fr',
-                'currency_code' => 'XOF',
+                'currency_code' => 'XAF',
                 'created_at' => Carbon::now()->subMonths(6),
             ]
         );
 
         $user2 = User::firstOrCreate(
-            ['email' => 'fatou.sow@example.com'],
+            ['email' => 'alexei.petrov@example.com'],
             [
-                'name' => 'Fatou Sow',
+                'name' => 'Alexei Petrov',
                 'password' => $password,
-                'phone' => '+33612345678',
+                'phone' => '+79161234567',
                 'role' => 'user',
                 'kyc_status' => 'approved',
                 'rating' => 4.9,
-                'completed_deliveries' => 25,
+                'completed_deliveries' => 20,
                 'is_recommended' => true,
-                'locale' => 'fr',
-                'currency_code' => 'EUR',
+                'locale' => 'en',
+                'currency_code' => 'RUB',
                 'created_at' => Carbon::now()->subMonths(8),
             ]
         );
 
         $user3 = User::firstOrCreate(
-            ['email' => 'jean.mbarga@example.com'],
+            ['email' => 'marie.kouame@example.com'],
             [
-                'name' => 'Jean Mbarga',
+                'name' => 'Marie Ngono',
                 'password' => $password,
-                'phone' => '+237690001001',
+                'phone' => '+237670002002',
+                'role' => 'user',
+                'kyc_status' => 'approved',
+                'rating' => 4.5,
+                'completed_deliveries' => 8,
+                'is_recommended' => true,
+                'locale' => 'fr',
+                'currency_code' => 'XAF',
+                'created_at' => Carbon::now()->subMonths(5),
+            ]
+        );
+
+        $user4 = User::firstOrCreate(
+            ['email' => 'elena.ivanova@example.com'],
+            [
+                'name' => 'Elena Ivanova',
+                'password' => $password,
+                'phone' => '+79057654321',
+                'role' => 'user',
+                'kyc_status' => 'approved',
+                'rating' => 4.2,
+                'completed_deliveries' => 15,
+                'is_recommended' => true,
+                'locale' => 'en',
+                'currency_code' => 'RUB',
+                'created_at' => Carbon::now()->subMonths(10),
+            ]
+        );
+
+        $user5 = User::firstOrCreate(
+            ['email' => 'paul.essomba@example.com'],
+            [
+                'name' => 'Paul Essomba',
+                'password' => $password,
+                'phone' => '+237655003003',
                 'role' => 'user',
                 'kyc_status' => 'approved',
                 'rating' => 3.8,
@@ -88,127 +120,93 @@ class DemoUserSeeder extends Seeder
             ]
         );
 
-        $user4 = User::firstOrCreate(
-            ['email' => 'marie.kouame@example.com'],
-            [
-                'name' => 'Marie Kouamé',
-                'password' => $password,
-                'phone' => '+22507001001',
-                'role' => 'user',
-                'kyc_status' => 'approved',
-                'rating' => 4.5,
-                'completed_deliveries' => 8,
-                'is_recommended' => true,
-                'locale' => 'fr',
-                'currency_code' => 'XOF',
-                'created_at' => Carbon::now()->subMonths(5),
-            ]
-        );
-
-        $user5 = User::firstOrCreate(
-            ['email' => 'ousmane.ba@example.com'],
-            [
-                'name' => 'Ousmane Ba',
-                'password' => $password,
-                'phone' => '+33678901234',
-                'role' => 'user',
-                'kyc_status' => 'approved',
-                'rating' => 4.2,
-                'completed_deliveries' => 15,
-                'is_recommended' => true,
-                'locale' => 'fr',
-                'currency_code' => 'EUR',
-                'created_at' => Carbon::now()->subMonths(10),
-            ]
-        );
-
         // ── 2. Users with PENDING KYC ──
 
         $user6 = User::firstOrCreate(
-            ['email' => 'ibrahim.traore@example.com'],
+            ['email' => 'dmitri.sokolov@example.com'],
             [
-                'name' => 'Ibrahim Traoré',
+                'name' => 'Dmitri Sokolov',
                 'password' => $password,
-                'phone' => '+22670001001',
+                'phone' => '+79031112233',
                 'role' => 'user',
                 'kyc_status' => 'pending',
                 'rating' => 0,
                 'completed_deliveries' => 0,
                 'is_recommended' => false,
-                'locale' => 'fr',
-                'currency_code' => 'XOF',
+                'locale' => 'en',
+                'currency_code' => 'RUB',
                 'created_at' => Carbon::now()->subWeeks(2),
             ]
         );
 
         $user7 = User::firstOrCreate(
-            ['email' => 'aissatou.camara@example.com'],
+            ['email' => 'aissatou.fotso@example.com'],
             [
-                'name' => 'Aïssatou Camara',
+                'name' => 'Aïssatou Fotso',
                 'password' => $password,
-                'phone' => '+224620001001',
+                'phone' => '+237680004004',
                 'role' => 'user',
                 'kyc_status' => 'pending',
-                'rating' => 0,
-                'completed_deliveries' => 0,
-                'is_recommended' => false,
-                'locale' => 'fr',
-                'currency_code' => 'XOF',
-                'created_at' => Carbon::now()->subWeeks(1),
-            ]
-        );
-
-        // ── 3. Users with REJECTED KYC ──
-
-        $user8 = User::firstOrCreate(
-            ['email' => 'paul.nguema@example.com'],
-            [
-                'name' => 'Paul Nguema',
-                'password' => $password,
-                'phone' => '+24107001001',
-                'role' => 'user',
-                'kyc_status' => 'rejected',
                 'rating' => 0,
                 'completed_deliveries' => 0,
                 'is_recommended' => false,
                 'locale' => 'fr',
                 'currency_code' => 'XAF',
+                'created_at' => Carbon::now()->subWeeks(1),
+            ]
+        );
+
+        // ── 3. User with REJECTED KYC ──
+
+        $user8 = User::firstOrCreate(
+            ['email' => 'boris.volkov@example.com'],
+            [
+                'name' => 'Boris Volkov',
+                'password' => $password,
+                'phone' => '+79264445566',
+                'role' => 'user',
+                'kyc_status' => 'rejected',
+                'rating' => 0,
+                'completed_deliveries' => 0,
+                'is_recommended' => false,
+                'locale' => 'en',
+                'currency_code' => 'RUB',
                 'created_at' => Carbon::now()->subMonths(1),
             ]
         );
 
-        // ── 4. Users with NO KYC (not_submitted) ──
+        // ── 4. Users with NO KYC ──
 
         $user9 = User::firstOrCreate(
-            ['email' => 'claire.dupont@example.com'],
+            ['email' => 'sarah.ndam@example.com'],
             [
-                'name' => 'Claire Dupont',
+                'name' => 'Sarah Ndam',
                 'password' => $password,
-                'phone' => '+33645678901',
+                'phone' => '+237699005005',
                 'role' => 'user',
                 'kyc_status' => 'pending',
                 'rating' => 0,
                 'completed_deliveries' => 0,
                 'is_recommended' => false,
                 'locale' => 'fr',
-                'currency_code' => 'EUR',
+                'currency_code' => 'XAF',
                 'created_at' => Carbon::now()->subDays(3),
             ]
         );
 
         $user10 = User::firstOrCreate(
-            ['email' => 'moussa.keita@example.com'],
+            ['email' => 'igor.kozlov@example.com'],
             [
-                'name' => 'Moussa Keita',
+                'name' => 'Igor Kozlov',
                 'password' => $password,
-                'phone' => '+22370001001',
+                'phone' => '+79107778899',
                 'role' => 'user',
                 'kyc_status' => 'pending',
                 'rating' => 0,
                 'completed_deliveries' => 0,
                 'is_recommended' => false,
-                'locale' => 'fr',
-                'currency_code' => 'XOF',
+                'locale' => 'en',
+                'currency_code' => 'RUB',
                 'created_at' => Carbon::now()->subDays(1),
             ]
         );
@@ -218,7 +216,6 @@ class DemoUserSeeder extends Seeder
 
         // ── KYC Documents ──
 
-        // Approved KYC documents
         foreach ($approvedUsers as $user) {
             KYCDocument::firstOrCreate(
                 ['user_id' => $user->id, 'document_type' => 'passport'],
@@ -233,7 +230,6 @@ class DemoUserSeeder extends Seeder
             );
         }
 
-        // Pending KYC documents
         KYCDocument::firstOrCreate(
             ['user_id' => $user6->id, 'document_type' => 'idCard'],
             [
@@ -255,7 +251,6 @@ class DemoUserSeeder extends Seeder
             ]
         );
 
-        // Rejected KYC document
         KYCDocument::firstOrCreate(
             ['user_id' => $user8->id, 'document_type' => 'driversLicense'],
             [
@@ -269,132 +264,129 @@ class DemoUserSeeder extends Seeder
             ]
         );
 
-        // ── Trips ──
+        // ── Trips (Cameroun ↔ Russie) — 20 voyages ──
 
-        if ($france && $senegal && $paris && $dakar) {
-            $trip1 = Trip::firstOrCreate(
-                ['traveler_id' => $user2->id, 'departure_date' => Carbon::now()->subDays(30)],
-                [
-                    'departure_country' => 'France',
-                    'departure_city' => 'Paris',
-                    'departure_country_id' => $france->id,
-                    'departure_city_id' => $paris->id,
-                    'arrival_country' => 'Senegal',
-                    'arrival_city' => 'Dakar',
-                    'arrival_country_id' => $senegal->id,
-                    'arrival_city_id' => $dakar->id,
-                    'departure_date' => Carbon::now()->subDays(30),
-                    'arrival_date' => Carbon::now()->subDays(29),
-                    'available_capacity' => 20.00,
-                    'price_per_kg' => 15.00,
-                    'accepted_package_types' => ['documents', 'electronics', 'clothing'],
-                    'currency_code' => 'EUR',
-                    'status' => 'completed',
-                    'verification_status' => 'verified',
-                    'verified_by' => $admin?->id,
-                    'verified_at' => Carbon::now()->subDays(31),
-                ]
+        $travelers = [$user1, $user2, $user3, $user4, $user5];
+        $cmCities = [
+            ['city' => $douala, 'name' => 'Douala'],
+            ['city' => $yaounde, 'name' => 'Yaoundé'],
+            ['city' => $bafoussam, 'name' => 'Bafoussam'],
+        ];
+        $ruCities = [
+            ['city' => $moscow, 'name' => 'Moscou'],
+            ['city' => $stPetersburg, 'name' => 'Saint-Pétersbourg'],
+            ['city' => $kazan, 'name' => 'Kazan'],
+        ];
+        $packageTypes = [
+            ['documents', 'electronics', 'clothing'],
+            ['food', 'clothing', 'cosmetics'],
+            ['documents', 'electronics'],
+            ['clothing', 'food'],
+            ['cosmetics', 'food', 'electronics'],
+        ];
+
+        $tripDefinitions = [
+            // ── Completed trips (past) ──
+            ['from' => 'cm', 'cmIdx' => 0, 'ruIdx' => 0, 'travIdx' => 0, 'days' => -45, 'cap' => 20, 'price' => 5000, 'cur' => 'XAF', 'status' => 'completed', 'pkgIdx' => 0],
+            ['from' => 'ru', 'cmIdx' => 0, 'ruIdx' => 0, 'travIdx' => 1, 'days' => -30, 'cap' => 15, 'price' => 800,  'cur' => 'RUB', 'status' => 'completed', 'pkgIdx' => 1],
+            ['from' => 'cm', 'cmIdx' => 1, 'ruIdx' => 1, 'travIdx' => 2, 'days' => -25, 'cap' => 12, 'price' => 5500, 'cur' => 'XAF', 'status' => 'completed', 'pkgIdx' => 2],
+            ['from' => 'ru', 'cmIdx' => 2, 'ruIdx' => 0, 'travIdx' => 3, 'days' => -20, 'cap' => 18, 'price' => 650,  'cur' => 'RUB', 'status' => 'completed', 'pkgIdx' => 3],
+            ['from' => 'cm', 'cmIdx' => 0, 'ruIdx' => 2, 'travIdx' => 4, 'days' => -15, 'cap' => 25, 'price' => 4800, 'cur' => 'XAF', 'status' => 'completed', 'pkgIdx' => 4],
+            ['from' => 'ru', 'cmIdx' => 1, 'ruIdx' => 0, 'travIdx' => 1, 'days' => -10, 'cap' => 10, 'price' => 900,  'cur' => 'RUB', 'status' => 'completed', 'pkgIdx' => 0],
+
+            // ── Active trips (future, verified) ──
+            ['from' => 'cm', 'cmIdx' => 0, 'ruIdx' => 0, 'travIdx' => 0, 'days' => 3,  'cap' => 22, 'price' => 5200, 'cur' => 'XAF', 'status' => 'active', 'pkgIdx' => 0],
+            ['from' => 'ru', 'cmIdx' => 0, 'ruIdx' => 1, 'travIdx' => 1, 'days' => 5,  'cap' => 30, 'price' => 550,  'cur' => 'RUB', 'status' => 'active', 'pkgIdx' => 1],
+            ['from' => 'cm', 'cmIdx' => 1, 'ruIdx' => 0, 'travIdx' => 2, 'days' => 7,  'cap' => 8,  'price' => 6000, 'cur' => 'XAF', 'status' => 'active', 'pkgIdx' => 2],
+            ['from' => 'ru', 'cmIdx' => 2, 'ruIdx' => 2, 'travIdx' => 3, 'days' => 10, 'cap' => 35, 'price' => 700,  'cur' => 'RUB', 'status' => 'active', 'pkgIdx' => 3],
+            ['from' => 'cm', 'cmIdx' => 2, 'ruIdx' => 0, 'travIdx' => 4, 'days' => 12, 'cap' => 15, 'price' => 4500, 'cur' => 'XAF', 'status' => 'active', 'pkgIdx' => 4],
+            ['from' => 'ru', 'cmIdx' => 0, 'ruIdx' => 0, 'travIdx' => 1, 'days' => 14, 'cap' => 20, 'price' => 750,  'cur' => 'RUB', 'status' => 'active', 'pkgIdx' => 0],
+            ['from' => 'cm', 'cmIdx' => 0, 'ruIdx' => 1, 'travIdx' => 0, 'days' => 18, 'cap' => 28, 'price' => 4000, 'cur' => 'XAF', 'status' => 'active', 'pkgIdx' => 1],
+            ['from' => 'ru', 'cmIdx' => 1, 'ruIdx' => 2, 'travIdx' => 3, 'days' => 20, 'cap' => 12, 'price' => 850,  'cur' => 'RUB', 'status' => 'active', 'pkgIdx' => 2],
+            ['from' => 'cm', 'cmIdx' => 1, 'ruIdx' => 0, 'travIdx' => 2, 'days' => 25, 'cap' => 18, 'price' => 5800, 'cur' => 'XAF', 'status' => 'active', 'pkgIdx' => 3],
+            ['from' => 'ru', 'cmIdx' => 2, 'ruIdx' => 1, 'travIdx' => 1, 'days' => 28, 'cap' => 40, 'price' => 480,  'cur' => 'RUB', 'status' => 'active', 'pkgIdx' => 4],
+            ['from' => 'cm', 'cmIdx' => 2, 'ruIdx' => 2, 'travIdx' => 4, 'days' => 30, 'cap' => 14, 'price' => 5300, 'cur' => 'XAF', 'status' => 'active', 'pkgIdx' => 0],
+
+            // ── Active trips (pending verification) ──
+            ['from' => 'cm', 'cmIdx' => 0, 'ruIdx' => 0, 'travIdx' => 2, 'days' => 35, 'cap' => 16, 'price' => 4700, 'cur' => 'XAF', 'status' => 'active', 'pkgIdx' => 1, 'pending' => true],
+            ['from' => 'ru', 'cmIdx' => 1, 'ruIdx' => 0, 'travIdx' => 3, 'days' => 38, 'cap' => 20, 'price' => 620,  'cur' => 'RUB', 'status' => 'active', 'pkgIdx' => 2, 'pending' => true],
+            ['from' => 'cm', 'cmIdx' => 1, 'ruIdx' => 1, 'travIdx' => 0, 'days' => 40, 'cap' => 10, 'price' => 6500, 'cur' => 'XAF', 'status' => 'active', 'pkgIdx' => 4, 'pending' => true],
+        ];
+
+        $trips = [];
+        foreach ($tripDefinitions as $i => $def) {
+            $cm = $cmCities[$def['cmIdx']];
+            $ru = $ruCities[$def['ruIdx']];
+            $traveler = $travelers[$def['travIdx']];
+
+            if (!$cm['city'] || !$ru['city']) continue;
+
+            $isCmToRu = $def['from'] === 'cm';
+            $depDate = $def['days'] > 0 ? Carbon::now()->addDays($def['days']) : Carbon::now()->subDays(abs($def['days']));
+            $arrDate = $depDate->copy()->addDays(2);
+            $isPending = $def['pending'] ?? false;
+
+            $tripData = [
+                'departure_country'    => $isCmToRu ? 'Cameroun' : 'Russie',
+                'departure_city'       => $isCmToRu ? $cm['name'] : $ru['name'],
+                'departure_country_id' => $isCmToRu ? $cameroon->id : $russia->id,
+                'departure_city_id'    => $isCmToRu ? $cm['city']->id : $ru['city']->id,
+                'arrival_country'      => $isCmToRu ? 'Russie' : 'Cameroun',
+                'arrival_city'         => $isCmToRu ? $ru['name'] : $cm['name'],
+                'arrival_country_id'   => $isCmToRu ? $russia->id : $cameroon->id,
+                'arrival_city_id'      => $isCmToRu ? $ru['city']->id : $cm['city']->id,
+                'departure_date'       => $depDate,
+                'arrival_date'         => $arrDate,
+                'available_capacity'   => $def['cap'],
+                'price_per_kg'         => $def['price'],
+                'accepted_package_types' => $packageTypes[$def['pkgIdx']],
+                'currency_code'        => $def['cur'],
+                'status'               => $def['status'],
+                'verification_status'  => $isPending ? 'pending' : 'verified',
+            ];
+
+            if (!$isPending) {
+                $tripData['verified_by'] = $admin?->id;
+                $tripData['verified_at'] = $depDate->copy()->subDay();
+            }
+
+            $trip = Trip::firstOrCreate(
+                ['traveler_id' => $traveler->id, 'departure_date' => $depDate],
+                $tripData
             );
 
-            $trip2 = Trip::firstOrCreate(
-                ['traveler_id' => $user5->id, 'departure_date' => Carbon::now()->subDays(15)],
-                [
-                    'departure_country' => 'Senegal',
-                    'departure_city' => 'Dakar',
-                    'departure_country_id' => $senegal->id,
-                    'departure_city_id' => $dakar->id,
-                    'arrival_country' => 'France',
-                    'arrival_city' => 'Paris',
-                    'arrival_country_id' => $france->id,
-                    'arrival_city_id' => $paris->id,
-                    'departure_date' => Carbon::now()->subDays(15),
-                    'arrival_date' => Carbon::now()->subDays(14),
-                    'available_capacity' => 15.00,
-                    'price_per_kg' => 12.00,
-                    'accepted_package_types' => ['food', 'clothing', 'cosmetics'],
-                    'currency_code' => 'EUR',
-                    'status' => 'completed',
-                    'verification_status' => 'verified',
-                    'verified_by' => $admin?->id,
-                    'verified_at' => Carbon::now()->subDays(16),
-                ]
-            );
+            $trips[$i] = $trip;
         }
 
-        if ($cameroon && $france && $douala && $paris) {
-            $trip3 = Trip::firstOrCreate(
-                ['traveler_id' => $user3->id, 'departure_date' => Carbon::now()->addDays(5)],
-                [
-                    'departure_country' => 'Cameroon',
-                    'departure_city' => 'Douala',
-                    'departure_country_id' => $cameroon->id,
-                    'departure_city_id' => $douala->id,
-                    'arrival_country' => 'France',
-                    'arrival_city' => 'Paris',
-                    'arrival_country_id' => $france->id,
-                    'arrival_city_id' => $paris->id,
-                    'departure_date' => Carbon::now()->addDays(5),
-                    'arrival_date' => Carbon::now()->addDays(6),
-                    'available_capacity' => 10.00,
-                    'price_per_kg' => 18.00,
-                    'accepted_package_types' => ['documents', 'electronics'],
-                    'currency_code' => 'EUR',
-                    'status' => 'active',
-                    'verification_status' => 'verified',
-                    'verified_by' => $admin?->id,
-                    'verified_at' => Carbon::now()->subDays(1),
-                ]
-            );
-        }
-
-        if ($ivoryCoast && $france && $abidjan && $marseille) {
-            $trip4 = Trip::firstOrCreate(
-                ['traveler_id' => $user4->id, 'departure_date' => Carbon::now()->addDays(10)],
-                [
-                    'departure_country' => 'Ivory Coast',
-                    'departure_city' => 'Abidjan',
-                    'departure_country_id' => $ivoryCoast->id,
-                    'departure_city_id' => $abidjan->id,
-                    'arrival_country' => 'France',
-                    'arrival_city' => 'Marseille',
-                    'arrival_country_id' => $france->id,
-                    'arrival_city_id' => $marseille->id,
-                    'departure_date' => Carbon::now()->addDays(10),
-                    'arrival_date' => Carbon::now()->addDays(11),
-                    'available_capacity' => 25.00,
-                    'price_per_kg' => 10.00,
-                    'accepted_package_types' => ['clothing', 'food', 'cosmetics'],
-                    'currency_code' => 'EUR',
-                    'status' => 'active',
-                    'verification_status' => 'pending',
-                ]
-            );
-        }
+        // Alias for shipments/ratings (first 2 completed trips)
+        $trip1 = $trips[0] ?? null;
+        $trip2 = $trips[1] ?? null;
+        $trip3 = $trips[6] ?? null; // first active trip
 
         // ── Shipments ──
 
-        if (isset($trip1) && $france && $senegal && $paris && $dakar) {
+        if (isset($trip1) && $cameroon && $russia && $douala && $moscow) {
             $shipment1 = Shipment::firstOrCreate(
-                ['sender_id' => $user1->id, 'trip_id' => $trip1->id],
+                ['sender_id' => $user3->id, 'trip_id' => $trip1->id],
                 [
-                    'traveler_id' => $user2->id,
+                    'traveler_id' => $user1->id,
                     'package_description' => 'Documents administratifs et vêtements',
                     'package_weight' => 5.00,
                     'package_length' => 40,
                     'package_width' => 30,
                     'package_height' => 20,
-                    'pickup_country' => 'France',
-                    'pickup_city' => 'Paris',
-                    'pickup_country_id' => $france->id,
-                    'pickup_city_id' => $paris->id,
-                    'pickup_address' => '15 Rue de Rivoli, Paris',
-                    'delivery_country' => 'Senegal',
-                    'delivery_city' => 'Dakar',
-                    'delivery_country_id' => $senegal->id,
-                    'delivery_city_id' => $dakar->id,
-                    'delivery_address' => 'Quartier Plateau, Dakar',
+                    'pickup_country' => 'Cameroun',
+                    'pickup_city' => 'Douala',
+                    'pickup_country_id' => $cameroon->id,
+                    'pickup_city_id' => $douala->id,
+                    'pickup_address' => 'Akwa, Douala',
+                    'delivery_country' => 'Russie',
+                    'delivery_city' => 'Moscou',
+                    'delivery_country_id' => $russia->id,
+                    'delivery_city_id' => $moscow->id,
+                    'delivery_address' => 'Arbat 10, Moscou',
                     'status' => 'delivered',
-                    'payment_amount' => 75.00,
+                    'payment_amount' => 25000.00,
                     'payment_status' => 'released',
                 ]
             );
@@ -402,78 +394,78 @@ class DemoUserSeeder extends Seeder
             $shipment2 = Shipment::firstOrCreate(
                 ['sender_id' => $user4->id, 'trip_id' => $trip1->id],
                 [
-                    'traveler_id' => $user2->id,
-                    'package_description' => 'Produits cosmétiques',
+                    'traveler_id' => $user1->id,
+                    'package_description' => 'Produits cosmétiques camerounais',
                     'package_weight' => 3.00,
                     'package_length' => 25,
                     'package_width' => 20,
                     'package_height' => 15,
-                    'pickup_country' => 'France',
-                    'pickup_city' => 'Paris',
-                    'pickup_country_id' => $france->id,
-                    'pickup_city_id' => $paris->id,
-                    'pickup_address' => '8 Avenue des Champs-Élysées, Paris',
-                    'delivery_country' => 'Senegal',
-                    'delivery_city' => 'Dakar',
-                    'delivery_country_id' => $senegal->id,
-                    'delivery_city_id' => $dakar->id,
-                    'delivery_address' => 'Mermoz, Dakar',
+                    'pickup_country' => 'Cameroun',
+                    'pickup_city' => 'Douala',
+                    'pickup_country_id' => $cameroon->id,
+                    'pickup_city_id' => $douala->id,
+                    'pickup_address' => 'Bonanjo, Douala',
+                    'delivery_country' => 'Russie',
+                    'delivery_city' => 'Moscou',
+                    'delivery_country_id' => $russia->id,
+                    'delivery_city_id' => $moscow->id,
+                    'delivery_address' => 'Tverskaya 25, Moscou',
                     'status' => 'delivered',
-                    'payment_amount' => 45.00,
+                    'payment_amount' => 15000.00,
                     'payment_status' => 'released',
                 ]
             );
         }
 
-        if (isset($trip2) && $senegal && $france && $dakar && $paris) {
+        if (isset($trip2) && $cameroon && $russia && $douala && $moscow) {
             $shipment3 = Shipment::firstOrCreate(
-                ['sender_id' => $user1->id, 'trip_id' => $trip2->id],
+                ['sender_id' => $user4->id, 'trip_id' => $trip2->id],
                 [
-                    'traveler_id' => $user5->id,
-                    'package_description' => 'Épices et produits locaux',
+                    'traveler_id' => $user2->id,
+                    'package_description' => 'Livres et matériel informatique',
                     'package_weight' => 8.00,
                     'package_length' => 50,
                     'package_width' => 35,
                     'package_height' => 25,
-                    'pickup_country' => 'Senegal',
-                    'pickup_city' => 'Dakar',
-                    'pickup_country_id' => $senegal->id,
-                    'pickup_city_id' => $dakar->id,
-                    'pickup_address' => 'Marché Sandaga, Dakar',
-                    'delivery_country' => 'France',
-                    'delivery_city' => 'Paris',
-                    'delivery_country_id' => $france->id,
-                    'delivery_city_id' => $paris->id,
-                    'delivery_address' => '22 Rue de Belleville, Paris',
+                    'pickup_country' => 'Russie',
+                    'pickup_city' => 'Moscou',
+                    'pickup_country_id' => $russia->id,
+                    'pickup_city_id' => $moscow->id,
+                    'pickup_address' => 'Prospect Mira 12, Moscou',
+                    'delivery_country' => 'Cameroun',
+                    'delivery_city' => 'Douala',
+                    'delivery_country_id' => $cameroon->id,
+                    'delivery_city_id' => $douala->id,
+                    'delivery_address' => 'Bonapriso, Douala',
                     'status' => 'delivered',
-                    'payment_amount' => 96.00,
+                    'payment_amount' => 6400.00,
                     'payment_status' => 'released',
                 ]
             );
         }
 
-        if (isset($trip3) && $cameroon && $france && $douala && $paris) {
+        if (isset($trip3) && $cameroon && $russia && $douala && $moscow) {
             $shipment4 = Shipment::firstOrCreate(
-                ['sender_id' => $user3->id, 'trip_id' => $trip3->id],
+                ['sender_id' => $user5->id, 'trip_id' => $trip3->id],
                 [
-                    'traveler_id' => $user3->id,
-                    'package_description' => 'Matériel informatique',
+                    'traveler_id' => $user1->id,
+                    'package_description' => 'Épices et produits alimentaires',
                     'package_weight' => 2.00,
                     'package_length' => 30,
                     'package_width' => 25,
                     'package_height' => 10,
-                    'pickup_country' => 'Cameroon',
+                    'pickup_country' => 'Cameroun',
                     'pickup_city' => 'Douala',
                     'pickup_country_id' => $cameroon->id,
                     'pickup_city_id' => $douala->id,
-                    'pickup_address' => 'Akwa, Douala',
-                    'delivery_country' => 'France',
-                    'delivery_city' => 'Paris',
-                    'delivery_country_id' => $france->id,
-                    'delivery_city_id' => $paris->id,
-                    'delivery_address' => '5 Rue du Faubourg, Paris',
+                    'pickup_address' => 'Marché Central, Douala',
+                    'delivery_country' => 'Russie',
+                    'delivery_city' => 'Moscou',
+                    'delivery_country_id' => $russia->id,
+                    'delivery_city_id' => $moscow->id,
+                    'delivery_address' => 'Leninsky Prospect 15, Moscou',
                     'status' => 'accepted',
-                    'payment_amount' => 36.00,
+                    'payment_amount' => 10400.00,
                     'payment_status' => 'escrowed',
                 ]
             );
@@ -483,33 +475,33 @@ class DemoUserSeeder extends Seeder
 
         if (isset($shipment1)) {
             Rating::firstOrCreate(
-                ['from_user_id' => $user1->id, 'to_user_id' => $user2->id, 'shipment_id' => $shipment1->id],
+                ['from_user_id' => $user3->id, 'to_user_id' => $user1->id, 'shipment_id' => $shipment1->id],
                 ['rating' => 5, 'comment' => 'Excellente livraison, très rapide et soigneuse !']
             );
             Rating::firstOrCreate(
-                ['from_user_id' => $user2->id, 'to_user_id' => $user1->id, 'shipment_id' => $shipment1->id],
+                ['from_user_id' => $user1->id, 'to_user_id' => $user3->id, 'shipment_id' => $shipment1->id],
                 ['rating' => 5, 'comment' => 'Colis bien emballé, expéditeur fiable.']
             );
         }
 
         if (isset($shipment2)) {
             Rating::firstOrCreate(
-                ['from_user_id' => $user4->id, 'to_user_id' => $user2->id, 'shipment_id' => $shipment2->id],
-                ['rating' => 4, 'comment' => 'Bon service, un peu de retard mais tout est arrivé.']
+                ['from_user_id' => $user4->id, 'to_user_id' => $user1->id, 'shipment_id' => $shipment2->id],
+                ['rating' => 4, 'comment' => 'Bon service, un peu de retard mais tout est arrivé intact.']
             );
             Rating::firstOrCreate(
-                ['from_user_id' => $user2->id, 'to_user_id' => $user4->id, 'shipment_id' => $shipment2->id],
+                ['from_user_id' => $user1->id, 'to_user_id' => $user4->id, 'shipment_id' => $shipment2->id],
                 ['rating' => 5, 'comment' => 'Colis parfait, merci !']
             );
         }
 
         if (isset($shipment3)) {
             Rating::firstOrCreate(
-                ['from_user_id' => $user1->id, 'to_user_id' => $user5->id, 'shipment_id' => $shipment3->id],
-                ['rating' => 4, 'comment' => 'Très bon transporteur, je recommande.']
+                ['from_user_id' => $user4->id, 'to_user_id' => $user2->id, 'shipment_id' => $shipment3->id],
+                ['rating' => 5, 'comment' => 'Très bon transporteur, je recommande fortement.']
             );
             Rating::firstOrCreate(
-                ['from_user_id' => $user5->id, 'to_user_id' => $user1->id, 'shipment_id' => $shipment3->id],
+                ['from_user_id' => $user2->id, 'to_user_id' => $user4->id, 'shipment_id' => $shipment3->id],
                 ['rating' => 4, 'comment' => 'Bon expéditeur, emballage correct.']
             );
         }
@@ -521,11 +513,10 @@ class DemoUserSeeder extends Seeder
                 ['user_id' => $user->id],
                 [
                     'balance' => round(rand(1000, 50000) / 100, 2),
-                    'currency_code' => $user->currency_code ?? 'EUR',
+                    'currency_code' => $user->currency_code ?? 'RUB',
                 ]
             );
 
-            // Add some transactions
             if ($wallet->wasRecentlyCreated) {
                 WalletTransaction::create([
                     'wallet_id' => $wallet->id,
@@ -548,11 +539,13 @@ class DemoUserSeeder extends Seeder
         }
 
         $this->command->info('Demo users seeded successfully!');
-        $this->command->info('10 demo users created:');
+        $this->command->info('10 demo users created (Cameroun + Russie):');
         $this->command->info('  - 5 with approved KYC (with trips, shipments, ratings, wallets)');
         $this->command->info('  - 2 with pending KYC');
         $this->command->info('  - 1 with rejected KYC');
         $this->command->info('  - 2 new users (pending, no KYC document submitted)');
+        $this->command->info('  - 20 trips across Cameroun↔Russie (6 completed, 11 active verified, 3 pending verification)');
+        $this->command->info('  - 4 shipments with ratings');
         $this->command->info('All demo users password: password');
     }
 }
