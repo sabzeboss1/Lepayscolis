@@ -58,7 +58,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
 
     setLoading(true);
     try {
-      const data = await apiClient.get(API_ENDPOINTS.admin.ratings.show(ratingId));
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.ratings.show(ratingId));
       setRating(data.data);
     } catch (error) {
       console.error('Failed to fetch rating details:', error);
@@ -73,7 +73,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
     }
 
     try {
-      await apiClient.delete(API_ENDPOINTS.admin.ratings.delete(ratingId), { reason: deleteReason });
+      await apiClient.delete<any>(API_ENDPOINTS.admin.ratings.delete(ratingId), { params: { reason: deleteReason } });
       router.push('/admin/ratings');
     } catch (error) {
       console.error('Failed to delete rating:', error);

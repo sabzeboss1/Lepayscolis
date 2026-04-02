@@ -68,7 +68,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
         per_page: perPage,
       };
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.wallets.show(userId), { params });
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.wallets.show(userId), { params });
       setWallet(data.data.wallet);
       setTransactions(data.data.transactions ?? []);
       setTotal(data.meta?.total ?? 0);
@@ -85,7 +85,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     setAdjusting(true);
     setAdjustError(null);
     try {
-      await apiClient.post(API_ENDPOINTS.admin.wallets.adjust(userId), {
+      await apiClient.post<any>(API_ENDPOINTS.admin.wallets.adjust(userId), {
         amount: parseFloat(adjustAmount),
         type: adjustType,
         reason: adjustReason,

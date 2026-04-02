@@ -49,7 +49,7 @@ export default function AnalyticsPage() {
       if (dateRange.from) params.date_from = dateRange.from;
       if (dateRange.to) params.date_to = dateRange.to;
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.analytics.index, { params });
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.analytics.index, { params });
       setAnalytics(data.data);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
@@ -61,7 +61,7 @@ export default function AnalyticsPage() {
   const handleExport = async (type: string) => {
     setExportLoading(true);
     try {
-      const result = await apiClient.post(API_ENDPOINTS.admin.analytics.export, {
+      const result = await apiClient.post<any>(API_ENDPOINTS.admin.analytics.export, {
         type,
         date_from: dateRange.from || undefined,
         date_to: dateRange.to || undefined,

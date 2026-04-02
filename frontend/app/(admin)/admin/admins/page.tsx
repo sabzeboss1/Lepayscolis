@@ -54,7 +54,7 @@ export default function AdminsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiClient.get(API_ENDPOINTS.admin.admins.list);
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.admins.list);
       setAdmins(data.data || []);
     } catch (e: any) {
       setError(e.message);
@@ -88,7 +88,7 @@ export default function AdminsPage() {
     setModal('activity');
     setActivityLoading(true);
     try {
-      const data = await apiClient.get(API_ENDPOINTS.admin.admins.activity(admin.id));
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.admins.activity(admin.id));
       setActivityLogs(data.data || []);
     } catch {
       setActivityLogs([]);
@@ -108,7 +108,7 @@ export default function AdminsPage() {
     setCreating(true);
     setCreateErrors({});
     try {
-      await apiClient.post(API_ENDPOINTS.admin.admins.create, createForm);
+      await apiClient.post<any>(API_ENDPOINTS.admin.admins.create, createForm);
       setSuccess(t('admin.admins.createSuccess'));
       closeModal();
       fetchAdmins();
@@ -123,7 +123,7 @@ export default function AdminsPage() {
     if (!selectedAdmin) return;
     setUpdating(true);
     try {
-      await apiClient.put(API_ENDPOINTS.admin.admins.updateRole(selectedAdmin.id), { role: newRole });
+      await apiClient.put<any>(API_ENDPOINTS.admin.admins.updateRole(selectedAdmin.id), { role: newRole });
       setSuccess(t('admin.admins.updateRoleSuccess'));
       closeModal();
       fetchAdmins();
@@ -139,7 +139,7 @@ export default function AdminsPage() {
     if (!selectedAdmin) return;
     setRemoving(true);
     try {
-      await apiClient.delete(API_ENDPOINTS.admin.admins.remove(selectedAdmin.id));
+      await apiClient.delete<any>(API_ENDPOINTS.admin.admins.remove(selectedAdmin.id));
       setSuccess(t('admin.admins.removeSuccess'));
       closeModal();
       fetchAdmins();

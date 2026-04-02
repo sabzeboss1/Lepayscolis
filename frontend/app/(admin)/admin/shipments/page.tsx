@@ -59,7 +59,7 @@ export default function ShipmentsPage() {
       if (filters.search) params.search = filters.search;
       if (filters.status) params.status = filters.status;
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.shipments.list, { params });
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.shipments.list, { params });
       setShipments(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {

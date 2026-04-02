@@ -58,7 +58,7 @@ export default function RatingsPage() {
       if (filters.search && typeof filters.search === 'string') params.search = filters.search;
       if (filters.rating && typeof filters.rating === 'string') params.rating = filters.rating;
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.ratings.list, { params });
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.ratings.list, { params });
       setRatings(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {

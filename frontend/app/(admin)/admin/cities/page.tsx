@@ -120,7 +120,7 @@ export default function AdminCitiesPage() {
 
   const toggleCity = async (city: City) => {
     try {
-      await apiClient.post(API_ENDPOINTS.admin.cities.toggle(city.id));
+      await apiClient.post<any>(API_ENDPOINTS.admin.cities.toggle(city.id));
       showSuccess(city.is_active ? t('admin.cities.success.deactivated') : t('admin.cities.success.activated'));
       await fetchCities();
     } catch (err: any) {
@@ -133,7 +133,7 @@ export default function AdminCitiesPage() {
     setCreating(true);
     setCreateErrors({});
     try {
-      await apiClient.post(API_ENDPOINTS.admin.cities.store, {
+      await apiClient.post<any>(API_ENDPOINTS.admin.cities.store, {
         name_en: createForm.name_en,
         name_fr: createForm.name_fr,
         country_id: parseInt(createForm.country_id),
@@ -168,7 +168,7 @@ export default function AdminCitiesPage() {
     setSaving(true);
     setEditErrors({});
     try {
-      await apiClient.put(API_ENDPOINTS.admin.cities.update(editingCity.id), {
+      await apiClient.put<any>(API_ENDPOINTS.admin.cities.update(editingCity.id), {
         name_en: editForm.name_en,
         name_fr: editForm.name_fr,
         country_id: parseInt(editForm.country_id),
@@ -188,7 +188,7 @@ export default function AdminCitiesPage() {
   const handleDelete = async (city: City) => {
     setDeleting(true);
     try {
-      await apiClient.delete(API_ENDPOINTS.admin.cities.delete(city.id));
+      await apiClient.delete<any>(API_ENDPOINTS.admin.cities.delete(city.id));
       showSuccess(t('admin.cities.success.deleted'));
       setDeletingCity(null);
       await fetchCities();

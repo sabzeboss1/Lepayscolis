@@ -129,7 +129,7 @@ export default function WithdrawPage() {
 
     setIsSubmitting(true);
     try {
-      await apiClient.post(API_ENDPOINTS.withdrawals.create, {
+      await apiClient.post<any>(API_ENDPOINTS.withdrawals.create, {
         amount: withdrawalAmount,
         payment_method: selectedPaymentMethod.id,
         payment_details: {

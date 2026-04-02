@@ -225,7 +225,7 @@ export default function SettingsPage() {
         }
       }
 
-      await apiClient.put(API_ENDPOINTS.admin.settings.update, tabData);
+      await apiClient.put<any>(API_ENDPOINTS.admin.settings.update, tabData);
 
       setMessage({ type: 'success', text: t('admin.settings.success') });
       setTimeout(() => setMessage(null), 3000);

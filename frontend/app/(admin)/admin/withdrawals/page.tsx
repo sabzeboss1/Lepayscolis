@@ -76,7 +76,7 @@ export default function WithdrawalsPage() {
       if (filters.status) params.status = filters.status;
       if (filters.search) params.search = filters.search;
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.withdrawals.list, { params });
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.withdrawals.list, { params });
       setWithdrawals(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
       setTotalPendingAmount(data.meta?.total_pending_amount || 0);
@@ -111,22 +111,22 @@ export default function WithdrawalsPage() {
   };
 
   const handleApprove = async (id: string) => {
-    await apiClient.post(API_ENDPOINTS.admin.withdrawals.approve(id));
+    await apiClient.post<any>(API_ENDPOINTS.admin.withdrawals.approve(id));
     fetchWithdrawals();
   };
 
   const handleReject = async (id: string, reason: string) => {
-    await apiClient.post(API_ENDPOINTS.admin.withdrawals.reject(id), { reason });
+    await apiClient.post<any>(API_ENDPOINTS.admin.withdrawals.reject(id), { reason });
     fetchWithdrawals();
   };
 
   const handleProcessing = async (id: string) => {
-    await apiClient.post(API_ENDPOINTS.admin.withdrawals.processing(id));
+    await apiClient.post<any>(API_ENDPOINTS.admin.withdrawals.processing(id));
     fetchWithdrawals();
   };
 
   const handleComplete = async (id: string) => {
-    await apiClient.post(API_ENDPOINTS.admin.withdrawals.complete(id));
+    await apiClient.post<any>(API_ENDPOINTS.admin.withdrawals.complete(id));
     fetchWithdrawals();
   };
 

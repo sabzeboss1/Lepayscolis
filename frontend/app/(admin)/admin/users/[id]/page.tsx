@@ -80,7 +80,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await apiClient.put(API_ENDPOINTS.admin.users.show(userId), formData);
+      await apiClient.put<any>(API_ENDPOINTS.admin.users.show(userId), formData);
       fetchUserDetails();
       setShowEditForm(false);
     } catch (error) {
@@ -92,7 +92,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await apiClient.post(API_ENDPOINTS.admin.users.suspend(userId), { 
+      await apiClient.post<any>(API_ENDPOINTS.admin.users.suspend(userId), { 
         reason: 'Suspended by admin' 
       });
       fetchUserDetails();
@@ -106,7 +106,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await apiClient.post(API_ENDPOINTS.admin.users.activate(userId));
+      await apiClient.post<any>(API_ENDPOINTS.admin.users.activate(userId));
       fetchUserDetails();
     } catch (error) {
       console.error('Failed to activate user:', error);
@@ -117,7 +117,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await apiClient.delete(API_ENDPOINTS.admin.users.show(userId));
+      await apiClient.delete<any>(API_ENDPOINTS.admin.users.show(userId));
       router.push('/admin/users');
     } catch (error) {
       console.error('Failed to delete user:', error);
@@ -128,7 +128,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!userId) return;
 
     try {
-      await apiClient.post(API_ENDPOINTS.admin.users.assignAdmin(userId), { 
+      await apiClient.post<any>(API_ENDPOINTS.admin.users.assignAdmin(userId), { 
         role: 'admin' 
       });
       fetchUserDetails();

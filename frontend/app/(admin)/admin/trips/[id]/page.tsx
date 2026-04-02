@@ -81,7 +81,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     if (!tripId) return;
     setLoading(true);
     try {
-      const data = await apiClient.get(API_ENDPOINTS.admin.trips.show(tripId));
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.trips.show(tripId));
       setTrip(data.data?.trip ?? null);
       setShipments(data.data?.shipments ?? []);
       setAnalytics(data.data?.analytics ?? null);
@@ -96,7 +96,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     if (!tripId || cancelReason.length < 10) return;
     setIsCancelling(true);
     try {
-      await apiClient.post(API_ENDPOINTS.admin.trips.cancel(tripId), { reason: cancelReason });
+      await apiClient.post<any>(API_ENDPOINTS.admin.trips.cancel(tripId), { reason: cancelReason });
       fetchTripDetails();
       setShowCancelDialog(false);
       setCancelReason('');
@@ -111,7 +111,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     if (!tripId) return;
     setIsVerifying(true);
     try {
-      await apiClient.post(API_ENDPOINTS.admin.trips.verify(tripId));
+      await apiClient.post<any>(API_ENDPOINTS.admin.trips.verify(tripId));
       fetchTripDetails();
     } catch (error) {
       console.error('Failed to verify trip:', error);
@@ -124,7 +124,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     if (!tripId || rejectReason.length < 10) return;
     setIsRejecting(true);
     try {
-      await apiClient.post(API_ENDPOINTS.admin.trips.reject(tripId), { reason: rejectReason });
+      await apiClient.post<any>(API_ENDPOINTS.admin.trips.reject(tripId), { reason: rejectReason });
       fetchTripDetails();
       setShowRejectDialog(false);
       setRejectReason('');

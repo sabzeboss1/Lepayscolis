@@ -59,7 +59,7 @@ export default function MessagesPage() {
         params.search = filters.search;
       }
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.messages.list, { params });
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.messages.list, { params });
       setConversations(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (error) {
