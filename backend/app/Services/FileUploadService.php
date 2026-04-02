@@ -57,12 +57,12 @@ class FileUploadService
     }
 
     /**
-     * Upload KYC document to private local storage
+     * Upload KYC document to public storage
      *
      * @param UploadedFile $file
      * @param string $userId
      * @param string $type Document type (e.g., 'document_front', 'document_back', 'selfie')
-     * @return string URL of uploaded document
+     * @return string Relative path stored in DB (e.g., kyc/11/document_front_xxx.png)
      * @throws \Exception
      */
     public function uploadKYCDocument(UploadedFile $file, string $userId, string $type): string
@@ -77,15 +77,15 @@ class FileUploadService
         $extension = $file->getClientOriginalExtension();
         $filename = "kyc/{$userId}/{$type}_" . time() . ".{$extension}";
 
-        // Upload to local private storage
-        $path = $file->storeAs('', $filename, 'local');
+        // Upload to public storage (accessible via /storage symlink)
+        $path = $file->storeAs('', $filename, 'public');
 
         if (!$path) {
             throw new \Exception('Failed to upload KYC document');
         }
 
-        // Return URL (served by Laravel via local disk with serve => true)
-        return Storage::disk('local')->url($filename);
+        // Return relative path (full URL built by resource)
+        return $filename;
     }
 
     /**
@@ -242,13 +242,13 @@ class FileUploadService
      */
     private function getDiskFromPath(string $path): string
     {
-        // Avatars and branding assets are stored in public disk
-        if (str_starts_with($path, 'avatars/') || str_starts_with($path, 'branding/')) {
+        // Avatars, branding assets, and KYC documents are stored in public disk
+        if (str_starts_with($path, 'avatars/') || str_starts_with($path, 'branding/') || str_starts_with($path, 'kyc/')) {
             return 'public';
         }
 
-        // KYC documents and travel proofs are stored in local (private) disk
-        if (str_starts_with($path, 'kyc/') || str_starts_with($path, 'travel-proofs/')) {
+        // Travel proofs are stored in local (private) disk
+        if (str_starts_with($path, 'travel-proofs/')) {
             return 'local';
         }
 
