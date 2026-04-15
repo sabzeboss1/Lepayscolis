@@ -106,7 +106,7 @@ function LoadingRows() {
 /* ── main page ────────────────────────────────── */
 export default function DashboardPage() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
-  const { needsKYC, isKYCPending, isKYCRejected } = useKYCCheck();
+  const { needsKYC, isKYCPending, isKYCRejected, isKYCNotSubmitted } = useKYCCheck();
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -124,6 +124,18 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Only fetch data if user has KYC approved
+      // For users without KYC, we'll show empty states with KYC prompts
+      if (user.kyc_status !== 'approved') {
+        setLoading(false);
+        return;
+      }
+
       try {
         const tripsResponse = await apiClient.get<PaginatedResponse<Trip>>(
           API_ENDPOINTS.trips.my
@@ -145,12 +157,13 @@ export default function DashboardPage() {
         setRecentConversations((conversationsResponse.data || []).slice(0, 3));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        // Don't show error to user - just show empty states
       } finally {
         setLoading(false);
       }
     };
 
-    if (user) fetchDashboardData();
+    fetchDashboardData();
   }, [user]);
 
   if (!user) {
@@ -190,6 +203,19 @@ export default function DashboardPage() {
         description: 'Vos documents sont en cours d\'examen. Cela prend généralement 1 à 2 jours ouvrables.',
         btnLabel: 'Voir le statut',
         btnVariant: 'outline' as const,
+      }
+    : isKYCNotSubmitted
+    ? {
+        icon: ShieldCheck,
+        iconColor: '#2563eb',
+        bg: 'rgba(37,99,235,0.05)',
+        border: 'rgba(37,99,235,0.2)',
+        titleColor: '#1e40af',
+        textColor: '#1d4ed8',
+        title: t('dashboard.kycRequired') || 'Complétez votre vérification KYC',
+        description: 'Vous devez vérifier votre identité pour publier des voyages et créer des expéditions.',
+        btnLabel: 'Compléter la vérification',
+        btnVariant: 'primary' as const,
       }
     : {
         icon: ShieldCheck,
@@ -382,7 +408,7 @@ export default function DashboardPage() {
                   ? 'En attente'
                   : user.kyc_status === 'rejected'
                   ? 'Rejeté'
-                  : 'Requis'}
+                  : 'Non soumis'}
               </span>
             }
           />
@@ -529,7 +555,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right shrink-0 ml-3">
                         <p className="text-sm font-semibold text-navy">{trip.available_capacity} kg</p>
-                        <p className="text-xs text-muted-text">{formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg</p>
+                        <p className="text-xs text-muted-text">{trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg</p>
                       </div>
                     </button>
                   ))}
@@ -624,7 +650,8 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* ── Recent Messages ── */}
+        {/* ── Recent Messages ── Temporairement masqué - Chat désactivé */}
+        {false && (
         <Card className="!rounded-2xl !p-0 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-light-border">
             <div className="flex items-center gap-2">
@@ -692,6 +719,7 @@ export default function DashboardPage() {
             )}
           </div>
         </Card>
+        )}
 
       </div>
     </div>

@@ -248,12 +248,8 @@ class WalletService
         
         $perPage = $filters['per_page'] ?? 50;
         
-        // Cache results for 10 minutes
-        $cacheKey = "wallet_history_{$wallet->id}_" . md5(json_encode($filters));
-        
-        return Cache::remember($cacheKey, self::HISTORY_CACHE_TTL, function () use ($query, $perPage) {
-            return $query->paginate($perPage);
-        });
+        // Ne pas mettre en cache les objets Eloquent paginés car cela cause des problèmes de sérialisation
+        return $query->paginate($perPage);
     }
 
     /**

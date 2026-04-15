@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
@@ -108,6 +108,7 @@ export default function NewTripPage() {
   const { user } = useAuth();
   const { isKYCApproved } = useKYCCheck();
   const { getCountryById, getCityById } = useCountries();
+  const { countries } = useCountries();
   const { currencySymbol, formatCurrency, currencyCode } = useUserCurrency();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,6 +129,57 @@ export default function NewTripPage() {
   });
 
   const [travelProof, setTravelProof] = useState<File | null>(null);
+  const [autoSelectedCountry, setAutoSelectedCountry] = useState<string | null>(null);
+
+  // Auto-select arrival country based on departure (Russia-Africa logic)
+  useEffect(() => {
+    if (formData.departureCountryId && countries.length > 0) {
+      const departureCountry = getCountryById(formData.departureCountryId);
+      if (departureCountry) {
+        const countryName = departureCountry.name.toLowerCase();
+        
+        // Si le pays de départ est la Russie, sélectionner automatiquement un pays africain
+        if (countryName.includes('russia') || countryName.includes('russie')) {
+          // Trouver un pays africain (par défaut, on cherche le Cameroun, sinon le premier pays non-russe)
+          const africanCountry = countries.find(c => 
+            c.name.toLowerCase().includes('cameroun') || 
+            c.name.toLowerCase().includes('cameroon')
+          ) || countries.find(c => 
+            !c.name.toLowerCase().includes('russia') && 
+            !c.name.toLowerCase().includes('russie')
+          );
+          
+          if (africanCountry && formData.arrivalCountryId !== africanCountry.id) {
+            setFormData(prev => ({
+              ...prev,
+              arrivalCountryId: africanCountry.id,
+              arrivalCityId: undefined, // Reset city
+            }));
+            setAutoSelectedCountry(`${africanCountry.name} (Afrique)`);
+          }
+        } 
+        // Si le pays de départ est africain, sélectionner automatiquement la Russie
+        else {
+          // Trouver la Russie
+          const russia = countries.find(c => 
+            c.name.toLowerCase().includes('russia') || 
+            c.name.toLowerCase().includes('russie')
+          );
+          
+          if (russia && formData.arrivalCountryId !== russia.id) {
+            setFormData(prev => ({
+              ...prev,
+              arrivalCountryId: russia.id,
+              arrivalCityId: undefined, // Reset city
+            }));
+            setAutoSelectedCountry('Russie');
+          }
+        }
+      }
+    } else {
+      setAutoSelectedCountry(null);
+    }
+  }, [formData.departureCountryId, countries, getCountryById]);
 
   // Draft functionality - save to localStorage
   const saveDraft = () => {
@@ -148,8 +200,17 @@ export default function NewTripPage() {
   const handleInputChange = (field: keyof TripFormData, value: string | number | string[] | undefined) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
-      if (field === 'departureCountryId') { newData.departureCityId = undefined; }
-      if (field === 'arrivalCountryId') { newData.arrivalCityId = undefined; }
+      
+      // Reset city when country changes
+      if (field === 'departureCountryId') { 
+        newData.departureCityId = undefined;
+        // La sélection automatique du pays d'arrivée est gérée par useEffect
+      }
+      
+      if (field === 'arrivalCountryId') { 
+        newData.arrivalCityId = undefined;
+      }
+      
       return newData;
     });
     if (errors[field]) {
@@ -266,9 +327,6 @@ export default function NewTripPage() {
 
       const formDataToSend = new FormData();
 
-      console.log('Currency code being sent:', currencyCode);
-      console.log('User currency_code:', user?.currency_code);
-
       // S'assurer qu'on a une devise valide
       const validCurrencyCode = currencyCode || 'EUR';
 
@@ -302,29 +360,52 @@ export default function NewTripPage() {
 
       if (!response.ok) {
         const error = await response.json();
+        setIsSubmitting(false);
+        
         if (response.status === 422 && error.errors) {
           const validationErrors: Record<string, string> = {};
           Object.entries(error.errors).forEach(([key, messages]) => {
             validationErrors[key] = (messages as string[])[0];
           });
           setErrors(validationErrors);
+          
+          const errorMessages = Object.entries(validationErrors)
+            .map(([key, message]) => `• ${message}`)
+            .join('\n');
+          
+          alert('Erreur de validation:\n\n' + (error.message || errorMessages));
+          
+          const errorKeys = Object.keys(validationErrors);
+          if (errorKeys.some(k => k.includes('country') || k.includes('city'))) {
+            setCurrentStep(1);
+          } else if (errorKeys.some(k => k.includes('date'))) {
+            setCurrentStep(2);
+          } else {
+            setCurrentStep(3);
+          }
           return;
         }
-        throw new Error(error.message || t('trips.publishError'));
+        
+        alert('Erreur: ' + (error.message || t('trips.publishError')));
+        return;
       }
 
       const result = await response.json();
+      setIsSubmitting(false);
+      
+      // Supprimer le brouillon
       localStorage.removeItem('tripDraft');
+      
+      // Redirection directe
       if (result.data?.id) {
         router.push(`/trips/${result.data.id}`);
       } else {
         router.push('/trips/my');
       }
+      
     } catch (error) {
-      console.error('Failed to publish trip:', error);
-      setErrors({ submit: error instanceof Error ? error.message : t('trips.publishError') });
-    } finally {
       setIsSubmitting(false);
+      alert('Erreur: ' + (error instanceof Error ? error.message : t('trips.publishError')));
     }
   };
 
@@ -380,6 +461,35 @@ export default function NewTripPage() {
         </h2>
         <p className="text-gray-500 text-sm mt-1">Indiquez vos villes de départ et d'arrivée</p>
       </div>
+
+      {/* Info message about Russia-Africa routes */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-semibold text-blue-900">Routes Russie ⇄ Afrique</p>
+            <p className="text-blue-700 mt-1">
+              Notre plateforme connecte la Russie et l'Afrique. Sélectionnez un pays africain si vous partez de Russie, ou la Russie si vous partez d'Afrique.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Auto-selection notification */}
+      {autoSelectedCountry && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-semibold text-emerald-900">Sélection automatique</p>
+              <p className="text-emerald-700 mt-1">
+                Vous partez de {formData.departureCountryId ? getCountryById(formData.departureCountryId)?.name : ''}. 
+                Le pays d'arrivée a été automatiquement défini sur <strong>{autoSelectedCountry}</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_56px_1fr] gap-4 items-start">
         {/* Departure */}
@@ -842,11 +952,11 @@ export default function NewTripPage() {
             <div class="grid">
               <div class="metric">
                 <h4>Capacité disponible</h4>
-                <p><strong>{formData.availableCapacity} kg</strong></p>
+                <p><strong>${formData.availableCapacity} kg</strong></p>
               </div>
               <div class="metric">
                 <h4>Prix par kg</h4>
-                <p><strong>{formatCurrency(formData.pricePerKg || 0)}</strong></p>
+                <p><strong>${formatCurrency(formData.pricePerKg || 0)}</strong></p>
               </div>
             </div>
           </div>
@@ -984,10 +1094,20 @@ export default function NewTripPage() {
           </div>
         </div>
 
-        {errors.submit && (
-          <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {errors.submit}
+        {Object.keys(errors).length > 0 && (
+          <div className="flex flex-col gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="font-semibold">Erreur de validation</span>
+            </div>
+            {errors.submit && <p>{errors.submit}</p>}
+            {Object.entries(errors)
+              .filter(([key]) => key !== 'submit')
+              .map(([key, message]) => (
+                <p key={`error-${key}`} className="text-xs">
+                  <strong>{key}:</strong> {message}
+                </p>
+              ))}
           </div>
         )}
 
@@ -1005,6 +1125,7 @@ export default function NewTripPage() {
             </div>
             <div className="flex gap-2">
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={generatePDF}
@@ -1014,6 +1135,7 @@ export default function NewTripPage() {
                 Imprimer
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={generatePDF}
@@ -1078,7 +1200,7 @@ export default function NewTripPage() {
             <div className="border-t border-gray-100 px-6 md:px-8 py-4 bg-gray-50 flex items-center justify-between">
               <div>
                 {currentStep > 1 ? (
-                  <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
+                  <Button type="button" variant="outline" onClick={handleBack} disabled={isSubmitting}>
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     {t('common.back')}
                   </Button>
@@ -1096,18 +1218,18 @@ export default function NewTripPage() {
                   Sauvegarder le brouillon
                 </button>
                 {currentStep < 4 ? (
-                  <Button variant="primary" onClick={handleNext} disabled={isSubmitting}>
+                  <Button type="button" variant="primary" onClick={handleNext} disabled={isSubmitting}>
                     {t('common.next')}
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 ) : (
                   <Button
+                    type="button"
                     variant="primary"
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                     loading={isSubmitting}
                   >
-                    {!isSubmitting && <Check className="w-4 h-4 mr-1.5" />}
                     {t('common.submit')}
                   </Button>
                 )}

@@ -392,7 +392,7 @@ export default function TripDetailPage() {
                   className="text-3xl font-bold mt-1"
                   style={{ color: 'var(--color-vibrant-orange)', fontFamily: 'var(--font-heading)' }}
                 >
-                  {formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}
+                  {trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}
                 </p>
                 <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
                   {trip.available_capacity} kg disponibles
@@ -568,14 +568,15 @@ export default function TripDetailPage() {
 
               {/* CTA buttons */}
               <div className="flex flex-col sm:flex-row gap-3 mt-5 pt-5" style={{ borderTop: '1px solid var(--color-light-border)' }}>
-                <Button
+                {/* Bouton "Contacter le voyageur" masqué */}
+                {/* <Button
                   variant="primary"
                   onClick={handleContactTraveler}
                   className="flex-1 gap-2"
                 >
                   <MessageCircle className="w-4 h-4" />
                   {t('trips.contactTraveler')}
-                </Button>
+                </Button> */}
                 <Button
                   variant="secondary"
                   onClick={handleRequestShipment}

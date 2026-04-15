@@ -26,6 +26,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  TrendingUp,
+  Route,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
@@ -66,6 +68,7 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
         { labelKey: 'admin.sidebar.trips', href: '/admin/trips', icon: Plane },
         { labelKey: 'admin.sidebar.shipments', href: '/admin/shipments', icon: Package },
         { labelKey: 'admin.sidebar.shipmentRequests', href: '/admin/shipment-requests', icon: PackageSearch },
+        { labelKey: 'admin.sidebar.routing', href: '/admin/routing', icon: Route },
         { labelKey: 'admin.sidebar.countries', href: '/admin/countries', icon: Globe },
         { labelKey: 'admin.sidebar.cities', href: '/admin/cities', icon: MapPin }
       ]
@@ -74,6 +77,7 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
       titleKey: 'admin.sidebar.financial',
       items: [
         { labelKey: 'admin.sidebar.wallets', href: '/admin/wallets', icon: Wallet },
+        { labelKey: 'admin.sidebar.rechargeRequests', href: '/admin/recharge-requests', icon: TrendingUp },
         { labelKey: 'admin.sidebar.withdrawals', href: '/admin/withdrawals', icon: CreditCard },
         { labelKey: 'admin.sidebar.payments', href: '/admin/payments', icon: CreditCard },
         { labelKey: 'admin.sidebar.currencies', href: '/admin/currencies', icon: Coins }

@@ -13,9 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Apply locale detection to all API requests
+        // Apply locale detection and currency conversion to all API requests
         $middleware->api(append: [
             \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\CurrencyConversionMiddleware::class,
         ]);
 
         // Configure rate limiting for API
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'shipment.access' => \App\Http\Middleware\CheckShipmentAccess::class,
             'admin' => \App\Http\Middleware\EnsureAdminRole::class,
             'super-admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'optional.auth' => \App\Http\Middleware\OptionalAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

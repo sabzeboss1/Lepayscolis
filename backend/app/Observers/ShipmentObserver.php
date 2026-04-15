@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Events\ShipmentCreated;
 use App\Events\ShipmentStatusChanged;
 use App\Models\Shipment;
 use App\Models\Trip;
@@ -23,6 +24,16 @@ class ShipmentObserver
                 $shipment->payment_amount = $shipment->package_weight * $trip->price_per_kg;
             }
         }
+    }
+
+    /**
+     * Handle the Shipment "created" event.
+     * Dispatch event to notify traveler.
+     */
+    public function created(Shipment $shipment): void
+    {
+        // Dispatch event when a new shipment is created
+        event(new ShipmentCreated($shipment));
     }
 
     /**

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, X } from 'lucide-react';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
-import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { useAdminCurrencyFormatter } from '@/lib/hooks/useAdminCurrencyFormatter';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
@@ -68,12 +68,35 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
         per_page: perPage,
       };
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.wallets.show(userId), { params });
-      setWallet(data.data.wallet);
-      setTransactions(data.data.transactions ?? []);
-      setTotal(data.meta?.total ?? 0);
-    } catch (error) {
+      const response = await apiClient.get(API_ENDPOINTS.admin.wallets.show(userId), { params });
+      console.log('Wallet API Response:', response);
+      
+      // Handle the response structure from backend
+      const responseData = response.data || response;
+      const walletData = responseData.wallet || {};
+      const userData = responseData.user || {};
+      const aggregates = responseData.aggregates || {};
+      
+      // Merge wallet data with user and aggregates
+      setWallet({
+        user: {
+          id: userData.id || userId,
+          name: userData.name || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+        },
+        balance: walletData.balance || 0,
+        currency_code: walletData.currency_code || 'EUR',
+        total_credits: aggregates.total_credits || 0,
+        total_debits: aggregates.total_debits || 0,
+        total_adjustments: aggregates.total_adjustments || 0,
+      });
+      
+      setTransactions(responseData.transactions || []);
+      setTotal(response.meta?.total ?? 0);
+    } catch (error: any) {
       console.error('Failed to fetch wallet details:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -108,7 +131,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     setAdjustError(null);
   };
 
-  const { formatCurrency } = useAdminCurrency();
+  const { formatWithConversion } = useAdminCurrencyFormatter();
 
   const getTypeLabel = (type: string) => {
     const map: Record<string, string> = {
@@ -200,7 +223,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
               <p className={`text-2xl font-bold mt-2 ${
                 wallet.balance > 0 ? 'text-green-600' : wallet.balance < 0 ? 'text-red-600' : 'text-gray-900'
               }`}>
-                {formatCurrency(wallet.balance, wallet.currency_code)}
+                {formatWithConversion(wallet.balance, wallet.currency_code)}
               </p>
             </div>
             <Wallet className="w-8 h-8 text-blue-600" />
@@ -211,7 +234,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalCredits')}</p>
-              <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(wallet.total_credits, wallet.currency_code)}</p>
+              <p className="text-2xl font-bold text-green-600 mt-2">{formatWithConversion(wallet.total_credits, wallet.currency_code)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
@@ -221,7 +244,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalDebits')}</p>
-              <p className="text-2xl font-bold text-red-600 mt-2">{formatCurrency(wallet.total_debits, wallet.currency_code)}</p>
+              <p className="text-2xl font-bold text-red-600 mt-2">{formatWithConversion(wallet.total_debits, wallet.currency_code)}</p>
             </div>
             <TrendingDown className="w-8 h-8 text-red-600" />
           </div>
@@ -231,7 +254,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalAdjustments')}</p>
-              <p className="text-2xl font-bold text-blue-600 mt-2">{formatCurrency(wallet.total_adjustments, wallet.currency_code)}</p>
+              <p className="text-2xl font-bold text-blue-600 mt-2">{formatWithConversion(wallet.total_adjustments, wallet.currency_code)}</p>
             </div>
             <DollarSign className="w-8 h-8 text-blue-600" />
           </div>
@@ -270,7 +293,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`text-sm font-semibold ${getTypeColor(tx.type)}`}>
-                        {tx.type === 'debit' ? '-' : '+'}{formatCurrency(Math.abs(tx.amount), wallet.currency_code)}
+                        {tx.type === 'debit' ? '-' : '+'}{formatWithConversion(Math.abs(tx.amount), wallet.currency_code)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -365,7 +388,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {t('admin.wallets.detail.currentBalance')}: {formatCurrency(wallet.balance, wallet.currency_code)}
+                  {t('admin.wallets.detail.currentBalance')}: {formatWithConversion(wallet.balance, wallet.currency_code)}
                 </p>
               </div>
 

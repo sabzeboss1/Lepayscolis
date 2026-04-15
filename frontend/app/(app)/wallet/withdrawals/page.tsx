@@ -9,6 +9,7 @@ import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
+import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay';
 import type { WithdrawalRequest, PaginatedResponse } from '@/lib/types/api';
 import {
   ArrowLeft,
@@ -257,7 +258,11 @@ export default function WithdrawalsPage() {
                       <div className="flex items-center justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
                           <span className="text-lg font-bold text-slate-900">
-                            {formatCurrency(withdrawal.amount)}
+                            <CurrencyDisplay
+                              amount={withdrawal.amount}
+                              currency={withdrawal.currency}
+                              className="!text-slate-900"
+                            />
                           </span>
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${cfg.badgeBg} ${cfg.badgeText} ${cfg.badgeBorder}`}
@@ -287,7 +292,11 @@ export default function WithdrawalsPage() {
                           <div>
                             <p className="text-slate-400 mb-0.5">Frais</p>
                             <p className="text-slate-700 font-medium">
-                              {formatCurrency(anyWithdrawal.fee)}
+                              <CurrencyDisplay
+                                amount={anyWithdrawal.fee}
+                                currency={anyWithdrawal.currency}
+                                className="!text-slate-700"
+                              />
                             </p>
                           </div>
                         )}
@@ -295,7 +304,11 @@ export default function WithdrawalsPage() {
                           <div>
                             <p className="text-slate-400 mb-0.5">Montant net</p>
                             <p className="font-semibold text-emerald-600">
-                              {formatCurrency(anyWithdrawal.net_amount)}
+                              <CurrencyDisplay
+                                amount={anyWithdrawal.net_amount}
+                                currency={anyWithdrawal.currency}
+                                className="!text-emerald-600"
+                              />
                             </p>
                           </div>
                         )}

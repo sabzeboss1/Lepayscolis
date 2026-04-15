@@ -35,9 +35,9 @@ const shipmentSchema = z.object({
   tripId: z.string().min(1, 'Trip ID is required'),
   description: z.string().min(1, 'Description is required'),
   weight: z.number().positive('Weight must be positive'),
-  length: z.number().positive('Length must be positive'),
-  width: z.number().positive('Width must be positive'),
-  height: z.number().positive('Height must be positive'),
+  length: z.number().positive('Length must be positive').optional(),
+  width: z.number().positive('Width must be positive').optional(),
+  height: z.number().positive('Height must be positive').optional(),
   value: z.number().positive('Value must be positive'),
   packageType: z.string().min(1, 'Package type is required'),
   recipientName: z.string().min(1, 'Recipient name is required'),
@@ -114,10 +114,13 @@ export default function NewShipmentPage() {
   // Fetch trip details if tripId is in URL
   useEffect(() => {
     const tripId = searchParams?.get('tripId');
+    console.log('Trip ID from URL:', tripId);
     if (tripId) {
+      setFormData(prev => ({ ...prev, tripId }));
       const fetchTrip = async () => {
         try {
           const response = await apiClient.get<{ data: any }>(`/api/trips/${tripId}`);
+          console.log('Trip fetched:', response.data);
           setSelectedTrip(response.data);
         } catch (error) {
           console.error('Failed to fetch trip:', error);
@@ -143,8 +146,10 @@ export default function NewShipmentPage() {
 
   // Calculate estimated cost when weight or trip changes
   useEffect(() => {
-    if (formData.weight && selectedTrip?.price_per_kg) {
-      setEstimatedCost(formData.weight * selectedTrip.price_per_kg);
+    if (formData.weight && selectedTrip) {
+      // Use converted price if available, otherwise use original price
+      const pricePerKg = selectedTrip.price_per_kg_converted || selectedTrip.price_per_kg;
+      setEstimatedCost(formData.weight * pricePerKg);
     } else {
       setEstimatedCost(null);
     }
@@ -186,6 +191,12 @@ export default function NewShipmentPage() {
     
     if (!acceptedTerms) {
       setErrors({ submit: 'Vous devez certifier que votre colis ne contient aucun objet interdit' });
+      return;
+    }
+    
+    // Validate trip ID
+    if (!formData.tripId || formData.tripId.trim() === '') {
+      setErrors({ submit: 'Voyage non sélectionné. Veuillez sélectionner un voyage.' });
       return;
     }
     
@@ -238,12 +249,32 @@ export default function NewShipmentPage() {
         photo_urls: photoUrls,
       };
 
+      console.log('Submitting shipment data:', shipmentData);
+
       await apiClient.post<{ data: any }>(API_ENDPOINTS.shipments.create, shipmentData);
 
       router.push('/shipments/my');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Shipment creation error:', error);
       const errorMessage = ErrorHandler.handle(error);
-      setErrors({ submit: errorMessage.message });
+      
+      // If it's a validation error, show detailed errors
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        const validationErrors: Record<string, string> = {};
+        Object.entries(error.response.data.errors).forEach(([key, messages]) => {
+          validationErrors[key] = (messages as string[])[0];
+        });
+        setErrors(validationErrors);
+        
+        // Also set a general submit error
+        const errorKeys = Object.keys(validationErrors);
+        setErrors(prev => ({
+          ...prev,
+          submit: `Erreur de validation: ${errorKeys.join(', ')}`
+        }));
+      } else {
+        setErrors({ submit: errorMessage.message });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -422,7 +453,7 @@ export default function NewShipmentPage() {
                     </p>
                     <p className="text-xs text-slate-600">
                       Départ: {new Date(selectedTrip.departure_date).toLocaleDateString('fr-FR')} • 
-                      Prix: {formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code)}/kg
+                      Prix: {selectedTrip.price_per_kg_formatted || formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code)}/kg
                     </p>
                   </div>
                 </div>
@@ -507,7 +538,6 @@ export default function NewShipmentPage() {
                     value={formData.length?.toString() || ''}
                     onChange={(e) => handleInputChange('length', parseFloat(e.target.value))}
                     error={errors.length}
-                    required
                     placeholder="0"
                   />
                   <Input
@@ -516,7 +546,6 @@ export default function NewShipmentPage() {
                     value={formData.width?.toString() || ''}
                     onChange={(e) => handleInputChange('width', parseFloat(e.target.value))}
                     error={errors.width}
-                    required
                     placeholder="0"
                   />
                   <Input
@@ -525,7 +554,6 @@ export default function NewShipmentPage() {
                     value={formData.height?.toString() || ''}
                     onChange={(e) => handleInputChange('height', parseFloat(e.target.value))}
                     error={errors.height}
-                    required
                     placeholder="0"
                   />
                 </div>

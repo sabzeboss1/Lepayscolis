@@ -50,9 +50,11 @@ export default function WalletsPage() {
 
       if (filters.search) params.search = filters.search;
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.wallets.list, { params });
-      setWallets(Array.isArray(data.data) ? data.data : []);
-      setTotal(data.meta?.total || 0);
+      const response = await apiClient.get(API_ENDPOINTS.admin.wallets.list, { params });
+      console.log('Wallets list response:', response);
+      
+      setWallets(Array.isArray(response.data) ? response.data : []);
+      setTotal(response.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch wallets:', error);
       setWallets([]);

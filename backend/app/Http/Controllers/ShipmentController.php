@@ -250,6 +250,40 @@ class ShipmentController extends Controller
         ]);
     }
 
+    /**
+     * Get shipments pending for traveler's trips.
+     * Returns shipments that are pending and assigned to the traveler's trips.
+     * 
+     * GET /api/shipments/pending-for-me
+     * Requires: auth:sanctum
+     */
+    public function pendingForMe(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        
+        // Get all trip IDs owned by the current user
+        $tripIds = Trip::where('traveler_id', $user->id)->pluck('id');
+        
+        // Get shipments that are pending and assigned to these trips
+        $query = Shipment::with(['sender', 'trip'])
+            ->where('status', 'pending')
+            ->whereIn('trip_id', $tripIds);
+
+        // Paginate results
+        $shipments = $query->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return response()->json([
+            'data' => ShipmentResource::collection($shipments->items()),
+            'meta' => [
+                'current_page' => $shipments->currentPage(),
+                'last_page' => $shipments->lastPage(),
+                'per_page' => $shipments->perPage(),
+                'total' => $shipments->total(),
+            ],
+        ]);
+    }
+
 
     /**
      * Update shipment status.
@@ -317,6 +351,7 @@ class ShipmentController extends Controller
      * Requires: auth:sanctum, shipment.access
      * 
      * NEW FLOW: When receiver confirms, funds are debited from sender and credited to traveler
+     * WITH CURRENCY CONVERSION: Converts payment to traveler's wallet currency
      */
     public function confirmDelivery(string $id): JsonResponse
     {
@@ -334,8 +369,19 @@ class ShipmentController extends Controller
             // Confirm delivery
             $shipment->confirmDelivery();
             
-            // Process wallet transactions
+            // Update completed deliveries count for both sender and traveler
+            if ($shipment->sender) {
+                $shipment->sender->increment('completed_deliveries');
+                $shipment->sender->updateRecommendedStatus();
+            }
+            if ($shipment->traveler) {
+                $shipment->traveler->increment('completed_deliveries');
+                $shipment->traveler->updateRecommendedStatus();
+            }
+            
+            // Process wallet transactions with currency conversion
             $walletService = app(\App\Services\WalletService::class);
+            $currencyService = app(\App\Services\CurrencyService::class);
             
             try {
                 // 1. Release held funds and debit sender's wallet
@@ -351,19 +397,53 @@ class ShipmentController extends Controller
                 $platformFee = $shipment->payment_amount * 0.15;
                 $travelerAmount = $shipment->payment_amount * 0.85;
                 
-                // 3. Credit traveler's wallet (85% of payment)
+                // 3. Get currencies
+                $shipmentCurrency = $shipment->currency_code ?? 'EUR';
+                $travelerCurrency = $shipment->traveler->wallet->currency_code ?? 'EUR';
+                
+                // 4. Convert amount to traveler's wallet currency if needed
+                $convertedAmount = $travelerAmount;
+                $exchangeRate = null;
+                
+                if ($shipmentCurrency !== $travelerCurrency) {
+                    $conversion = $currencyService->convert(
+                        $travelerAmount,
+                        $shipmentCurrency,
+                        $travelerCurrency
+                    );
+                    $convertedAmount = $conversion['converted_amount'];
+                    $exchangeRate = $conversion['exchange_rate'];
+                    
+                    \Log::info("Currency conversion for shipment #{$shipment->id}", [
+                        'original_amount' => $travelerAmount,
+                        'original_currency' => $shipmentCurrency,
+                        'converted_amount' => $convertedAmount,
+                        'target_currency' => $travelerCurrency,
+                        'exchange_rate' => $exchangeRate,
+                    ]);
+                }
+                
+                // 5. Credit traveler's wallet with converted amount (85% of payment)
                 $walletService->credit(
                     $shipment->traveler->wallet,
-                    $travelerAmount,
+                    $convertedAmount,
                     "Payment received for shipment #{$shipment->id}",
                     'shipment',
-                    $shipment->id
+                    $shipment->id,
+                    $travelerAmount, // original_amount
+                    $shipmentCurrency, // original_currency_code
+                    $exchangeRate // exchange_rate_used
                 );
                 
-                // 4. Update shipment payment status
+                // 6. Update shipment payment status
                 $shipment->update(['payment_status' => 'released']);
                 
             } catch (\Exception $e) {
+                \Log::error("Payment processing failed for shipment #{$shipment->id}", [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                
                 return response()->json([
                     'message' => 'Delivery confirmed but payment processing failed. Please contact support.',
                     'error' => $e->getMessage(),

@@ -74,6 +74,14 @@ export interface Shipment {
   payment_amount: number;
   payment_status: 'pending' | 'processing' | 'escrowed' | 'released' | 'refunded';
   price: number;
+  currency_code: string;
+  
+  // Currency conversion fields
+  price_converted?: number;
+  price_formatted?: string;
+  price_original: number;
+  price_original_currency: string;
+  
   created_at: string;
   updated_at: string;
 }

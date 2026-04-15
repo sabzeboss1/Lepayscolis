@@ -88,6 +88,15 @@ export const API_ENDPOINTS = {
   },
 
   // ============================================================================
+  // Recharge Request Endpoints
+  // ============================================================================
+  rechargeRequests: {
+    create: '/api/recharge-requests',
+    list: '/api/recharge-requests',
+    show: (id: string) => `/api/recharge-requests/${id}`,
+  },
+
+  // ============================================================================
   // Rating Endpoints
   // ============================================================================
   ratings: {
@@ -160,6 +169,14 @@ export const API_ENDPOINTS = {
       processing: (id: string) => `/api/admin/withdrawals/${id}/processing`,
       complete: (id: string) => `/api/admin/withdrawals/${id}/complete`,
     },
+
+    rechargeRequests: {
+      list: '/api/admin/recharge-requests',
+      show: (id: string) => `/api/admin/recharge-requests/${id}`,
+      processing: (id: string) => `/api/admin/recharge-requests/${id}/processing`,
+      complete: (id: string) => `/api/admin/recharge-requests/${id}/complete`,
+      reject: (id: string) => `/api/admin/recharge-requests/${id}/reject`,
+    },
     
     trips: {
       list: '/api/admin/trips',
@@ -184,6 +201,15 @@ export const API_ENDPOINTS = {
       reject: (id: string) => `/api/admin/shipment-requests/${id}/reject`,
       delete: (id: string) => `/api/admin/shipment-requests/${id}`,
       analytics: '/api/admin/shipment-requests/analytics',
+    },
+
+    routing: {
+      stats: '/api/admin/routing/stats',
+      assignShipment: '/api/admin/routing/assign-shipment',
+      assignShipmentToUser: '/api/admin/routing/assign-shipment-to-user',
+      recommendTraveler: '/api/admin/routing/recommend-traveler',
+      recommendUser: '/api/admin/routing/recommend-user',
+      suggestions: '/api/admin/routing/suggestions',
     },
     
     payments: {

@@ -112,7 +112,10 @@ export default function MyTripsPage() {
         case 'date':
           return new Date(b.departure_date).getTime() - new Date(a.departure_date).getTime();
         case 'price':
-          return b.price_per_kg - a.price_per_kg;
+          // Use converted prices for sorting if available
+          const priceA = a.price_per_kg_converted || a.price_per_kg;
+          const priceB = b.price_per_kg_converted || b.price_per_kg;
+          return priceB - priceA;
         case 'capacity':
           return b.available_capacity - a.available_capacity;
         default:
@@ -268,7 +271,7 @@ export default function MyTripsPage() {
                     </div>
                     <div>
                       <span className="font-medium">{t('trips.pricePerKg')}:</span>{' '}
-                      <span className="text-gray-700">{formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}</span>
+                      <span className="text-gray-700">{trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}</span>
                     </div>
                     {trip.travel_proof_url && (
                       <div className="flex items-center gap-1 text-green-600">

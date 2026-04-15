@@ -780,6 +780,7 @@
       "trips": "Trips",
       "shipments": "Shipments",
       "shipmentRequests": "Shipment Requests",
+      "routing": "Manual Routing",
       "financial": "Financial",
       "wallets": "Wallets",
       "withdrawals": "Withdrawals",

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Trip } from '@/lib/types/trip';
 import { RatingStars } from './RatingStars';
-import { formatCurrency } from '@/lib/utils/formatting';
+import { CurrencyDisplay } from './CurrencyDisplay';
 import {
   Plane,
   Package,
@@ -115,7 +115,12 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '
               color: 'var(--color-vibrant-orange)',
             }}
           >
-            {formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg
+            <CurrencyDisplay 
+              amount={trip.price_per_kg_converted || trip.price_per_kg} 
+              currency={trip.price_per_kg_original_currency ? undefined : trip.currency_code}
+              showCurrencyNote={!!trip.price_per_kg_original_currency}
+              className="!text-inherit"
+            />/kg
           </div>
         </div>
 

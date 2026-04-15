@@ -35,10 +35,12 @@ class UserStatsController extends Controller
                   });
         })->where('status', 'delivered')->count();
         
-        // Get wallet balance and total earnings
+        // Get wallet balance
         $wallet = Wallet::where('user_id', $user->id)->first();
-        $totalEarnings = $wallet ? $wallet->total_earned : 0;
         $currentBalance = $wallet ? $wallet->balance : 0;
+        
+        // Total earnings = current balance (simplifié)
+        $totalEarnings = $currentBalance;
         
         // Calculate success rate (delivered shipments / total accepted shipments)
         $acceptedShipments = Shipment::whereHas('trip', function($q) use ($user) {

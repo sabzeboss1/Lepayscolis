@@ -39,7 +39,7 @@ class AuthController extends Controller
                 'phone' => $request->phone,
                 'locale' => $locale,
                 'currency_code' => $currencyCode,
-                'kyc_status' => 'pending',
+                'kyc_status' => 'not_submitted',
                 'rating' => 0,
                 'completed_deliveries' => 0,
                 'is_recommended' => false,

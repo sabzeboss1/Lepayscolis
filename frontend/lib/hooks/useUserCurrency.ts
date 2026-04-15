@@ -1,18 +1,27 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 
 /**
  * Hook that provides currency formatting based on the logged-in user's currency_code preference.
  * Falls back to 'EUR' if no user or no currency_code set.
+ * Handles SSR hydration properly.
  */
 export function useUserCurrency() {
   const { user } = useAuth();
-  const currencyCode = user?.currency_code || 'EUR';
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  // Prevent hydration mismatch by only using user currency after hydration
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+  
+  const currencyCode = (isHydrated && user?.currency_code) || 'EUR';
 
   console.log('useUserCurrency - user:', user);
   console.log('useUserCurrency - currencyCode:', currencyCode);
+  console.log('useUserCurrency - isHydrated:', isHydrated);
 
   const formatCurrency = useCallback(
     (amount: number, overrideCurrency?: string) => {
@@ -39,5 +48,5 @@ export function useUserCurrency() {
     }
   })();
 
-  return { currencyCode, currencySymbol, formatCurrency };
+  return { currencyCode, currencySymbol, formatCurrency, isHydrated };
 }
