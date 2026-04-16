@@ -35,19 +35,19 @@ const shipmentSchema = z.object({
   tripId: z.string().min(1, 'Trip ID is required'),
   description: z.string().min(1, 'Description is required'),
   weight: z.number().positive('Weight must be positive'),
-  length: z.number().positive('Length must be positive').optional(),
-  width: z.number().positive('Width must be positive').optional(),
-  height: z.number().positive('Height must be positive').optional(),
+  length: z.number().positive('Length must be positive').optional().or(z.literal(undefined)),
+  width: z.number().positive('Width must be positive').optional().or(z.literal(undefined)),
+  height: z.number().positive('Height must be positive').optional().or(z.literal(undefined)),
   value: z.number().positive('Value must be positive'),
   packageType: z.string().min(1, 'Package type is required'),
   recipientName: z.string().min(1, 'Recipient name is required'),
   recipientPhone: z.string().min(1, 'Recipient phone is required'),
   pickupCountryId: z.number().positive('Pickup country is required'),
   pickupCityId: z.number().positive('Pickup city is required'),
-  pickupAddress: z.string().min(1, 'Pickup address is required'),
+  pickupAddress: z.string().optional(),
   deliveryCountryId: z.number().positive('Delivery country is required'),
   deliveryCityId: z.number().positive('Delivery city is required'),
-  deliveryAddress: z.string().min(1, 'Delivery address is required'),
+  deliveryAddress: z.string().optional(),
 });
 
 type ShipmentFormData = z.infer<typeof shipmentSchema>;
@@ -645,8 +645,7 @@ export default function NewShipmentPage() {
                   value={formData.pickupAddress || ''}
                   onChange={(e) => handleInputChange('pickupAddress', e.target.value)}
                   error={errors.pickupAddress}
-                  required
-                  placeholder="Adresse complète où récupérer le colis"
+                  placeholder="Adresse complète où récupérer le colis (optionnel)"
                 />
               </SectionCard>
 
@@ -680,8 +679,7 @@ export default function NewShipmentPage() {
                   value={formData.deliveryAddress || ''}
                   onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
                   error={errors.deliveryAddress}
-                  required
-                  placeholder="Adresse complète de livraison"
+                  placeholder="Adresse complète de livraison (optionnel)"
                 />
               </SectionCard>
 
