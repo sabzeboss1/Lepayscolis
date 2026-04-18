@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
+import { useCurrencyFormatter } from '@/lib/hooks/useCurrencyFormatter';
 import {
   Search,
   SlidersHorizontal,
@@ -32,6 +33,13 @@ interface ShipmentRequest {
   weight: number;
   max_budget: number;
   currency_code: string;
+  
+  // Currency conversion fields
+  max_budget_converted?: number;
+  max_budget_formatted?: string;
+  max_budget_original: number;
+  max_budget_original_currency: string;
+  
   status: string;
   pickup_country: { id: number; name_en: string; name_fr: string; name?: string };
   pickup_city: { id: number; name_en: string; name_fr: string; name?: string };
@@ -85,8 +93,14 @@ function SkeletonCard() {
 }
 
 function ShipmentRequestCard({ request, onClick }: { request: ShipmentRequest; onClick: () => void }) {
-  const { formatCurrency } = useUserCurrency();
+  const { formatWithCurrencyNote, isHydrated } = useCurrencyFormatter();
   const senderInitial = request.sender.name.charAt(0).toUpperCase();
+
+  // Use converted budget if available and hydrated, otherwise use original budget
+  const displayBudget = (isHydrated && (request as any).max_budget_converted) ?? request.max_budget;
+  const displayCurrency = (isHydrated && (request as any).max_budget_converted) ? 
+    ((request as any).max_budget_formatted ? (request as any).max_budget_formatted.split(' ')[1] : '') : 
+    request.currency_code;
 
   return (
     <div
@@ -224,9 +238,10 @@ function ShipmentRequestCard({ request, onClick }: { request: ShipmentRequest; o
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
               style={{ background: 'rgba(249,115,22,0.1)', color: 'var(--color-vibrant-orange)' }}
+              suppressHydrationWarning
             >
               <DollarSign className="w-3 h-3" />
-              Max {formatCurrency(request.max_budget, request.currency_code)}
+              Max {(isHydrated && (request as any).max_budget_formatted) || formatWithCurrencyNote(displayBudget, displayCurrency)}
             </span>
           )}
 
@@ -268,8 +283,14 @@ function ShipmentRequestCard({ request, onClick }: { request: ShipmentRequest; o
 }
 
 function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () => void }) {
-  const { formatCurrency } = useUserCurrency();
+  const { formatWithCurrencyNote, isHydrated } = useCurrencyFormatter();
   const senderInitial = shipment.sender?.name?.charAt(0).toUpperCase() || 'U';
+
+  // Use converted price if available and hydrated, otherwise use original price
+  const displayPrice = (isHydrated && (shipment as any).price_converted) ?? shipment.price;
+  const displayCurrency = (isHydrated && (shipment as any).price_converted) ? 
+    ((shipment as any).price_formatted ? (shipment as any).price_formatted.split(' ')[1] : '') : 
+    (shipment as any).currency_code;
 
   return (
     <div
@@ -390,7 +411,7 @@ function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () =
               {senderInitial}
             </div>
             <span className="text-[11px] font-medium" style={{ color: 'var(--color-muted-text)' }}>
-              {shipment.sender.name}
+              {shipment.sender?.name || 'Utilisateur'}
             </span>
           </div>
 
@@ -399,8 +420,9 @@ function ShipmentCard({ shipment, onClick }: { shipment: Shipment; onClick: () =
             <span
               className="ml-auto text-sm font-bold"
               style={{ color: 'var(--color-vibrant-orange)', fontFamily: 'var(--font-heading)' }}
+              suppressHydrationWarning
             >
-              {formatCurrency(shipment.price)}
+              {(isHydrated && (shipment as any).price_formatted) || formatWithCurrencyNote(displayPrice, displayCurrency)}
             </span>
           )}
         </div>
@@ -441,9 +463,24 @@ export default function ShipmentSearchPage() {
       if (debouncedDelivery) params.append('delivery_city', debouncedDelivery);
       if (maxWeight) params.append('max_weight', maxWeight);
 
+      // Get auth token for currency conversion
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_token='))
+        ?.split('=')[1];
+
+      const headers: HeadersInit = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       if (activeTab === 'shipments') {
         const res = await fetch(`/api/shipments/available?${params}`, {
-          headers: { Accept: 'application/json' },
+          headers,
           credentials: 'include',
         });
         if (!res.ok) throw new Error(res.status === 401 ? 'Non autorisé' : 'Erreur de recherche');
@@ -451,7 +488,7 @@ export default function ShipmentSearchPage() {
         setShipments(data.data || []);
       } else {
         const res = await fetch(`/api/shipment-requests?${params}`, {
-          headers: { Accept: 'application/json' },
+          headers,
           credentials: 'include',
         });
         if (!res.ok) throw new Error(res.status === 401 ? 'Non autorisé' : 'Erreur de recherche');

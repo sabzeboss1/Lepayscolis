@@ -39,7 +39,7 @@ const NAV_ITEMS = [
   { href: '/shipments/search', labelKey: 'navigation.findShipments', icon: Search },
   { href: '/shipments', labelKey: 'navigation.shipments', icon: Package },
   { href: '/wallet', labelKey: 'navigation.wallet', icon: Wallet },
-  { href: '/messages', labelKey: 'navigation.messages', icon: MessageCircle },
+  // { href: '/messages', labelKey: 'navigation.messages', icon: MessageCircle }, // Temporairement masqué
 ];
 
 function KycBadge({ status }: { status: User['kyc_status'] }) {
@@ -133,7 +133,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
               <img
                 src={logo_url}
                 alt="LePaysExpressColis"
-                className="w-10 h-10 md:w-11 md:h-11 object-contain hover:opacity-85 transition-opacity"
+                className="w-14 h-14 md:w-16 md:h-16 object-contain hover:opacity-85 transition-opacity"
               />
               <span
                 className="hidden sm:block ml-2 text-sm font-bold text-navy leading-tight"

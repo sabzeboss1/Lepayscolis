@@ -8,12 +8,12 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * TripResource - Transform trip model to JSON
- * 
+ *
  * Includes:
  * - All trip fields
  * - Traveler data using UserResource (whenLoaded)
  * - Dates formatted as ISO 8601
- * 
+ *
  * Validates Requirements: 3.12, 12.14-12.15
  */
 class TripResource extends JsonResource
@@ -25,6 +25,30 @@ class TripResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $user = $request->user();
+        $conversionService = app(\App\Services\CurrencyConversionService::class);
+
+        // Convert price for user if authenticated
+        $priceConversion = null;
+        if ($user && $this->price_per_kg && $this->currency_code) {
+            try {
+                $priceConversion = $conversionService->convertForUser(
+                    (float) $this->price_per_kg,
+                    $this->currency_code,
+                    $user
+                );
+            } catch (\Exception $e) {
+                // Log error but don't fail the request
+                \Log::warning('Currency conversion failed in TripResource', [
+                    'trip_id' => $this->id,
+                    'amount' => $this->price_per_kg,
+                    'from' => $this->currency_code,
+                    'to' => $user->currency_code,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return [
             'id' => $this->id,
             'traveler_id' => $this->traveler_id,
@@ -52,6 +76,14 @@ class TripResource extends JsonResource
             'price_per_kg' => (float) $this->price_per_kg,
             'currency_code' => $this->currency_code,
             'price_converted' => $this->convertPrice($request),
+
+            // Currency conversion fields
+            'price_per_kg_converted' => $priceConversion ? $priceConversion['amount'] : null,
+            'price_per_kg_formatted' => $priceConversion ? $priceConversion['formatted'] : null,
+            'price_per_kg_original' => $priceConversion && isset($priceConversion['original_amount']) ? $priceConversion['original_amount'] : null,
+            'price_per_kg_original_currency' => $priceConversion && isset($priceConversion['original_currency']) ? $priceConversion['original_currency'] : null,
+            'price_per_kg_exchange_rate' => $priceConversion && isset($priceConversion['exchange_rate']) ? $priceConversion['exchange_rate'] : null,
+
             'accepted_package_types' => $this->accepted_package_types,
             'pickup_address' => $this->pickup_address,
             'delivery_address' => $this->delivery_address,

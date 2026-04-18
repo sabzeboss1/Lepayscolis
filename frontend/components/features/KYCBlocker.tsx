@@ -13,7 +13,7 @@ interface KYCBlockerProps {
 
 export function KYCBlocker({ action, children }: KYCBlockerProps) {
   const router = useRouter();
-  const { isKYCApproved, isKYCPending, isKYCRejected } = useKYCCheck();
+  const { isKYCApproved, isKYCPending, isKYCRejected, isKYCNotSubmitted } = useKYCCheck();
 
   // If KYC is approved, render children
   if (isKYCApproved) {
@@ -48,7 +48,7 @@ export function KYCBlocker({ action, children }: KYCBlockerProps) {
       };
     }
 
-    // Not submitted
+    // Not submitted (default)
     return {
       icon: Shield,
       color: 'text-blue-600',

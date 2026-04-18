@@ -154,9 +154,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-90 z-[9999] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black/50 text-white">
+      <div className="flex items-center justify-between p-4 bg-black/50 text-white relative z-10">
         <h2 className="text-lg font-semibold">{title}</h2>
         <button
           onClick={handleCancel}
@@ -168,7 +168,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
       {/* Instructions */}
       {instructions.length > 0 && !capturedImage && (
-        <div className="px-4 py-2 bg-blue-600/90 text-white text-sm">
+        <div className="px-4 py-2 bg-blue-600/90 text-white text-sm relative z-10">
           <ul className="space-y-1">
             {instructions.map((instruction, index) => (
               <li key={index} className="flex items-start gap-2">
@@ -181,9 +181,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       )}
 
       {/* Camera View */}
-      <div className="flex-1 relative flex items-center justify-center">
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden">
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
             <div className="text-center text-white p-6">
               <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
               <p className="text-lg font-semibold mb-2">Erreur de caméra</p>
@@ -219,10 +219,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
             />
             
             {/* Camera overlay guide */}
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none z-10">
               <div className="w-full h-full flex items-center justify-center">
                 <div className="w-64 h-80 border-2 border-white/50 rounded-2xl relative">
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-white text-sm text-center">
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-white text-sm text-center whitespace-nowrap">
                     Placez votre visage dans le cadre
                   </div>
                   {/* Corner guides */}
@@ -241,7 +241,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       </div>
 
       {/* Controls */}
-      <div className="p-6 bg-black/50">
+      <div className="p-6 bg-black/50 relative z-20">
         {capturedImage ? (
           // Preview controls
           <div className="flex items-center justify-center gap-4">
@@ -266,12 +266,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           </div>
         ) : (
           // Camera controls
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between max-w-md mx-auto">
             <Button
               onClick={switchCamera}
               variant="secondary"
               size="sm"
-              className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+              className="bg-white/20 text-white border-white/30 hover:bg-white/30 shrink-0"
               disabled={!isStreaming}
             >
               <RotateCcw className="w-4 h-4 mr-2" />
@@ -281,14 +281,15 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
             <button
               onClick={capturePhoto}
               disabled={!isStreaming}
-              className="w-20 h-20 bg-white rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+              className="w-20 h-20 bg-white rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors shadow-lg shrink-0"
+              aria-label="Prendre une photo"
             >
               <div className="w-16 h-16 bg-white border-4 border-gray-300 rounded-full flex items-center justify-center">
                 <Camera className="w-8 h-8 text-gray-600" />
               </div>
             </button>
 
-            <div className="w-16"></div> {/* Spacer for centering */}
+            <div className="w-16 shrink-0"></div> {/* Spacer for centering */}
           </div>
         )}
       </div>

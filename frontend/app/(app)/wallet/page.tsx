@@ -6,6 +6,8 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { KYCBlocker } from '@/components/features/KYCBlocker';
+import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay';
+import { useCurrencyFormatter } from '@/lib/hooks/useCurrencyFormatter';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
@@ -31,12 +33,11 @@ const FILTER_TABS: { key: FilterType; label: string }[] = [
   { key: 'debit', label: 'Débits' },
 ];
 
-function TransactionRow({ transaction, formatCurrency, formatDate }: {
+function TransactionRow({ transaction }: {
   transaction: WalletTransaction;
-  formatCurrency: (n: number) => string;
-  formatDate: (s: string) => string;
 }) {
   const isCredit = transaction.type === 'credit';
+  
   return (
     <div className="flex items-center gap-4 py-3.5 border-b border-slate-100 last:border-0 group">
       {/* Icon */}
@@ -55,17 +56,25 @@ function TransactionRow({ transaction, formatCurrency, formatDate }: {
       {/* Details */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-slate-800 truncate">{transaction.description}</p>
-        <p className="text-xs text-slate-500 mt-0.5">{formatDate(transaction.created_at)}</p>
+        <p className="text-xs text-slate-500 mt-0.5">
+          {new Date(transaction.created_at).toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
       </div>
 
       {/* Amount */}
-      <span
-        className={`text-sm font-bold shrink-0 ${
-          isCredit ? 'text-emerald-600' : 'text-red-500'
-        }`}
-      >
-        {isCredit ? '+' : '-'}{formatCurrency(transaction.amount)}
-      </span>
+      <div className={`text-sm font-bold shrink-0 ${isCredit ? 'text-emerald-600' : 'text-red-500'}`}>
+        {isCredit ? '+' : '-'}
+        {transaction.formatted_amount || new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: transaction.currency_code || 'EUR',
+        }).format(transaction.amount)}
+      </div>
     </div>
   );
 }
@@ -74,10 +83,12 @@ export default function WalletPage() {
   const { t, locale } = useTranslation();
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  
   const [balance, setBalance] = useState(0);
   const [heldBalance, setHeldBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
-  const [currency, setCurrency] = useState(user?.currency_code || 'EUR');
+  const [currency, setCurrency] = useState('EUR');
+  const [originalCurrency, setOriginalCurrency] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,18 +114,21 @@ export default function WalletPage() {
     setIsLoadingData(true);
     setError(null);
     try {
-      const walletResponse = await apiClient.get<{ data: Wallet }>(API_ENDPOINTS.wallet.balance);
-      setBalance(walletResponse.data.balance);
-      setHeldBalance(walletResponse.data.held_balance);
-      setAvailableBalance(walletResponse.data.available_balance);
-      setCurrency(walletResponse.data.currency);
+      const walletResponse = await apiClient.get<{ success: boolean; data: any }>(API_ENDPOINTS.wallet.balance);
+      const walletData = walletResponse.data;
+      
+      setBalance(walletData.balance || 0);
+      setHeldBalance(walletData.held_balance || 0);
+      setAvailableBalance(walletData.available_balance || walletData.balance || 0);
+      setCurrency(walletData.currency_code || 'EUR');
+      setOriginalCurrency(walletData.original_currency_code || null);
 
       const transactionsResponse = await apiClient.get<PaginatedResponse<WalletTransaction>>(
         API_ENDPOINTS.wallet.transactions,
         { params: { page: currentPage, per_page: 10 } }
       );
-      setTransactions(transactionsResponse.data);
-      setTotalPages(transactionsResponse.meta.last_page);
+      setTransactions(transactionsResponse.data || []);
+      setTotalPages(transactionsResponse.meta?.last_page || 1);
     } catch (err) {
       const errorResponse = ErrorHandler.handle(err, locale);
       setError(errorResponse.message);
@@ -125,12 +139,11 @@ export default function WalletPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    const currencyCode = currency || 'EUR';
     return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fr-FR', {
       style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      currency: currency,
+      minimumFractionDigits: currency === 'XAF' || currency === 'XOF' ? 0 : 2,
+      maximumFractionDigits: currency === 'XAF' || currency === 'XOF' ? 0 : 2,
     }).format(amount);
   };
 
@@ -209,6 +222,11 @@ export default function WalletPage() {
               </div>
               <div className="text-4xl sm:text-5xl font-bold tracking-tight mt-2">
                 {formatCurrency(balance)}
+                {originalCurrency && (
+                  <div className="text-sm font-normal text-blue-200 mt-1">
+                    (Converti depuis {originalCurrency})
+                  </div>
+                )}
               </div>
 
               {/* Held balance indicator */}
@@ -267,14 +285,6 @@ export default function WalletPage() {
                   <Banknote className="w-4 h-4 mr-1.5" />
                   Retirer
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push('/wallet/withdrawals')}
-                  className="text-white hover:bg-white/10 border border-white/20"
-                >
-                  Historique
-                </Button>
               </div>
             </div>
           </div>
@@ -321,8 +331,6 @@ export default function WalletPage() {
                       <TransactionRow
                         key={transaction.id}
                         transaction={transaction}
-                        formatCurrency={formatCurrency}
-                        formatDate={formatDate}
                       />
                     ))}
                   </div>

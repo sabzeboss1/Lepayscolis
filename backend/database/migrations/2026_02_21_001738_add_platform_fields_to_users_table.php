@@ -24,7 +24,7 @@ return new class extends Migration
             $table->boolean('is_recommended')->default(false)->after('completed_deliveries')->comment('Recommended user flag (rating >= 4.5 and deliveries >= 5)');
             
             // Add KYC status enum
-            $table->enum('kyc_status', ['pending', 'approved', 'rejected'])->default('pending')->after('is_recommended')->comment('KYC verification status');
+            $table->enum('kyc_status', ['not_submitted', 'pending', 'approved', 'rejected'])->default('not_submitted')->after('is_recommended')->comment('KYC verification status');
             
             // Add locale field (fr or en)
             $table->string('locale', 2)->default('fr')->after('kyc_status')->comment('User preferred language: fr or en');

@@ -22,6 +22,23 @@ export interface Shipment {
   delivery_address: string;
   status: 'pending' | 'accepted' | 'paid' | 'in_transit' | 'delivered' | 'cancelled';
   payment_amount: number;
+  price: number; // Alias for payment_amount
+  currency_code: string;
+  
+  // Currency conversion fields
+  price_converted?: number;
+  price_formatted?: string;
+  price_original: number;
+  price_original_currency: string;
+  
+  fees?: {
+    sender_fee: number;
+    traveler_fee: number;
+    platform_fee: number;
+    traveler_amount: number;
+    sender_fee_percentage: number;
+    traveler_fee_percentage: number;
+  };
   payment_status: string;
   created_at: string;
   updated_at: string;

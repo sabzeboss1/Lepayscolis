@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ShipmentRequest;
 use App\Models\ShipmentBid;
+use App\Http\Resources\ShipmentRequestResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -46,7 +47,7 @@ class ShipmentRequestController extends Controller
         $requests = $query->orderBy('created_at', 'desc')->paginate(20);
 
         return response()->json([
-            'data' => $requests->items(),
+            'data' => ShipmentRequestResource::collection($requests->items()),
             'pagination' => [
                 'current_page' => $requests->currentPage(),
                 'last_page' => $requests->lastPage(),
@@ -65,9 +66,9 @@ class ShipmentRequestController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'weight' => 'required|numeric|min:0.1|max:50',
-            'length' => 'required|numeric|min:1',
-            'width' => 'required|numeric|min:1',
-            'height' => 'required|numeric|min:1',
+            'length' => 'nullable|numeric|min:1',
+            'width' => 'nullable|numeric|min:1',
+            'height' => 'nullable|numeric|min:1',
             'declared_value' => 'required|numeric|min:0',
             'package_type' => 'required|string|max:100',
             'recipient_name' => 'required|string|max:255',
@@ -82,7 +83,7 @@ class ShipmentRequestController extends Controller
             'currency_code' => 'required|string|size:3',
             'needed_by' => 'nullable|date|after:now',
             'photo_urls' => 'nullable|array',
-            'photo_urls.*' => 'string|url',
+            'photo_urls.*' => 'string',
         ]);
 
         if ($validator->fails()) {
@@ -107,7 +108,7 @@ class ShipmentRequestController extends Controller
 
         return response()->json([
             'message' => 'Annonce d\'expédition créée avec succès',
-            'data' => $shipmentRequest
+            'data' => ShipmentRequestResource::make($shipmentRequest)
         ], 201);
     }
 
@@ -128,7 +129,7 @@ class ShipmentRequestController extends Controller
             }
         ])->findOrFail($id);
 
-        return response()->json(['data' => $shipmentRequest]);
+        return response()->json(['data' => ShipmentRequestResource::make($shipmentRequest)]);
     }
 
     /**
@@ -151,7 +152,7 @@ class ShipmentRequestController extends Controller
         ->paginate(20);
 
         return response()->json([
-            'data' => $requests->items(),
+            'data' => ShipmentRequestResource::collection($requests->items()),
             'pagination' => [
                 'current_page' => $requests->currentPage(),
                 'last_page' => $requests->lastPage(),
@@ -193,7 +194,7 @@ class ShipmentRequestController extends Controller
 
         return response()->json([
             'message' => 'Annonce mise à jour avec succès',
-            'data' => $shipmentRequest
+            'data' => ShipmentRequestResource::make($shipmentRequest)
         ]);
     }
 

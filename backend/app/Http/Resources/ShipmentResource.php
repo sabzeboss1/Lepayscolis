@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Services\CurrencyService;
 
 /**
  * ShipmentResource - Transform shipment model to JSON
@@ -13,6 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * - Sender data using PublicUserResource (whenLoaded)
  * - Traveler data using PublicUserResource (whenLoaded)
  * - Trip data using TripResource (whenLoaded)
+ * - Currency conversion for payment amounts
  * - Dates formatted as ISO 8601
  * 
  * Validates Requirements: 4.15, 12.14-12.15
@@ -26,6 +28,33 @@ class ShipmentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $user = $request->user();
+        $currencyService = app(CurrencyService::class);
+        
+        // Get original currency from shipment or default to XAF
+        $originalCurrency = $this->currency_code ?? 'XAF';
+        $originalAmount = $this->payment_amount;
+        
+        // Convert currency if user is authenticated and has different preferred currency
+        $convertedAmount = null;
+        $convertedCurrency = null;
+        $formattedAmount = null;
+        
+        $userCurrency = $user->currency_code ?? null;
+        if ($user && $userCurrency && $userCurrency !== $originalCurrency) {
+            try {
+                $conversion = $currencyService->convert($originalAmount, $originalCurrency, $userCurrency);
+                $convertedAmount = $conversion['converted_amount'];
+                $convertedCurrency = $userCurrency;
+                $formattedAmount = $currencyService->format($convertedAmount, $convertedCurrency);
+            } catch (\Exception $e) {
+                // Fallback to original currency if conversion fails
+                $convertedAmount = null;
+                $convertedCurrency = null;
+                $formattedAmount = null;
+            }
+        }
+
         return [
             'id' => $this->id,
             'sender_id' => $this->sender_id,
@@ -61,7 +90,33 @@ class ShipmentResource extends JsonResource
             'status' => $this->status,
             'payment_amount' => $this->payment_amount,
             'price' => $this->payment_amount, // Alias pour le frontend
+            'currency_code' => $originalCurrency,
+            
+            // Currency conversion fields
+            'price_converted' => $convertedAmount,
+            'price_formatted' => $formattedAmount,
+            'price_original' => $originalAmount,
+            'price_original_currency' => $originalCurrency,
+            
             'payment_status' => $this->payment_status,
+            'fees' => $this->whenLoaded('payment', function () {
+                $payment = $this->payment;
+                if ($payment) {
+                    return [
+                        'sender_fee' => (float) $payment->sender_fee,
+                        'traveler_fee' => (float) $payment->traveler_fee,
+                        'platform_fee' => (float) $payment->platform_fee,
+                        'traveler_amount' => (float) $payment->traveler_amount,
+                        'sender_fee_percentage' => $payment->base_amount > 0
+                            ? round(($payment->sender_fee / $payment->base_amount) * 100, 2)
+                            : 0,
+                        'traveler_fee_percentage' => $payment->base_amount > 0
+                            ? round(($payment->traveler_fee / $payment->base_amount) * 100, 2)
+                            : 0,
+                    ];
+                }
+                return null;
+            }),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             

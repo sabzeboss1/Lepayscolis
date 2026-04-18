@@ -65,6 +65,9 @@ class ShipmentBidController extends Controller
 
         $bid->load('traveler:id,name,avatar,rating,completed_deliveries');
 
+        // Déclencher l'événement de notification
+        event(new \App\Events\ShipmentBidSubmitted($bid));
+
         return response()->json([
             'message' => 'Soumission envoyée avec succès',
             'data' => $bid
@@ -107,8 +110,42 @@ class ShipmentBidController extends Controller
             ], 422);
         }
 
+        // Déclencher l'événement de notification
+        event(new \App\Events\ShipmentBidAccepted($bid));
+
         return response()->json([
             'message' => 'Soumission acceptée avec succès',
+            'data' => $bid->fresh(['traveler', 'shipmentRequest'])
+        ]);
+    }
+
+    /**
+     * Reject a bid
+     */
+    public function reject(string $shipmentRequestId, string $bidId): JsonResponse
+    {
+        $shipmentRequest = ShipmentRequest::where('sender_id', Auth::id())
+                                         ->findOrFail($shipmentRequestId);
+
+        $bid = ShipmentBid::where('shipment_request_id', $shipmentRequestId)
+                         ->findOrFail($bidId);
+
+        if ($bid->status !== 'pending') {
+            return response()->json([
+                'message' => 'Cette soumission ne peut plus être rejetée'
+            ], 422);
+        }
+
+        $bid->update([
+            'status' => 'rejected',
+            'responded_at' => now(),
+        ]);
+
+        // Déclencher l'événement de notification
+        event(new \App\Events\ShipmentBidRejected($bid));
+
+        return response()->json([
+            'message' => 'Soumission rejetée',
             'data' => $bid->fresh(['traveler', 'shipmentRequest'])
         ]);
     }

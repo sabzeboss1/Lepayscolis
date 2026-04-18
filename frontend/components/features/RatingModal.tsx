@@ -1,42 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { useState } from 'react';
+import { Star, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { RatingStars } from '@/components/ui/RatingStars';
-import { useTranslation } from '@/lib/i18n/useTranslation';
-import { NotificationService } from '@/lib/services/NotificationService';
-import type { User, Shipment } from '@/lib/types/api';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 
 interface RatingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  shipment: Shipment;
-  ratedUser: User;
-  currentUserId: string;
+  shipmentId: string;
+  toUserId: string;
+  toUserName: string;
+  userRole: 'sender' | 'traveler'; // Role of the person being rated
+  onSuccess?: () => void;
 }
 
-export function RatingModal({ isOpen, onClose, shipment, ratedUser, currentUserId }: RatingModalProps) {
-  const { t } = useTranslation();
+export function RatingModal({
+  isOpen,
+  onClose,
+  shipmentId,
+  toUserId,
+  toUserName,
+  userRole,
+  onSuccess,
+}: RatingModalProps) {
   const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate rating
+  const handleSubmit = async () => {
     if (rating === 0) {
-      setError(t('errors.required'));
-      return;
-    }
-
-    // Validate comment for low ratings
-    if (rating < 3 && !comment.trim()) {
-      setError('Un commentaire est requis pour les notes inférieures à 3 étoiles');
+      setError('Veuillez sélectionner une note');
       return;
     }
 
@@ -44,142 +44,132 @@ export function RatingModal({ isOpen, onClose, shipment, ratedUser, currentUserI
     setError('');
 
     try {
-      const response = await fetch('/api/ratings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          shipment_id: shipment.id,
-          rated_id: ratedUser.id,
-          score: rating,
-          comment: comment.trim() || undefined,
-        }),
+      await apiClient.post(API_ENDPOINTS.ratings.create, {
+        to_user_id: toUserId,
+        shipment_id: shipmentId,
+        rating,
+        comment: comment.trim() || null,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to submit rating');
-      }
-
-      NotificationService.success(t('ratings.submitSuccess'));
+      onSuccess?.();
       onClose();
-    } catch (error: any) {
-      console.error('Rating submission error:', error);
-      setError(error.message || t('ratings.submitError'));
+    } catch (err: any) {
+      const errorMessage = ErrorHandler.handle(err);
+      setError(errorMessage.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const roleLabel = userRole === 'traveler' ? 'le voyageur' : "l'expéditeur";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">{t('ratings.title')}</h2>
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-white">Évaluer {roleLabel}</h2>
+            <p className="text-sm text-orange-100">{toUserName}</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
-            aria-label={t('common.close')}
+            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+            disabled={isSubmitting}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* User Info */}
-          <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
-            <img
-              src={ratedUser.avatar_url || '/default-avatar.png'}
-              alt={ratedUser.name}
-              className="w-16 h-16 rounded-full object-cover"
-            />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">{ratedUser.name}</h3>
-              <p className="text-sm text-gray-600">
-                {shipment.traveler_id === ratedUser.id ? 'Voyageur' : 'Expéditeur'}
-              </p>
-            </div>
-          </div>
-
-          {/* Rating */}
+        <div className="p-6 space-y-6">
+          {/* Rating Stars */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-3">
-              {t('ratings.yourRating')} *
+            <label className="block text-sm font-medium text-slate-700 mb-3">
+              Votre note
             </label>
-            <div className="flex items-center gap-4">
-              <RatingStars
-                rating={rating}
-                size="lg"
-                interactive
-                onChange={setRating}
-              />
-              {rating > 0 && (
-                <span className="text-lg font-semibold text-gray-700">
-                  {rating} {t('ratings.stars', { count: rating })}
-                </span>
-              )}
+            <div className="flex items-center justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoveredRating(star)}
+                  onMouseLeave={() => setHoveredRating(0)}
+                  className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded"
+                  disabled={isSubmitting}
+                >
+                  <Star
+                    className={`w-10 h-10 transition-colors ${
+                      star <= (hoveredRating || rating)
+                        ? 'fill-orange-500 text-orange-500'
+                        : 'text-slate-300'
+                    }`}
+                  />
+                </button>
+              ))}
             </div>
-            {error && rating === 0 && (
-              <p className="text-sm text-red-600 mt-2">{error}</p>
+            {rating > 0 && (
+              <p className="text-center text-sm text-slate-600 mt-2">
+                {rating === 1 && 'Très insatisfait'}
+                {rating === 2 && 'Insatisfait'}
+                {rating === 3 && 'Moyen'}
+                {rating === 4 && 'Satisfait'}
+                {rating === 5 && 'Très satisfait'}
+              </p>
             )}
           </div>
 
           {/* Comment */}
           <div>
-            <label htmlFor="comment" className="block text-lg font-medium text-gray-700 mb-2">
-              {t('ratings.comment')} {rating < 3 && rating > 0 && '*'}
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Commentaire <span className="text-slate-400 font-normal">(optionnel)</span>
             </label>
             <textarea
-              id="comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              rows={4}
+              placeholder={`Partagez votre expérience avec ${toUserName}...`}
               maxLength={500}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={t('ratings.comment')}
+              rows={4}
+              disabled={isSubmitting}
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none text-sm disabled:bg-slate-50 disabled:text-slate-500"
             />
-            <div className="flex items-center justify-between mt-1">
-              <p className="text-sm text-gray-500">
-                {comment.length}/500 {t('common.characters')}
-              </p>
-              {rating < 3 && rating > 0 && (
-                <p className="text-sm text-orange-600">
-                  * Commentaire requis pour les notes inférieures à 3
-                </p>
-              )}
-            </div>
+            <p className="text-xs text-slate-500 mt-1 text-right">
+              {comment.length}/500 caractères
+            </p>
           </div>
 
-          {error && rating > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-red-800">{error}</p>
+          {/* Error */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+              {error}
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-4 pt-4">
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isSubmitting || rating === 0}
-              loading={isSubmitting}
-              className="flex-1"
-            >
-              {t('ratings.submitRating')}
-            </Button>
+          <div className="flex gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
+              className="flex-1"
             >
-              {t('common.cancel')}
+              Plus tard
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSubmit}
+              disabled={isSubmitting || rating === 0}
+              loading={isSubmitting}
+              className="flex-1"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Envoyer
             </Button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

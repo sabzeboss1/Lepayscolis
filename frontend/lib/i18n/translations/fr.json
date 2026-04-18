@@ -780,8 +780,10 @@
       "trips": "Voyages",
       "shipments": "Expéditions",
       "shipmentRequests": "Annonces de colis",
+      "routing": "Routage Manuel",
       "financial": "Finances",
       "wallets": "Portefeuilles",
+      "rechargeRequests": "Demandes de recharge",
       "withdrawals": "Retraits",
       "payments": "Paiements",
       "content": "Contenu",
@@ -1402,7 +1404,9 @@
         "reasonPlaceholder": "Expliquez pourquoi cet ajustement est effectué (minimum 10 caractères)...",
         "reasonMinChars": "{{count}} / 10 minimum",
         "adjusting": "Ajustement...",
-        "confirmAdjust": "Confirmer l'ajustement"
+        "confirmAdjust": "Confirmer l'ajustement",
+        "currency": "Devise",
+        "exchangeRate": "taux"
       }
     },
     "withdrawals": {

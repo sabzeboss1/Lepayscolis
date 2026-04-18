@@ -426,7 +426,7 @@ export default function ProfilePage() {
                 {[
                   { label: 'Publier un voyage', icon: Plane, path: '/trips/new', color: 'text-blue-600', bg: 'bg-blue-50' },
                   { label: 'Envoyer un colis', icon: Package, path: '/trips/search', color: 'text-green-600', bg: 'bg-green-50' },
-                  { label: 'Mes messages', icon: MessageSquare, path: '/messages', color: 'text-purple-600', bg: 'bg-purple-50' },
+                  // { label: 'Mes messages', icon: MessageSquare, path: '/messages', color: 'text-purple-600', bg: 'bg-purple-50' }, // Temporairement masqué
                   { label: 'Retirer mes gains', icon: Wallet, path: '/wallet/withdraw', color: 'text-orange-600', bg: 'bg-orange-50' },
                 ].map((action) => {
                   const AIcon = action.icon;

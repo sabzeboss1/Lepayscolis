@@ -7,16 +7,17 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { KYCBlocker } from '@/components/features/KYCBlocker';
+import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay';
+import { useCurrencyFormatter } from '@/lib/hooks/useCurrencyFormatter';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import {
   getWithdrawalConfig,
-  getSupportedCountries,
-  formatAmount,
   type PaymentMethod,
   type PaymentMethodField,
 } from '@/lib/data/withdrawalMethods';
+import { useCountries } from '@/lib/hooks/useCountries';
 import type { Wallet } from '@/lib/types/api';
 import {
   ArrowLeft,
@@ -35,8 +36,11 @@ export default function WithdrawPage() {
   const { t, locale } = useTranslation();
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { formatWithCurrencyNote } = useCurrencyFormatter();
+  const { countries } = useCountries();
+
   const [balance, setBalance] = useState(0);
-  const [currency, setCurrency] = useState(user?.currency_code || 'EUR');
+  const [walletCurrency, setWalletCurrency] = useState('EUR');
   const [amount, setAmount] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
@@ -46,7 +50,6 @@ export default function WithdrawPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
 
-  const supportedCountries = getSupportedCountries();
 
   useEffect(() => {
     if (user) {
@@ -64,7 +67,7 @@ export default function WithdrawPage() {
     try {
       const walletResponse = await apiClient.get<{ data: Wallet }>(API_ENDPOINTS.wallet.balance);
       setBalance(walletResponse.data.balance);
-      setCurrency(walletResponse.data.currency);
+      setWalletCurrency(walletResponse.data.currency_code || 'EUR');
     } catch (err) {
       const errorResponse = ErrorHandler.handle(err, locale);
       setError(errorResponse.message);
@@ -118,7 +121,7 @@ export default function WithdrawPage() {
       return;
     }
     if (withdrawalAmount < MINIMUM_WITHDRAWAL) {
-      setError(`Le montant minimum de retrait est de ${MINIMUM_WITHDRAWAL} ${config.currencySymbol}`);
+      setError(`Le montant minimum de retrait est de ${formatWithCurrencyNote(MINIMUM_WITHDRAWAL, walletCurrency)}`);
       return;
     }
     if (withdrawalAmount > balance) {
@@ -129,14 +132,13 @@ export default function WithdrawPage() {
 
     setIsSubmitting(true);
     try {
+      const dbCountry = countries.find(c => c.code === selectedCountry);
       await apiClient.post<any>(API_ENDPOINTS.withdrawals.create, {
         amount: withdrawalAmount,
+        country_code: selectedCountry,
+        currency: config?.currency || dbCountry?.default_currency_code,
         payment_method: selectedPaymentMethod.id,
-        payment_details: {
-          ...paymentDetails,
-          country_code: selectedCountry,
-          currency: config.currency,
-        },
+        payment_details: paymentDetails,
       });
       setSuccess(true);
       setTimeout(() => router.push('/wallet/withdrawals'), 2500);
@@ -221,17 +223,22 @@ export default function WithdrawPage() {
             <div>
               <p className="text-xs text-blue-300 mb-0.5">Solde disponible</p>
               <p className="text-2xl font-bold">
-                {config
-                  ? formatAmount(balance, config.currency, config.currencySymbol)
-                  : `${balance.toFixed(2)} EUR`}
+                <CurrencyDisplay
+                  amount={balance}
+                  currency={walletCurrency}
+                  showCurrencyNote={true}
+                  className="!text-white"
+                />
               </p>
             </div>
             <div className="text-right text-xs text-blue-300">
               <p>Minimum :</p>
               <p className="font-medium text-white">
-                {config
-                  ? formatAmount(MINIMUM_WITHDRAWAL, config.currency, config.currencySymbol)
-                  : `${MINIMUM_WITHDRAWAL} EUR`}
+                <CurrencyDisplay
+                  amount={MINIMUM_WITHDRAWAL}
+                  currency={walletCurrency}
+                  className="!text-white"
+                />
               </p>
             </div>
           </div>
@@ -257,7 +264,7 @@ export default function WithdrawPage() {
                     className="w-full appearance-none px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white pr-10"
                   >
                     <option value="">-- Choisir un pays --</option>
-                    {supportedCountries.map((country) => (
+                    {countries.map((country) => (
                       <option key={country.code} value={country.code}>
                         {country.name}
                       </option>
@@ -265,11 +272,15 @@ export default function WithdrawPage() {
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
-                {config && (
-                  <p className="mt-2 text-xs text-slate-500">
-                    Devise : <span className="font-medium">{config.currency}</span> ({config.currencySymbol})
-                  </p>
-                )}
+                {selectedCountry && (() => {
+                  const dbCountry = countries.find(c => c.code === selectedCountry);
+                  const currency = config?.currency || dbCountry?.default_currency_code;
+                  return currency ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      Devise : <span className="font-medium">{currency}</span>
+                    </p>
+                  ) : null;
+                })()}
               </div>
             </div>
 
@@ -327,21 +338,33 @@ export default function WithdrawPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Montant demandé</span>
                       <span className="font-medium text-slate-900">
-                        {formatAmount(parsedAmount, config.currency, config.currencySymbol)}
+                        <CurrencyDisplay
+                          amount={parsedAmount}
+                          currency={walletCurrency}
+                        />
                       </span>
                     </div>
                     {WITHDRAWAL_FEE_PERCENTAGE > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-600">Frais ({WITHDRAWAL_FEE_PERCENTAGE * 100}%)</span>
                         <span className="font-medium text-red-500">
-                          -{formatAmount(calculateFee(parsedAmount), config.currency, config.currencySymbol)}
+                          <CurrencyDisplay
+                            amount={calculateFee(parsedAmount)}
+                            currency={walletCurrency}
+                            showPlusSign={false}
+                            className="!text-red-500"
+                          />
                         </span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
                       <span className="font-semibold text-slate-900">Montant net</span>
                       <span className="font-bold text-emerald-600">
-                        {formatAmount(calculateNetAmount(parsedAmount), config.currency, config.currencySymbol)}
+                        <CurrencyDisplay
+                          amount={calculateNetAmount(parsedAmount)}
+                          currency={walletCurrency}
+                          className="!text-emerald-600"
+                        />
                       </span>
                     </div>
                   </div>

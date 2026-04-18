@@ -75,6 +75,11 @@ class KYCVerificationService
                 'submitted_at' => now(),
             ]);
 
+            // Update user KYC status to pending after successful submission
+            $user->update([
+                'kyc_status' => 'pending',
+            ]);
+
             DB::commit();
 
             return $kycDocument;

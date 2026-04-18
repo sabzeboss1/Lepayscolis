@@ -361,7 +361,7 @@ export default function TripDetailPage() {
                 >
                   {trip.price_converted
                     ? formatCurrency(trip.price_converted.amount, trip.price_converted.currency_code)
-                    : formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg
+                    : trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg
                 </p>
                 {trip.price_converted && (
                   <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -542,14 +542,15 @@ export default function TripDetailPage() {
 
               {/* CTA buttons */}
               <div className="flex flex-col sm:flex-row gap-3 mt-5 pt-5" style={{ borderTop: '1px solid var(--color-light-border)' }}>
-                <Button
+                {/* Bouton "Contacter le voyageur" masqué */}
+                {/* <Button
                   variant="primary"
                   onClick={handleContactTraveler}
                   className="flex-1 gap-2"
                 >
                   <MessageCircle className="w-4 h-4" />
                   {t('trips.contactTraveler')}
-                </Button>
+                </Button> */}
                 <Button
                   variant="secondary"
                   onClick={handleRequestShipment}

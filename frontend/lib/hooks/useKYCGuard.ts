@@ -33,6 +33,7 @@ export function useKYCGuard() {
   const isKYCApproved = user?.kyc_status === 'approved';
   const isKYCPending = user?.kyc_status === 'pending';
   const isKYCRejected = user?.kyc_status === 'rejected';
+  const isKYCNotSubmitted = user?.kyc_status === 'not_submitted';
   const needsKYC = !isAdmin && (!user || user.kyc_status !== 'approved');
 
   return {
@@ -40,6 +41,7 @@ export function useKYCGuard() {
     isKYCApproved,
     isKYCPending,
     isKYCRejected,
+    isKYCNotSubmitted,
     needsKYC,
     kyc_status: user?.kyc_status || 'not_submitted'
   };

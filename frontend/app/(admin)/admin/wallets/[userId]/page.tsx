@@ -5,9 +5,32 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, X } from 'lucide-react';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
-import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { useAdminCurrencyFormatter } from '@/lib/hooks/useAdminCurrencyFormatter';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+
+const ZERO_DECIMAL_CURRENCIES = ['XAF', 'XOF', 'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV'];
+
+function formatInCurrency(amount: number, currencyCode: string): string {
+  const isZeroDecimal = ZERO_DECIMAL_CURRENCIES.includes(currencyCode.toUpperCase());
+  try {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: isZeroDecimal ? 0 : 2,
+      maximumFractionDigits: isZeroDecimal ? 0 : 2,
+    }).format(isZeroDecimal ? Math.round(amount) : amount);
+  } catch {
+    return `${amount.toLocaleString('fr-FR')} ${currencyCode}`;
+  }
+}
+
+interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+  exchange_rate: number;
+}
 
 interface WalletDetails {
   user: {
@@ -20,7 +43,6 @@ interface WalletDetails {
   currency_code: string;
   total_credits: number;
   total_debits: number;
-  total_adjustments: number;
 }
 
 interface Transaction {
@@ -48,12 +70,27 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
   const [adjustType, setAdjustType] = useState<'credit' | 'debit'>('credit');
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [adjusting, setAdjusting] = useState(false);
   const [adjustError, setAdjustError] = useState<string | null>(null);
+
+  const { defaultCurrency } = useAdminCurrencyFormatter();
 
   useEffect(() => {
     params.then((p) => setUserId(p.userId));
   }, [params]);
+
+  useEffect(() => {
+    const fetchCurrencies = async () => {
+      try {
+        const data = await apiClient.get<any>(API_ENDPOINTS.currencies.list);
+        setCurrencies(data.data ?? []);
+      } catch {
+        // keep empty
+      }
+    };
+    fetchCurrencies();
+  }, []);
 
   useEffect(() => {
     if (userId) fetchWalletDetails();
@@ -69,7 +106,13 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
       };
 
       const data = await apiClient.get<any>(API_ENDPOINTS.admin.wallets.show(userId), { params });
-      setWallet(data.data.wallet);
+      setWallet({
+        user: data.data.user,
+        balance: data.data.wallet.balance,
+        currency_code: data.data.wallet.currency_code,
+        total_credits: data.data.aggregates?.total_credits ?? 0,
+        total_debits: data.data.aggregates?.total_debits ?? 0,
+      });
       setTransactions(data.data.transactions ?? []);
       setTotal(data.meta?.total ?? 0);
     } catch (error) {
@@ -108,7 +151,21 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     setAdjustError(null);
   };
 
-  const { formatCurrency } = useAdminCurrency();
+  const getConvertedPreview = (): { amount: number; rate: number; targetCurrency: string } | null => {
+    if (!adjustAmount || !defaultCurrency || !wallet) return null;
+    if (defaultCurrency === wallet.currency_code) return null;
+
+    const fromRate = currencies.find((c) => c.code === defaultCurrency)?.exchange_rate;
+    const toRate = currencies.find((c) => c.code === wallet.currency_code)?.exchange_rate;
+    if (!fromRate || !toRate) return null;
+
+    const rate = toRate / fromRate;
+    return {
+      amount: Math.round(parseFloat(adjustAmount) * rate * 100) / 100,
+      rate: Math.round(rate * 1000000) / 1000000,
+      targetCurrency: wallet.currency_code,
+    };
+  };
 
   const getTypeLabel = (type: string) => {
     const map: Record<string, string> = {
@@ -192,7 +249,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
       </div>
 
       {/* Wallet Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -200,7 +257,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
               <p className={`text-2xl font-bold mt-2 ${
                 wallet.balance > 0 ? 'text-green-600' : wallet.balance < 0 ? 'text-red-600' : 'text-gray-900'
               }`}>
-                {formatCurrency(wallet.balance, wallet.currency_code)}
+                {formatInCurrency(wallet.balance, wallet.currency_code)}
               </p>
             </div>
             <Wallet className="w-8 h-8 text-blue-600" />
@@ -211,7 +268,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalCredits')}</p>
-              <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(wallet.total_credits, wallet.currency_code)}</p>
+              <p className="text-2xl font-bold text-green-600 mt-2">{formatInCurrency(wallet.total_credits, wallet.currency_code)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
@@ -221,19 +278,9 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalDebits')}</p>
-              <p className="text-2xl font-bold text-red-600 mt-2">{formatCurrency(wallet.total_debits, wallet.currency_code)}</p>
+              <p className="text-2xl font-bold text-red-600 mt-2">{formatInCurrency(wallet.total_debits, wallet.currency_code)}</p>
             </div>
             <TrendingDown className="w-8 h-8 text-red-600" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalAdjustments')}</p>
-              <p className="text-2xl font-bold text-blue-600 mt-2">{formatCurrency(wallet.total_adjustments, wallet.currency_code)}</p>
-            </div>
-            <DollarSign className="w-8 h-8 text-blue-600" />
           </div>
         </div>
       </div>
@@ -270,7 +317,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`text-sm font-semibold ${getTypeColor(tx.type)}`}>
-                        {tx.type === 'debit' ? '-' : '+'}{formatCurrency(Math.abs(tx.amount), wallet.currency_code)}
+                        {tx.type === 'debit' ? '-' : '+'}{formatInCurrency(Math.abs(tx.amount), wallet.currency_code)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -353,7 +400,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('admin.wallets.detail.adjustmentAmount')}
+                  {t('admin.wallets.detail.adjustmentAmount')} ({defaultCurrency})
                 </label>
                 <input
                   type="number"
@@ -365,8 +412,17 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {t('admin.wallets.detail.currentBalance')}: {formatCurrency(wallet.balance, wallet.currency_code)}
+                  {t('admin.wallets.detail.currentBalance')}: {formatInCurrency(wallet.balance, wallet.currency_code)}
                 </p>
+                {(() => {
+                  const preview = getConvertedPreview();
+                  if (!preview) return null;
+                  return (
+                    <p className="text-xs text-blue-600 mt-1">
+                      ≈ {formatInCurrency(preview.amount, preview.targetCurrency)} ({t('admin.wallets.detail.exchangeRate')}: {preview.rate})
+                    </p>
+                  );
+                })()}
               </div>
 
               <div>
