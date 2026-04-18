@@ -100,8 +100,9 @@ export const API_ENDPOINTS = {
   // Rating Endpoints
   // ============================================================================
   ratings: {
-    submit: '/api/ratings',
-    list: (userId: string) => `/api/users/${userId}/ratings`,
+    create: '/api/ratings',
+    list: '/api/ratings',
+    userRatings: (userId: string) => `/api/users/${userId}/ratings`,
   },
 
   // ============================================================================

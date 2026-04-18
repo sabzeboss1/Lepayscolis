@@ -27,7 +27,18 @@ const FOOTER_LINKS = {
 };
 
 export function LandingFooter() {
-  const { logo_url } = usePlatformBranding();
+  const branding = usePlatformBranding();
+  
+  // Defensive defaults
+  const logo_url = branding?.logo_url || '/logo.png';
+  const contact_email = branding?.contact_email || 'contact@tumaplus.com';
+  const contact_phone = branding?.contact_phone || '+33 1 23 45 67 89';
+  const contact_address = branding?.contact_address || 'Paris, France';
+  const whatsapp_number = branding?.whatsapp_number || '33123456789';
+  const facebook_url = branding?.facebook_url || '#';
+  const twitter_url = branding?.twitter_url || '#';
+  const instagram_url = branding?.instagram_url || '#';
+  const linkedin_url = branding?.linkedin_url || '#';
 
   return (
     <footer className="bg-navy text-white">
@@ -48,17 +59,23 @@ export function LandingFooter() {
               l&apos;Afrique. Sûr, abordable et fiable.
             </p>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm text-white/50">
+              <a 
+                href={`mailto:${contact_email}`}
+                className="flex items-center gap-3 text-sm text-white/50 hover:text-white/80 transition-colors"
+              >
                 <Mail className="w-4 h-4 shrink-0" />
-                <span>contact@tumaplus.com</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-white/50">
+                <span>{contact_email}</span>
+              </a>
+              <a 
+                href={`tel:${contact_phone.replace(/\s/g, '')}`}
+                className="flex items-center gap-3 text-sm text-white/50 hover:text-white/80 transition-colors"
+              >
                 <Phone className="w-4 h-4 shrink-0" />
-                <span>+33 1 23 45 67 89</span>
-              </div>
+                <span>{contact_phone}</span>
+              </a>
               <div className="flex items-center gap-3 text-sm text-white/50">
                 <MapPin className="w-4 h-4 shrink-0" />
-                <span>Paris, France</span>
+                <span>{contact_address}</span>
               </div>
             </div>
           </div>
@@ -94,7 +111,7 @@ export function LandingFooter() {
           <div className="flex items-center gap-4">
             {/* WhatsApp */}
             <a
-              href="https://wa.me/33123456789"
+              href={`https://wa.me/${whatsapp_number.replace(/\s/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 transition-colors text-sm font-medium"
@@ -106,22 +123,21 @@ export function LandingFooter() {
 
             {/* Social icons */}
             <div className="flex items-center gap-2">
-              {['Facebook', 'X', 'Instagram', 'LinkedIn'].map((social) => (
+              {[
+                { name: 'Facebook', url: facebook_url, icon: 'f' },
+                { name: 'X', url: twitter_url, icon: '𝕏' },
+                { name: 'Instagram', url: instagram_url, icon: 'ig' },
+                { name: 'LinkedIn', url: linkedin_url, icon: 'in' },
+              ].map((social) => (
                 <a
-                  key={social}
-                  href="#"
+                  key={social.name}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-colors"
-                  aria-label={social}
+                  aria-label={social.name}
                 >
-                  <span className="text-xs font-bold">
-                    {social === 'Facebook'
-                      ? 'f'
-                      : social === 'X'
-                        ? '𝕏'
-                        : social === 'Instagram'
-                          ? 'ig'
-                          : 'in'}
-                  </span>
+                  <span className="text-xs font-bold">{social.icon}</span>
                 </a>
               ))}
             </div>
