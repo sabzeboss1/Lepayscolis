@@ -1402,7 +1402,9 @@
         "reasonPlaceholder": "Expliquez pourquoi cet ajustement est effectué (minimum 10 caractères)...",
         "reasonMinChars": "{{count}} / 10 minimum",
         "adjusting": "Ajustement...",
-        "confirmAdjust": "Confirmer l'ajustement"
+        "confirmAdjust": "Confirmer l'ajustement",
+        "currency": "Devise",
+        "exchangeRate": "taux"
       }
     },
     "withdrawals": {

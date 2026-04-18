@@ -89,6 +89,7 @@ export default function NewShipmentPage() {
   const [showProhibitedItems, setShowProhibitedItems] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletData, setWalletData] = useState<any | null>(null);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<any | null>(null);
 
@@ -133,7 +134,12 @@ export default function NewShipmentPage() {
     const fetchWallet = async () => {
       try {
         const response = await apiClient.get<{ data: any }>(API_ENDPOINTS.wallet.balance);
-        setWalletBalance(response.data.balance);
+        setWalletData(response.data);
+        // Use converted balance if available, otherwise use original balance
+        const balance = response.data.balance_converted
+          ? response.data.balance_converted.amount
+          : response.data.balance;
+        setWalletBalance(balance);
       } catch (error) {
         console.error('Failed to fetch wallet balance:', error);
       }
@@ -141,10 +147,13 @@ export default function NewShipmentPage() {
     if (user) fetchWallet();
   }, [user]);
 
-  // Calculate estimated cost when weight or trip changes
+  // Calculate estimated cost when weight or trip changes (use converted price if available)
   useEffect(() => {
     if (formData.weight && selectedTrip?.price_per_kg) {
-      setEstimatedCost(formData.weight * selectedTrip.price_per_kg);
+      const pricePerKg = selectedTrip.price_converted
+        ? selectedTrip.price_converted.amount
+        : selectedTrip.price_per_kg;
+      setEstimatedCost(formData.weight * pricePerKg);
     } else {
       setEstimatedCost(null);
     }
@@ -421,8 +430,15 @@ export default function NewShipmentPage() {
                       {selectedTrip.departure_city} → {selectedTrip.arrival_city}
                     </p>
                     <p className="text-xs text-slate-600">
-                      Départ: {new Date(selectedTrip.departure_date).toLocaleDateString('fr-FR')} • 
-                      Prix: {formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code)}/kg
+                      Départ: {new Date(selectedTrip.departure_date).toLocaleDateString('fr-FR')} •
+                      Prix: {selectedTrip.price_converted
+                        ? formatCurrency(selectedTrip.price_converted.amount, selectedTrip.price_converted.currency_code)
+                        : formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}/kg
+                      {selectedTrip.price_converted && (
+                        <span className="text-slate-400 ml-1">
+                          ({formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}/kg)
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -444,6 +460,11 @@ export default function NewShipmentPage() {
                       <div>
                         <p className="text-xs text-slate-600">Solde disponible</p>
                         <p className="text-lg font-bold text-slate-900">{formatCurrency(walletBalance)}</p>
+                        {walletData?.balance_converted && (
+                          <p className="text-[10px] text-slate-400">
+                            {formatCurrency(walletData.balance, walletData.currency_code)}
+                          </p>
+                        )}
                       </div>
                     </div>
                     {estimatedCost !== null && (
@@ -452,6 +473,11 @@ export default function NewShipmentPage() {
                         <p className={`text-lg font-bold ${walletBalance >= estimatedCost ? 'text-emerald-600' : 'text-red-600'}`}>
                           {formatCurrency(estimatedCost)}
                         </p>
+                        {selectedTrip?.price_converted && formData.weight && (
+                          <p className="text-[10px] text-slate-400">
+                            {formatCurrency(formData.weight * selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

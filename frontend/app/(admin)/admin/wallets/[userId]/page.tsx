@@ -9,6 +9,13 @@ import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
+interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+  exchange_rate: number;
+}
+
 interface WalletDetails {
   user: {
     id: string;
@@ -48,12 +55,26 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
   const [adjustType, setAdjustType] = useState<'credit' | 'debit'>('credit');
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
+  const [adjustCurrency, setAdjustCurrency] = useState('');
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [adjusting, setAdjusting] = useState(false);
   const [adjustError, setAdjustError] = useState<string | null>(null);
 
   useEffect(() => {
     params.then((p) => setUserId(p.userId));
   }, [params]);
+
+  useEffect(() => {
+    const fetchCurrencies = async () => {
+      try {
+        const data = await apiClient.get<any>(API_ENDPOINTS.currencies.list);
+        setCurrencies(data.data ?? []);
+      } catch {
+        // keep empty
+      }
+    };
+    fetchCurrencies();
+  }, []);
 
   useEffect(() => {
     if (userId) fetchWalletDetails();
@@ -69,7 +90,17 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
       };
 
       const data = await apiClient.get<any>(API_ENDPOINTS.admin.wallets.show(userId), { params });
-      setWallet(data.data.wallet);
+      setWallet({
+        user: data.data.user,
+        balance: data.data.wallet.balance,
+        currency_code: data.data.wallet.currency_code,
+        total_credits: data.data.aggregates?.total_credits ?? 0,
+        total_debits: data.data.aggregates?.total_debits ?? 0,
+        total_adjustments: data.data.aggregates?.total_adjustments ?? 0,
+      });
+      if (!adjustCurrency) {
+        setAdjustCurrency(defaultCurrency);
+      }
       setTransactions(data.data.transactions ?? []);
       setTotal(data.meta?.total ?? 0);
     } catch (error) {
@@ -89,6 +120,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
         amount: parseFloat(adjustAmount),
         type: adjustType,
         reason: adjustReason,
+        currency_code: adjustCurrency,
       });
 
       fetchWalletDetails();
@@ -105,10 +137,23 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
     setAdjustType('credit');
     setAdjustAmount('');
     setAdjustReason('');
+    setAdjustCurrency(defaultCurrency);
     setAdjustError(null);
   };
 
-  const { formatCurrency } = useAdminCurrency();
+  const getConvertedPreview = (): { amount: number; rate: number } | null => {
+    if (!adjustAmount || !adjustCurrency || !wallet) return null;
+    if (adjustCurrency === wallet.currency_code) return null;
+
+    const fromRate = currencies.find((c) => c.code === adjustCurrency)?.exchange_rate;
+    const toRate = currencies.find((c) => c.code === wallet.currency_code)?.exchange_rate;
+    if (!fromRate || !toRate) return null;
+
+    const rate = toRate / fromRate;
+    return { amount: Math.round(parseFloat(adjustAmount) * rate * 100) / 100, rate: Math.round(rate * 1000000) / 1000000 };
+  };
+
+  const { formatCurrency, defaultCurrency } = useAdminCurrency();
 
   const getTypeLabel = (type: string) => {
     const map: Record<string, string> = {
@@ -355,18 +400,41 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('admin.wallets.detail.adjustmentAmount')}
                 </label>
-                <input
-                  type="number"
-                  value={adjustAmount}
-                  onChange={(e) => setAdjustAmount(e.target.value)}
-                  placeholder="0.00"
-                  min="0.01"
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={adjustAmount}
+                    onChange={(e) => setAdjustAmount(e.target.value)}
+                    placeholder="0.00"
+                    min="0.01"
+                    step="0.01"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <select
+                    value={adjustCurrency}
+                    onChange={(e) => setAdjustCurrency(e.target.value)}
+                    className="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {currencies.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code} ({c.symbol})
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <p className="text-xs text-gray-500 mt-1">
                   {t('admin.wallets.detail.currentBalance')}: {formatCurrency(wallet.balance, wallet.currency_code)}
+                  {' '}({wallet.currency_code})
                 </p>
+                {(() => {
+                  const preview = getConvertedPreview();
+                  if (!preview) return null;
+                  return (
+                    <p className="text-xs text-blue-600 mt-1">
+                      ≈ {formatCurrency(preview.amount, wallet.currency_code)} {wallet.currency_code} ({t('admin.wallets.detail.exchangeRate')}: {preview.rate})
+                    </p>
+                  );
+                })()}
               </div>
 
               <div>

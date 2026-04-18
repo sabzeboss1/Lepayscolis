@@ -169,9 +169,12 @@ class WalletService
         Wallet $wallet,
         float $amount,
         string $reason,
-        User $admin
+        User $admin,
+        ?float $originalAmount = null,
+        ?string $originalCurrencyCode = null,
+        ?float $exchangeRateUsed = null
     ): WalletTransaction {
-        return DB::transaction(function () use ($wallet, $amount, $reason, $admin) {
+        return DB::transaction(function () use ($wallet, $amount, $reason, $admin, $originalAmount, $originalCurrencyCode, $exchangeRateUsed) {
             // Lock wallet row for update
             $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
             
@@ -194,8 +197,11 @@ class WalletService
                 'reference_id' => $admin->id,
                 'balance_after' => $wallet->balance,
                 'currency_code' => $wallet->currency_code ?? 'EUR',
+                'original_amount' => $originalAmount,
+                'original_currency_code' => $originalCurrencyCode,
+                'exchange_rate_used' => $exchangeRateUsed,
             ]);
-            
+
             // Create audit log entry
             WalletAuditLog::create([
                 'admin_id' => $admin->id,
@@ -205,6 +211,9 @@ class WalletService
                 'reason' => $reason,
                 'metadata' => json_encode([
                     'amount' => $amount,
+                    'original_amount' => $originalAmount,
+                    'original_currency_code' => $originalCurrencyCode,
+                    'exchange_rate_used' => $exchangeRateUsed,
                     'previous_balance' => $wallet->balance - $amount,
                     'new_balance' => $wallet->balance,
                     'user_id' => $wallet->user_id,

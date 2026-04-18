@@ -24,6 +24,7 @@ class AdjustBalanceRequest extends FormRequest
             'amount' => ['required', 'numeric', 'not_in:0'],
             'type' => ['required', Rule::in(['credit', 'debit'])],
             'reason' => ['required', 'string', 'min:10', 'max:500'],
+            'currency_code' => ['required', 'string', 'size:3', 'exists:currencies,code'],
         ];
     }
 
@@ -39,6 +40,8 @@ class AdjustBalanceRequest extends FormRequest
             'type.in' => 'Type must be either credit or debit',
             'reason.required' => 'A reason for adjustment is required',
             'reason.min' => 'Reason must be at least 10 characters',
+            'currency_code.required' => 'Currency is required',
+            'currency_code.exists' => 'Invalid currency code',
         ];
     }
 }

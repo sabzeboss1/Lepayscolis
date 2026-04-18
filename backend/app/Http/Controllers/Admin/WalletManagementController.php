@@ -10,6 +10,7 @@ use App\Http\Resources\WalletTransactionResource;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletAuditLog;
+use App\Services\CurrencyService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,8 @@ use Illuminate\Http\Request;
 class WalletManagementController extends Controller
 {
     public function __construct(
-        private WalletService $walletService
+        private WalletService $walletService,
+        private CurrencyService $currencyService
     ) {
         // Auth and admin middleware applied at route level in api.php
     }
@@ -158,20 +160,37 @@ class WalletManagementController extends Controller
             ], 404);
         }
 
-        $amount = $request->input('amount');
+        $amount = abs($request->input('amount'));
         $type = $request->input('type');
         $reason = $request->input('reason');
+        $adminCurrencyCode = $request->input('currency_code');
         $admin = $request->user();
 
+        $walletCurrencyCode = $user->wallet->currency_code ?? 'EUR';
+
+        // Convert amount if admin currency differs from wallet currency
+        $originalAmount = $amount;
+        $originalCurrencyCode = $adminCurrencyCode;
+        $exchangeRateUsed = null;
+
+        if ($adminCurrencyCode !== $walletCurrencyCode) {
+            $conversion = $this->currencyService->convert($amount, $adminCurrencyCode, $walletCurrencyCode);
+            $amount = $conversion['converted_amount'];
+            $exchangeRateUsed = $conversion['exchange_rate'];
+        }
+
         // Convert to negative if debit
-        $adjustmentAmount = $type === 'debit' ? -abs($amount) : abs($amount);
+        $adjustmentAmount = $type === 'debit' ? -$amount : $amount;
 
         try {
             $transaction = $this->walletService->adjustBalance(
                 $user->wallet,
                 $adjustmentAmount,
                 $reason,
-                $admin
+                $admin,
+                $originalAmount,
+                $originalCurrencyCode,
+                $exchangeRateUsed
             );
 
             return response()->json([
