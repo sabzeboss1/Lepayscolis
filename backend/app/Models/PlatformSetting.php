@@ -137,6 +137,14 @@ class PlatformSetting extends Model
     }
 
     /**
+     * Get the system default currency code.
+     */
+    public static function getDefaultCurrency(): string
+    {
+        return (string) self::get('default_currency', 'XAF');
+    }
+
+    /**
      * Get the sender fee percentage.
      */
     public static function getSenderFeePercentage(): float

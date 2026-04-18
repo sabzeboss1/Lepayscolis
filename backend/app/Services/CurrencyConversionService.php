@@ -29,7 +29,7 @@ class CurrencyConversionService
      */
     public function convertForUser(float $amount, string $sourceCurrency, User $user): array
     {
-        $targetCurrency = $user->currency_code ?? 'EUR';
+        $targetCurrency = $user->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
         // Si c'est déjà la devise de l'utilisateur, pas de conversion
         if ($sourceCurrency === $targetCurrency) {
@@ -80,7 +80,7 @@ class CurrencyConversionService
      */
     public function convertForAdmin(float $amount, string $sourceCurrency, ?string $defaultCurrency = null): array
     {
-        $targetCurrency = $defaultCurrency ?? 'EUR';
+        $targetCurrency = $defaultCurrency ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
         // Si c'est déjà la devise par défaut, pas de conversion
         if ($sourceCurrency === $targetCurrency) {
@@ -213,7 +213,7 @@ class CurrencyConversionService
      */
     public function getUserCurrency(?User $user): string
     {
-        return $user?->currency_code ?? 'EUR';
+        return $user?->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
     }
 
     /**

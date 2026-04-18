@@ -413,9 +413,10 @@ class ShipmentController extends Controller
                 $travelerAmount = $fees['traveler_receives'];
             }
 
-            // 3. Get currencies
-            $shipmentCurrency = $shipment->currency_code ?? 'EUR';
-            $travelerCurrency = $shipment->traveler->wallet->currency_code ?? 'EUR';
+            // 3. Get currencies (fallback to system default, never hardcoded EUR)
+            $systemCurrency = \App\Models\PlatformSetting::get('default_currency', 'XAF');
+            $shipmentCurrency = $shipment->currency_code ?? $systemCurrency;
+            $travelerCurrency = $shipment->traveler->wallet->currency_code ?? $systemCurrency;
 
             // 4. Convert amount to traveler's wallet currency if needed
             $convertedAmount = $travelerAmount;
