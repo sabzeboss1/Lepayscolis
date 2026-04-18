@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { RatingModal } from '@/components/features/RatingModal';
 import { apiClient } from '@/lib/api/client';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import type { Shipment } from '@/lib/types/api';
@@ -15,7 +16,6 @@ import {
   Weight,
   Ruler,
   ArrowLeft,
-  MessageCircle,
   CheckCircle,
   AlertCircle,
   Clock,
@@ -39,6 +39,14 @@ export default function ShipmentDetailsPage() {
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  
+  // Rating modal state
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [ratingTarget, setRatingTarget] = useState<{
+    userId: number;
+    userName: string;
+    userRole: 'sender' | 'traveler';
+  } | null>(null);
   
   // Modal state
   const [modalState, setModalState] = useState<{
@@ -126,6 +134,19 @@ export default function ShipmentDetailsPage() {
             message: 'Le paiement a été traité avec succès. Le voyageur a reçu ses fonds.',
             type: 'success',
           });
+          
+          // Show rating modal after successful delivery confirmation
+          if (shipment?.traveler_id && shipment?.traveler?.name) {
+            setTimeout(() => {
+              setModalState(prev => ({ ...prev, isOpen: false }));
+              setRatingTarget({
+                userId: shipment.traveler_id!,
+                userName: shipment.traveler.name,
+                userRole: 'traveler',
+              });
+              setShowRatingModal(true);
+            }, 1500);
+          }
         } catch (err) {
           setModalState({
             isOpen: true,
@@ -305,7 +326,7 @@ export default function ShipmentDetailsPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <div className="flex items-center gap-3">
                   <DollarSign className="w-5 h-5 text-blue-600" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-blue-900">Paiement effectué</p>
                     <p className="text-xs text-blue-700">
                       Le voyageur a reçu {formatCurrency(shipment.payment_amount * 0.85)} (85%)
@@ -313,6 +334,36 @@ export default function ShipmentDetailsPage() {
                   </div>
                 </div>
               </div>
+              
+              {/* Rating button for delivered shipments */}
+              {((isSender && shipment.traveler_id) || (isTraveler && shipment.sender_id)) && (
+                <div className="mt-3">
+                  <Button
+                    onClick={() => {
+                      if (isSender && shipment.traveler_id && shipment.traveler?.name) {
+                        setRatingTarget({
+                          userId: shipment.traveler_id,
+                          userName: shipment.traveler.name,
+                          userRole: 'traveler',
+                        });
+                        setShowRatingModal(true);
+                      } else if (isTraveler && shipment.sender_id && shipment.sender?.name) {
+                        setRatingTarget({
+                          userId: shipment.sender_id,
+                          userName: shipment.sender.name,
+                          userRole: 'sender',
+                        });
+                        setShowRatingModal(true);
+                      }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    ⭐ Évaluer {isSender ? 'le voyageur' : "l'expéditeur"}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -493,6 +544,26 @@ export default function ShipmentDetailsPage() {
         onConfirm={modalState.onConfirm}
         loading={modalState.loading}
       />
+
+      {/* Rating Modal */}
+      {ratingTarget && (
+        <RatingModal
+          isOpen={showRatingModal}
+          onClose={() => {
+            setShowRatingModal(false);
+            setRatingTarget(null);
+          }}
+          shipmentId={params.id as string}
+          toUserId={ratingTarget.userId}
+          toUserName={ratingTarget.userName}
+          userRole={ratingTarget.userRole}
+          onSuccess={() => {
+            setShowRatingModal(false);
+            setRatingTarget(null);
+            fetchShipment(); // Refresh to show updated ratings
+          }}
+        />
+      )}
     </div>
   );
 }

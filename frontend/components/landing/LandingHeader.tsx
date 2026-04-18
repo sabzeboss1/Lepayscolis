@@ -42,7 +42,7 @@ export function LandingHeader() {
             <img
               src={logo_url}
               alt="Tuma Plus Logo"
-              className="h-12 w-auto object-contain"
+              className="h-19 w-auto object-contain"
             />
           </Link>
 
@@ -126,45 +126,39 @@ export function LandingHeader() {
             isMenuOpen ? 'max-h-96 pb-6' : 'max-h-0'
           }`}
         >
-          <nav className="flex flex-col gap-1 pt-2">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsMenuOpen(false)}
-                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
-                  isScrolled
-                    ? 'text-gray-700 hover:bg-gray-50'
-                    : 'text-white/90 hover:bg-white/10'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-white/10">
-              <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
-                <Button
-                  variant="outline"
-                  fullWidth
-                  className={`font-medium ${
-                    isScrolled
-                      ? 'border-gray-300 text-gray-700'
-                      : 'border-white/30 text-white bg-white/5'
-                  }`}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 mt-2">
+            <nav className="flex flex-col gap-1 p-2">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  Connexion
-                </Button>
-              </Link>
-              <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
-                <Button
-                  fullWidth
-                  className="bg-vibrant-orange hover:bg-warm-orange text-white font-semibold"
-                >
-                  S&apos;inscrire
-                </Button>
-              </Link>
-            </div>
-          </nav>
+                  {link.label}
+                </Link>
+              ))}
+              <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-gray-100">
+                <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    className="font-medium border-gray-300 text-gray-700"
+                  >
+                    Connexion
+                  </Button>
+                </Link>
+                <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
+                  <Button
+                    fullWidth
+                    className="bg-vibrant-orange hover:bg-warm-orange text-white font-semibold"
+                  >
+                    S&apos;inscrire
+                  </Button>
+                </Link>
+              </div>
+            </nav>
+          </div>
         </div>
       </div>
     </header>

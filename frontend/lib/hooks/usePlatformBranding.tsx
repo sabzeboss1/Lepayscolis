@@ -9,6 +9,14 @@ interface PlatformBranding {
   primary_color: string;
   secondary_color: string;
   platform_name: string;
+  contact_email: string;
+  contact_phone: string;
+  contact_address: string;
+  whatsapp_number: string;
+  facebook_url: string;
+  twitter_url: string;
+  instagram_url: string;
+  linkedin_url: string;
 }
 
 const defaults: PlatformBranding = {
@@ -17,6 +25,14 @@ const defaults: PlatformBranding = {
   primary_color: '#3B82F6',
   secondary_color: '#F97316',
   platform_name: 'LePaysExpressColis',
+  contact_email: 'contact@tumaplus.com',
+  contact_phone: '+33 1 23 45 67 89',
+  contact_address: 'Paris, France',
+  whatsapp_number: '33123456789',
+  facebook_url: '#',
+  twitter_url: '#',
+  instagram_url: '#',
+  linkedin_url: '#',
 };
 
 const PlatformBrandingContext = createContext<PlatformBranding>(defaults);

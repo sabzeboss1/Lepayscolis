@@ -46,6 +46,9 @@ Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 // Public utility routes
 Route::get('/languages', [UserController::class, 'supportedLanguages']);
+Route::get('/popular-routes', [\App\Http\Controllers\PublicStatsController::class, 'popularRoutes'])->middleware('throttle:60,1');
+Route::get('/testimonials', [\App\Http\Controllers\PublicStatsController::class, 'testimonials'])->middleware('throttle:60,1');
+Route::get('/platform-stats', [\App\Http\Controllers\PublicStatsController::class, 'platformStats'])->middleware('throttle:60,1');
 Route::get('/currencies', function () {
     $currencies = app(\App\Services\CurrencyService::class)->getActiveCurrencies();
     return response()->json(['data' => $currencies]);
@@ -53,7 +56,21 @@ Route::get('/currencies', function () {
 Route::get('/countries', [CountryController::class, 'index']);
 Route::get('/countries/{id}/cities', [CountryController::class, 'cities']);
 Route::get('/platform/branding', function () {
-    $keys = ['logo_url', 'favicon_url', 'primary_color', 'secondary_color', 'platform_name'];
+    $keys = [
+        'logo_url', 
+        'favicon_url', 
+        'primary_color', 
+        'secondary_color', 
+        'platform_name',
+        'contact_email',
+        'contact_phone',
+        'contact_address',
+        'whatsapp_number',
+        'facebook_url',
+        'twitter_url',
+        'instagram_url',
+        'linkedin_url',
+    ];
     $settings = [];
     foreach ($keys as $key) {
         $settings[$key] = \App\Models\PlatformSetting::get($key);
