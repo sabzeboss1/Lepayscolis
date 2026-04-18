@@ -68,7 +68,7 @@ class WalletManagementController extends Controller
                     'phone' => $wallet->user->phone,
                 ],
                 'balance' => (float) $wallet->balance,
-                'currency_code' => $wallet->currency_code ?? 'EUR',
+                'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
                 'total_credits' => (float) $totalCredits,
                 'total_debits' => (float) $totalDebits,
                 'last_transaction_at' => $lastTransaction?->created_at?->toIso8601String(),
@@ -127,7 +127,7 @@ class WalletManagementController extends Controller
                     'balance' => (float) $wallet->balance,
                     'held_balance' => (float) $wallet->held_balance,
                     'available_balance' => (float) $wallet->balance - (float) $wallet->held_balance,
-                    'currency_code' => $wallet->currency_code ?? 'EUR',
+                    'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
                 ],
                 'user' => [
                     'id' => $user->id,
@@ -171,7 +171,7 @@ class WalletManagementController extends Controller
 
         // Use system default currency from platform settings
         $systemCurrencyCode = PlatformSetting::get('default_currency', 'EUR');
-        $walletCurrencyCode = $user->wallet->currency_code ?? 'EUR';
+        $walletCurrencyCode = $user->wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
         // Convert amount if system currency differs from wallet currency
         $originalAmount = $amount;
@@ -208,7 +208,7 @@ class WalletManagementController extends Controller
                         'balance' => (float) $user->wallet->fresh()->balance,
                         'held_balance' => (float) $user->wallet->held_balance,
                         'available_balance' => (float) $user->wallet->balance - (float) $user->wallet->held_balance,
-                        'currency_code' => $user->wallet->currency_code ?? 'EUR',
+                        'currency_code' => $user->wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
                     ],
                     'transaction' => new WalletTransactionResource($transaction),
                 ],

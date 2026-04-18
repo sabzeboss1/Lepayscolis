@@ -24,7 +24,7 @@ class WalletTransactionResource extends JsonResource
         // Extraire les valeurs avec des valeurs par défaut
         $amount = (float) ($data['amount'] ?? 0);
         $balanceAfter = (float) ($data['balance_after'] ?? 0);
-        $currencyCode = $data['currency_code'] ?? 'EUR';
+        $currencyCode = $data['currency_code'] ?? \App\Models\PlatformSetting::getDefaultCurrency();
         $originalAmount = $data['original_amount'] ?? null;
         $originalCurrency = $data['original_currency_code'] ?? null;
         $exchangeRate = $data['exchange_rate_used'] ?? null;
