@@ -25,8 +25,21 @@ export default function AuthenticatedImage({ src, alt, className, style }: Authe
         const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
         const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
         
-        // Prepend backend base URL if src is a relative path
-        const url = src.startsWith('http') ? src : `${apiClient.baseUrl}${src}`;
+        // Convert absolute API URLs to relative paths to use Next.js proxy (avoids CORS)
+        let url = src;
+        if (src.startsWith('http')) {
+          try {
+            const parsed = new URL(src);
+            // If it's a storage path from the API server, use the relative path via proxy
+            if (parsed.pathname.startsWith('/storage/')) {
+              url = parsed.pathname;
+            }
+          } catch {
+            // Keep original URL if parsing fails
+          }
+        } else if (!src.startsWith('/')) {
+          url = `${apiClient.baseUrl}${src}`;
+        }
 
         const response = await fetch(url, {
           headers: {
