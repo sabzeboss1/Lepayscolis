@@ -119,6 +119,10 @@ class ShipmentController extends Controller
             $shipment->status = 'pending';
             $shipment->payment_status = 'escrowed';
             $shipment->payment_amount = $paymentAmount;
+            $shipment->currency_code = $shipment->currency_code
+                ?? $wallet->currency_code
+                ?? $user->currency_code
+                ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
             $shipment->save();
             
@@ -413,10 +417,15 @@ class ShipmentController extends Controller
                 $travelerAmount = $fees['traveler_receives'];
             }
 
-            // 3. Get currencies (fallback to system default, never hardcoded EUR)
-            $systemCurrency = \App\Models\PlatformSetting::get('default_currency', 'XAF');
-            $shipmentCurrency = $shipment->currency_code ?? $systemCurrency;
-            $travelerCurrency = $shipment->traveler->wallet->currency_code ?? $systemCurrency;
+            // 3. Get currencies - shipment currency falls back to sender's wallet currency
+            //    (the amount was debited in the sender's currency)
+            $senderCurrency = $shipment->sender->wallet->currency_code
+                ?? $shipment->sender->currency_code
+                ?? \App\Models\PlatformSetting::getDefaultCurrency();
+            $shipmentCurrency = $shipment->currency_code ?? $senderCurrency;
+            $travelerCurrency = $shipment->traveler->wallet->currency_code
+                ?? $shipment->traveler->currency_code
+                ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
             // 4. Convert amount to traveler's wallet currency if needed
             $convertedAmount = $travelerAmount;
