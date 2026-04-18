@@ -11,7 +11,7 @@ interface RatingModalProps {
   isOpen: boolean;
   onClose: () => void;
   shipmentId: string;
-  toUserId: number;
+  toUserId: string;
   toUserName: string;
   userRole: 'sender' | 'traveler'; // Role of the person being rated
   onSuccess?: () => void;

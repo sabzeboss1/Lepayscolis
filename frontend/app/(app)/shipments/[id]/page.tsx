@@ -43,7 +43,7 @@ export default function ShipmentDetailsPage() {
   // Rating modal state
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratingTarget, setRatingTarget] = useState<{
-    userId: number;
+    userId: string;
     userName: string;
     userRole: 'sender' | 'traveler';
   } | null>(null);
@@ -136,12 +136,12 @@ export default function ShipmentDetailsPage() {
           });
           
           // Show rating modal after successful delivery confirmation
-          if (shipment?.traveler_id && shipment?.traveler?.name) {
+          if (shipment?.traveler_id && shipment?.traveler) {
             setTimeout(() => {
               setModalState(prev => ({ ...prev, isOpen: false }));
               setRatingTarget({
                 userId: shipment.traveler_id!,
-                userName: shipment.traveler.name,
+                userName: shipment.traveler!.name,
                 userRole: 'traveler',
               });
               setShowRatingModal(true);
@@ -336,18 +336,18 @@ export default function ShipmentDetailsPage() {
               </div>
               
               {/* Rating button for delivered shipments */}
-              {((isSender && shipment.traveler_id) || (isTraveler && shipment.sender_id)) && (
+              {((isSender && shipment.traveler_id && shipment.traveler) || (isTraveler && shipment.sender_id && shipment.sender)) && (
                 <div className="mt-3">
                   <Button
                     onClick={() => {
-                      if (isSender && shipment.traveler_id && shipment.traveler?.name) {
+                      if (isSender && shipment.traveler_id && shipment.traveler) {
                         setRatingTarget({
                           userId: shipment.traveler_id,
                           userName: shipment.traveler.name,
                           userRole: 'traveler',
                         });
                         setShowRatingModal(true);
-                      } else if (isTraveler && shipment.sender_id && shipment.sender?.name) {
+                      } else if (isTraveler && shipment.sender_id && shipment.sender) {
                         setRatingTarget({
                           userId: shipment.sender_id,
                           userName: shipment.sender.name,
