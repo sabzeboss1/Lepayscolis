@@ -81,8 +81,8 @@ Route::middleware('auth:sanctum')->prefix('kyc')->group(function () {
 
 // Trip routes
 Route::prefix('trips')->group(function () {
-    // Public routes
-    Route::get('/', [TripController::class, 'index']);
+    // Public routes with optional authentication for currency conversion
+    Route::get('/', [TripController::class, 'index'])->middleware('optional.auth')->name('trips.index');
 
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
@@ -102,7 +102,7 @@ Route::prefix('trips')->group(function () {
     });
 
     // Public trip details (after /my to avoid route conflict)
-    Route::get('/{id}', [TripController::class, 'show']);
+    Route::get('/{id}', [TripController::class, 'show'])->middleware('optional.auth');
 });
 
 // Serve travel proof files (public - anyone can view) - Outside trips group to avoid route conflict
@@ -110,16 +110,19 @@ Route::get('/trips/{id}/travel-proof', [TravelProofController::class, 'show']);
 
 // Shipment routes
 Route::prefix('shipments')->group(function () {
-    // Public routes
-    Route::get('/', [ShipmentController::class, 'index']);
+    // Public routes with optional authentication for currency conversion
+    Route::get('/', [ShipmentController::class, 'index'])->middleware('optional.auth');
 
     // Available shipments for travelers (public - anyone can browse)
-    Route::get('/available', [ShipmentController::class, 'available']);
+    Route::get('/available', [ShipmentController::class, 'available'])->middleware('optional.auth');
 
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
         // My shipments route (must come before /{id} to avoid conflict)
         Route::get('/my', [ShipmentController::class, 'myShipments']);
+        
+        // Pending shipments for traveler's trips
+        Route::get('/pending-for-me', [ShipmentController::class, 'pendingForMe']);
 
         // Routes requiring KYC verification
         Route::middleware('kyc.verified')->group(function () {
@@ -132,14 +135,14 @@ Route::prefix('shipments')->group(function () {
     });
 
     // Public shipment details (after /my to avoid route conflict)
-    Route::get('/{id}', [ShipmentController::class, 'show']);
+    Route::get('/{id}', [ShipmentController::class, 'show'])->middleware('optional.auth');
 });
 
 // Shipment Requests routes (new bidding system)
 Route::prefix('shipment-requests')->group(function () {
-    // Public routes - travelers can browse requests
-    Route::get('/', [\App\Http\Controllers\ShipmentRequestController::class, 'index']);
-    Route::get('/{id}', [\App\Http\Controllers\ShipmentRequestController::class, 'show']);
+    // Public routes - travelers can browse requests with optional authentication for currency conversion
+    Route::get('/', [\App\Http\Controllers\ShipmentRequestController::class, 'index'])->middleware('optional.auth');
+    Route::get('/{id}', [\App\Http\Controllers\ShipmentRequestController::class, 'show'])->middleware('optional.auth');
 
     // Protected routes (require authentication and KYC verification)
     Route::middleware(['auth:sanctum', 'kyc.verified'])->group(function () {
@@ -153,6 +156,7 @@ Route::prefix('shipment-requests')->group(function () {
         Route::post('/{id}/bids', [\App\Http\Controllers\ShipmentBidController::class, 'store']);
         Route::get('/{id}/bids', [\App\Http\Controllers\ShipmentBidController::class, 'index']);
         Route::post('/{shipmentRequestId}/bids/{bidId}/accept', [\App\Http\Controllers\ShipmentBidController::class, 'accept']);
+        Route::post('/{shipmentRequestId}/bids/{bidId}/reject', [\App\Http\Controllers\ShipmentBidController::class, 'reject']);
         
         // Traveler bid management
         Route::get('/my/bids', [\App\Http\Controllers\ShipmentBidController::class, 'myBids']);
@@ -224,6 +228,22 @@ Route::middleware(['auth:sanctum', 'kyc.verified'])->prefix('withdrawals')->grou
     Route::get('/', [\App\Http\Controllers\WithdrawalController::class, 'index'])->middleware('throttle:60,1');
     Route::get('/{id}', [\App\Http\Controllers\WithdrawalController::class, 'show'])->middleware('throttle:60,1');
     Route::delete('/{id}', [\App\Http\Controllers\WithdrawalController::class, 'cancel'])->middleware('throttle:30,1');
+});
+
+// Recharge request routes (protected, require KYC verification)
+Route::middleware(['auth:sanctum', 'kyc.verified'])->prefix('recharge-requests')->group(function () {
+    Route::post('/', [\App\Http\Controllers\RechargeRequestController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/', [\App\Http\Controllers\RechargeRequestController::class, 'index'])->middleware('throttle:60,1');
+    Route::get('/{id}', [\App\Http\Controllers\RechargeRequestController::class, 'show'])->middleware('throttle:60,1');
+});
+
+// Notification routes (protected)
+Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
+    Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->middleware('throttle:60,1');
+    Route::get('/unread-count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])->middleware('throttle:120,1');
+    Route::put('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->middleware('throttle:60,1');
+    Route::put('/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->middleware('throttle:30,1');
+    Route::delete('/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->middleware('throttle:60,1');
 });
 
 /*
@@ -337,6 +357,16 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::delete('/{id}', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'destroy'])->middleware('throttle:30,1');
     });
 
+    // Manual Routing Management
+    Route::prefix('routing')->group(function () {
+        Route::get('/stats', [\App\Http\Controllers\Admin\AdminRoutingController::class, 'getRoutingStats'])->middleware('throttle:60,1');
+        Route::post('/assign-shipment', [\App\Http\Controllers\Admin\AdminRoutingController::class, 'assignShipmentToTrip'])->middleware('throttle:30,1');
+        Route::post('/assign-shipment-to-user', [\App\Http\Controllers\Admin\AdminRoutingController::class, 'assignShipmentToUser'])->middleware('throttle:30,1');
+        Route::post('/recommend-traveler', [\App\Http\Controllers\Admin\AdminRoutingController::class, 'recommendTravelerForRequest'])->middleware('throttle:30,1');
+        Route::post('/recommend-user', [\App\Http\Controllers\Admin\AdminRoutingController::class, 'recommendUserForRequest'])->middleware('throttle:30,1');
+        Route::post('/suggestions', [\App\Http\Controllers\Admin\AdminRoutingController::class, 'getCompatibilitySuggestions'])->middleware('throttle:60,1');
+    });
+
     // Wallet Management
     Route::prefix('wallets')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\WalletManagementController::class, 'index'])->middleware('throttle:60,1');
@@ -352,6 +382,15 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/{id}/reject', [\App\Http\Controllers\Admin\WithdrawalManagementController::class, 'reject'])->middleware('throttle:30,1');
         Route::post('/{id}/processing', [\App\Http\Controllers\Admin\WithdrawalManagementController::class, 'markProcessing'])->middleware('throttle:30,1');
         Route::post('/{id}/complete', [\App\Http\Controllers\Admin\WithdrawalManagementController::class, 'complete'])->middleware('throttle:30,1');
+    });
+
+    // Recharge Request Management
+    Route::prefix('recharge-requests')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminRechargeRequestController::class, 'index'])->middleware('throttle:60,1');
+        Route::get('/{id}', [\App\Http\Controllers\Admin\AdminRechargeRequestController::class, 'show'])->middleware('throttle:60,1');
+        Route::post('/{id}/processing', [\App\Http\Controllers\Admin\AdminRechargeRequestController::class, 'markProcessing'])->middleware('throttle:30,1');
+        Route::post('/{id}/complete', [\App\Http\Controllers\Admin\AdminRechargeRequestController::class, 'complete'])->middleware('throttle:30,1');
+        Route::post('/{id}/reject', [\App\Http\Controllers\Admin\AdminRechargeRequestController::class, 'reject'])->middleware('throttle:30,1');
     });
 
     // Payment Management

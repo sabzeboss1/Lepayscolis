@@ -198,11 +198,19 @@ export default function ShipmentRequestDetailPage() {
   const [bidPickupDate, setBidPickupDate] = useState('');
   const [bidDeliveryDate, setBidDeliveryDate] = useState('');
   const [submittingBid, setSubmittingBid] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showAcceptedModal, setShowAcceptedModal] = useState(false);
+  const [showRejectedModal, setShowRejectedModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const fetchRequest = async () => {
       try {
         const response = await apiClient.get<{ data: ShipmentRequest }>(`/api/shipment-requests/${params.id}`);
+        console.log('📦 Shipment Request Data:', response.data);
+        console.log('👤 Current User:', user);
+        console.log('🔍 Is Owner?', user?.id === response.data.sender?.id);
         setRequest(response.data);
       } catch (err) {
         console.error('Failed to fetch shipment request:', err);
@@ -232,10 +240,11 @@ export default function ShipmentRequestDetailPage() {
       setBidMessage('');
       setBidPickupDate('');
       setBidDeliveryDate('');
-      alert('Soumission envoyée avec succès !');
+      setShowSuccessModal(true);
     } catch (err) {
-      const errorMessage = ErrorHandler.handle(err);
-      alert(`Erreur: ${errorMessage.message}`);
+      const errorMsg = ErrorHandler.handle(err);
+      setErrorMessage(errorMsg.message);
+      setShowErrorModal(true);
     } finally {
       setSubmittingBid(false);
     }
@@ -291,6 +300,16 @@ export default function ShipmentRequestDetailPage() {
   const canBid = !isOwner && request.status === 'open';
   const bidCount = request.bids?.length || 0;
   const senderInitial = request.sender.name.charAt(0).toUpperCase();
+
+  console.log('🎯 Render Check:', {
+    userId: user?.id,
+    senderId: request.sender.id,
+    isOwner,
+    canBid,
+    requestStatus: request.status,
+    bidsCount: bidCount,
+    hasBids: !!request.bids,
+  });
 
   return (
     <div className="min-h-screen bg-soft-gray">
@@ -677,6 +696,53 @@ export default function ShipmentRequestDetailPage() {
                             </span>
                           </div>
                         )}
+                        {/* Accept/Reject buttons for owner */}
+                        {isOwner && bid.status === 'pending' && (
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={async () => {
+                                if (!confirm('Êtes-vous sûr de vouloir accepter cette soumission ?')) return;
+                                try {
+                                  await apiClient.post(`/api/shipment-requests/${request.id}/bids/${bid.id}/accept`);
+                                  const response = await apiClient.get<{ data: ShipmentRequest }>(`/api/shipment-requests/${params.id}`);
+                                  setRequest(response.data);
+                                  setShowAcceptedModal(true);
+                                } catch (err) {
+                                  const errorMsg = ErrorHandler.handle(err);
+                                  setErrorMessage(errorMsg.message);
+                                  setShowErrorModal(true);
+                                }
+                              }}
+                              className="flex-1"
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              Accepter
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                if (!confirm('Êtes-vous sûr de vouloir refuser cette soumission ?')) return;
+                                try {
+                                  await apiClient.post(`/api/shipment-requests/${request.id}/bids/${bid.id}/reject`);
+                                  const response = await apiClient.get<{ data: ShipmentRequest }>(`/api/shipment-requests/${params.id}`);
+                                  setRequest(response.data);
+                                  setShowRejectedModal(true);
+                                } catch (err) {
+                                  const errorMsg = ErrorHandler.handle(err);
+                                  setErrorMessage(errorMsg.message);
+                                  setShowErrorModal(true);
+                                }
+                              }}
+                              className="flex-1"
+                              style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                            >
+                              Refuser
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1034,6 +1100,149 @@ export default function ShipmentRequestDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl"
+            style={{ border: '1px solid var(--color-light-border)' }}
+          >
+            <div className="text-center">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: 'rgba(16,185,129,0.1)' }}
+              >
+                <CheckCircle2 className="w-8 h-8" style={{ color: '#10B981' }} />
+              </div>
+              <h3
+                className="text-2xl font-bold mb-2"
+                style={{ color: 'var(--color-navy)', fontFamily: 'var(--font-heading)' }}
+              >
+                Soumission envoyée !
+              </h3>
+              <p className="mb-6" style={{ color: 'var(--color-body-text)' }}>
+                Votre offre a été envoyée avec succès. Le posteur de l'annonce sera notifié et pourra l'accepter ou la refuser.
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full"
+              >
+                Fermer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Accepted Modal */}
+      {showAcceptedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl"
+            style={{ border: '1px solid var(--color-light-border)' }}
+          >
+            <div className="text-center">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: 'rgba(16,185,129,0.1)' }}
+              >
+                <CheckCircle2 className="w-8 h-8" style={{ color: '#10B981' }} />
+              </div>
+              <h3
+                className="text-2xl font-bold mb-2"
+                style={{ color: 'var(--color-navy)', fontFamily: 'var(--font-heading)' }}
+              >
+                Soumission acceptée !
+              </h3>
+              <p className="mb-6" style={{ color: 'var(--color-body-text)' }}>
+                La soumission a été acceptée avec succès. Une expédition a été créée automatiquement et le voyageur a été notifié. Les fonds ont été bloqués dans votre wallet.
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setShowAcceptedModal(false);
+                  router.push('/shipments/pending');
+                }}
+                className="w-full"
+              >
+                Voir mes expéditions
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejected Modal */}
+      {showRejectedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl"
+            style={{ border: '1px solid var(--color-light-border)' }}
+          >
+            <div className="text-center">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: 'rgba(239,68,68,0.1)' }}
+              >
+                <AlertCircle className="w-8 h-8" style={{ color: '#EF4444' }} />
+              </div>
+              <h3
+                className="text-2xl font-bold mb-2"
+                style={{ color: 'var(--color-navy)', fontFamily: 'var(--font-heading)' }}
+              >
+                Soumission rejetée
+              </h3>
+              <p className="mb-6" style={{ color: 'var(--color-body-text)' }}>
+                La soumission a été rejetée. Le voyageur a été notifié. Votre annonce reste ouverte pour recevoir d'autres offres.
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => setShowRejectedModal(false)}
+                className="w-full"
+              >
+                Fermer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl"
+            style={{ border: '1px solid var(--color-light-border)' }}
+          >
+            <div className="text-center">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: 'rgba(239,68,68,0.1)' }}
+              >
+                <AlertCircle className="w-8 h-8" style={{ color: '#EF4444' }} />
+              </div>
+              <h3
+                className="text-2xl font-bold mb-2"
+                style={{ color: 'var(--color-navy)', fontFamily: 'var(--font-heading)' }}
+              >
+                Erreur
+              </h3>
+              <p className="mb-6" style={{ color: 'var(--color-body-text)' }}>
+                {errorMessage || 'Une erreur est survenue. Veuillez réessayer.'}
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => setShowErrorModal(false)}
+                className="w-full"
+              >
+                Fermer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

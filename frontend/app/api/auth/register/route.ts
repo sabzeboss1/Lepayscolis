@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       rating: 0,
       completed_deliveries: 0,
       is_recommended: false,
-      kyc_status: 'pending',
+      kyc_status: 'not_submitted',
       created_at: new Date().toISOString(),
       locale: 'en',
     });

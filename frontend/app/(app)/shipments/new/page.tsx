@@ -35,19 +35,19 @@ const shipmentSchema = z.object({
   tripId: z.string().min(1, 'Trip ID is required'),
   description: z.string().min(1, 'Description is required'),
   weight: z.number().positive('Weight must be positive'),
-  length: z.number().positive('Length must be positive'),
-  width: z.number().positive('Width must be positive'),
-  height: z.number().positive('Height must be positive'),
+  length: z.number().positive('Length must be positive').optional().or(z.literal(undefined)),
+  width: z.number().positive('Width must be positive').optional().or(z.literal(undefined)),
+  height: z.number().positive('Height must be positive').optional().or(z.literal(undefined)),
   value: z.number().positive('Value must be positive'),
   packageType: z.string().min(1, 'Package type is required'),
   recipientName: z.string().min(1, 'Recipient name is required'),
   recipientPhone: z.string().min(1, 'Recipient phone is required'),
   pickupCountryId: z.number().positive('Pickup country is required'),
   pickupCityId: z.number().positive('Pickup city is required'),
-  pickupAddress: z.string().min(1, 'Pickup address is required'),
+  pickupAddress: z.string().optional(),
   deliveryCountryId: z.number().positive('Delivery country is required'),
   deliveryCityId: z.number().positive('Delivery city is required'),
-  deliveryAddress: z.string().min(1, 'Delivery address is required'),
+  deliveryAddress: z.string().optional(),
 });
 
 type ShipmentFormData = z.infer<typeof shipmentSchema>;
@@ -115,10 +115,13 @@ export default function NewShipmentPage() {
   // Fetch trip details if tripId is in URL
   useEffect(() => {
     const tripId = searchParams?.get('tripId');
+    console.log('Trip ID from URL:', tripId);
     if (tripId) {
+      setFormData(prev => ({ ...prev, tripId }));
       const fetchTrip = async () => {
         try {
           const response = await apiClient.get<{ data: any }>(`/api/trips/${tripId}`);
+          console.log('Trip fetched:', response.data);
           setSelectedTrip(response.data);
         } catch (error) {
           console.error('Failed to fetch trip:', error);
@@ -149,10 +152,9 @@ export default function NewShipmentPage() {
 
   // Calculate estimated cost when weight or trip changes (use converted price if available)
   useEffect(() => {
-    if (formData.weight && selectedTrip?.price_per_kg) {
-      const pricePerKg = selectedTrip.price_converted
-        ? selectedTrip.price_converted.amount
-        : selectedTrip.price_per_kg;
+    if (formData.weight && selectedTrip) {
+      // Use converted price if available, otherwise use original price
+      const pricePerKg = selectedTrip.price_per_kg_converted || selectedTrip.price_per_kg;
       setEstimatedCost(formData.weight * pricePerKg);
     } else {
       setEstimatedCost(null);
@@ -195,6 +197,12 @@ export default function NewShipmentPage() {
     
     if (!acceptedTerms) {
       setErrors({ submit: 'Vous devez certifier que votre colis ne contient aucun objet interdit' });
+      return;
+    }
+    
+    // Validate trip ID
+    if (!formData.tripId || formData.tripId.trim() === '') {
+      setErrors({ submit: 'Voyage non sélectionné. Veuillez sélectionner un voyage.' });
       return;
     }
     
@@ -247,12 +255,32 @@ export default function NewShipmentPage() {
         photo_urls: photoUrls,
       };
 
+      console.log('Submitting shipment data:', shipmentData);
+
       await apiClient.post<{ data: any }>(API_ENDPOINTS.shipments.create, shipmentData);
 
       router.push('/shipments/my');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Shipment creation error:', error);
       const errorMessage = ErrorHandler.handle(error);
-      setErrors({ submit: errorMessage.message });
+      
+      // If it's a validation error, show detailed errors
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        const validationErrors: Record<string, string> = {};
+        Object.entries(error.response.data.errors).forEach(([key, messages]) => {
+          validationErrors[key] = (messages as string[])[0];
+        });
+        setErrors(validationErrors);
+        
+        // Also set a general submit error
+        const errorKeys = Object.keys(validationErrors);
+        setErrors(prev => ({
+          ...prev,
+          submit: `Erreur de validation: ${errorKeys.join(', ')}`
+        }));
+      } else {
+        setErrors({ submit: errorMessage.message });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -431,7 +459,7 @@ export default function NewShipmentPage() {
                     </p>
                     <p className="text-xs text-slate-600">
                       Départ: {new Date(selectedTrip.departure_date).toLocaleDateString('fr-FR')} •
-                      Prix: {selectedTrip.price_converted
+                      Prix: {selectedTrip.price_per_kg_formatted || selectedTrip.price_converted
                         ? formatCurrency(selectedTrip.price_converted.amount, selectedTrip.price_converted.currency_code)
                         : formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}/kg
                       {selectedTrip.price_converted && (
@@ -533,7 +561,6 @@ export default function NewShipmentPage() {
                     value={formData.length?.toString() || ''}
                     onChange={(e) => handleInputChange('length', parseFloat(e.target.value))}
                     error={errors.length}
-                    required
                     placeholder="0"
                   />
                   <Input
@@ -542,7 +569,6 @@ export default function NewShipmentPage() {
                     value={formData.width?.toString() || ''}
                     onChange={(e) => handleInputChange('width', parseFloat(e.target.value))}
                     error={errors.width}
-                    required
                     placeholder="0"
                   />
                   <Input
@@ -551,7 +577,6 @@ export default function NewShipmentPage() {
                     value={formData.height?.toString() || ''}
                     onChange={(e) => handleInputChange('height', parseFloat(e.target.value))}
                     error={errors.height}
-                    required
                     placeholder="0"
                   />
                 </div>
@@ -643,8 +668,7 @@ export default function NewShipmentPage() {
                   value={formData.pickupAddress || ''}
                   onChange={(e) => handleInputChange('pickupAddress', e.target.value)}
                   error={errors.pickupAddress}
-                  required
-                  placeholder="Adresse complète où récupérer le colis"
+                  placeholder="Adresse complète où récupérer le colis (optionnel)"
                 />
               </SectionCard>
 
@@ -678,8 +702,7 @@ export default function NewShipmentPage() {
                   value={formData.deliveryAddress || ''}
                   onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
                   error={errors.deliveryAddress}
-                  required
-                  placeholder="Adresse complète de livraison"
+                  placeholder="Adresse complète de livraison (optionnel)"
                 />
               </SectionCard>
 

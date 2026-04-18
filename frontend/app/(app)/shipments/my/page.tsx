@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
-import { UserCard } from '@/components/ui/UserCard';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
@@ -98,16 +97,24 @@ export default function MyShipmentsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
-  const { formatCurrency } = useUserCurrency();
+  const { formatCurrency, isHydrated } = useUserCurrency();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ShipmentStatus>('all');
   const [sortBy, setSortBy] = useState<SortOption>('date');
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration issues by only rendering after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
-    fetchMyShipments();
-  }, []);
+    if (isMounted) {
+      fetchMyShipments();
+    }
+  }, [isMounted]);
 
   const fetchMyShipments = async () => {
     setIsLoading(true);
@@ -159,14 +166,36 @@ export default function MyShipmentsPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-900 font-heading">Mes expéditions</h1>
-                <p className="text-sm text-slate-500">{shipments.length} expédition{shipments.length !== 1 ? 's' : ''} au total</p>
+                <p className="text-sm text-slate-500" suppressHydrationWarning>
+                  {shipments.length} expédition{shipments.length !== 1 ? 's' : ''} au total
+                </p>
               </div>
             </div>
-            <Button variant="primary" onClick={() => router.push('/shipments/new')}>
-              <Plus className="w-4 h-4 mr-1.5" />
-              <span className="hidden sm:inline">Nouvelle expédition</span>
-              <span className="sm:hidden">Nouveau</span>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/shipment-requests/my')}
+              >
+                <Package className="w-4 h-4 mr-1.5" />
+                <span className="hidden sm:inline">Demandes d'expédition</span>
+                <span className="sm:hidden">Demandes</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/shipments/pending')}
+              >
+                <Clock className="w-4 h-4 mr-1.5" />
+                <span className="hidden sm:inline">Demandes en attente</span>
+                <span className="sm:hidden">En attente</span>
+              </Button>
+              <Button variant="primary" onClick={() => router.push('/shipments/new')}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                <span className="hidden sm:inline">Nouvelle expédition</span>
+                <span className="sm:hidden">Nouveau</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -281,10 +310,12 @@ export default function MyShipmentsPage() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="text-xl font-bold text-orange-500">
+                      <span className="text-xl font-bold text-orange-500" suppressHydrationWarning>
                         {formatCurrency(shipment.price)}
                       </span>
-                      <p className="text-xs text-slate-400 mt-0.5">{formatDate(shipment.created_at)}</p>
+                      <p className="text-xs text-slate-400 mt-0.5" suppressHydrationWarning>
+                        {formatDate(shipment.created_at)}
+                      </p>
                     </div>
                   </div>
 
@@ -318,13 +349,24 @@ export default function MyShipmentsPage() {
 
                   {/* Traveler info */}
                   {shipment.traveler && (
-                  <div className="border-t border-slate-100 pt-4 mb-4">
-                    <p className="text-xs font-medium text-slate-500 mb-3">Voyageur assigné</p>
-                    <UserCard
-                      user={shipment.traveler as any}
-                      showContactButton={!['cancelled', 'delivered'].includes(shipment.status)}
-                      onClick={() => router.push(`/profile/${shipment.traveler?.id}`)}
-                    />
+                    <div className="border-t border-slate-100 pt-4 mb-4">
+                      <p className="text-xs font-medium text-slate-500 mb-3">Voyageur assigné</p>
+                      <div 
+                        onClick={() => router.push(`/profile/${shipment.traveler?.id}`)}
+                        className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                          {shipment.traveler.name?.charAt(0).toUpperCase() || 'V'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900 text-sm truncate">
+                            {shipment.traveler.name}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            ⭐ {Number(shipment.traveler.rating || 0).toFixed(1)} · {shipment.traveler.completed_deliveries || 0} livraisons
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
 

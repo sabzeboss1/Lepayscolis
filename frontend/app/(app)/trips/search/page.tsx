@@ -9,6 +9,7 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { apiClient } from '@/lib/api/client';
 import { useCurrencies } from '@/lib/hooks/useCurrencies';
+import { apiClient } from '@/lib/api/client';
 import {
   Search,
   SlidersHorizontal,
@@ -125,9 +126,9 @@ export default function TripSearchPage() {
   const sorted = [...trips].sort((a, b) => {
     if (sortBy === 'date')   return new Date(a.departure_date).getTime() - new Date(b.departure_date).getTime();
     if (sortBy === 'price') {
-      // Convert both prices to EUR for fair comparison
-      const priceA = convertToEUR(a.price_per_kg, a.currency_code || 'EUR');
-      const priceB = convertToEUR(b.price_per_kg, b.currency_code || 'EUR');
+      // Use converted prices if available, otherwise use original prices with conversion
+      const priceA = a.price_per_kg_converted || convertToEUR(a.price_per_kg, a.currency_code || 'EUR');
+      const priceB = b.price_per_kg_converted || convertToEUR(b.price_per_kg, b.currency_code || 'EUR');
       return priceA - priceB;
     }
     if (sortBy === 'rating') return (b.traveler?.rating || 0) - (a.traveler?.rating || 0);

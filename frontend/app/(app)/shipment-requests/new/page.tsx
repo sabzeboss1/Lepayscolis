@@ -33,9 +33,9 @@ const shipmentRequestSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
   weight: z.number().positive('Weight must be positive'),
-  length: z.number().positive('Length must be positive'),
-  width: z.number().positive('Width must be positive'),
-  height: z.number().positive('Height must be positive'),
+  length: z.number().positive('Length must be positive').optional(),
+  width: z.number().positive('Width must be positive').optional(),
+  height: z.number().positive('Height must be positive').optional(),
   declared_value: z.number().positive('Value must be positive'),
   package_type: z.string().min(1, 'Package type is required'),
   recipient_name: z.string().min(1, 'Recipient name is required'),
@@ -368,7 +368,6 @@ export default function NewShipmentRequestPage() {
                   value={formData.length?.toString() || ''}
                   onChange={(e) => handleInputChange('length', parseFloat(e.target.value))}
                   error={errors.length}
-                  required
                   placeholder="0"
                 />
                 <Input
@@ -377,7 +376,6 @@ export default function NewShipmentRequestPage() {
                   value={formData.width?.toString() || ''}
                   onChange={(e) => handleInputChange('width', parseFloat(e.target.value))}
                   error={errors.width}
-                  required
                   placeholder="0"
                 />
                 <Input
@@ -386,7 +384,6 @@ export default function NewShipmentRequestPage() {
                   value={formData.height?.toString() || ''}
                   onChange={(e) => handleInputChange('height', parseFloat(e.target.value))}
                   error={errors.height}
-                  required
                   placeholder="0"
                 />
               </div>

@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
+import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay';
 import { apiClient } from '@/lib/api/client';
 import {
   Package,
   MapPin,
-  Weight,
   User,
   Clock,
   DollarSign,
@@ -37,8 +36,6 @@ interface ShipmentRequest {
 }
 
 function RequestCard({ request, onClick }: { request: ShipmentRequest; onClick: () => void }) {
-  const { formatCurrency } = useUserCurrency();
-  
   return (
     <div
       onClick={onClick}
@@ -84,7 +81,7 @@ function RequestCard({ request, onClick }: { request: ShipmentRequest; onClick: 
           {request.max_budget && (
             <div className="flex items-center gap-1">
               <DollarSign className="w-4 h-4" />
-              <span>Max: {formatCurrency(request.max_budget, request.currency_code)}</span>
+              <span>Max: <CurrencyDisplay amount={request.max_budget} currency={request.currency_code} className="!text-inherit" /></span>
             </div>
           )}
           {request.needed_by && (
@@ -104,7 +101,6 @@ function RequestCard({ request, onClick }: { request: ShipmentRequest; onClick: 
 
 export default function ShipmentRequestsPage() {
   const router = useRouter();
-  const { formatCurrency } = useUserCurrency();
   const [requests, setRequests] = useState<ShipmentRequest[]>([]);
   const [loading, setLoading] = useState(true);
 

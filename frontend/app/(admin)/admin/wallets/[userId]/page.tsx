@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, X } from 'lucide-react';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
-import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+import { useAdminCurrencyFormatter } from '@/lib/hooks/useAdminCurrencyFormatter';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
@@ -105,6 +105,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
       setTotal(data.meta?.total ?? 0);
     } catch (error) {
       console.error('Failed to fetch wallet details:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -245,7 +246,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
               <p className={`text-2xl font-bold mt-2 ${
                 wallet.balance > 0 ? 'text-green-600' : wallet.balance < 0 ? 'text-red-600' : 'text-gray-900'
               }`}>
-                {formatCurrency(wallet.balance, wallet.currency_code)}
+                {formatWithConversion(wallet.balance, wallet.currency_code)}
               </p>
             </div>
             <Wallet className="w-8 h-8 text-blue-600" />
@@ -256,7 +257,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalCredits')}</p>
-              <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(wallet.total_credits, wallet.currency_code)}</p>
+              <p className="text-2xl font-bold text-green-600 mt-2">{formatWithConversion(wallet.total_credits, wallet.currency_code)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
@@ -266,7 +267,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalDebits')}</p>
-              <p className="text-2xl font-bold text-red-600 mt-2">{formatCurrency(wallet.total_debits, wallet.currency_code)}</p>
+              <p className="text-2xl font-bold text-red-600 mt-2">{formatWithConversion(wallet.total_debits, wallet.currency_code)}</p>
             </div>
             <TrendingDown className="w-8 h-8 text-red-600" />
           </div>
@@ -276,7 +277,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{t('admin.wallets.detail.totalAdjustments')}</p>
-              <p className="text-2xl font-bold text-blue-600 mt-2">{formatCurrency(wallet.total_adjustments, wallet.currency_code)}</p>
+              <p className="text-2xl font-bold text-blue-600 mt-2">{formatWithConversion(wallet.total_adjustments, wallet.currency_code)}</p>
             </div>
             <DollarSign className="w-8 h-8 text-blue-600" />
           </div>
@@ -315,7 +316,7 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`text-sm font-semibold ${getTypeColor(tx.type)}`}>
-                        {tx.type === 'debit' ? '-' : '+'}{formatCurrency(Math.abs(tx.amount), wallet.currency_code)}
+                        {tx.type === 'debit' ? '-' : '+'}{formatWithConversion(Math.abs(tx.amount), wallet.currency_code)}
                       </span>
                     </td>
                     <td className="px-6 py-4">

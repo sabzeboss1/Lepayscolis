@@ -39,7 +39,7 @@ const NAV_ITEMS = [
   { href: '/shipments/search', labelKey: 'navigation.findShipments', icon: Search },
   { href: '/shipments', labelKey: 'navigation.shipments', icon: Package },
   { href: '/wallet', labelKey: 'navigation.wallet', icon: Wallet },
-  { href: '/messages', labelKey: 'navigation.messages', icon: MessageCircle },
+  // { href: '/messages', labelKey: 'navigation.messages', icon: MessageCircle }, // Temporairement masqué
 ];
 
 function KycBadge({ status }: { status: User['kyc_status'] }) {

@@ -18,11 +18,19 @@ class Shipment extends Model
         'sender_id',
         'traveler_id',
         'trip_id',
+        'shipment_request_id',
+        'title',
+        'description',
         'package_description',
         'package_weight',
         'package_length',
         'package_width',
         'package_height',
+        'declared_value',
+        'package_type',
+        'photo_urls',
+        'recipient_name',
+        'recipient_phone',
         'pickup_city',
         'pickup_country',
         'pickup_country_id',
@@ -36,14 +44,21 @@ class Shipment extends Model
         'status',
         'payment_amount',
         'payment_status',
+        'currency_code',
+        'pickup_date',
+        'delivery_date',
     ];
 
     protected $casts = [
         'package_weight' => 'decimal:2',
         'payment_amount' => 'decimal:2',
+        'declared_value' => 'decimal:2',
         'package_length' => 'integer',
         'package_width' => 'integer',
         'package_height' => 'integer',
+        'photo_urls' => 'array',
+        'pickup_date' => 'datetime',
+        'delivery_date' => 'datetime',
         'status' => 'string',
         'payment_status' => 'string',
     ];
@@ -70,6 +85,14 @@ class Shipment extends Model
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
+    }
+
+    /**
+     * Get the shipment request that created this shipment.
+     */
+    public function shipmentRequest(): BelongsTo
+    {
+        return $this->belongsTo(ShipmentRequest::class);
     }
 
     public function pickupCountry(): BelongsTo

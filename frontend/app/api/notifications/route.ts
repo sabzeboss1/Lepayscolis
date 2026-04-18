@@ -1,16 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { notifications } from '@/lib/api/mockData';
+import { getBackendUrl } from '@/lib/api/config';
 
 export async function GET(request: NextRequest) {
   try {
-    // In production, this would fetch from the backend API
-    // For now, return mock data
+    const token = request.cookies.get('auth-token')?.value;
     
-    const unreadNotifications = notifications.filter(n => !n.is_read);
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const response = await fetch(`${getBackendUrl()}/api/notifications`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch notifications');
+    }
+
+    const data = await response.json();
     
     return NextResponse.json({
-      notifications: notifications,
-      unread_count: unreadNotifications.length,
+      notifications: data.notifications || [],
+      unread_count: data.unread_count || 0,
     });
   } catch (error) {
     console.error('Error fetching notifications:', error);

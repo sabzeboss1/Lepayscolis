@@ -18,6 +18,13 @@ export interface Trip {
     currency_code: string;
     exchange_rate: number;
   } | null;
+  
+  // Currency conversion fields (added by CurrencyConversionMiddleware)
+  price_per_kg_converted?: number;
+  price_per_kg_formatted?: string;
+  price_per_kg_original?: number;
+  price_per_kg_original_currency?: string;
+  
   accepted_package_types: string[];
   pickup_address: string;
   delivery_address: string;
