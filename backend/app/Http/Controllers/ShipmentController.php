@@ -155,7 +155,7 @@ class ShipmentController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $shipment = Shipment::with(['sender', 'traveler', 'trip.traveler', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity'])
+        $shipment = Shipment::with(['sender', 'traveler', 'trip.traveler', 'pickupCountry', 'pickupCity', 'deliveryCountry', 'deliveryCity', 'payment'])
             ->findOrFail($id);
 
         return response()->json([
@@ -393,9 +393,16 @@ class ShipmentController extends Controller
                     $shipment->id
                 );
                 
-                // 2. Calculate platform fee (15%) and traveler amount (85%)
-                $platformFee = $shipment->payment_amount * 0.15;
-                $travelerAmount = $shipment->payment_amount * 0.85;
+                // 2. Calculate platform fee and traveler amount from Payment or PlatformSetting
+                $payment = $shipment->payment;
+                if ($payment && $payment->traveler_amount > 0) {
+                    $platformFee = (float) $payment->platform_fee;
+                    $travelerAmount = (float) $payment->traveler_amount;
+                } else {
+                    $fees = \App\Models\PlatformSetting::calculateFees($shipment->payment_amount);
+                    $platformFee = $fees['platform_revenue'];
+                    $travelerAmount = $fees['traveler_receives'];
+                }
                 
                 // 3. Get currencies
                 $shipmentCurrency = $shipment->currency_code ?? 'EUR';

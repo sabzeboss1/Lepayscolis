@@ -783,6 +783,7 @@
       "routing": "Manual Routing",
       "financial": "Financial",
       "wallets": "Wallets",
+      "rechargeRequests": "Recharge Requests",
       "withdrawals": "Withdrawals",
       "payments": "Payments",
       "content": "Content",

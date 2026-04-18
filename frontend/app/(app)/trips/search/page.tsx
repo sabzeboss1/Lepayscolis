@@ -9,7 +9,6 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { apiClient } from '@/lib/api/client';
 import { useCurrencies } from '@/lib/hooks/useCurrencies';
-import { apiClient } from '@/lib/api/client';
 import {
   Search,
   SlidersHorizontal,

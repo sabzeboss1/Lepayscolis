@@ -31,6 +31,14 @@ export interface Shipment {
   price_original: number;
   price_original_currency: string;
   
+  fees?: {
+    sender_fee: number;
+    traveler_fee: number;
+    platform_fee: number;
+    traveler_amount: number;
+    sender_fee_percentage: number;
+    traveler_fee_percentage: number;
+  };
   payment_status: string;
   created_at: string;
   updated_at: string;

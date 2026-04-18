@@ -14,11 +14,10 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import {
   getWithdrawalConfig,
-  getSupportedCountries,
-  formatAmount,
   type PaymentMethod,
   type PaymentMethodField,
 } from '@/lib/data/withdrawalMethods';
+import { useCountries } from '@/lib/hooks/useCountries';
 import type { Wallet } from '@/lib/types/api';
 import {
   ArrowLeft,
@@ -38,7 +37,8 @@ export default function WithdrawPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { formatWithCurrencyNote } = useCurrencyFormatter();
-  
+  const { countries } = useCountries();
+
   const [balance, setBalance] = useState(0);
   const [walletCurrency, setWalletCurrency] = useState('EUR');
   const [amount, setAmount] = useState('');
@@ -50,7 +50,6 @@ export default function WithdrawPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
 
-  const supportedCountries = getSupportedCountries();
 
   useEffect(() => {
     if (user) {
@@ -133,14 +132,13 @@ export default function WithdrawPage() {
 
     setIsSubmitting(true);
     try {
+      const dbCountry = countries.find(c => c.code === selectedCountry);
       await apiClient.post<any>(API_ENDPOINTS.withdrawals.create, {
         amount: withdrawalAmount,
+        country_code: selectedCountry,
+        currency: config?.currency || dbCountry?.default_currency_code,
         payment_method: selectedPaymentMethod.id,
-        payment_details: {
-          ...paymentDetails,
-          country_code: selectedCountry,
-          currency: config.currency,
-        },
+        payment_details: paymentDetails,
       });
       setSuccess(true);
       setTimeout(() => router.push('/wallet/withdrawals'), 2500);
@@ -266,7 +264,7 @@ export default function WithdrawPage() {
                     className="w-full appearance-none px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white pr-10"
                   >
                     <option value="">-- Choisir un pays --</option>
-                    {supportedCountries.map((country) => (
+                    {countries.map((country) => (
                       <option key={country.code} value={country.code}>
                         {country.name}
                       </option>
@@ -274,11 +272,15 @@ export default function WithdrawPage() {
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
-                {config && (
-                  <p className="mt-2 text-xs text-slate-500">
-                    Devise : <span className="font-medium">{config.currency}</span> ({config.currencySymbol})
-                  </p>
-                )}
+                {selectedCountry && (() => {
+                  const dbCountry = countries.find(c => c.code === selectedCountry);
+                  const currency = config?.currency || dbCountry?.default_currency_code;
+                  return currency ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      Devise : <span className="font-medium">{currency}</span>
+                    </p>
+                  ) : null;
+                })()}
               </div>
             </div>
 

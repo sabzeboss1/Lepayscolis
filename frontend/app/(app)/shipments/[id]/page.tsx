@@ -308,7 +308,7 @@ export default function ShipmentDetailsPage() {
                   <div>
                     <p className="text-sm font-semibold text-blue-900">Paiement effectué</p>
                     <p className="text-xs text-blue-700">
-                      Le voyageur a reçu {formatCurrency(shipment.payment_amount * 0.85)} (85%)
+                      Le voyageur a reçu {formatCurrency(shipment.fees?.traveler_amount ?? shipment.payment_amount)}
                     </p>
                   </div>
                 </div>
@@ -454,14 +454,29 @@ export default function ShipmentDetailsPage() {
                 <span className="text-sm text-slate-600">Montant total</span>
                 <span className="text-lg font-bold text-slate-900">{formatCurrency(shipment.payment_amount)}</span>
               </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-600">Part du voyageur (85%)</span>
-                <span className="font-semibold text-emerald-600">{formatCurrency(shipment.payment_amount * 0.85)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-600">Frais de service (15%)</span>
-                <span className="font-semibold text-slate-600">{formatCurrency(shipment.payment_amount * 0.15)}</span>
-              </div>
+              {shipment.fees ? (
+                <>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-600">Part du voyageur ({100 - (shipment.fees.traveler_fee_percentage ?? 0)}%)</span>
+                    <span className="font-semibold text-emerald-600">{formatCurrency(shipment.fees.traveler_amount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-600">Frais de service ({(shipment.fees.sender_fee_percentage ?? 0) + (shipment.fees.traveler_fee_percentage ?? 0)}%)</span>
+                    <span className="font-semibold text-slate-600">{formatCurrency(shipment.fees.platform_fee)}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-600">Part du voyageur</span>
+                    <span className="font-semibold text-emerald-600">--</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-600">Frais de service</span>
+                    <span className="font-semibold text-slate-600">--</span>
+                  </div>
+                </>
+              )}
               <div className="pt-3 border-t border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${

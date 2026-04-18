@@ -190,7 +190,7 @@ class WalletService
             // Create transaction record
             $transaction = WalletTransaction::create([
                 'wallet_id' => $wallet->id,
-                'type' => 'adjustment',
+                'type' => $amount >= 0 ? 'credit' : 'debit',
                 'amount' => abs($amount),
                 'description' => "Admin adjustment: {$reason}",
                 'reference_type' => 'admin',

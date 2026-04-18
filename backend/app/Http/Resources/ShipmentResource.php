@@ -40,10 +40,12 @@ class ShipmentResource extends JsonResource
         $convertedCurrency = null;
         $formattedAmount = null;
         
-        if ($user && $user->preferred_currency && $user->preferred_currency !== $originalCurrency) {
+        $userCurrency = $user->currency_code ?? null;
+        if ($user && $userCurrency && $userCurrency !== $originalCurrency) {
             try {
-                $convertedAmount = $currencyService->convert($originalAmount, $originalCurrency, $user->preferred_currency);
-                $convertedCurrency = $user->preferred_currency;
+                $conversion = $currencyService->convert($originalAmount, $originalCurrency, $userCurrency);
+                $convertedAmount = $conversion['converted_amount'];
+                $convertedCurrency = $userCurrency;
                 $formattedAmount = $currencyService->format($convertedAmount, $convertedCurrency);
             } catch (\Exception $e) {
                 // Fallback to original currency if conversion fails
@@ -97,6 +99,24 @@ class ShipmentResource extends JsonResource
             'price_original_currency' => $originalCurrency,
             
             'payment_status' => $this->payment_status,
+            'fees' => $this->whenLoaded('payment', function () {
+                $payment = $this->payment;
+                if ($payment) {
+                    return [
+                        'sender_fee' => (float) $payment->sender_fee,
+                        'traveler_fee' => (float) $payment->traveler_fee,
+                        'platform_fee' => (float) $payment->platform_fee,
+                        'traveler_amount' => (float) $payment->traveler_amount,
+                        'sender_fee_percentage' => $payment->base_amount > 0
+                            ? round(($payment->sender_fee / $payment->base_amount) * 100, 2)
+                            : 0,
+                        'traveler_fee_percentage' => $payment->base_amount > 0
+                            ? round(($payment->traveler_fee / $payment->base_amount) * 100, 2)
+                            : 0,
+                    ];
+                }
+                return null;
+            }),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             

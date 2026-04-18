@@ -138,11 +138,7 @@ export default function NewShipmentPage() {
       try {
         const response = await apiClient.get<{ data: any }>(API_ENDPOINTS.wallet.balance);
         setWalletData(response.data);
-        // Use converted balance if available, otherwise use original balance
-        const balance = response.data.balance_converted
-          ? response.data.balance_converted.amount
-          : response.data.balance;
-        setWalletBalance(balance);
+        setWalletBalance((typeof response.data.balance === 'number') ? response.data.balance : parseFloat(response.data.balance) || 0);
       } catch (error) {
         console.error('Failed to fetch wallet balance:', error);
       }
@@ -459,7 +455,7 @@ export default function NewShipmentPage() {
                     </p>
                     <p className="text-xs text-slate-600">
                       Départ: {new Date(selectedTrip.departure_date).toLocaleDateString('fr-FR')} •
-                      Prix: {selectedTrip.price_per_kg_formatted || selectedTrip.price_converted
+                      Prix: {selectedTrip.price_converted
                         ? formatCurrency(selectedTrip.price_converted.amount, selectedTrip.price_converted.currency_code)
                         : formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}/kg
                       {selectedTrip.price_converted && (
@@ -488,9 +484,9 @@ export default function NewShipmentPage() {
                       <div>
                         <p className="text-xs text-slate-600">Solde disponible</p>
                         <p className="text-lg font-bold text-slate-900">{formatCurrency(walletBalance)}</p>
-                        {walletData?.balance_converted && (
+                        {walletData?.original_balance != null && (
                           <p className="text-[10px] text-slate-400">
-                            {formatCurrency(walletData.balance, walletData.currency_code)}
+                            {formatCurrency(walletData.original_balance, walletData.original_currency_code)}
                           </p>
                         )}
                       </div>
