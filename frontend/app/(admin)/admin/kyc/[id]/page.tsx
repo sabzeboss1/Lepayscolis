@@ -130,7 +130,17 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
 
   const handleDownload = async (url: string) => {
     try {
-      const fullUrl = url.startsWith('http') ? url : `${apiClient.baseUrl}${url}`;
+      let fullUrl = url;
+      if (url.startsWith('http')) {
+        try {
+          const parsed = new URL(url);
+          if (parsed.pathname.startsWith('/storage/')) {
+            fullUrl = parsed.pathname;
+          }
+        } catch { /* keep original */ }
+      } else if (!url.startsWith('/')) {
+        fullUrl = `${apiClient.baseUrl}${url}`;
+      }
       const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
 
       const response = await fetch(fullUrl, {
