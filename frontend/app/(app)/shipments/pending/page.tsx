@@ -110,7 +110,7 @@ export default function PendingShipmentsPage() {
         setProcessingId(shipmentId);
         try {
           await apiClient.post(`/api/shipments/${shipmentId}/accept`, {
-            trip_id: shipment.trip.id,
+            trip_id: shipment.trip?.id,
           });
           await fetchPendingShipments();
           setModalState({

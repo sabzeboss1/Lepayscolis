@@ -4,7 +4,6 @@ namespace App\Http\Resources\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class KYCSubmissionResource extends JsonResource
 {
@@ -15,26 +14,8 @@ class KYCSubmissionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Helper function to generate KYC file URL
-        $generateFileUrl = function($url) {
-            if (!$url) return null;
-            
-            // If it's already a full URL (S3), return as is
-            if (str_starts_with($url, 'http')) {
-                return $url;
-            }
-            
-            // For local storage, extract the path and generate API URL
-            // URL format: kyc/{userId}/{filename}
-            if (preg_match('#kyc/(\d+)/(.+)$#', $url, $matches)) {
-                $userId = $matches[1];
-                $filename = $matches[2];
-                return url("/api/admin/kyc/files/{$userId}/{$filename}");
-            }
-            
-            return $url;
-        };
-        
+        $baseUrl = $request->getSchemeAndHttpHost();
+
         return [
             'id' => $this->id,
             'user' => [
@@ -44,7 +25,7 @@ class KYCSubmissionResource extends JsonResource
                 'phone' => $this->user->phone,
             ],
             'document_type' => $this->document_type,
-            'document_number' => $this->id, // Using ID as document number for now
+            'document_number' => $this->id,
             'status' => $this->status,
             'rejection_reason' => $this->when($this->status === 'rejected', $this->rejection_reason),
             'submitted_at' => $this->submitted_at ? $this->submitted_at->toIso8601String() : $this->created_at->toIso8601String(),
@@ -54,11 +35,31 @@ class KYCSubmissionResource extends JsonResource
                 [
                     'id' => $this->id,
                     'type' => $this->document_type,
-                    'front_url' => $generateFileUrl($this->document_front_url),
-                    'back_url' => $generateFileUrl($this->document_back_url),
-                    'selfie_url' => $generateFileUrl($this->selfie_url),
+                    'front_url' => $this->buildFileUrl($this->document_front_url, $baseUrl),
+                    'back_url' => $this->buildFileUrl($this->document_back_url, $baseUrl),
+                    'selfie_url' => $this->buildFileUrl($this->selfie_url, $baseUrl),
                 ]
             ],
         ];
+    }
+
+    /**
+     * Build full URL for a KYC file.
+     */
+    private function buildFileUrl(?string $path, string $baseUrl): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        // Already a full URL (S3, etc.)
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+
+        // Strip leading /storage/ if present (legacy values)
+        $cleanPath = preg_replace('#^/?storage/#', '', $path);
+
+        return $baseUrl . '/storage/' . $cleanPath;
     }
 }

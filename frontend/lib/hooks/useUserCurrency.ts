@@ -19,10 +19,6 @@ export function useUserCurrency() {
   
   const currencyCode = (isHydrated && user?.currency_code) || 'EUR';
 
-  console.log('useUserCurrency - user:', user);
-  console.log('useUserCurrency - currencyCode:', currencyCode);
-  console.log('useUserCurrency - isHydrated:', isHydrated);
-
   const formatCurrency = useCallback(
     (amount: number, overrideCurrency?: string) => {
       const code = overrideCurrency || currencyCode;

@@ -6,7 +6,21 @@ import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
-import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
+const ZERO_DECIMAL_CURRENCIES = ['XAF', 'XOF', 'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV'];
+
+function formatInCurrency(amount: number, currencyCode: string): string {
+  const isZeroDecimal = ZERO_DECIMAL_CURRENCIES.includes(currencyCode.toUpperCase());
+  try {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: isZeroDecimal ? 0 : 2,
+      maximumFractionDigits: isZeroDecimal ? 0 : 2,
+    }).format(isZeroDecimal ? Math.round(amount) : amount);
+  } catch {
+    return `${amount.toLocaleString('fr-FR')} ${currencyCode}`;
+  }
+}
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
@@ -50,11 +64,9 @@ export default function WalletsPage() {
 
       if (filters.search) params.search = filters.search;
 
-      const response = await apiClient.get(API_ENDPOINTS.admin.wallets.list, { params });
-      console.log('Wallets list response:', response);
-      
-      setWallets(Array.isArray(response.data) ? response.data : []);
-      setTotal(response.meta?.total || 0);
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.wallets.list, { params });
+      setWallets(Array.isArray(data.data) ? data.data : []);
+      setTotal(data.meta?.total || 0);
     } catch (error) {
       console.error('Failed to fetch wallets:', error);
       setWallets([]);
@@ -73,7 +85,6 @@ export default function WalletsPage() {
     setCurrentPage(1);
   };
 
-  const { formatCurrency } = useAdminCurrency();
 
   const columns: Column<Wallet>[] = [
     {
@@ -100,7 +111,7 @@ export default function WalletsPage() {
                 : 'text-gray-900'
           }`}
         >
-          {formatCurrency(wallet.balance, wallet.currency_code)}
+          {formatInCurrency(wallet.balance, wallet.currency_code ?? 'EUR')}
         </span>
       ),
     },
@@ -109,7 +120,7 @@ export default function WalletsPage() {
       label: t('admin.wallets.columns.totalCredits'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-green-600">{formatCurrency(wallet.total_credits, wallet.currency_code)}</span>
+        <span className="text-sm text-green-600">{formatInCurrency(wallet.total_credits, wallet.currency_code ?? 'EUR')}</span>
       ),
     },
     {
@@ -117,7 +128,7 @@ export default function WalletsPage() {
       label: t('admin.wallets.columns.totalDebits'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-red-600">{formatCurrency(wallet.total_debits, wallet.currency_code)}</span>
+        <span className="text-sm text-red-600">{formatInCurrency(wallet.total_debits, wallet.currency_code ?? 'EUR')}</span>
       ),
     },
     {

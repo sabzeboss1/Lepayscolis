@@ -79,7 +79,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
     if (!shipmentId) return;
     setLoading(true);
     try {
-      const data = await apiClient.get(API_ENDPOINTS.admin.shipments.show(shipmentId));
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.shipments.show(shipmentId));
       setShipment(data.data?.shipment ?? null);
       setStatusHistory(data.data?.status_history ?? []);
       setAnalytics(data.data?.analytics ?? null);
@@ -94,7 +94,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
     if (!shipmentId || cancelReason.trim().length < 10) return;
     setCancelLoading(true);
     try {
-      await apiClient.post(API_ENDPOINTS.admin.shipments.cancel(shipmentId), { reason: cancelReason });
+      await apiClient.post<any>(API_ENDPOINTS.admin.shipments.cancel(shipmentId), { reason: cancelReason });
       await fetchShipmentDetails();
       setShowCancelDialog(false);
       setCancelReason('');

@@ -68,7 +68,7 @@ export default function AdminRechargeRequestsPage() {
       if (filters.status) params.status = filters.status;
       if (filters.search) params.search = filters.search;
 
-      const response = await apiClient.get(API_ENDPOINTS.admin.rechargeRequests.list, { params });
+      const response = await apiClient.get<any>(API_ENDPOINTS.admin.rechargeRequests.list, { params });
       setRequests(Array.isArray(response.data) ? response.data : []);
       setTotal(response.meta?.total || 0);
     } catch (error) {

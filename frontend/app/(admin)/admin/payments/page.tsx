@@ -72,7 +72,7 @@ export default function PaymentsPage() {
       if (filters.date_from) params.date_from = filters.date_from;
       if (filters.date_to) params.date_to = filters.date_to;
 
-      const data = await apiClient.get(API_ENDPOINTS.admin.payments.list, { params });
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.payments.list, { params });
       setPayments(Array.isArray(data.data) ? data.data : []);
       setTotal(data.meta?.total || 0);
     } catch (err) {

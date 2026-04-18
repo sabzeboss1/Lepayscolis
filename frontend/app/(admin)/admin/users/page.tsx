@@ -125,11 +125,11 @@ export default function UsersPage() {
 
     try {
       if (actionKey === 'suspend') {
-        await apiClient.post(API_ENDPOINTS.admin.users.bulkSuspend, { 
+        await apiClient.post<any>(API_ENDPOINTS.admin.users.bulkSuspend, { 
           user_ids: selectedIds 
         });
       } else if (actionKey === 'activate') {
-        await apiClient.post(API_ENDPOINTS.admin.users.bulkActivate, { 
+        await apiClient.post<any>(API_ENDPOINTS.admin.users.bulkActivate, { 
           user_ids: selectedIds 
         });
       }

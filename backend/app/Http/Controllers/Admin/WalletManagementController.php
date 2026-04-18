@@ -7,9 +7,11 @@ use App\Http\Requests\Admin\AdjustBalanceRequest;
 use App\Http\Resources\WalletAuditLogResource;
 use App\Http\Resources\WalletResource;
 use App\Http\Resources\WalletTransactionResource;
+use App\Models\PlatformSetting;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletAuditLog;
+use App\Services\CurrencyService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +19,8 @@ use Illuminate\Http\Request;
 class WalletManagementController extends Controller
 {
     public function __construct(
-        private WalletService $walletService
+        private WalletService $walletService,
+        private CurrencyService $currencyService
     ) {
         // Auth and admin middleware applied at route level in api.php
     }
@@ -65,6 +68,7 @@ class WalletManagementController extends Controller
                     'phone' => $wallet->user->phone,
                 ],
                 'balance' => (float) $wallet->balance,
+                'currency_code' => $wallet->currency_code ?? 'EUR',
                 'total_credits' => (float) $totalCredits,
                 'total_debits' => (float) $totalDebits,
                 'last_transaction_at' => $lastTransaction?->created_at?->toIso8601String(),
@@ -109,10 +113,6 @@ class WalletManagementController extends Controller
             ->where('type', 'debit')
             ->sum('amount');
 
-        $totalAdjustments = $wallet->transactions()
-            ->where('type', 'adjustment')
-            ->sum('amount');
-
         // Paginated transactions
         $transactions = $wallet->transactions()
             ->orderBy('created_at', 'desc')
@@ -121,7 +121,14 @@ class WalletManagementController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'wallet' => new WalletResource($wallet),
+                'wallet' => [
+                    'id' => $wallet->id,
+                    'user_id' => $wallet->user_id,
+                    'balance' => (float) $wallet->balance,
+                    'held_balance' => (float) $wallet->held_balance,
+                    'available_balance' => (float) $wallet->balance - (float) $wallet->held_balance,
+                    'currency_code' => $wallet->currency_code ?? 'EUR',
+                ],
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -131,7 +138,6 @@ class WalletManagementController extends Controller
                 'aggregates' => [
                     'total_credits' => (float) $totalCredits,
                     'total_debits' => (float) abs($totalDebits),
-                    'total_adjustments' => (float) $totalAdjustments,
                 ],
                 'transactions' => WalletTransactionResource::collection($transactions),
             ],
@@ -158,27 +164,52 @@ class WalletManagementController extends Controller
             ], 404);
         }
 
-        $amount = $request->input('amount');
+        $amount = abs($request->input('amount'));
         $type = $request->input('type');
         $reason = $request->input('reason');
         $admin = $request->user();
 
+        // Use system default currency from platform settings
+        $systemCurrencyCode = PlatformSetting::get('default_currency', 'EUR');
+        $walletCurrencyCode = $user->wallet->currency_code ?? 'EUR';
+
+        // Convert amount if system currency differs from wallet currency
+        $originalAmount = $amount;
+        $originalCurrencyCode = $systemCurrencyCode;
+        $exchangeRateUsed = null;
+
+        if ($systemCurrencyCode !== $walletCurrencyCode) {
+            $conversion = $this->currencyService->convert($amount, $systemCurrencyCode, $walletCurrencyCode);
+            $amount = $conversion['converted_amount'];
+            $exchangeRateUsed = $conversion['exchange_rate'];
+        }
+
         // Convert to negative if debit
-        $adjustmentAmount = $type === 'debit' ? -abs($amount) : abs($amount);
+        $adjustmentAmount = $type === 'debit' ? -$amount : $amount;
 
         try {
             $transaction = $this->walletService->adjustBalance(
                 $user->wallet,
                 $adjustmentAmount,
                 $reason,
-                $admin
+                $admin,
+                $originalAmount,
+                $originalCurrencyCode,
+                $exchangeRateUsed
             );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Wallet balance adjusted successfully',
                 'data' => [
-                    'wallet' => new WalletResource($user->wallet->fresh()),
+                    'wallet' => [
+                        'id' => $user->wallet->id,
+                        'user_id' => $user->wallet->user_id,
+                        'balance' => (float) $user->wallet->fresh()->balance,
+                        'held_balance' => (float) $user->wallet->held_balance,
+                        'available_balance' => (float) $user->wallet->balance - (float) $user->wallet->held_balance,
+                        'currency_code' => $user->wallet->currency_code ?? 'EUR',
+                    ],
                     'transaction' => new WalletTransactionResource($transaction),
                 ],
             ]);

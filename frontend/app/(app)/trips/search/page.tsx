@@ -7,8 +7,8 @@ import { TripCard } from '@/components/ui/TripCard';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
-import { useCurrencies } from '@/lib/hooks/useCurrencies';
 import { apiClient } from '@/lib/api/client';
+import { useCurrencies } from '@/lib/hooks/useCurrencies';
 import {
   Search,
   SlidersHorizontal,
@@ -95,31 +95,10 @@ export default function TripSearchPage() {
       if (dateFrom)           params.append('dateFrom', dateFrom);
       if (dateTo)             params.append('dateTo', dateTo);
       if (minCapacity)        params.append('minCapacity', minCapacity);
+      if (debouncedTraveler)  params.append('traveler_name', debouncedTraveler);
 
-      // Get auth token from cookie
-      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-      
-      const headers: Record<string, string> = {
-        'Accept': 'application/json',
-      };
-      
-      // Add auth header if token exists
-      if (token) {
-        headers['Authorization'] = `Bearer ${decodeURIComponent(token)}`;
-      }
-
-      const res = await fetch(`/api/trips?${params}`, {
-        headers,
-        credentials: 'include',
-      });
-      
-      if (!res.ok) throw new Error(res.status === 401 ? t('errors.unauthorized') : t('trips.searchError'));
-      const data = await res.json();
-      
-      // Filter out trips with 0kg available capacity
-      const allTrips = data.data || [];
-      const availableTrips = allTrips.filter((trip: Trip) => trip.available_capacity > 0);
-      setTrips(availableTrips);
+      const data = await apiClient.get<any>(`/api/trips?${params}`);
+      setTrips(data.data || data.trips || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.networkError'));
     } finally {

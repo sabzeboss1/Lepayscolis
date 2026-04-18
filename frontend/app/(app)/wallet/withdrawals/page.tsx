@@ -137,7 +137,7 @@ export default function WithdrawalsPage() {
         : 'Êtes-vous sûr de vouloir annuler cette demande de retrait ?';
     if (!confirm(confirmMessage)) return;
     try {
-      await apiClient.delete(API_ENDPOINTS.withdrawals.show(id));
+      await apiClient.delete<any>(API_ENDPOINTS.withdrawals.show(id));
       fetchWithdrawals();
     } catch (err) {
       const errorResponse = ErrorHandler.handle(err, locale);

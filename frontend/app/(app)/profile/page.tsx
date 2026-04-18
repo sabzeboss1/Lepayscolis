@@ -3,6 +3,7 @@
 import { useAuth } from '@/lib/auth';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
+import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { useRouter } from 'next/navigation';
@@ -64,47 +65,30 @@ export default function ProfilePage() {
   const fetchUserData = async () => {
     try {
       setIsLoadingRatings(true);
-      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
 
-      const [ratingsResponse, statsResponse] = await Promise.allSettled([
-        fetch(`/api/users/${user?.id}/ratings`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        }),
-        fetch('/api/users/stats', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        }),
+      const [ratingsResult, statsResult] = await Promise.allSettled([
+        apiClient.get<{ ratings: Rating[] }>(`/api/users/${user?.id}/ratings`),
+        apiClient.get<{ stats: any }>('/api/users/stats'),
       ]);
 
-      if (ratingsResponse.status === 'fulfilled' && ratingsResponse.value.ok) {
-        const ratingsData = await ratingsResponse.value.json();
-        setRatings(ratingsData.ratings || []);
+      if (ratingsResult.status === 'fulfilled') {
+        setRatings(ratingsResult.value.ratings || []);
       }
 
-      if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
-        const statsData = await statsResponse.value.json();
+      if (statsResult.status === 'fulfilled') {
+        const s = statsResult.value.stats;
         setStats({
-          totalTrips: statsData.stats.total_trips,
-          totalShipments: statsData.stats.total_shipments,
-          totalEarnings: statsData.stats.total_earnings,
-          successRate: statsData.stats.success_rate,
-          responseTime: statsData.stats.response_time,
-          memberSince: new Date(statsData.stats.member_since).toLocaleDateString('fr-FR', {
+          totalTrips: s.total_trips,
+          totalShipments: s.total_shipments,
+          totalEarnings: s.total_earnings,
+          successRate: s.success_rate,
+          responseTime: s.response_time,
+          memberSince: new Date(s.member_since).toLocaleDateString('fr-FR', {
             year: 'numeric',
             month: 'long',
           }),
-          earningsThisMonth: statsData.stats.earnings_this_month,
-          pendingEarnings: statsData.stats.pending_earnings,
+          earningsThisMonth: s.earnings_this_month,
+          pendingEarnings: s.pending_earnings,
         });
       }
     } catch (err) {
@@ -117,22 +101,11 @@ export default function ProfilePage() {
   const fetchActivities = async () => {
     try {
       setIsLoadingActivities(true);
-      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
 
-      const response = await fetch('/api/users/activity?limit=10', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-          'Accept': 'application/json',
-        },
-        credentials: 'include',
+      const data = await apiClient.get<{ activities: any[] }>('/api/users/activity', {
+        params: { limit: 10 },
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setActivities(data.activities || []);
-      }
+      setActivities(data.activities || []);
     } catch (err) {
       console.error('Failed to load activities:', err);
     } finally {
@@ -525,12 +498,15 @@ export default function ProfilePage() {
                   {ratings.map(rating => (
                     <div key={rating.id} className="flex gap-4 pb-5 border-b border-gray-50 last:border-0 last:pb-0">
                       <img
-                        src={`https://i.pravatar.cc/40?u=${rating.from_user_id}`}
-                        alt="Reviewer"
+                        src={rating.from_user?.avatar || `https://i.pravatar.cc/40?u=${rating.from_user_id}`}
+                        alt={rating.from_user?.name || 'Reviewer'}
                         className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {rating.from_user?.name && (
+                            <span className="text-sm font-semibold text-gray-800">{rating.from_user.name}</span>
+                          )}
                           <RatingStars rating={rating.rating} size="sm" />
                           <span className="text-xs text-gray-400">
                             {new Date(rating.created_at).toLocaleDateString('fr-FR', {

@@ -338,21 +338,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/bulk-approve', [AdminKYCController::class, 'bulkApprove'])->middleware('throttle:30,1');
         Route::post('/bulk-reject', [AdminKYCController::class, 'bulkReject'])->middleware('throttle:30,1');
 
-        // Serve KYC document files (admin only)
-        Route::get('/files/{userId}/{filename}', function ($userId, $filename) {
-            $path = "kyc/{$userId}/{$filename}";
-
-            if (!Storage::disk('local')->exists($path)) {
-                abort(404, 'File not found');
-            }
-
-            $file = Storage::disk('local')->get($path);
-            $mimeType = Storage::disk('local')->mimeType($path);
-
-            return response($file, 200)
-                ->header('Content-Type', $mimeType)
-                ->header('Cache-Control', 'private, max-age=3600');
-        })->where('filename', '.*')->middleware('throttle:60,1');
     });
 
     // Trip Management

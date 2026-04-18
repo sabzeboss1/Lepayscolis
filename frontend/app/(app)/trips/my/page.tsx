@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Trip } from '@/lib/types/trip';
+import { apiClient } from '@/lib/api/client';
 import { formatCurrency } from '@/lib/utils/formatting';
 
 type TripStatus = 'all' | 'active' | 'completed' | 'cancelled';
@@ -30,33 +31,12 @@ export default function MyTripsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      // Get auth tokens from cookies
-      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
-      
-      const response = await fetch('/api/trips/my', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-          'Accept': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error(t('errors.unauthorized'));
-        }
-        throw new Error(t('trips.fetchError'));
-      }
-
-      const data = await response.json();
-      // Handle both paginated and non-paginated responses
+      const data = await apiClient.get<any>('/api/trips/my');
       const tripsData = data.data || data.trips || [];
       setTrips(tripsData);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch trips:', err);
-      setError(err instanceof Error ? err.message : t('errors.serverError'));
+      setError(err?.message || t('errors.serverError'));
     } finally {
       setIsLoading(false);
     }
@@ -66,29 +46,9 @@ export default function MyTripsPage() {
     if (!confirm(t('trips.confirmCancel') + '?')) return;
 
     try {
-      // Get auth tokens from cookies
-      const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
-      
-      const response = await fetch(`/api/trips/${tripId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-          'Accept': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || t('trips.cancelError'));
-      }
-
-      // Refresh trips list
+      await apiClient.delete(`/api/trips/${tripId}`);
       fetchMyTrips();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to cancel trip:', err);
       alert(err instanceof Error ? err.message : t('trips.cancelError'));
     }
@@ -271,7 +231,11 @@ export default function MyTripsPage() {
                     </div>
                     <div>
                       <span className="font-medium">{t('trips.pricePerKg')}:</span>{' '}
-                      <span className="text-gray-700">{trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}</span>
+                      <span className="text-gray-700">
+                        {trip.price_converted
+                          ? formatCurrency(trip.price_converted.amount, trip.price_converted.currency_code)
+                          : formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}
+                      </span>
                     </div>
                     {trip.travel_proof_url && (
                       <div className="flex items-center gap-1 text-green-600">

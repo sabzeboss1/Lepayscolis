@@ -783,6 +783,7 @@
       "routing": "Manual Routing",
       "financial": "Financial",
       "wallets": "Wallets",
+      "rechargeRequests": "Recharge Requests",
       "withdrawals": "Withdrawals",
       "payments": "Payments",
       "content": "Content",
@@ -1403,7 +1404,9 @@
         "reasonPlaceholder": "Explain why this adjustment is being made (minimum 10 characters)...",
         "reasonMinChars": "{{count}} / 10 minimum",
         "adjusting": "Adjusting...",
-        "confirmAdjust": "Confirm Adjustment"
+        "confirmAdjust": "Confirm Adjustment",
+        "currency": "Currency",
+        "exchangeRate": "rate"
       }
     },
     "withdrawals": {

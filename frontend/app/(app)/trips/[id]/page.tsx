@@ -8,6 +8,7 @@ import { RatingStars } from '@/components/ui/RatingStars';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useRealtimeTripStatus } from '@/lib/hooks/useRealtimeStatusUpdates';
 import { useAuth } from '@/lib/auth';
+import { apiClient } from '@/lib/api/client';
 import { formatCurrency } from '@/lib/utils/formatting';
 import {
   ArrowLeft,
@@ -167,29 +168,12 @@ export default function TripDetailPage() {
   useEffect(() => {
     const fetchTrip = async () => {
       try {
-        const token = document.cookie.split('; ').find(r => r.startsWith('auth-token='))?.split('=')[1];
-        const csrfToken = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='))?.split('=')[1];
-
-        const response = await fetch(`/api/trips/${tripId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-            Accept: 'application/json',
-          },
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) setError(t('errors.notFound'));
-          else if (response.status === 401) setError(t('errors.unauthorized'));
-          else setError(t('errors.serverError'));
-          return;
-        }
-
-        const data = await response.json();
+        const data = await apiClient.get<any>(`/api/trips/${tripId}`);
         setTrip(data.data || data.trip || data);
-      } catch (err) {
-        setError(t('errors.networkError'));
+      } catch (err: any) {
+        if (err?.status === 404) setError(t('errors.notFound'));
+        else if (err?.status === 401) setError(t('errors.unauthorized'));
+        else setError(t('errors.networkError'));
         console.error('Fetch trip error:', err);
       } finally {
         setLoading(false);
@@ -206,28 +190,11 @@ export default function TripDetailPage() {
       return;
     }
     try {
-      const token = document.cookie.split('; ').find(r => r.startsWith('auth-token='))?.split('=')[1];
-      const csrfToken = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='))?.split('=')[1];
-
-      const response = await fetch(`/api/messages/conversation-with/${trip.traveler_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',
-          Accept: 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        alert(err.message || t('messages.errorCreatingConversation'));
-        return;
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get<any>(`/api/messages/conversation-with/${trip.traveler_id}`);
       router.push(data.data?.id ? `/messages/${data.data.id}` : '/messages');
-    } catch {
-      alert(t('messages.errorCreatingConversation') || 'Erreur lors de la création de la conversation');
+    } catch (error: any) {
+      console.error('Error creating conversation:', error);
+      alert(error?.message || t('messages.errorCreatingConversation') || 'Erreur lors de la création de la conversation');
     }
   };
 
@@ -392,8 +359,15 @@ export default function TripDetailPage() {
                   className="text-3xl font-bold mt-1"
                   style={{ color: 'var(--color-vibrant-orange)', fontFamily: 'var(--font-heading)' }}
                 >
-                  {trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}
+                  {trip.price_converted
+                    ? formatCurrency(trip.price_converted.amount, trip.price_converted.currency_code)
+                    : trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg
                 </p>
+                {trip.price_converted && (
+                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg
+                  </p>
+                )}
                 <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
                   {trip.available_capacity} kg disponibles
                 </p>

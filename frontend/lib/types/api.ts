@@ -16,6 +16,7 @@ export interface User {
   avatar_url?: string;
   kyc_status: 'pending' | 'approved' | 'rejected' | 'not_submitted';
   rating: number;
+  completed_deliveries?: number;
   total_ratings: number;
   is_verified: boolean;
   role?: 'user' | 'admin';
@@ -81,7 +82,16 @@ export interface Shipment {
   price_formatted?: string;
   price_original: number;
   price_original_currency: string;
-  
+
+  fees?: {
+    sender_fee: number;
+    traveler_fee: number;
+    platform_fee: number;
+    traveler_amount: number;
+    sender_fee_percentage: number;
+    traveler_fee_percentage: number;
+  };
+
   created_at: string;
   updated_at: string;
 }
@@ -140,6 +150,12 @@ export interface Wallet {
   held_balance: number;
   available_balance: number;
   currency: string;
+  currency_code: string;
+  formatted_balance?: string;
+  formatted_held_balance?: string;
+  formatted_available_balance?: string;
+  original_balance?: number;
+  original_currency_code?: string;
   created_at: string;
   updated_at: string;
 }
@@ -149,10 +165,13 @@ export interface WalletTransaction {
   wallet_id: string;
   type: 'credit' | 'debit' | 'hold' | 'hold_cancelled' | 'adjustment';
   amount: number;
+  currency_code?: string;
+  formatted_amount?: string;
   description: string;
   reference_type?: string;
   reference_id?: string;
   balance_after: number;
+  formatted_balance_after?: string;
   created_at: string;
 }
 

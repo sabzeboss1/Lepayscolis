@@ -60,7 +60,7 @@ export default function AuditLogsPage() {
         if (dateRange.to) params.date_to = dateRange.to;
       }
 
-      const result = await apiClient.get(API_ENDPOINTS.admin.auditLogs.list, { params });
+      const result = await apiClient.get<any>(API_ENDPOINTS.admin.auditLogs.list, { params });
       setLogs(result.data || []);
       setTotalLogs(result.meta?.total || 0);
     } catch (error) {
@@ -105,7 +105,7 @@ export default function AuditLogsPage() {
         if (dateRange.to) exportFilters.date_to = dateRange.to;
       }
 
-      const result = await apiClient.post(API_ENDPOINTS.admin.auditLogs.export, exportFilters);
+      const result = await apiClient.post<any>(API_ENDPOINTS.admin.auditLogs.export, exportFilters);
 
       if (result.download_url) {
         const a = document.createElement('a');

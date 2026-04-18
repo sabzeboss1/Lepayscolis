@@ -66,7 +66,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
 
     setLoading(true);
     try {
-      const data = await apiClient.get(API_ENDPOINTS.admin.messages.show(conversationId));
+      const data = await apiClient.get<any>(API_ENDPOINTS.admin.messages.show(conversationId));
       setConversation(data.data);
     } catch (error) {
       console.error('Failed to fetch conversation details:', error);
@@ -81,7 +81,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
     }
 
     try {
-      await apiClient.post(API_ENDPOINTS.admin.users.banMessaging(selectedUserId), { reason: banReason });
+      await apiClient.post<any>(API_ENDPOINTS.admin.users.banMessaging(selectedUserId), { reason: banReason });
       fetchConversationDetails();
       setShowBanDialog(false);
       setSelectedUserId(null);
@@ -93,7 +93,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
 
   const handleUnbanUser = async (userId: string) => {
     try {
-      await apiClient.post(API_ENDPOINTS.admin.users.unbanMessaging(userId));
+      await apiClient.post<any>(API_ENDPOINTS.admin.users.unbanMessaging(userId));
       fetchConversationDetails();
     } catch (error) {
       console.error('Failed to unban user:', error);
@@ -106,7 +106,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
     }
 
     try {
-      await apiClient.delete(API_ENDPOINTS.admin.messages.delete(selectedMessageId), { reason: deleteReason });
+      await apiClient.delete<any>(API_ENDPOINTS.admin.messages.delete(selectedMessageId), { params: { reason: deleteReason } });
       fetchConversationDetails();
       setShowDeleteDialog(false);
       setSelectedMessageId(null);

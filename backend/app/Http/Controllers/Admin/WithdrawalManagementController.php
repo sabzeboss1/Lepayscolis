@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApproveWithdrawalRequest;
 use App\Http\Requests\Admin\RejectWithdrawalRequest;
 use App\Http\Resources\WithdrawalRequestResource;
+use App\Models\PlatformSetting;
 use App\Models\WithdrawalRequest;
+use App\Services\CurrencyService;
 use App\Services\WithdrawalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +18,8 @@ use Illuminate\Http\Request;
 class WithdrawalManagementController extends Controller
 {
     public function __construct(
-        private WithdrawalService $withdrawalService
+        private WithdrawalService $withdrawalService,
+        private CurrencyService $currencyService
     ) {
         // Auth and admin middleware applied at route level in api.php
     }
@@ -57,9 +60,20 @@ class WithdrawalManagementController extends Controller
 
         $withdrawals = $query->paginate($perPage);
 
-        // Calculate total pending amount
-        $totalPending = WithdrawalRequest::where('status', 'pending')
-            ->sum('amount');
+        // Calculate total pending amount converted to system currency
+        $systemCurrency = PlatformSetting::get('default_currency', 'EUR');
+        $pendingRequests = WithdrawalRequest::where('status', 'pending')->get(['amount', 'currency']);
+
+        $totalPending = 0;
+        foreach ($pendingRequests as $req) {
+            $reqCurrency = $req->currency ?? $systemCurrency;
+            if ($reqCurrency !== $systemCurrency) {
+                $conversion = $this->currencyService->convert((float) $req->amount, $reqCurrency, $systemCurrency);
+                $totalPending += $conversion['converted_amount'];
+            } else {
+                $totalPending += (float) $req->amount;
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -69,8 +83,8 @@ class WithdrawalManagementController extends Controller
                 'last_page' => $withdrawals->lastPage(),
                 'per_page' => $withdrawals->perPage(),
                 'total' => $withdrawals->total(),
-                'total_pending_amount' => (float) $totalPending,
-                'formatted_total_pending' => number_format($totalPending, 2) . ' EUR',
+                'total_pending_amount' => round($totalPending, 2),
+                'formatted_total_pending' => $this->currencyService->format($totalPending, $systemCurrency),
             ],
         ]);
     }

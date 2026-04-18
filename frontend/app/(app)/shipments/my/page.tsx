@@ -132,7 +132,7 @@ export default function MyShipmentsPage() {
   const handleCancelShipment = async (shipmentId: string) => {
     if (!confirm('Confirmer l\'annulation ?')) return;
     try {
-      await apiClient.post(API_ENDPOINTS.shipments.cancel(shipmentId));
+      await apiClient.post<any>(API_ENDPOINTS.shipments.cancel(shipmentId));
       fetchMyShipments();
     } catch (err) {
       alert(ErrorHandler.handle(err));
@@ -311,7 +311,10 @@ export default function MyShipmentsPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <span className="text-xl font-bold text-orange-500" suppressHydrationWarning>
-                        {formatCurrency(shipment.price)}
+                        {(shipment as any).price_formatted || formatCurrency(
+                          (shipment as any).price_converted ?? shipment.price,
+                          (shipment as any).price_converted ? undefined : ((shipment as any).currency_code || undefined)
+                        )}
                       </span>
                       <p className="text-xs text-slate-400 mt-0.5" suppressHydrationWarning>
                         {formatDate(shipment.created_at)}

@@ -2,17 +2,18 @@
 
 namespace App\Http\Resources;
 
+use App\Services\CurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * TripResource - Transform trip model to JSON
- * 
+ *
  * Includes:
  * - All trip fields
  * - Traveler data using UserResource (whenLoaded)
  * - Dates formatted as ISO 8601
- * 
+ *
  * Validates Requirements: 3.12, 12.14-12.15
  */
 class TripResource extends JsonResource
@@ -26,7 +27,7 @@ class TripResource extends JsonResource
     {
         $user = $request->user();
         $conversionService = app(\App\Services\CurrencyConversionService::class);
-        
+
         // Convert price for user if authenticated
         $priceConversion = null;
         if ($user && $this->price_per_kg && $this->currency_code) {
@@ -74,14 +75,15 @@ class TripResource extends JsonResource
             'available_capacity' => (float) $this->available_capacity,
             'price_per_kg' => (float) $this->price_per_kg,
             'currency_code' => $this->currency_code,
-            
+            'price_converted' => $this->convertPrice($request),
+
             // Currency conversion fields
             'price_per_kg_converted' => $priceConversion ? $priceConversion['amount'] : null,
             'price_per_kg_formatted' => $priceConversion ? $priceConversion['formatted'] : null,
             'price_per_kg_original' => $priceConversion && isset($priceConversion['original_amount']) ? $priceConversion['original_amount'] : null,
             'price_per_kg_original_currency' => $priceConversion && isset($priceConversion['original_currency']) ? $priceConversion['original_currency'] : null,
             'price_per_kg_exchange_rate' => $priceConversion && isset($priceConversion['exchange_rate']) ? $priceConversion['exchange_rate'] : null,
-            
+
             'accepted_package_types' => $this->accepted_package_types,
             'pickup_address' => $this->pickup_address,
             'delivery_address' => $this->delivery_address,
@@ -101,5 +103,38 @@ class TripResource extends JsonResource
             // Include traveler data when loaded
             'traveler' => PublicUserResource::make($this->whenLoaded('traveler')),
         ];
+    }
+
+    /**
+     * Convert price to the authenticated user's preferred currency.
+     * Returns null if no conversion needed (same currency or no user).
+     */
+    private function convertPrice(Request $request): ?array
+    {
+        $user = $request->user() ?? auth('sanctum')->user();
+        $tripCurrency = $this->currency_code ?? 'EUR';
+        $userCurrency = $user?->currency_code;
+
+        // No conversion needed if same currency or no user
+        if (!$userCurrency || $userCurrency === $tripCurrency) {
+            return null;
+        }
+
+        try {
+            $currencyService = app(CurrencyService::class);
+            $conversion = $currencyService->convert(
+                (float) $this->price_per_kg,
+                $tripCurrency,
+                $userCurrency
+            );
+
+            return [
+                'amount' => $conversion['converted_amount'],
+                'currency_code' => $userCurrency,
+                'exchange_rate' => $conversion['exchange_rate'],
+            ];
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }
