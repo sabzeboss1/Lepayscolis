@@ -45,7 +45,7 @@ class UpdateTripRequest extends FormRequest
             'pickup_address' => ['sometimes', 'string', 'min:5', 'max:1000'],
             'delivery_address' => ['sometimes', 'string', 'min:5', 'max:1000'],
             'status' => ['sometimes', 'string', 'in:active,completed,cancelled'],
-            'travel_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // 5MB
+            'travel_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:' . env('UPLOAD_MAX_FILESIZE', 25600)], // Default 25MB
         ];
     }
 
