@@ -31,20 +31,20 @@ class SubmitKYCRequest extends FormRequest
                 'required',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
-                'max:5120', // 5MB in kilobytes
+                'max:' . env('UPLOAD_MAX_FILESIZE', 25600), // Default 25MB
             ],
             'document_back' => [
                 'required_if:document_type,idCard',
                 'nullable',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
-                'max:5120', // 5MB in kilobytes
+                'max:' . env('UPLOAD_MAX_FILESIZE', 25600), // Default 25MB
             ],
             'selfie' => [
                 'required',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
-                'max:5120', // 5MB in kilobytes
+                'max:' . env('UPLOAD_MAX_FILESIZE', 25600), // Default 25MB
             ],
         ];
     }
