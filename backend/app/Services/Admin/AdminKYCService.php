@@ -7,6 +7,7 @@ use App\Models\KYCDocument;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 
 class AdminKYCService
 {
@@ -60,9 +61,10 @@ class AdminKYCService
      *
      * @param string $kycId
      * @param User $admin
+     * @param bool $clearCache Whether to clear dashboard cache (default true)
      * @return KYCDocument
      */
-    public function approveKYC(string $kycId, User $admin): KYCDocument
+    public function approveKYC(string $kycId, User $admin, bool $clearCache = true): KYCDocument
     {
         $kyc = KYCDocument::with('user')->findOrFail($kycId);
 
@@ -82,6 +84,11 @@ class AdminKYCService
         // Create audit log
         AuditLog::log($admin, 'approve', 'kyc', $kycId, $before, $after);
 
+        // Clear admin dashboard cache to update pending KYC count
+        if ($clearCache) {
+            $this->clearDashboardCache();
+        }
+
         // TODO: Queue notification
         // $this->notificationService->sendKYCApprovedNotification($kyc->user);
 
@@ -94,9 +101,10 @@ class AdminKYCService
      * @param string $kycId
      * @param string $reason
      * @param User $admin
+     * @param bool $clearCache Whether to clear dashboard cache (default true)
      * @return KYCDocument
      */
-    public function rejectKYC(string $kycId, string $reason, User $admin): KYCDocument
+    public function rejectKYC(string $kycId, string $reason, User $admin, bool $clearCache = true): KYCDocument
     {
         $kyc = KYCDocument::with('user')->findOrFail($kycId);
 
@@ -113,6 +121,11 @@ class AdminKYCService
 
         // Create audit log
         AuditLog::log($admin, 'reject', 'kyc', $kycId, $before, $after);
+
+        // Clear admin dashboard cache to update pending KYC count
+        if ($clearCache) {
+            $this->clearDashboardCache();
+        }
 
         // TODO: Queue notification
         // $this->notificationService->sendKYCRejectedNotification($kyc->user, $reason);
@@ -134,11 +147,17 @@ class AdminKYCService
 
         foreach ($kycIds as $kycId) {
             try {
-                $this->approveKYC($kycId, $admin);
+                // Don't clear cache for each individual approval
+                $this->approveKYC($kycId, $admin, false);
                 $approved[] = $kycId;
             } catch (\Exception $e) {
                 $failed[] = $kycId;
             }
+        }
+
+        // Clear dashboard cache once after bulk operation
+        if (count($approved) > 0) {
+            $this->clearDashboardCache();
         }
 
         return [
@@ -162,16 +181,38 @@ class AdminKYCService
 
         foreach ($kycIds as $kycId) {
             try {
-                $this->rejectKYC($kycId, $reason, $admin);
+                // Don't clear cache for each individual rejection
+                $this->rejectKYC($kycId, $reason, $admin, false);
                 $rejected[] = $kycId;
             } catch (\Exception $e) {
                 $failed[] = $kycId;
             }
         }
 
+        // Clear dashboard cache once after bulk operation
+        if (count($rejected) > 0) {
+            $this->clearDashboardCache();
+        }
+
         return [
             'rejected' => $rejected,
             'failed' => $failed,
         ];
+    }
+
+    /**
+     * Clear admin dashboard cache to reflect updated KYC counts
+     * 
+     * @return void
+     */
+    private function clearDashboardCache(): void
+    {
+        Cache::forget('admin_dashboard_metrics');
+        Cache::forget('admin_dashboard_charts');
+        
+        // Also clear activity feed cache as it might include KYC submissions
+        for ($limit = 10; $limit <= 50; $limit += 10) {
+            Cache::forget("admin_activity_feed_{$limit}");
+        }
     }
 }

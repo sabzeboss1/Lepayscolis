@@ -37,6 +37,10 @@ class CreateTripRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Get dynamic price limits from platform settings
+        $minPrice = \App\Models\PlatformSetting::get('min_shipment_price', 1);
+        $maxPrice = \App\Models\PlatformSetting::get('max_shipment_price', 1000);
+
         return [
             'departure_country_id' => ['required', 'integer', 'exists:countries,id'],
             'departure_city_id' => ['required', 'integer', 'exists:cities,id'],
@@ -45,12 +49,12 @@ class CreateTripRequest extends FormRequest
             'arrival_city_id' => ['required', 'integer', 'exists:cities,id'],
             'arrival_date' => ['required', 'date', 'after:departure_date'],
             'available_capacity' => ['required', 'numeric', 'min:0.1', 'max:100'],
-            'price_per_kg' => ['required', 'numeric', 'min:1', 'max:1000'],
+            'price_per_kg' => ['required', 'numeric', "min:{$minPrice}", "max:{$maxPrice}"],
             'currency_code' => ['required', 'string', 'size:3', 'exists:currencies,code'],
             'accepted_package_types' => ['required', 'array', 'min:1'],
             'accepted_package_types.*' => ['required', 'string', 'in:enveloppes,petits_colis,moyens_colis,grands_colis'],
-            'pickup_address' => ['required', 'string', 'min:5', 'max:1000'],
-            'delivery_address' => ['required', 'string', 'min:5', 'max:1000'],
+            'pickup_address' => ['nullable', 'string', 'min:5', 'max:1000'],
+            'delivery_address' => ['nullable', 'string', 'min:5', 'max:1000'],
             'travel_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // 5MB - Optional
         ];
     }

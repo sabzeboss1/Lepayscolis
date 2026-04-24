@@ -18,10 +18,12 @@ interface RechargeRequest {
     id: string;
     name: string;
     email: string;
+    phone?: string;
   };
   amount: number;
   currency_code: string;
   payment_method: string;
+  payment_details?: Record<string, string>;
   status: 'pending' | 'processing' | 'completed' | 'rejected';
   created_at: string;
   processed_at?: string;
@@ -153,6 +155,78 @@ export default function AdminRechargeRequestsPage() {
     return labels[method] || method;
   };
 
+  const renderContactInfo = (request: RechargeRequest) => {
+    const details = request.payment_details || {};
+    const method = request.payment_method;
+
+    if (!details || Object.keys(details).length === 0) {
+      return <span className="text-xs text-gray-400">Non renseigné</span>;
+    }
+
+    return (
+      <div className="text-xs space-y-1">
+        {method === 'direct_payment' && (
+          <>
+            {details.phone && (
+              <div className="flex items-center gap-1">
+                <span className="font-medium text-gray-600">📞</span>
+                <a href={`tel:${details.phone}`} className="text-blue-600 hover:underline">
+                  {details.phone}
+                </a>
+              </div>
+            )}
+            {details.preferred_contact_time && (
+              <div className="text-gray-600">
+                <span className="font-medium">⏰</span> {details.preferred_contact_time}
+              </div>
+            )}
+          </>
+        )}
+        {method === 'bank_transfer' && (
+          <>
+            {details.bank_name && (
+              <div className="text-gray-600">
+                <span className="font-medium">🏦</span> {details.bank_name}
+              </div>
+            )}
+            {details.account_holder && (
+              <div className="text-gray-600">
+                <span className="font-medium">👤</span> {details.account_holder}
+              </div>
+            )}
+            {details.reference && (
+              <div className="text-gray-600">
+                <span className="font-medium">🔖</span> {details.reference}
+              </div>
+            )}
+          </>
+        )}
+        {method === 'mobile_money' && (
+          <>
+            {details.provider && (
+              <div className="text-gray-600">
+                <span className="font-medium">📱</span> {details.provider}
+              </div>
+            )}
+            {details.phone_number && (
+              <div className="flex items-center gap-1">
+                <span className="font-medium text-gray-600">📞</span>
+                <a href={`tel:${details.phone_number}`} className="text-blue-600 hover:underline">
+                  {details.phone_number}
+                </a>
+              </div>
+            )}
+            {details.account_name && (
+              <div className="text-gray-600">
+                <span className="font-medium">👤</span> {details.account_name}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
   const columns: Column<RechargeRequest>[] = [
     {
       key: 'user',
@@ -180,6 +254,11 @@ export default function AdminRechargeRequestsPage() {
       render: (request) => (
         <span className="text-sm text-gray-700">{getPaymentMethodLabel(request.payment_method)}</span>
       ),
+    },
+    {
+      key: 'contact_info',
+      label: 'Informations de contact',
+      render: (request) => renderContactInfo(request),
     },
     {
       key: 'status',
@@ -334,13 +413,34 @@ export default function AdminRechargeRequestsPage() {
               {actionType === 'complete' ? 'Valider la recharge' : 'Rejeter la demande'}
             </h3>
             
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Utilisateur</p>
-              <p className="font-medium text-gray-900">{selectedRequest.user.name}</p>
-              <p className="text-sm text-gray-600 mt-2 mb-1">Montant</p>
-              <p className="font-bold text-emerald-600">
-                {formatCurrency(selectedRequest.amount, selectedRequest.currency_code)}
-              </p>
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg space-y-3">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Utilisateur</p>
+                <p className="font-medium text-gray-900">{selectedRequest.user.name}</p>
+                <p className="text-sm text-gray-500">{selectedRequest.user.email}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Montant</p>
+                <p className="font-bold text-emerald-600">
+                  {formatCurrency(selectedRequest.amount, selectedRequest.currency_code)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Méthode de paiement</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {getPaymentMethodLabel(selectedRequest.payment_method)}
+                </p>
+              </div>
+
+              {/* Contact Information */}
+              {selectedRequest.payment_details && Object.keys(selectedRequest.payment_details).length > 0 && (
+                <div className="pt-3 border-t border-gray-200">
+                  <p className="text-sm text-gray-600 mb-2 font-medium">Informations de contact</p>
+                  {renderContactInfo(selectedRequest)}
+                </div>
+              )}
             </div>
 
             <div className="mb-4">

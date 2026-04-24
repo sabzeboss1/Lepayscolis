@@ -309,6 +309,7 @@ export default function RegisterPage() {
               placeholder="Créer un mot de passe"
               autoComplete="new-password"
               error={errors.password?.message || fieldErrors.password}
+              showPasswordToggle
               {...register('password')}
             />
 
@@ -318,6 +319,7 @@ export default function RegisterPage() {
               placeholder="Confirmer votre mot de passe"
               autoComplete="new-password"
               error={errors.confirmPassword?.message || fieldErrors.password_confirmation}
+              showPasswordToggle
               {...register('confirmPassword')}
             />
 

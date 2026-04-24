@@ -53,8 +53,8 @@ const tripSchema = z.object({
   availableCapacity: z.number().positive('Capacity must be positive'),
   pricePerKg: z.number().positive('Price must be positive'),
   acceptedPackageTypes: z.array(z.string()).min(1, 'Select at least one package type'),
-  pickupAddress: z.string().min(5, 'Pickup address is required'),
-  deliveryAddress: z.string().min(5, 'Delivery address is required'),
+  pickupAddress: z.string().optional(),
+  deliveryAddress: z.string().optional(),
 })
 .refine(
   (data) => {
@@ -113,6 +113,8 @@ export default function NewTripPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [minShipmentPrice, setMinShipmentPrice] = useState<number>(1);
+  const [maxShipmentPrice, setMaxShipmentPrice] = useState<number>(1000);
 
   const [formData, setFormData] = useState<Partial<TripFormData>>({
     departureCountryId: undefined,
@@ -130,6 +132,25 @@ export default function NewTripPage() {
 
   const [travelProof, setTravelProof] = useState<File | null>(null);
   const [autoSelectedCountry, setAutoSelectedCountry] = useState<string | null>(null);
+
+  // Fetch platform settings for price limits
+  useEffect(() => {
+    const fetchPlatformSettings = async () => {
+      try {
+        const response = await fetch('/api/platform/branding');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.data) {
+            setMinShipmentPrice(parseFloat(result.data.min_shipment_price) || 1);
+            setMaxShipmentPrice(parseFloat(result.data.max_shipment_price) || 1000);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch platform settings:', error);
+      }
+    };
+    fetchPlatformSettings();
+  }, []);
 
   // Auto-select arrival country based on departure (Russia-Africa logic)
   useEffect(() => {
@@ -271,10 +292,11 @@ export default function NewTripPage() {
       if (!formData.acceptedPackageTypes || formData.acceptedPackageTypes.length === 0) {
         newErrors.acceptedPackageTypes = t('errors.selectAtLeastOne');
       }
-      if (!formData.pickupAddress || formData.pickupAddress.length < 5) {
+      // Pickup and delivery addresses are now optional
+      if (formData.pickupAddress && formData.pickupAddress.length > 0 && formData.pickupAddress.length < 5) {
         newErrors.pickupAddress = t('errors.addressTooShort');
       }
-      if (!formData.deliveryAddress || formData.deliveryAddress.length < 5) {
+      if (formData.deliveryAddress && formData.deliveryAddress.length > 0 && formData.deliveryAddress.length < 5) {
         newErrors.deliveryAddress = t('errors.addressTooShort');
       }
       if (!formData.availableCapacity || formData.availableCapacity <= 0) {
@@ -282,6 +304,10 @@ export default function NewTripPage() {
       }
       if (!formData.pricePerKg || formData.pricePerKg <= 0) {
         newErrors.pricePerKg = t('errors.mustBePositive');
+      } else if (formData.pricePerKg < minShipmentPrice) {
+        newErrors.pricePerKg = `Le prix minimum est de ${minShipmentPrice} ${currencySymbol}`;
+      } else if (formData.pricePerKg > maxShipmentPrice) {
+        newErrors.pricePerKg = `Le prix maximum est de ${maxShipmentPrice} ${currencySymbol}`;
       }
     }
 
@@ -756,7 +782,7 @@ export default function NewTripPage() {
           <div>
             <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
               <Home className="w-4 h-4 text-green-500" />
-              {t('trips.pickupAddress')} <span className="text-red-500">*</span>
+              {t('trips.pickupAddress')}
             </label>
             <textarea
               value={formData.pickupAddress || ''}
@@ -777,7 +803,7 @@ export default function NewTripPage() {
           <div>
             <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
               <Navigation className="w-4 h-4 text-blue-500" />
-              {t('trips.deliveryAddress')} <span className="text-red-500">*</span>
+              {t('trips.deliveryAddress')}
             </label>
             <textarea
               value={formData.deliveryAddress || ''}
@@ -812,14 +838,21 @@ export default function NewTripPage() {
               error={errors.availableCapacity}
               required
             />
-            <Input
-              type="number"
-              label={`${t('trips.pricePerKg')} (${currencySymbol})`}
-              value={formData.pricePerKg?.toString() || ''}
-              onChange={(e) => handleInputChange('pricePerKg', parseFloat(e.target.value))}
-              error={errors.pricePerKg}
-              required
-            />
+            <div>
+              <Input
+                type="number"
+                label={`${t('trips.pricePerKg')} (${currencySymbol})`}
+                value={formData.pricePerKg?.toString() || ''}
+                onChange={(e) => handleInputChange('pricePerKg', parseFloat(e.target.value))}
+                error={errors.pricePerKg}
+                min={minShipmentPrice}
+                max={maxShipmentPrice}
+                required
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Prix autorisé : {minShipmentPrice} - {maxShipmentPrice} {currencySymbol}
+              </p>
+            </div>
           </div>
         </div>
 

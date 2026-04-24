@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, Globe, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -122,11 +122,11 @@ export function LandingHeader() {
 
         {/* Mobile Menu */}
         <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ${
-            isMenuOpen ? 'max-h-96 pb-6' : 'max-h-0'
+          className={`lg:hidden transition-all duration-300 ease-in-out ${
+            isMenuOpen ? 'max-h-[calc(100vh-6rem)] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 mt-2">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 mt-2 max-h-[calc(100vh-8rem)] overflow-y-auto">
             <nav className="flex flex-col gap-1 p-2">
               {NAV_LINKS.map((link) => (
                 <Link
@@ -138,7 +138,7 @@ export function LandingHeader() {
                   {link.label}
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-gray-100">
+              <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-gray-100 pb-2">
                 <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
                   <Button
                     variant="outline"

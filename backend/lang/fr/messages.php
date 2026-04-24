@@ -7,6 +7,9 @@ return [
         'login_success' => 'Connexion réussie.',
         'login_failed' => 'La connexion a échoué.',
         'logout_success' => 'Déconnexion réussie.',
+        'password_reset_sent' => 'Un lien de réinitialisation a été envoyé à votre adresse email.',
+        'password_reset_failed' => 'Échec de l\'envoi du lien de réinitialisation.',
+        'password_reset_success' => 'Votre mot de passe a été réinitialisé avec succès.',
     ],
 
     'profile' => [

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\KYCDocument;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -80,6 +81,9 @@ class KYCVerificationService
                 'kyc_status' => 'pending',
             ]);
 
+            // Clear admin dashboard cache to update pending KYC count
+            $this->clearDashboardCache();
+
             DB::commit();
 
             return $kycDocument;
@@ -111,6 +115,9 @@ class KYCVerificationService
             $kycDocument->user->update([
                 'kyc_status' => 'approved',
             ]);
+
+            // Clear admin dashboard cache to update pending KYC count
+            $this->clearDashboardCache();
 
             DB::commit();
 
@@ -153,6 +160,9 @@ class KYCVerificationService
             $kycDocument->user->update([
                 'kyc_status' => 'rejected',
             ]);
+
+            // Clear admin dashboard cache to update pending KYC count
+            $this->clearDashboardCache();
 
             DB::commit();
 
@@ -243,6 +253,22 @@ class KYCVerificationService
 
         if (!empty($errors)) {
             throw ValidationException::withMessages($errors);
+        }
+    }
+
+    /**
+     * Clear admin dashboard cache to reflect updated KYC counts
+     * 
+     * @return void
+     */
+    private function clearDashboardCache(): void
+    {
+        Cache::forget('admin_dashboard_metrics');
+        Cache::forget('admin_dashboard_charts');
+        
+        // Also clear activity feed cache as it might include KYC submissions
+        for ($limit = 10; $limit <= 50; $limit += 10) {
+            Cache::forget("admin_activity_feed_{$limit}");
         }
     }
 }

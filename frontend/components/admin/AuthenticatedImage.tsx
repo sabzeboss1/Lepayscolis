@@ -25,10 +25,21 @@ export default function AuthenticatedImage({ src, alt, className, style }: Authe
         const token = document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
         const csrfToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
         
-        // Prepend backend base URL if src is a relative path
-        const url = src.startsWith('http') ? src : `${apiClient.baseUrl}${src}`;
+        // Convert /storage/kyc/{userId}/{filename} to /api/kyc/images/{userId}/{filename}
+        let url = src;
+        if (src.includes('/storage/kyc/')) {
+          // Extract userId and filename from the storage path
+          const match = src.match(/\/storage\/kyc\/(\d+)\/(.+)$/);
+          if (match) {
+            const [, userId, filename] = match;
+            url = `/api/kyc/images/${userId}/${filename}`;
+          }
+        }
+        
+        // Prepend backend base URL if url is a relative path
+        const fullUrl = url.startsWith('http') ? url : `${apiClient.baseUrl}${url}`;
 
-        const response = await fetch(url, {
+        const response = await fetch(fullUrl, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'X-XSRF-TOKEN': csrfToken ? decodeURIComponent(csrfToken) : '',

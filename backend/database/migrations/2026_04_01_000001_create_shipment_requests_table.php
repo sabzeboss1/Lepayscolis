@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->decimal('weight', 8, 2);
-            $table->decimal('length', 8, 2);
-            $table->decimal('width', 8, 2);
-            $table->decimal('height', 8, 2);
+            $table->decimal('length', 8, 2)->nullable();
+            $table->decimal('width', 8, 2)->nullable();
+            $table->decimal('height', 8, 2)->nullable();
             $table->decimal('declared_value', 10, 2);
             $table->string('package_type');
             $table->json('photo_urls')->nullable();

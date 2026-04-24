@@ -39,6 +39,8 @@ Route::get('/health', [SetupController::class, 'health']);
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
 // Broadcasting authentication (for Pusher private/presence channels)
@@ -70,6 +72,8 @@ Route::get('/platform/branding', function () {
         'twitter_url',
         'instagram_url',
         'linkedin_url',
+        'min_shipment_price',
+        'max_shipment_price',
     ];
     $settings = [];
     foreach ($keys as $key) {
@@ -94,6 +98,9 @@ Route::middleware('auth:sanctum')->prefix('kyc')->group(function () {
     Route::get('/', [KYCController::class, 'show']);
     Route::post('/', [KYCController::class, 'store']);
     Route::get('/status', [KYCController::class, 'status']);
+    
+    // Serve KYC images with proper CORS headers
+    Route::get('/images/{userId}/{filename}', [KYCController::class, 'serveImage']);
 });
 
 // Trip routes

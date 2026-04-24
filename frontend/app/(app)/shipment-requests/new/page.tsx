@@ -30,23 +30,23 @@ import {
 } from 'lucide-react';
 
 const shipmentRequestSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().min(1, 'Description is required'),
-  weight: z.number().positive('Weight must be positive'),
-  length: z.number().positive('Length must be positive').optional(),
-  width: z.number().positive('Width must be positive').optional(),
-  height: z.number().positive('Height must be positive').optional(),
-  declared_value: z.number().positive('Value must be positive'),
-  package_type: z.string().min(1, 'Package type is required'),
-  recipient_name: z.string().min(1, 'Recipient name is required'),
-  recipient_phone: z.string().min(1, 'Recipient phone is required'),
-  pickup_country_id: z.number().positive('Pickup country is required'),
-  pickup_city_id: z.number().positive('Pickup city is required'),
-  pickup_address: z.string().min(1, 'Pickup address is required'),
-  delivery_country_id: z.number().positive('Delivery country is required'),
-  delivery_city_id: z.number().positive('Delivery city is required'),
-  delivery_address: z.string().min(1, 'Delivery address is required'),
-  max_budget: z.number().positive('Budget must be positive').optional(),
+  title: z.string().min(1, 'Titre requis').max(255, 'Titre trop long (max 255 caractères)'),
+  description: z.string().min(1, 'Description requise'),
+  weight: z.number().positive('Le poids doit être positif').min(0.1, 'Poids minimum: 0.1 kg').max(50, 'Poids maximum: 50 kg'),
+  length: z.number().positive('La longueur doit être positive').min(1, 'Longueur minimum: 1 cm').optional(),
+  width: z.number().positive('La largeur doit être positive').min(1, 'Largeur minimum: 1 cm').optional(),
+  height: z.number().positive('La hauteur doit être positive').min(1, 'Hauteur minimum: 1 cm').optional(),
+  declared_value: z.number().min(0, 'La valeur doit être positive ou zéro'),
+  package_type: z.string().min(1, 'Type de colis requis').max(100, 'Type trop long (max 100 caractères)'),
+  recipient_name: z.string().min(1, 'Nom du destinataire requis').max(255, 'Nom trop long (max 255 caractères)'),
+  recipient_phone: z.string().min(1, 'Téléphone du destinataire requis').max(20, 'Numéro trop long (max 20 caractères)'),
+  pickup_country_id: z.number().positive('Pays de récupération requis'),
+  pickup_city_id: z.number().positive('Ville de récupération requise'),
+  pickup_address: z.string().min(1, 'Adresse de récupération requise'),
+  delivery_country_id: z.number().positive('Pays de livraison requis'),
+  delivery_city_id: z.number().positive('Ville de livraison requise'),
+  delivery_address: z.string().min(1, 'Adresse de livraison requise'),
+  max_budget: z.number().positive('Le budget doit être positif').optional(),
   needed_by: z.string().optional(),
 });
 
@@ -88,6 +88,9 @@ export default function NewShipmentRequestPage() {
   const [showProhibitedItems, setShowProhibitedItems] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [autoSelectedPickupCountry, setAutoSelectedPickupCountry] = useState<string | null>(null);
+  const [autoSelectedDeliveryCountry, setAutoSelectedDeliveryCountry] = useState<string | null>(null);
+  const [countries, setCountries] = useState<any[]>([]);
 
   const [formData, setFormData] = useState<Partial<ShipmentRequestFormData>>({
     title: '',
@@ -123,8 +126,129 @@ export default function NewShipmentRequestPage() {
     if (user) fetchWallet();
   }, [user]);
 
+  // Fetch countries for auto-selection logic
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await apiClient.get<{ data: any[] }>('/api/countries');
+        setCountries(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch countries:', error);
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // Auto-select pickup country based on delivery (Russia-Africa logic)
+  useEffect(() => {
+    if (formData.delivery_country_id && countries.length > 0) {
+      const deliveryCountry = countries.find(c => c.id === formData.delivery_country_id);
+      if (deliveryCountry) {
+        const countryName = deliveryCountry.name.toLowerCase();
+        
+        // Si le pays de livraison est la Russie, sélectionner automatiquement un pays africain pour la récupération
+        if (countryName.includes('russia') || countryName.includes('russie')) {
+          const africanCountry = countries.find(c => 
+            c.name.toLowerCase().includes('cameroun') || 
+            c.name.toLowerCase().includes('cameroon')
+          ) || countries.find(c => 
+            !c.name.toLowerCase().includes('russia') && 
+            !c.name.toLowerCase().includes('russie')
+          );
+          
+          if (africanCountry && formData.pickup_country_id !== africanCountry.id) {
+            setFormData(prev => ({
+              ...prev,
+              pickup_country_id: africanCountry.id,
+              pickup_city_id: undefined,
+            }));
+            setAutoSelectedPickupCountry(`${africanCountry.name} (Afrique)`);
+          }
+        } 
+        // Si le pays de livraison est africain, sélectionner automatiquement la Russie pour la récupération
+        else {
+          const russia = countries.find(c => 
+            c.name.toLowerCase().includes('russia') || 
+            c.name.toLowerCase().includes('russie')
+          );
+          
+          if (russia && formData.pickup_country_id !== russia.id) {
+            setFormData(prev => ({
+              ...prev,
+              pickup_country_id: russia.id,
+              pickup_city_id: undefined,
+            }));
+            setAutoSelectedPickupCountry('Russie');
+          }
+        }
+      }
+    } else {
+      setAutoSelectedPickupCountry(null);
+    }
+  }, [formData.delivery_country_id, countries]);
+
+  // Auto-select delivery country based on pickup (Russia-Africa logic)
+  useEffect(() => {
+    if (formData.pickup_country_id && countries.length > 0) {
+      const pickupCountry = countries.find(c => c.id === formData.pickup_country_id);
+      if (pickupCountry) {
+        const countryName = pickupCountry.name.toLowerCase();
+        
+        // Si le pays de récupération est la Russie, sélectionner automatiquement un pays africain pour la livraison
+        if (countryName.includes('russia') || countryName.includes('russie')) {
+          const africanCountry = countries.find(c => 
+            c.name.toLowerCase().includes('cameroun') || 
+            c.name.toLowerCase().includes('cameroon')
+          ) || countries.find(c => 
+            !c.name.toLowerCase().includes('russia') && 
+            !c.name.toLowerCase().includes('russie')
+          );
+          
+          if (africanCountry && formData.delivery_country_id !== africanCountry.id) {
+            setFormData(prev => ({
+              ...prev,
+              delivery_country_id: africanCountry.id,
+              delivery_city_id: undefined,
+            }));
+            setAutoSelectedDeliveryCountry(`${africanCountry.name} (Afrique)`);
+          }
+        } 
+        // Si le pays de récupération est africain, sélectionner automatiquement la Russie pour la livraison
+        else {
+          const russia = countries.find(c => 
+            c.name.toLowerCase().includes('russia') || 
+            c.name.toLowerCase().includes('russie')
+          );
+          
+          if (russia && formData.delivery_country_id !== russia.id) {
+            setFormData(prev => ({
+              ...prev,
+              delivery_country_id: russia.id,
+              delivery_city_id: undefined,
+            }));
+            setAutoSelectedDeliveryCountry('Russie');
+          }
+        }
+      }
+    } else {
+      setAutoSelectedDeliveryCountry(null);
+    }
+  }, [formData.pickup_country_id, countries]);
+
   const handleInputChange = (field: keyof ShipmentRequestFormData, value: string | number | undefined) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [field]: value };
+      
+      // Reset city when country changes
+      if (field === 'pickup_country_id') {
+        newData.pickup_city_id = undefined;
+      }
+      if (field === 'delivery_country_id') {
+        newData.delivery_city_id = undefined;
+      }
+      
+      return newData;
+    });
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -285,6 +409,20 @@ export default function NewShipmentRequestPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate>
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+
+            {/* Info message about Russia-Africa routes */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-blue-900">Routes Russie ⇄ Afrique</p>
+                  <p className="text-blue-700 mt-1">
+                    Notre plateforme connecte la Russie et l'Afrique. Lorsque vous sélectionnez un pays, 
+                    l'autre sera automatiquement défini pour respecter cette logique.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Wallet Balance */}
             {walletBalance !== null && (
@@ -480,6 +618,21 @@ export default function NewShipmentRequestPage() {
               title="Lieu de récupération"
               subtitle="Où le voyageur peut récupérer le colis"
             >
+              {/* Auto-selection notification for pickup */}
+              {autoSelectedPickupCountry && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-emerald-900">Sélection automatique</p>
+                      <p className="text-emerald-700 mt-1">
+                        Vous livrez en {formData.delivery_country_id ? countries.find(c => c.id === formData.delivery_country_id)?.name : ''}. 
+                        Le pays de récupération a été automatiquement défini sur <strong>{autoSelectedPickupCountry}</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <CountrySelect
                   label="Pays de récupération"
@@ -515,6 +668,21 @@ export default function NewShipmentRequestPage() {
               title="Lieu de livraison"
               subtitle="Où le colis doit être livré"
             >
+              {/* Auto-selection notification for delivery */}
+              {autoSelectedDeliveryCountry && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-emerald-900">Sélection automatique</p>
+                      <p className="text-emerald-700 mt-1">
+                        Vous récupérez en {formData.pickup_country_id ? countries.find(c => c.id === formData.pickup_country_id)?.name : ''}. 
+                        Le pays de livraison a été automatiquement défini sur <strong>{autoSelectedDeliveryCountry}</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <CountrySelect
                   label="Pays de livraison"

@@ -37,6 +37,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         streamRef.current.getTracks().forEach(track => track.stop());
       }
 
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('Votre navigateur ne supporte pas l\'accès à la caméra. Veuillez utiliser Safari sur iOS.');
+        return;
+      }
+
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: facingMode,
@@ -51,12 +57,37 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        
+        // Important for iOS: wait for metadata to load before playing
+        await new Promise<void>((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => {
+              resolve();
+            };
+          }
+        });
+        
+        await videoRef.current.play();
         setIsStreaming(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error accessing camera:', err);
-      setError('Impossible d\'accéder à la caméra. Vérifiez les permissions.');
+      
+      let errorMessage = 'Impossible d\'accéder à la caméra.';
+      
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMessage = 'Permission refusée. Veuillez autoriser l\'accès à la caméra dans les réglages de votre navigateur.';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMessage = 'Aucune caméra détectée sur cet appareil.';
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        errorMessage = 'La caméra est déjà utilisée par une autre application.';
+      } else if (err.name === 'OverconstrainedError') {
+        errorMessage = 'Les paramètres de la caméra ne sont pas supportés.';
+      } else if (err.name === 'SecurityError') {
+        errorMessage = 'Accès à la caméra bloqué pour des raisons de sécurité. Assurez-vous d\'utiliser HTTPS.';
+      }
+      
+      setError(errorMessage);
     }
   }, [facingMode]);
 
@@ -180,21 +211,53 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         </div>
       )}
 
+      {/* iOS Help Banner */}
+      {!capturedImage && !isStreaming && !error && (
+        <div className="px-4 py-3 bg-yellow-600/90 text-white text-xs relative z-10">
+          <p className="font-semibold mb-1">📱 Sur iPhone ?</p>
+          <p>Assurez-vous d'autoriser l'accès à la caméra quand Safari vous le demande.</p>
+        </div>
+      )}
+
       {/* Camera View */}
       <div className="flex-1 relative flex items-center justify-center overflow-hidden">
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
-            <div className="text-center text-white p-6">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 p-4">
+            <div className="text-center text-white max-w-md">
               <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
               <p className="text-lg font-semibold mb-2">Erreur de caméra</p>
               <p className="text-sm text-gray-300 mb-4">{error}</p>
-              <Button
-                onClick={startCamera}
-                variant="primary"
-                size="sm"
-              >
-                Réessayer
-              </Button>
+              
+              {/* iOS specific help */}
+              {error.includes('Permission') && (
+                <div className="bg-blue-600/20 border border-blue-400/30 rounded-lg p-3 mb-4 text-left text-xs">
+                  <p className="font-semibold mb-2">📱 Sur iPhone :</p>
+                  <ol className="space-y-1 list-decimal list-inside">
+                    <li>Ouvrez Réglages iOS</li>
+                    <li>Cherchez "Safari"</li>
+                    <li>Activez "Caméra"</li>
+                    <li>Revenez ici et réessayez</li>
+                  </ol>
+                </div>
+              )}
+              
+              <div className="flex gap-2 justify-center">
+                <Button
+                  onClick={startCamera}
+                  variant="primary"
+                  size="sm"
+                >
+                  Réessayer
+                </Button>
+                <Button
+                  onClick={handleCancel}
+                  variant="secondary"
+                  size="sm"
+                  className="bg-white/20 text-white border-white/30"
+                >
+                  Annuler
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -215,7 +278,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               ref={videoRef}
               className="max-w-full max-h-full object-contain transform scale-x-[-1]"
               playsInline
+              autoPlay
               muted
+              webkit-playsinline="true"
             />
             
             {/* Camera overlay guide */}

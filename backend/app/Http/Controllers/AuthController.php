@@ -11,7 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -177,5 +179,147 @@ class AuthController extends Controller
         return response()->json([
             'message' => __('messages.auth.logout_success'),
         ], 200);
+    }
+
+    /**
+     * Send password reset link to user's email.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $ipAddress = $request->ip();
+
+        try {
+            // Check if user exists
+            $user = User::where('email', $request->email)->first();
+
+            if (!$user) {
+                // For security, don't reveal if email exists or not
+                Log::warning('Password reset requested for non-existent email', [
+                    'email' => $request->email,
+                    'ip_address' => $ipAddress,
+                    'timestamp' => now(),
+                ]);
+
+                return response()->json([
+                    'message' => __('messages.auth.password_reset_sent'),
+                ], 200);
+            }
+
+            // Send password reset link
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+
+            if ($status === Password::RESET_LINK_SENT) {
+                Log::info('Password reset link sent', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'ip_address' => $ipAddress,
+                    'timestamp' => now(),
+                ]);
+
+                return response()->json([
+                    'message' => __('messages.auth.password_reset_sent'),
+                ], 200);
+            }
+
+            Log::error('Failed to send password reset link', [
+                'email' => $request->email,
+                'ip_address' => $ipAddress,
+                'status' => $status,
+                'timestamp' => now(),
+            ]);
+
+            return response()->json([
+                'message' => __('messages.auth.password_reset_failed'),
+            ], 500);
+        } catch (\Exception $e) {
+            Log::error('Password reset request failed', [
+                'email' => $request->email,
+                'ip_address' => $ipAddress,
+                'error' => $e->getMessage(),
+                'timestamp' => now(),
+            ]);
+
+            return response()->json([
+                'message' => __('messages.auth.password_reset_failed'),
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset user's password.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $ipAddress = $request->ip();
+
+        try {
+            $status = Password::reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+                function (User $user, string $password) use ($ipAddress) {
+                    $user->forceFill([
+                        'password' => $password,
+                        'remember_token' => Str::random(60),
+                    ])->save();
+
+                    // Revoke all existing tokens for security
+                    $user->tokens()->delete();
+
+                    Log::info('Password reset successful', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'ip_address' => $ipAddress,
+                        'timestamp' => now(),
+                    ]);
+                }
+            );
+
+            if ($status === Password::PASSWORD_RESET) {
+                return response()->json([
+                    'message' => __('messages.auth.password_reset_success'),
+                ], 200);
+            }
+
+            Log::warning('Password reset failed - invalid token', [
+                'email' => $request->email,
+                'ip_address' => $ipAddress,
+                'status' => $status,
+                'timestamp' => now(),
+            ]);
+
+            return response()->json([
+                'message' => __($status),
+            ], 400);
+        } catch (\Exception $e) {
+            Log::error('Password reset failed', [
+                'email' => $request->email,
+                'ip_address' => $ipAddress,
+                'error' => $e->getMessage(),
+                'timestamp' => now(),
+            ]);
+
+            return response()->json([
+                'message' => __('messages.auth.password_reset_failed'),
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
