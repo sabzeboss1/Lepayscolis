@@ -158,44 +158,51 @@ export default function MyShipmentsPage() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                <Package className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900 font-heading">Mes expéditions</h1>
-                <p className="text-sm text-slate-500" suppressHydrationWarning>
-                  {shipments.length} expédition{shipments.length !== 1 ? 's' : ''} au total
-                </p>
-              </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          {/* Title row */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
+              <Package className="w-5 h-5 text-orange-600" />
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/shipment-requests/my')}
-              >
-                <Package className="w-4 h-4 mr-1.5" />
-                <span className="hidden sm:inline">Demandes d'expédition</span>
-                <span className="sm:hidden">Demandes</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/shipments/pending')}
-              >
-                <Clock className="w-4 h-4 mr-1.5" />
-                <span className="hidden sm:inline">Demandes en attente</span>
-                <span className="sm:hidden">En attente</span>
-              </Button>
-              <Button variant="primary" onClick={() => router.push('/shipments/new')}>
-                <Plus className="w-4 h-4 mr-1.5" />
-                <span className="hidden sm:inline">Nouvelle expédition</span>
-                <span className="sm:hidden">Nouveau</span>
-              </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-slate-900 font-heading">Mes expéditions</h1>
+              <p className="text-sm text-slate-500" suppressHydrationWarning>
+                {shipments.length} expédition{shipments.length !== 1 ? 's' : ''} au total
+              </p>
             </div>
+          </div>
+          
+          {/* Buttons row - responsive grid */}
+          <div className="grid grid-cols-2 sm:flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/shipment-requests/my')}
+              className="justify-center"
+            >
+              <Package className="w-4 h-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Demandes d'expédition</span>
+              <span className="sm:hidden ml-1.5">Demandes</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/shipments/pending')}
+              className="justify-center"
+            >
+              <Clock className="w-4 h-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Demandes en attente</span>
+              <span className="sm:hidden ml-1.5">En attente</span>
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={() => router.push('/shipments/new')}
+              className="col-span-2 sm:col-span-1 justify-center"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Nouvelle expédition</span>
+              <span className="sm:hidden">Nouveau</span>
+            </Button>
           </div>
         </div>
       </div>

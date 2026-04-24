@@ -31,23 +31,57 @@ import {
   Plus,
 } from 'lucide-react';
 
+// Prohibited keywords (same as backend)
+const PROHIBITED_KEYWORDS = [
+  'weapon', 'weapons', 'gun', 'guns', 'firearm', 'firearms',
+  'drug', 'drugs', 'narcotic', 'narcotics', 'cocaine', 'heroin',
+  'explosive', 'explosives', 'bomb', 'bombs', 'ammunition',
+  'knife', 'knives', 'blade', 'blades',
+  'poison', 'toxic', 'hazardous',
+  'arme', 'armes', 'drogue', 'drogues', 'explosif', 'bombe',
+];
+
 const shipmentSchema = z.object({
-  tripId: z.string().min(1, 'Trip ID is required'),
-  description: z.string().min(1, 'Description is required'),
-  weight: z.number().positive('Weight must be positive'),
-  length: z.number().positive('Length must be positive').optional().or(z.literal(undefined)),
-  width: z.number().positive('Width must be positive').optional().or(z.literal(undefined)),
-  height: z.number().positive('Height must be positive').optional().or(z.literal(undefined)),
-  value: z.number().positive('Value must be positive'),
-  packageType: z.string().min(1, 'Package type is required'),
-  recipientName: z.string().min(1, 'Recipient name is required'),
-  recipientPhone: z.string().min(1, 'Recipient phone is required'),
-  pickupCountryId: z.number().positive('Pickup country is required'),
-  pickupCityId: z.number().positive('Pickup city is required'),
-  pickupAddress: z.string().optional(),
-  deliveryCountryId: z.number().positive('Delivery country is required'),
-  deliveryCityId: z.number().positive('Delivery city is required'),
-  deliveryAddress: z.string().optional(),
+  tripId: z.string().min(1, 'Voyage requis'),
+  description: z.string()
+    .min(1, 'Description requise')
+    .max(500, 'Description trop longue (max 500 caractères)')
+    .refine((val) => {
+      const lowerVal = val.toLowerCase();
+      return !PROHIBITED_KEYWORDS.some(keyword => lowerVal.includes(keyword));
+    }, 'La description contient des mots interdits (armes, drogues, explosifs, etc.)'),
+  weight: z.number()
+    .positive('Le poids doit être positif')
+    .min(0.1, 'Poids minimum: 0.1 kg')
+    .max(100, 'Poids maximum: 100 kg'),
+  length: z.number()
+    .positive('La longueur doit être positive')
+    .min(1, 'Longueur minimum: 1 cm')
+    .max(500, 'Longueur maximum: 500 cm')
+    .optional()
+    .or(z.literal(undefined)),
+  width: z.number()
+    .positive('La largeur doit être positive')
+    .min(1, 'Largeur minimum: 1 cm')
+    .max(500, 'Largeur maximum: 500 cm')
+    .optional()
+    .or(z.literal(undefined)),
+  height: z.number()
+    .positive('La hauteur doit être positive')
+    .min(1, 'Hauteur minimum: 1 cm')
+    .max(500, 'Hauteur maximum: 500 cm')
+    .optional()
+    .or(z.literal(undefined)),
+  value: z.number().min(0, 'La valeur doit être positive ou zéro'),
+  packageType: z.string().min(1, 'Type de colis requis').max(100, 'Type trop long (max 100 caractères)'),
+  recipientName: z.string().min(1, 'Nom du destinataire requis').max(255, 'Nom trop long (max 255 caractères)'),
+  recipientPhone: z.string().min(1, 'Téléphone du destinataire requis').max(50, 'Numéro trop long (max 50 caractères)'),
+  pickupCountryId: z.number().positive('Pays de récupération requis'),
+  pickupCityId: z.number().positive('Ville de récupération requise'),
+  pickupAddress: z.string().max(500, 'Adresse trop longue (max 500 caractères)').optional(),
+  deliveryCountryId: z.number().positive('Pays de livraison requis'),
+  deliveryCityId: z.number().positive('Ville de livraison requise'),
+  deliveryAddress: z.string().max(500, 'Adresse trop longue (max 500 caractères)').optional(),
 });
 
 type ShipmentFormData = z.infer<typeof shipmentSchema>;
@@ -92,6 +126,9 @@ export default function NewShipmentPage() {
   const [walletData, setWalletData] = useState<any | null>(null);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<any | null>(null);
+  const [autoSelectedPickupCountry, setAutoSelectedPickupCountry] = useState<string | null>(null);
+  const [autoSelectedDeliveryCountry, setAutoSelectedDeliveryCountry] = useState<string | null>(null);
+  const [countries, setCountries] = useState<any[]>([]);
 
   const [formData, setFormData] = useState<Partial<ShipmentFormData>>({
     tripId: searchParams?.get('tripId') || '',
@@ -146,6 +183,109 @@ export default function NewShipmentPage() {
     if (user) fetchWallet();
   }, [user]);
 
+  // Fetch countries for auto-selection logic
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await apiClient.get<{ data: any[] }>('/api/countries');
+        setCountries(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch countries:', error);
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // Auto-select pickup country based on delivery (Russia-Africa logic)
+  useEffect(() => {
+    if (formData.deliveryCountryId && countries.length > 0) {
+      const deliveryCountry = countries.find(c => c.id === formData.deliveryCountryId);
+      if (deliveryCountry) {
+        const countryName = deliveryCountry.name.toLowerCase();
+        
+        if (countryName.includes('russia') || countryName.includes('russie')) {
+          const africanCountry = countries.find(c => 
+            c.name.toLowerCase().includes('cameroun') || 
+            c.name.toLowerCase().includes('cameroon')
+          ) || countries.find(c => 
+            !c.name.toLowerCase().includes('russia') && 
+            !c.name.toLowerCase().includes('russie')
+          );
+          
+          if (africanCountry && formData.pickupCountryId !== africanCountry.id) {
+            setFormData(prev => ({
+              ...prev,
+              pickupCountryId: africanCountry.id,
+              pickupCityId: undefined,
+            }));
+            setAutoSelectedPickupCountry(`${africanCountry.name} (Afrique)`);
+          }
+        } else {
+          const russia = countries.find(c => 
+            c.name.toLowerCase().includes('russia') || 
+            c.name.toLowerCase().includes('russie')
+          );
+          
+          if (russia && formData.pickupCountryId !== russia.id) {
+            setFormData(prev => ({
+              ...prev,
+              pickupCountryId: russia.id,
+              pickupCityId: undefined,
+            }));
+            setAutoSelectedPickupCountry('Russie');
+          }
+        }
+      }
+    } else {
+      setAutoSelectedPickupCountry(null);
+    }
+  }, [formData.deliveryCountryId, countries]);
+
+  // Auto-select delivery country based on pickup (Russia-Africa logic)
+  useEffect(() => {
+    if (formData.pickupCountryId && countries.length > 0) {
+      const pickupCountry = countries.find(c => c.id === formData.pickupCountryId);
+      if (pickupCountry) {
+        const countryName = pickupCountry.name.toLowerCase();
+        
+        if (countryName.includes('russia') || countryName.includes('russie')) {
+          const africanCountry = countries.find(c => 
+            c.name.toLowerCase().includes('cameroun') || 
+            c.name.toLowerCase().includes('cameroon')
+          ) || countries.find(c => 
+            !c.name.toLowerCase().includes('russia') && 
+            !c.name.toLowerCase().includes('russie')
+          );
+          
+          if (africanCountry && formData.deliveryCountryId !== africanCountry.id) {
+            setFormData(prev => ({
+              ...prev,
+              deliveryCountryId: africanCountry.id,
+              deliveryCityId: undefined,
+            }));
+            setAutoSelectedDeliveryCountry(`${africanCountry.name} (Afrique)`);
+          }
+        } else {
+          const russia = countries.find(c => 
+            c.name.toLowerCase().includes('russia') || 
+            c.name.toLowerCase().includes('russie')
+          );
+          
+          if (russia && formData.deliveryCountryId !== russia.id) {
+            setFormData(prev => ({
+              ...prev,
+              deliveryCountryId: russia.id,
+              deliveryCityId: undefined,
+            }));
+            setAutoSelectedDeliveryCountry('Russie');
+          }
+        }
+      }
+    } else {
+      setAutoSelectedDeliveryCountry(null);
+    }
+  }, [formData.pickupCountryId, countries]);
+
   // Calculate estimated cost when weight or trip changes (use converted price if available)
   useEffect(() => {
     if (formData.weight && selectedTrip) {
@@ -158,7 +298,19 @@ export default function NewShipmentPage() {
   }, [formData.weight, selectedTrip]);
 
   const handleInputChange = (field: keyof ShipmentFormData, value: string | number | undefined) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [field]: value };
+      
+      // Reset city when country changes
+      if (field === 'pickupCountryId') {
+        newData.pickupCityId = undefined;
+      }
+      if (field === 'deliveryCountryId') {
+        newData.deliveryCityId = undefined;
+      }
+      
+      return newData;
+    });
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -473,6 +625,20 @@ export default function NewShipmentPage() {
             <form onSubmit={handleSubmit} noValidate>
             <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
 
+              {/* Info message about Russia-Africa routes */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-blue-900">Routes Russie ⇄ Afrique</p>
+                    <p className="text-blue-700 mt-1">
+                      Notre plateforme connecte la Russie et l'Afrique. Lorsque vous sélectionnez un pays, 
+                      l'autre sera automatiquement défini pour respecter cette logique.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Wallet Balance & Cost Estimate */}
               {walletBalance !== null && (
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
@@ -641,6 +807,21 @@ export default function NewShipmentPage() {
                 title="Lieu de récupération"
                 subtitle="Où le voyageur peut récupérer le colis"
               >
+                {/* Auto-selection notification for pickup */}
+                {autoSelectedPickupCountry && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-semibold text-emerald-900">Sélection automatique</p>
+                        <p className="text-emerald-700 mt-1">
+                          Vous livrez en {formData.deliveryCountryId ? countries.find(c => c.id === formData.deliveryCountryId)?.name : ''}. 
+                          Le pays de récupération a été automatiquement défini sur <strong>{autoSelectedPickupCountry}</strong>.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <CountrySelect
                     label="Pays de récupération"
@@ -675,6 +856,21 @@ export default function NewShipmentPage() {
                 title="Lieu de livraison"
                 subtitle="Où le colis doit être livré"
               >
+                {/* Auto-selection notification for delivery */}
+                {autoSelectedDeliveryCountry && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-semibold text-emerald-900">Sélection automatique</p>
+                        <p className="text-emerald-700 mt-1">
+                          Vous récupérez en {formData.pickupCountryId ? countries.find(c => c.id === formData.pickupCountryId)?.name : ''}. 
+                          Le pays de livraison a été automatiquement défini sur <strong>{autoSelectedDeliveryCountry}</strong>.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <CountrySelect
                     label="Pays de livraison"

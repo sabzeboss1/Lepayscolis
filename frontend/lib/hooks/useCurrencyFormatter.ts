@@ -56,6 +56,11 @@ export function useCurrencyFormatter() {
         forceDecimals?: boolean;
       } = {}
     ) => {
+      // Handle null, undefined, or NaN values
+      if (amount === null || amount === undefined || isNaN(amount)) {
+        amount = 0;
+      }
+
       const {
         showSymbolOnly = false,
         locale = 'fr-FR',

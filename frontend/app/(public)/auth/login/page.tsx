@@ -240,12 +240,17 @@ export default function LoginPage() {
                 placeholder="Votre mot de passe"
                 autoComplete="current-password"
                 error={errors.password?.message || fieldErrors.password}
+                showPasswordToggle
                 {...register('password')}
               />
               <div className="flex justify-end mt-1.5">
-                <span className="text-xs text-body-text cursor-not-allowed opacity-60">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs hover:underline"
+                  style={{ color: 'var(--color-royal-blue)' }}
+                >
                   Mot de passe oublié ?
-                </span>
+                </Link>
               </div>
             </div>
 

@@ -70,6 +70,14 @@ export function AdminCurrencyProvider({ children }: { children: ReactNode }) {
 
   const formatCurrency = useCallback(
     (amount: number, currency?: string) => {
+      // Handle null, undefined, or NaN values
+      if (amount === null || amount === undefined || isNaN(amount)) {
+        return new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: currency || defaultCurrency,
+        }).format(0);
+      }
+
       // If a per-record currency is provided and differs from system default,
       // convert the amount to system default currency first
       let displayAmount = amount;
