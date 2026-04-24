@@ -117,10 +117,10 @@ class PaymentService
             DB::transaction(function () use ($payment) {
                 // Use stored values from double commission model
                 $travelerAmount = (float) $payment->traveler_amount;
-                $paymentCurrency = $payment->currency_code ?? 'EUR';
+                $paymentCurrency = $payment->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
                 $wallet = $payment->payee->wallet;
-                $walletCurrency = $wallet->currency_code ?? 'EUR';
+                $walletCurrency = $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
                 Log::info('Payment release initiated', [
                     'payment_id' => $payment->id,

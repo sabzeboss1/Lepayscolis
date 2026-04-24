@@ -119,6 +119,10 @@ class ShipmentController extends Controller
             $shipment->status = 'pending';
             $shipment->payment_status = 'escrowed';
             $shipment->payment_amount = $paymentAmount;
+            $shipment->currency_code = $shipment->currency_code
+                ?? $wallet->currency_code
+                ?? $user->currency_code
+                ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
             $shipment->save();
             
@@ -355,6 +359,7 @@ class ShipmentController extends Controller
      */
     public function confirmDelivery(string $id): JsonResponse
     {
+        try {
         return DB::transaction(function () use ($id) {
             $shipment = Shipment::with(['sender.wallet', 'traveler.wallet'])->findOrFail($id);
 
@@ -382,86 +387,90 @@ class ShipmentController extends Controller
             // Process wallet transactions with currency conversion
             $walletService = app(\App\Services\WalletService::class);
             $currencyService = app(\App\Services\CurrencyService::class);
-            
-            try {
-                // 1. Release held funds and debit sender's wallet
+
+            // 1. Debit sender's wallet - release held funds if available, otherwise simple debit
+            $senderWallet = $shipment->sender->wallet->fresh();
+            if ($senderWallet->held_balance >= $shipment->payment_amount) {
                 $walletService->releaseAndDebit(
-                    $shipment->sender->wallet,
+                    $senderWallet,
                     $shipment->payment_amount,
                     "Payment for shipment #{$shipment->id} - Delivered",
                     'shipment',
                     $shipment->id
                 );
-                
-                // 2. Calculate platform fee and traveler amount from Payment or PlatformSetting
-                $payment = $shipment->payment;
-                if ($payment && $payment->traveler_amount > 0) {
-                    $platformFee = (float) $payment->platform_fee;
-                    $travelerAmount = (float) $payment->traveler_amount;
-                } else {
-                    $fees = \App\Models\PlatformSetting::calculateFees($shipment->payment_amount);
-                    $platformFee = $fees['platform_revenue'];
-                    $travelerAmount = $fees['traveler_receives'];
-                }
-                
-                // 3. Get currencies
-                $shipmentCurrency = $shipment->currency_code ?? 'EUR';
-                $travelerCurrency = $shipment->traveler->wallet->currency_code ?? 'EUR';
-                
-                // 4. Convert amount to traveler's wallet currency if needed
-                $convertedAmount = $travelerAmount;
-                $exchangeRate = null;
-                
-                if ($shipmentCurrency !== $travelerCurrency) {
-                    $conversion = $currencyService->convert(
-                        $travelerAmount,
-                        $shipmentCurrency,
-                        $travelerCurrency
-                    );
-                    $convertedAmount = $conversion['converted_amount'];
-                    $exchangeRate = $conversion['exchange_rate'];
-                    
-                    \Log::info("Currency conversion for shipment #{$shipment->id}", [
-                        'original_amount' => $travelerAmount,
-                        'original_currency' => $shipmentCurrency,
-                        'converted_amount' => $convertedAmount,
-                        'target_currency' => $travelerCurrency,
-                        'exchange_rate' => $exchangeRate,
-                    ]);
-                }
-                
-                // 5. Credit traveler's wallet with converted amount (85% of payment)
-                $walletService->credit(
-                    $shipment->traveler->wallet,
-                    $convertedAmount,
-                    "Payment received for shipment #{$shipment->id}",
+            } else {
+                $walletService->debit(
+                    $senderWallet,
+                    $shipment->payment_amount,
+                    "Payment for shipment #{$shipment->id} - Delivered",
                     'shipment',
-                    $shipment->id,
-                    $travelerAmount, // original_amount
-                    $shipmentCurrency, // original_currency_code
-                    $exchangeRate // exchange_rate_used
+                    $shipment->id
                 );
-                
-                // 6. Update shipment payment status
-                $shipment->update(['payment_status' => 'released']);
-                
-            } catch (\Exception $e) {
-                \Log::error("Payment processing failed for shipment #{$shipment->id}", [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-                
-                return response()->json([
-                    'message' => 'Delivery confirmed but payment processing failed. Please contact support.',
-                    'error' => $e->getMessage(),
-                ], 500);
             }
+
+            // 2. Calculate platform fee and traveler amount from Payment or PlatformSetting
+            $payment = $shipment->payment;
+            if ($payment && $payment->traveler_amount > 0) {
+                $travelerAmount = (float) $payment->traveler_amount;
+            } else {
+                $fees = \App\Models\PlatformSetting::calculateFees($shipment->payment_amount);
+                $travelerAmount = $fees['traveler_receives'];
+            }
+
+            // 3. Get currencies - shipment currency falls back to sender's wallet currency
+            //    (the amount was debited in the sender's currency)
+            $senderCurrency = $shipment->sender->wallet->currency_code
+                ?? $shipment->sender->currency_code
+                ?? \App\Models\PlatformSetting::getDefaultCurrency();
+            $shipmentCurrency = $shipment->currency_code ?? $senderCurrency;
+            $travelerCurrency = $shipment->traveler->wallet->currency_code
+                ?? $shipment->traveler->currency_code
+                ?? \App\Models\PlatformSetting::getDefaultCurrency();
+
+            // 4. Convert amount to traveler's wallet currency if needed
+            $convertedAmount = $travelerAmount;
+            $exchangeRate = null;
+
+            if ($shipmentCurrency !== $travelerCurrency) {
+                $conversion = $currencyService->convert(
+                    $travelerAmount,
+                    $shipmentCurrency,
+                    $travelerCurrency
+                );
+                $convertedAmount = $conversion['converted_amount'];
+                $exchangeRate = $conversion['exchange_rate'];
+            }
+
+            // 5. Credit traveler's wallet
+            $walletService->credit(
+                $shipment->traveler->wallet,
+                $convertedAmount,
+                "Payment received for shipment #{$shipment->id}",
+                'shipment',
+                $shipment->id,
+                $travelerAmount,
+                $shipmentCurrency,
+                $exchangeRate
+            );
+
+            // 6. Update shipment payment status
+            $shipment->update(['payment_status' => 'released']);
 
             return response()->json([
                 'message' => 'Delivery confirmed successfully. Payment has been processed.',
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });
+        } catch (\Exception $e) {
+            \Log::error("Delivery confirmation failed for shipment #{$id}", [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Payment processing failed. No changes were made. Please contact support.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

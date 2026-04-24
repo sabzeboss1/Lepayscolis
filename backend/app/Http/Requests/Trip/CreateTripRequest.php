@@ -55,7 +55,7 @@ class CreateTripRequest extends FormRequest
             'accepted_package_types.*' => ['required', 'string', 'in:enveloppes,petits_colis,moyens_colis,grands_colis'],
             'pickup_address' => ['nullable', 'string', 'min:5', 'max:1000'],
             'delivery_address' => ['nullable', 'string', 'min:5', 'max:1000'],
-            'travel_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // 5MB - Optional
+            'travel_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:' . env('UPLOAD_MAX_FILESIZE', 25600)], // Default 25MB - Optional
         ];
     }
 

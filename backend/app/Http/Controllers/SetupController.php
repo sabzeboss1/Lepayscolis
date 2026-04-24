@@ -18,7 +18,8 @@ class SetupController extends Controller
     {
         $setupToken = config('app.setup_token');
 
-        if (!$setupToken || $request->header('X-Setup-Token') !== $setupToken) {
+        $providedToken = $request->header('X-Setup-Token') ?? $request->query('token');
+        if (!$setupToken || $providedToken !== $setupToken) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 

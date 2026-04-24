@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 | Setup & Health Routes (no auth)
 |--------------------------------------------------------------------------
 */
-Route::post('/setup', SetupController::class);
+Route::match(['get', 'post'], '/setup', SetupController::class);
 Route::post('/artisan', [SetupController::class, 'artisan']);
 Route::get('/health', [SetupController::class, 'health']);
 

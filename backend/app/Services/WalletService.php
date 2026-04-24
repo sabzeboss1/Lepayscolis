@@ -89,7 +89,7 @@ class WalletService
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
                 'balance_after' => $wallet->balance,
-                'currency_code' => $wallet->currency_code ?? 'EUR',
+                'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
                 'original_amount' => $originalAmount,
                 'original_currency_code' => $originalCurrencyCode,
                 'exchange_rate_used' => $exchangeRateUsed,
@@ -145,7 +145,7 @@ class WalletService
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
                 'balance_after' => $wallet->balance,
-                'currency_code' => $wallet->currency_code ?? 'EUR',
+                'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
             ]);
 
             // Clear balance cache
@@ -196,7 +196,7 @@ class WalletService
                 'reference_type' => 'admin',
                 'reference_id' => $admin->id,
                 'balance_after' => $wallet->balance,
-                'currency_code' => $wallet->currency_code ?? 'EUR',
+                'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
                 'original_amount' => $originalAmount,
                 'original_currency_code' => $originalCurrencyCode,
                 'exchange_rate_used' => $exchangeRateUsed,

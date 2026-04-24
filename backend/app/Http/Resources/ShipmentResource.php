@@ -32,7 +32,7 @@ class ShipmentResource extends JsonResource
         $currencyService = app(CurrencyService::class);
         
         // Get original currency from shipment or default to XAF
-        $originalCurrency = $this->currency_code ?? 'XAF';
+        $originalCurrency = $this->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
         $originalAmount = $this->payment_amount;
         
         // Convert currency if user is authenticated and has different preferred currency

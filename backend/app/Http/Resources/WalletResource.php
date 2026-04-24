@@ -21,20 +21,20 @@ class WalletResource extends JsonResource
         // Convertir le solde selon la devise préférée de l'utilisateur
         $balanceConversion = $conversionService->convertForUser(
             (float) $this->balance,
-            $this->currency_code ?? 'EUR',
+            $this->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
             $user
         );
 
         $heldBalanceConversion = $conversionService->convertForUser(
             (float) $this->held_balance,
-            $this->currency_code ?? 'EUR',
+            $this->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
             $user
         );
 
         $availableBalance = (float) $this->balance - (float) $this->held_balance;
         $availableBalanceConversion = $conversionService->convertForUser(
             $availableBalance,
-            $this->currency_code ?? 'EUR',
+            $this->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
             $user
         );
 
