@@ -27,7 +27,7 @@ class AdminKYCService
      */
     public function getKYCSubmissions(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = KYCDocument::with('user');
+        $query = KYCDocument::with(['user' => fn($q) => $q->withTrashed()]);
 
         // Filter by status
         if (!empty($filters['status'])) {
