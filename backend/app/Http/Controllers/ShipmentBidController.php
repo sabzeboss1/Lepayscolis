@@ -157,7 +157,7 @@ class ShipmentBidController extends Controller
     {
         $bids = ShipmentBid::with([
             'shipmentRequest' => function($q) {
-                $q->with(['pickupCountry:id,name', 'deliveryCountry:id,name']);
+                $q->with(['pickupCountry:id,name_en,name_fr', 'deliveryCountry:id,name_en,name_fr']);
             }
         ])
         ->where('traveler_id', Auth::id())
