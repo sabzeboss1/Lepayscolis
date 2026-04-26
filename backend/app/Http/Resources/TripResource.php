@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Services\CurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -75,7 +74,11 @@ class TripResource extends JsonResource
             'available_capacity' => (float) $this->available_capacity,
             'price_per_kg' => (float) $this->price_per_kg,
             'currency_code' => $this->currency_code,
-            'price_converted' => $this->convertPrice($request),
+            'price_converted' => $priceConversion ? [
+                'amount' => $priceConversion['amount'],
+                'currency_code' => $priceConversion['currency'],
+                'exchange_rate' => $priceConversion['exchange_rate'] ?? null,
+            ] : null,
 
             // Currency conversion fields
             'price_per_kg_converted' => $priceConversion ? $priceConversion['amount'] : null,
@@ -105,36 +108,4 @@ class TripResource extends JsonResource
         ];
     }
 
-    /**
-     * Convert price to the authenticated user's preferred currency.
-     * Returns null if no conversion needed (same currency or no user).
-     */
-    private function convertPrice(Request $request): ?array
-    {
-        $user = $request->user() ?? auth('sanctum')->user();
-        $tripCurrency = $this->currency_code ?? 'EUR';
-        $userCurrency = $user?->currency_code;
-
-        // No conversion needed if same currency or no user
-        if (!$userCurrency || $userCurrency === $tripCurrency) {
-            return null;
-        }
-
-        try {
-            $currencyService = app(CurrencyService::class);
-            $conversion = $currencyService->convert(
-                (float) $this->price_per_kg,
-                $tripCurrency,
-                $userCurrency
-            );
-
-            return [
-                'amount' => $conversion['converted_amount'],
-                'currency_code' => $userCurrency,
-                'exchange_rate' => $conversion['exchange_rate'],
-            ];
-        } catch (\Exception $e) {
-            return null;
-        }
-    }
 }

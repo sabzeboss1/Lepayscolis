@@ -100,10 +100,10 @@ class ShipmentRequestController extends Controller
 
         $shipmentRequest->load([
             'sender:id,name,avatar',
-            'pickupCountry:id,name',
-            'pickupCity:id,name',
-            'deliveryCountry:id,name',
-            'deliveryCity:id,name'
+            'pickupCountry:id,name_en,name_fr',
+            'pickupCity:id,name,country_id',
+            'deliveryCountry:id,name_en,name_fr',
+            'deliveryCity:id,name,country_id'
         ]);
 
         return response()->json([
@@ -119,10 +119,10 @@ class ShipmentRequestController extends Controller
     {
         $shipmentRequest = ShipmentRequest::with([
             'sender:id,name,avatar,rating,completed_deliveries',
-            'pickupCountry:id,name',
-            'pickupCity:id,name',
-            'deliveryCountry:id,name',
-            'deliveryCity:id,name',
+            'pickupCountry:id,name_en,name_fr',
+            'pickupCity:id,name,country_id',
+            'deliveryCountry:id,name_en,name_fr',
+            'deliveryCity:id,name,country_id',
             'bids' => function($q) {
                 $q->with('traveler:id,name,avatar,rating,completed_deliveries')
                   ->orderBy('proposed_price', 'asc');
@@ -138,10 +138,10 @@ class ShipmentRequestController extends Controller
     public function myRequests(): JsonResponse
     {
         $requests = ShipmentRequest::with([
-            'pickupCountry:id,name',
-            'pickupCity:id,name',
-            'deliveryCountry:id,name',
-            'deliveryCity:id,name',
+            'pickupCountry:id,name_en,name_fr',
+            'pickupCity:id,name,country_id',
+            'deliveryCountry:id,name_en,name_fr',
+            'deliveryCity:id,name,country_id',
             'assignedTraveler:id,name,avatar'
         ])
         ->withCount(['bids as bids_count' => function($q) {
