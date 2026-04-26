@@ -300,11 +300,27 @@ class AdminUserService
 
         $before = $user->only(['name', 'email', 'phone']);
 
+        // Delete avatar file from storage
+        if ($user->avatar) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+        }
+
+        // Delete KYC documents files and records
+        foreach ($user->kycDocuments as $doc) {
+            foreach (['document_front_url', 'document_back_url', 'selfie_url'] as $field) {
+                if ($doc->$field) {
+                    $path = preg_replace('#^/?storage/#', '', $doc->$field);
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+                }
+            }
+            $doc->delete();
+        }
+
         // Anonymize personal data
         $user->update([
             'name' => 'Deleted User',
             'email' => 'deleted_' . $userId . '@deleted.com',
-            'phone' => null,
+            'phone' => 'deleted_' . $userId,
             'avatar' => null,
         ]);
 
