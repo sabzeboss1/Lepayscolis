@@ -16,13 +16,13 @@ class AdminTripResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'traveler' => [
+            'traveler' => $this->traveler ? [
                 'id' => $this->traveler->id,
                 'name' => $this->traveler->name,
                 'email' => $this->traveler->email,
                 'phone' => $this->traveler->phone,
                 'average_rating' => $this->traveler->average_rating ? round($this->traveler->average_rating, 2) : null,
-            ],
+            ] : null,
             'origin' => "{$this->departure_city}, {$this->departure_country}",
             'destination' => "{$this->arrival_city}, {$this->arrival_country}",
             'departure_city' => $this->departure_city,

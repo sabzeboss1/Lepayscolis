@@ -30,12 +30,10 @@ class AdminUserService
             });
         }
 
-        // Filter by status
+        // Filter by status (only include soft-deleted when explicitly requested)
         if (!empty($filters['status'])) {
-            if ($filters['status'] === 'active') {
-                $query->whereNull('deleted_at');
-            } elseif ($filters['status'] === 'suspended') {
-                $query->whereNotNull('deleted_at');
+            if ($filters['status'] === 'suspended') {
+                $query->withTrashed()->whereNotNull('deleted_at');
             }
         }
 
@@ -44,8 +42,7 @@ class AdminUserService
             $query->where('kyc_status', $filters['kyc_status']);
         }
 
-        return $query->withTrashed()
-            ->latest('created_at')
+        return $query->latest('created_at')
             ->paginate($perPage);
     }
 
