@@ -316,28 +316,32 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
           {/* Traveler Info */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.trips.detail.travelerInfo')}</h2>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm">
-                <User className="w-4 h-4 text-gray-400 mr-3" />
-                <span className="text-gray-600 w-24">{t('admin.trips.detail.name')}:</span>
-                <button
-                  onClick={() => router.push(`/admin/users/${trip.traveler.id}`)}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  {trip.traveler.name}
-                </button>
-              </div>
-              <div className="flex items-center text-sm">
-                <span className="text-gray-600 w-24 ml-7">{t('admin.trips.detail.email')}:</span>
-                <span className="text-gray-900">{trip.traveler.email}</span>
-              </div>
-              {trip.traveler.phone && (
+            {trip.traveler ? (
+              <div className="space-y-3">
                 <div className="flex items-center text-sm">
-                  <span className="text-gray-600 w-24 ml-7">{t('admin.trips.detail.phone')}:</span>
-                  <span className="text-gray-900">{trip.traveler.phone}</span>
+                  <User className="w-4 h-4 text-gray-400 mr-3" />
+                  <span className="text-gray-600 w-24">{t('admin.trips.detail.name')}:</span>
+                  <button
+                    onClick={() => router.push(`/admin/users/${trip.traveler.id}`)}
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    {trip.traveler.name}
+                  </button>
                 </div>
-              )}
-            </div>
+                <div className="flex items-center text-sm">
+                  <span className="text-gray-600 w-24 ml-7">{t('admin.trips.detail.email')}:</span>
+                  <span className="text-gray-900">{trip.traveler.email}</span>
+                </div>
+                {trip.traveler.phone && (
+                  <div className="flex items-center text-sm">
+                    <span className="text-gray-600 w-24 ml-7">{t('admin.trips.detail.phone')}:</span>
+                    <span className="text-gray-900">{trip.traveler.phone}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 italic">Utilisateur supprimé</p>
+            )}
           </div>
 
           {/* Associated Shipments */}

@@ -247,7 +247,7 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{t('admin.kyc.review.title')}</h1>
             <p className="text-sm text-gray-600 mt-1">
-              {submission.user.name} &mdash; {t(`admin.kyc.documentTypes.${submission.document_type}`)}
+              {submission.user?.name ?? 'Utilisateur supprimé'} &mdash; {t(`admin.kyc.documentTypes.${submission.document_type}`)}
             </p>
           </div>
         </div>
@@ -332,17 +332,17 @@ export default function KYCDetailPage({ params }: { params: Promise<{ id: string
               <div className="flex items-center text-sm">
                 <User className="w-4 h-4 text-gray-400 mr-3" />
                 <span className="text-gray-600 w-20">{t('admin.kyc.review.name')}:</span>
-                <span className="text-gray-900 font-medium">{submission.user.name}</span>
+                <span className="text-gray-900 font-medium">{submission.user?.name ?? 'Utilisateur supprimé'}</span>
               </div>
               <div className="flex items-center text-sm">
                 <Mail className="w-4 h-4 text-gray-400 mr-3" />
                 <span className="text-gray-600 w-20">{t('admin.kyc.review.email')}:</span>
-                <span className="text-gray-900">{submission.user.email}</span>
+                <span className="text-gray-900">{submission.user?.email}</span>
               </div>
               <div className="flex items-center text-sm">
                 <Phone className="w-4 h-4 text-gray-400 mr-3" />
                 <span className="text-gray-600 w-20">{t('admin.kyc.review.phone')}:</span>
-                <span className="text-gray-900">{submission.user.phone}</span>
+                <span className="text-gray-900">{submission.user?.phone}</span>
               </div>
             </div>
           </div>

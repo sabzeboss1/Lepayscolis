@@ -234,9 +234,9 @@ export default function WalletDetailPage({ params }: { params: Promise<{ userId:
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {t('admin.wallets.detail.title', { name: wallet.user.name })}
+              {t('admin.wallets.detail.title', { name: wallet.user?.name ?? 'Utilisateur supprimé' })}
             </h1>
-            <p className="text-sm text-gray-600 mt-1">{wallet.user.email}</p>
+            <p className="text-sm text-gray-600 mt-1">{wallet.user?.email}</p>
           </div>
         </div>
         <button
