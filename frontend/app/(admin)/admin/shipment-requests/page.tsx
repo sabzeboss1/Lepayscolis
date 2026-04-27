@@ -154,8 +154,8 @@ export default function ShipmentRequestsPage() {
       label: 'Expéditeur',
       render: (request) => (
         <div>
-          <div className="font-medium text-gray-900">{request.sender.name}</div>
-          <div className="text-sm text-gray-500">{request.sender.email}</div>
+          <div className="font-medium text-gray-900">{request.sender?.name ?? 'Utilisateur supprimé'}</div>
+          <div className="text-sm text-gray-500">{request.sender?.email}</div>
         </div>
       )
     },
@@ -327,16 +327,16 @@ export default function ShipmentRequestsPage() {
               <div className="border-b pb-4">
                 <h4 className="text-sm font-semibold text-gray-700 mb-3">Expéditeur</h4>
                 <div className="flex items-center gap-3">
-                  {selectedRequest.sender.avatar && (
+                  {selectedRequest.sender?.avatar && (
                     <img
                       src={selectedRequest.sender.avatar}
-                      alt={selectedRequest.sender.name}
+                      alt={selectedRequest.sender?.name ?? ''}
                       className="w-12 h-12 rounded-full"
                     />
                   )}
                   <div>
-                    <p className="font-medium text-gray-900">{selectedRequest.sender.name}</p>
-                    <p className="text-sm text-gray-500">{selectedRequest.sender.email}</p>
+                    <p className="font-medium text-gray-900">{selectedRequest.sender?.name ?? 'Utilisateur supprimé'}</p>
+                    <p className="text-sm text-gray-500">{selectedRequest.sender?.email}</p>
                   </div>
                 </div>
               </div>
@@ -455,7 +455,7 @@ export default function ShipmentRequestsPage() {
                 <span className="font-medium">Titre:</span> {selectedRequest.title}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Expéditeur:</span> {selectedRequest.sender.name}
+                <span className="font-medium">Expéditeur:</span> {selectedRequest.sender?.name ?? 'Utilisateur supprimé'}
               </p>
             </div>
 

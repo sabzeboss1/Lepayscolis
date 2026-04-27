@@ -187,8 +187,8 @@ export default function KYCPage() {
       label: t('admin.kyc.columns.user'),
       render: (submission) => (
         <div>
-          <div className="font-medium text-gray-900">{submission.user.name}</div>
-          <div className="text-sm text-gray-500">{submission.user.email}</div>
+          <div className="font-medium text-gray-900">{submission.user?.name ?? 'Utilisateur supprimé'}</div>
+          <div className="text-sm text-gray-500">{submission.user?.email}</div>
         </div>
       )
     },

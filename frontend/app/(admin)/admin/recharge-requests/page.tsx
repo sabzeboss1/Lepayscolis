@@ -233,8 +233,8 @@ export default function AdminRechargeRequestsPage() {
       label: 'Utilisateur',
       render: (request) => (
         <div>
-          <div className="font-medium text-gray-900">{request.user.name}</div>
-          <div className="text-sm text-gray-500">{request.user.email}</div>
+          <div className="font-medium text-gray-900">{request.user?.name ?? 'Utilisateur supprimé'}</div>
+          <div className="text-sm text-gray-500">{request.user?.email}</div>
         </div>
       ),
     },
@@ -340,7 +340,7 @@ export default function AdminRechargeRequestsPage() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => router.push(`/admin/wallets/${request.user.id}`)}
+            onClick={() => request.user && router.push(`/admin/wallets/${request.user.id}`)}
             className="text-gray-600 hover:bg-gray-50"
           >
             <Eye className="w-4 h-4" />
@@ -416,8 +416,8 @@ export default function AdminRechargeRequestsPage() {
             <div className="mb-4 p-4 bg-gray-50 rounded-lg space-y-3">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Utilisateur</p>
-                <p className="font-medium text-gray-900">{selectedRequest.user.name}</p>
-                <p className="text-sm text-gray-500">{selectedRequest.user.email}</p>
+                <p className="font-medium text-gray-900">{selectedRequest.user?.name ?? 'Utilisateur supprimé'}</p>
+                <p className="text-sm text-gray-500">{selectedRequest.user?.email}</p>
               </div>
               
               <div>

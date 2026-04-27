@@ -224,12 +224,12 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <button
-                        onClick={() => router.push(`/admin/users/${message.sender.id}`)}
+                        onClick={() => message.sender && router.push(`/admin/users/${message.sender.id}`)}
                         className="text-sm font-semibold text-blue-600 hover:text-blue-800"
                       >
-                        {message.sender.name}
+                        {message.sender?.name ?? 'Utilisateur supprimé'}
                       </button>
-                      {message.sender.messaging_banned && (
+                      {message.sender?.messaging_banned && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                           {t('admin.messages.banned')}
                         </span>
