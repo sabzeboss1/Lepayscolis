@@ -10,9 +10,19 @@ interface AuthenticatedImageProps {
   style?: React.CSSProperties;
 }
 
+function isPdf(src: string): boolean {
+  try {
+    const url = new URL(src, window.location.origin);
+    return url.pathname.toLowerCase().endsWith('.pdf');
+  } catch {
+    return src.toLowerCase().endsWith('.pdf');
+  }
+}
+
 export default function AuthenticatedImage({ src, alt, className, style }: AuthenticatedImageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const pdf = isPdf(src);
 
   return (
     <>
@@ -25,9 +35,18 @@ export default function AuthenticatedImage({ src, alt, className, style }: Authe
       {error ? (
         <div className={`flex items-center justify-center bg-gray-100 ${className}`} style={style}>
           <div className="text-center text-gray-500">
-            <p className="text-sm">Failed to load image</p>
+            <p className="text-sm">Failed to load document</p>
           </div>
         </div>
+      ) : pdf ? (
+        <iframe
+          src={src}
+          title={alt}
+          className={className}
+          style={{ ...style, display: loading ? 'none' : undefined, width: '100%', minHeight: '500px' }}
+          onLoad={() => setLoading(false)}
+          onError={() => { setLoading(false); setError(true); }}
+        />
       ) : (
         <img
           src={src}

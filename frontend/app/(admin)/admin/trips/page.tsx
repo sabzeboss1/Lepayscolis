@@ -155,8 +155,8 @@ export default function TripsPage() {
       label: t('admin.trips.columns.traveler'),
       render: (trip) => (
         <div>
-          <div className="font-medium text-gray-900">{trip.traveler.name}</div>
-          <div className="text-sm text-gray-500">{trip.traveler.email}</div>
+          <div className="font-medium text-gray-900">{trip.traveler?.name ?? 'Utilisateur supprimé'}</div>
+          <div className="text-sm text-gray-500">{trip.traveler?.email}</div>
         </div>
       )
     },

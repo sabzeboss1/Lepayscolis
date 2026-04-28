@@ -18,12 +18,12 @@ class KYCSubmissionResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'user' => [
+            'user' => $this->user ? [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
                 'phone' => $this->user->phone,
-            ],
+            ] : null,
             'document_type' => $this->document_type,
             'document_number' => $this->id,
             'status' => $this->status,

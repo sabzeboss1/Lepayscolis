@@ -106,9 +106,6 @@ Route::middleware('auth:sanctum')->prefix('kyc')->group(function () {
     Route::get('/', [KYCController::class, 'show']);
     Route::post('/', [KYCController::class, 'store']);
     Route::get('/status', [KYCController::class, 'status']);
-    
-    // Serve KYC images with proper CORS headers
-    Route::get('/images/{userId}/{filename}', [KYCController::class, 'serveImage']);
 });
 
 // Trip routes

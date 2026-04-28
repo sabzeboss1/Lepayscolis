@@ -164,7 +164,7 @@ export default function AdminRoutingPage() {
   };
 
   const handleRecommendTravelerForRequest = async () => {
-    if (!selectedRequest || !selectedTrip) return;
+    if (!selectedRequest || !selectedTrip || !selectedTrip.traveler) return;
 
     try {
       await apiClient.post(API_ENDPOINTS.admin.routing.recommendTraveler, {
@@ -270,10 +270,10 @@ export default function AdminRoutingPage() {
       weight = item.package_weight;
     } else {
       // This is a ShipmentRequest
-      pickupCity = item.pickup_city.name;
-      pickupCountry = item.pickup_country.name;
-      deliveryCity = item.delivery_city.name;
-      deliveryCountry = item.delivery_country.name;
+      pickupCity = item.pickup_city?.name ?? '';
+      pickupCountry = item.pickup_country?.name ?? '';
+      deliveryCity = item.delivery_city?.name ?? '';
+      deliveryCountry = item.delivery_country?.name ?? '';
       weight = item.weight;
     }
 
@@ -449,8 +449,8 @@ export default function AdminRoutingPage() {
                         <User className="w-4 h-4 text-blue-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{trip.traveler.name}</p>
-                        <p className="text-xs text-gray-500">{trip.traveler.email}</p>
+                        <p className="font-medium text-gray-900">{trip.traveler?.name ?? 'Utilisateur supprimé'}</p>
+                        <p className="text-xs text-gray-500">{trip.traveler?.email}</p>
                       </div>
                     </div>
                     <span className="text-sm font-medium text-green-600">
@@ -560,7 +560,7 @@ export default function AdminRoutingPage() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="font-medium text-gray-900">{shipment.title}</p>
-                      <p className="text-xs text-gray-500">Par {shipment.sender.name}</p>
+                      <p className="text-xs text-gray-500">Par {shipment.sender?.name ?? 'Utilisateur supprimé'}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-medium text-orange-600">
@@ -599,7 +599,7 @@ export default function AdminRoutingPage() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="font-medium text-gray-900">{request.title}</p>
-                      <p className="text-xs text-gray-500">Par {request.sender.name}</p>
+                      <p className="text-xs text-gray-500">Par {request.sender?.name ?? 'Utilisateur supprimé'}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-medium text-orange-600">
@@ -614,10 +614,10 @@ export default function AdminRoutingPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <MapPin className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-700">
-                      {request.pickup_city.name} → {request.delivery_city.name}
+                      {request.pickup_city?.name ?? '—'} → {request.delivery_city?.name ?? '—'}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <span>{request.bids_count} soumission(s)</span>
                     <span>{new Date(request.created_at).toLocaleDateString()}</span>
@@ -648,7 +648,7 @@ export default function AdminRoutingPage() {
               </h4>
               {selectedTrip && (
                 <>
-                  <p className="text-sm text-blue-800">{selectedTrip.traveler.name}</p>
+                  <p className="text-sm text-blue-800">{selectedTrip.traveler?.name ?? 'Utilisateur supprimé'}</p>
                   <p className="text-xs text-blue-600">
                     {selectedTrip.departure_city} → {selectedTrip.arrival_city}
                   </p>
@@ -691,7 +691,7 @@ export default function AdminRoutingPage() {
                 <>
                   <p className="text-sm text-orange-800">{selectedRequest.title}</p>
                   <p className="text-xs text-orange-600">
-                    {selectedRequest.pickup_city.name} → {selectedRequest.delivery_city.name}
+                    {selectedRequest.pickup_city?.name ?? '—'} → {selectedRequest.delivery_city?.name ?? '—'}
                   </p>
                   <p className="text-xs text-orange-600">
                     {selectedRequest.weight} kg

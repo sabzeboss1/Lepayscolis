@@ -30,12 +30,10 @@ class AdminUserService
             });
         }
 
-        // Filter by status
+        // Filter by status (only include soft-deleted when explicitly requested)
         if (!empty($filters['status'])) {
-            if ($filters['status'] === 'active') {
-                $query->whereNull('deleted_at');
-            } elseif ($filters['status'] === 'suspended') {
-                $query->whereNotNull('deleted_at');
+            if ($filters['status'] === 'suspended') {
+                $query->withTrashed()->whereNotNull('deleted_at');
             }
         }
 
@@ -44,8 +42,7 @@ class AdminUserService
             $query->where('kyc_status', $filters['kyc_status']);
         }
 
-        return $query->withTrashed()
-            ->latest('created_at')
+        return $query->latest('created_at')
             ->paginate($perPage);
     }
 
@@ -299,6 +296,22 @@ class AdminUserService
         $user = User::findOrFail($userId);
 
         $before = $user->only(['name', 'email', 'phone']);
+
+        // Delete avatar file from storage
+        if ($user->avatar) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+        }
+
+        // Delete KYC documents files and records
+        foreach ($user->kycDocuments as $doc) {
+            foreach (['document_front_url', 'document_back_url', 'selfie_url'] as $field) {
+                if ($doc->$field) {
+                    $path = preg_replace('#^/?storage/#', '', $doc->$field);
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+                }
+            }
+            $doc->delete();
+        }
 
         // Anonymize personal data
         $user->update([

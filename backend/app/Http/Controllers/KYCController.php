@@ -143,49 +143,6 @@ class KYCController extends Controller
     }
 
     /**
-     * Serve KYC image with proper authentication and CORS headers
-     * 
-     * GET /api/kyc/images/{userId}/{filename}
-     * 
-     * @param Request $request
-     * @param string $userId
-     * @param string $filename
-     * @return \Illuminate\Http\Response
-     */
-    public function serveImage(Request $request, string $userId, string $filename)
-    {
-        $user = $request->user();
-        
-        // Check if user is admin or accessing their own images
-        if (!$user->isAdmin() && $user->id != $userId) {
-            return response()->json([
-                'message' => 'Unauthorized to access this image',
-            ], 403);
-        }
-
-        // Construct the file path
-        $path = "kyc/{$userId}/{$filename}";
-        
-        // Check if file exists in storage
-        if (!\Storage::disk('public')->exists($path)) {
-            return response()->json([
-                'message' => 'Image not found',
-            ], 404);
-        }
-
-        // Get the file
-        $file = \Storage::disk('public')->get($path);
-        $mimeType = \Storage::disk('public')->mimeType($path);
-
-        // Return the file with proper headers
-        return response($file, 200)
-            ->header('Content-Type', $mimeType)
-            ->header('Access-Control-Allow-Origin', config('cors.allowed_origins')[0] ?? '*')
-            ->header('Access-Control-Allow-Credentials', 'true')
-            ->header('Cache-Control', 'private, max-age=3600');
-    }
-
-    /**
      * List all pending KYC documents (admin only)
      * 
      * GET /api/admin/kyc/pending

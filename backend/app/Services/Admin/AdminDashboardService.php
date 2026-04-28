@@ -90,8 +90,8 @@ class AdminDashboardService
                     'description' => "New trip: {$trip->departure_city} → {$trip->arrival_city}",
                     'timestamp' => $trip->created_at,
                     'user' => [
-                        'name' => $trip->traveler->name,
-                        'avatar' => $trip->traveler->avatar,
+                        'name' => $trip->traveler?->name ?? 'Deleted User',
+                        'avatar' => $trip->traveler?->avatar,
                     ],
                     'link' => "/admin/trips/{$trip->id}",
                 ];
@@ -110,8 +110,8 @@ class AdminDashboardService
                     'description' => "New shipment: {$shipment->pickup_city} → {$shipment->delivery_city}",
                     'timestamp' => $shipment->created_at,
                     'user' => [
-                        'name' => $shipment->sender->name,
-                        'avatar' => $shipment->sender->avatar,
+                        'name' => $shipment->sender?->name ?? 'Deleted User',
+                        'avatar' => $shipment->sender?->avatar,
                     ],
                     'link' => "/admin/shipments/{$shipment->id}",
                 ];
@@ -133,8 +133,8 @@ class AdminDashboardService
                     'description' => "Payment released: {$formatted}",
                     'timestamp' => $payment->created_at,
                     'user' => [
-                        'name' => $payment->user->name,
-                        'avatar' => $payment->user->avatar,
+                        'name' => $payment->user?->name ?? 'Deleted User',
+                        'avatar' => $payment->user?->avatar,
                     ],
                     'link' => "/admin/payments/{$payment->id}",
                 ];
