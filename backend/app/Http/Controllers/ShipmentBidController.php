@@ -104,19 +104,50 @@ class ShipmentBidController extends Controller
         $bid = ShipmentBid::where('shipment_request_id', $shipmentRequestId)
                          ->findOrFail($bidId);
 
-        if (!$bid->accept()) {
+        try {
+            if (!$bid->accept()) {
+                return response()->json([
+                    'message' => 'Impossible d\'accepter cette soumission'
+                ], 422);
+            }
+
+            // Déclencher l'événement de notification
+            event(new \App\Events\ShipmentBidAccepted($bid));
+
             return response()->json([
-                'message' => 'Impossible d\'accepter cette soumission'
-            ], 422);
+                'message' => 'Soumission acceptée avec succès',
+                'data' => $bid->fresh(['traveler', 'shipmentRequest'])
+            ]);
+        } catch (\Exception $e) {
+            // Gérer les erreurs spécifiques
+            if (str_contains($e->getMessage(), 'Insufficient balance')) {
+                return response()->json([
+                    'message' => 'Solde insuffisant pour accepter cette soumission. Veuillez recharger votre wallet avant de continuer.',
+                    'error_type' => 'insufficient_balance'
+                ], 422);
+            }
+
+            if (str_contains($e->getMessage(), 'Sender wallet not found')) {
+                return response()->json([
+                    'message' => 'Wallet non trouvé. Veuillez contacter le support.',
+                    'error_type' => 'wallet_not_found'
+                ], 422);
+            }
+
+            // Autres erreurs
+            \Log::error('Error accepting bid', [
+                'bid_id' => $bidId,
+                'shipment_request_id' => $shipmentRequestId,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Une erreur est survenue lors de l\'acceptation de la soumission. Veuillez réessayer.',
+                'error_type' => 'general_error'
+            ], 500);
         }
-
-        // Déclencher l'événement de notification
-        event(new \App\Events\ShipmentBidAccepted($bid));
-
-        return response()->json([
-            'message' => 'Soumission acceptée avec succès',
-            'data' => $bid->fresh(['traveler', 'shipmentRequest'])
-        ]);
     }
 
     /**

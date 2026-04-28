@@ -165,7 +165,7 @@ class RatingControllerTest extends TestCase
         $this->assertEquals(5.00, $traveler->rating);
     }
 
-    public function test_rating_increments_completed_deliveries(): void
+    public function test_rating_does_not_increment_completed_deliveries(): void
     {
         $sender = User::factory()->create();
         $traveler = User::factory()->create(['completed_deliveries' => 0]);
@@ -184,7 +184,9 @@ class RatingControllerTest extends TestCase
         ]);
 
         $traveler->refresh();
-        $this->assertEquals(1, $traveler->completed_deliveries);
+        // completed_deliveries should NOT be incremented when rating is created
+        // It should only be incremented when shipment delivery is confirmed
+        $this->assertEquals(0, $traveler->completed_deliveries);
     }
 
     public function test_high_rating_and_deliveries_sets_recommended_status(): void
@@ -192,7 +194,7 @@ class RatingControllerTest extends TestCase
         $sender = User::factory()->create();
         $traveler = User::factory()->create([
             'rating' => 4.40,
-            'completed_deliveries' => 4,
+            'completed_deliveries' => 5, // Already has 5 deliveries
             'is_recommended' => false,
         ]);
         $shipment = Shipment::factory()->create([
@@ -211,6 +213,7 @@ class RatingControllerTest extends TestCase
 
         $traveler->refresh();
         $this->assertTrue($traveler->is_recommended);
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(5, $traveler->completed_deliveries);
         $this->assertGreaterThanOrEqual(4.5, $traveler->rating);
     }

@@ -11,24 +11,63 @@ class AdminWalletService
 {
     public function getWallets(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = User::select('users.*', DB::raw('COALESCE(SUM(wallet_transactions.amount), 0) as balance'))
-            ->leftJoin('wallet_transactions', 'users.id', '=', 'wallet_transactions.user_id')
-            ->groupBy('users.id');
+        // Ensure all users have wallets
+        $this->ensureUsersHaveWallets();
+
+        // Join avec la table wallets pour obtenir les données du portefeuille
+        $query = User::query()
+            ->select([
+                'users.*',
+                'wallets.balance',
+                'wallets.id as wallet_id',
+            ])
+            ->leftJoin('wallets', 'wallets.user_id', '=', 'users.id')
+            ->selectSub(
+                'SELECT COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) FROM wallet_transactions WHERE wallet_transactions.wallet_id = wallets.id',
+                'total_credits'
+            )
+            ->selectSub(
+                'SELECT COALESCE(ABS(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END)), 0) FROM wallet_transactions WHERE wallet_transactions.wallet_id = wallets.id',
+                'total_debits'
+            )
+            ->selectSub(
+                'SELECT MAX(created_at) FROM wallet_transactions WHERE wallet_transactions.wallet_id = wallets.id',
+                'last_transaction_at'
+            );
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                $q->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%");
             });
         }
 
         $sort = $filters['sort'] ?? 'balance';
         if ($sort === 'balance') {
-            $query->orderBy('balance', 'desc');
+            $query->orderByRaw('COALESCE(wallets.balance, 0) DESC');
+        } else {
+            $query->orderBy('users.created_at', 'desc');
         }
 
         return $query->paginate($perPage);
+    }
+
+    /**
+     * Ensure all users have wallets
+     */
+    private function ensureUsersHaveWallets(): void
+    {
+        $usersWithoutWallets = User::whereDoesntHave('wallet')->get();
+        
+        foreach ($usersWithoutWallets as $user) {
+            \App\Models\Wallet::create([
+                'user_id' => $user->id,
+                'balance' => 0.00,
+                'currency_code' => \App\Models\PlatformSetting::get('default_currency', 'EUR'),
+                'held_balance' => 0.00,
+            ]);
+        }
     }
 
     public function getWalletDetails(int $userId): array

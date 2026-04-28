@@ -462,6 +462,71 @@ export class ApiClient {
       xhr.send(formData);
     });
   }
+
+  /**
+   * Upload branding asset (logo or favicon) with type parameter
+   */
+  async uploadBrandingAsset<T>(
+    endpoint: string,
+    file: File,
+    type: 'logo' | 'favicon',
+    onProgress?: (progress: number) => void
+  ): Promise<T> {
+    const url = new URL(endpoint, this.config.baseUrl);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const progress = (e.loaded / e.total) * 100;
+            onProgress(progress);
+          }
+        });
+      }
+
+      xhr.addEventListener('load', async () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response);
+          } catch {
+            resolve(xhr.responseText as any);
+          }
+        } else {
+          try {
+            const error = JSON.parse(xhr.responseText);
+            reject(new ApiError(xhr.status, error.message || 'Upload failed', error.code, error.errors));
+          } catch {
+            reject(new ApiError(xhr.status, 'Upload failed'));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Network error during upload'));
+      });
+
+      xhr.open('POST', url.toString());
+      
+      const token = this.getAuthToken();
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+      
+      const csrfToken = this.getCSRFToken();
+      if (csrfToken) {
+        xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken);
+      }
+
+      xhr.withCredentials = true;
+      xhr.send(formData);
+    });
+  }
 }
 
 // Export singleton instance configured with environment variables

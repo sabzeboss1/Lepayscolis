@@ -9,7 +9,7 @@ class RatingObserver
 {
     /**
      * Handle the Rating "created" event.
-     * Update the rated user's average rating, completed_deliveries count, and is_recommended flag.
+     * Update the rated user's average rating and is_recommended flag.
      * Send notification to the rated user.
      */
     public function created(Rating $rating): void
@@ -20,8 +20,8 @@ class RatingObserver
             // Update average rating
             $ratedUser->updateRating();
             
-            // Increment completed_deliveries count
-            $ratedUser->increment('completed_deliveries');
+            // Note: completed_deliveries is incremented in ShipmentController::confirmDelivery()
+            // when the shipment is marked as delivered, not when a rating is given
             
             // Update is_recommended flag (will be recalculated by UserObserver on save)
             $ratedUser->updateRecommendedStatus();

@@ -352,6 +352,48 @@ class TripController extends Controller
     }
 
     /**
+     * Cancel trip (owner only) - Changes status to cancelled instead of deleting
+     * 
+     * Validates Requirements: 3.15
+     */
+    public function cancel(string $id): JsonResponse
+    {
+        $trip = Trip::find($id);
+
+        if (!$trip) {
+            return response()->json([
+                'message' => 'Trip not found'
+            ], 404);
+        }
+
+        // Check if trip can be cancelled
+        if ($trip->status === 'cancelled') {
+            return response()->json([
+                'message' => 'Trip is already cancelled'
+            ], 400);
+        }
+
+        if ($trip->status === 'completed') {
+            return response()->json([
+                'message' => 'Cannot cancel a completed trip'
+            ], 400);
+        }
+
+        // Update status to cancelled
+        $trip->update(['status' => 'cancelled']);
+
+        Log::info('Trip cancelled successfully', [
+            'trip_id' => $trip->id,
+            'traveler_id' => $trip->traveler_id
+        ]);
+
+        return response()->json([
+            'message' => 'Trip cancelled successfully',
+            'data' => new TripResource($trip->load(['traveler', 'departureCountry', 'departureCity', 'arrivalCountry', 'arrivalCity']))
+        ]);
+    }
+
+    /**
      * Soft delete trip (owner only)
      * 
      * Validates Requirements: 3.15

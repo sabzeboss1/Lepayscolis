@@ -45,34 +45,48 @@ class AdminSettingsController extends Controller
     public function uploadBrandingAsset(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|max:2048',
+            'file' => 'required|file|mimes:png,jpg,jpeg,svg,ico|max:2048',
             'type' => 'required|string|in:logo,favicon',
         ]);
 
         try {
-            $url = $this->fileUploadService->uploadBrandingAsset(
-                $request->file('file'),
-                $request->input('type')
-            );
+            $file = $request->file('file');
+            $type = $request->input('type');
+
+            // Additional validation for file type based on branding type
+            if ($type === 'favicon') {
+                $allowedMimes = ['image/x-icon', 'image/vnd.microsoft.icon', 'image/png', 'image/svg+xml'];
+            } else {
+                $allowedMimes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+            }
+
+            if (!in_array($file->getMimeType(), $allowedMimes)) {
+                return response()->json([
+                    'message' => "Type de fichier non valide pour {$type}. Types autorisés: " . implode(', ', $allowedMimes),
+                ], 422);
+            }
+
+            $url = $this->fileUploadService->uploadBrandingAsset($file, $type);
 
             // Save the URL to platform settings
-            $settingKey = $request->input('type') === 'logo' ? 'logo_url' : 'favicon_url';
+            $settingKey = $type === 'logo' ? 'logo_url' : 'favicon_url';
             PlatformSetting::set($settingKey, $url, $request->user()->id);
 
             Log::info('Branding asset uploaded', [
-                'type' => $request->input('type'),
+                'type' => $type,
                 'url' => $url,
                 'admin_id' => $request->user()->id,
             ]);
 
             return response()->json([
                 'url' => $url,
-                'message' => ucfirst($request->input('type')) . ' uploaded successfully',
+                'message' => ucfirst($type) . ' téléchargé avec succès',
             ], 200);
         } catch (\Exception $e) {
             Log::error('Branding asset upload failed', [
                 'type' => $request->input('type'),
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([

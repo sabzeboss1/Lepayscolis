@@ -18,17 +18,20 @@ class WalletResource extends JsonResource
         $currency = PlatformSetting::get('default_currency', 'EUR');
 
         return [
+            'id' => 'wallet_' . $this->id, // User ID for wallet identification
             'user' => [
                 'id' => $this->id,
                 'name' => $this->name,
                 'email' => $this->email,
+                'phone' => $this->phone ?? '',
             ],
-            'balance' => $this->balance ?? 0,
+            'wallet_id' => $this->wallet_id ?? null,
+            'balance' => (float) ($this->balance ?? 0),
             'currency_code' => $currency,
             'balance_formatted' => number_format($this->balance ?? 0, 2) . ' ' . $currency,
-            'total_credits' => $this->when(isset($this->total_credits), $this->total_credits),
-            'total_debits' => $this->when(isset($this->total_debits), $this->total_debits),
-            'transaction_count' => $this->when(isset($this->transaction_count), $this->transaction_count),
+            'total_credits' => (float) ($this->total_credits ?? 0),
+            'total_debits' => (float) ($this->total_debits ?? 0),
+            'last_transaction_at' => $this->last_transaction_at ?? null,
         ];
     }
 }

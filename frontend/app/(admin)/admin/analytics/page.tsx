@@ -236,7 +236,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-gray-500">Avg Trips per User</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
-                {analytics.engagement.avg_trips_per_user.toFixed(1)}
+                {(Number(analytics.engagement.avg_trips_per_user) || 0).toFixed(1)}
               </p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-600" />
@@ -248,7 +248,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-gray-500">Avg Shipments per User</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
-                {analytics.engagement.avg_shipments_per_user.toFixed(1)}
+                {(Number(analytics.engagement.avg_shipments_per_user) || 0).toFixed(1)}
               </p>
             </div>
             <Package className="w-8 h-8 text-purple-600" />

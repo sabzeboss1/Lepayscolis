@@ -46,7 +46,8 @@ export default function MyTripsPage() {
     if (!confirm(t('trips.confirmCancel') + '?')) return;
 
     try {
-      await apiClient.delete(`/api/trips/${tripId}`);
+      // Changer le statut à "cancelled" au lieu de supprimer
+      await apiClient.put(`/api/trips/${tripId}/cancel`, {});
       fetchMyTrips();
     } catch (err: any) {
       console.error('Failed to cancel trip:', err);

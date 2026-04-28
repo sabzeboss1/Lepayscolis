@@ -49,11 +49,23 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/notifications');
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
       if (response.ok) {
         const data = await response.json();
         setNotifications(data.notifications || []);
         setUnreadCount(data.unread_count || 0);
+      } else if (response.status === 401) {
+        // Handle unauthorized - user is not authenticated
+        console.log('User not authenticated for notifications');
+        setNotifications([]);
+        setUnreadCount(0);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -64,9 +76,16 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
 
   // Mark notification as read
   const markAsRead = useCallback(async (id: string) => {
+    if (!isAuthenticated) return;
+
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/notifications/${id}/read`, {
         method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
@@ -80,13 +99,20 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
+    if (!isAuthenticated) return;
+
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/notifications/read-all', {
         method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
@@ -98,7 +124,7 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Add toast
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {

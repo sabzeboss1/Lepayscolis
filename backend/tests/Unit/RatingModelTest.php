@@ -134,7 +134,7 @@ class RatingModelTest extends TestCase
         $this->assertEquals(4.0, $toUser->rating);
     }
 
-    public function test_observer_increments_completed_deliveries_on_create(): void
+    public function test_observer_does_not_increment_completed_deliveries_on_create(): void
     {
         $fromUser = User::factory()->create();
         $toUser = User::factory()->create(['rating' => 0, 'completed_deliveries' => 0]);
@@ -151,7 +151,9 @@ class RatingModelTest extends TestCase
         ]);
 
         $toUser->refresh();
-        $this->assertEquals(1, $toUser->completed_deliveries);
+        // completed_deliveries should NOT be incremented when rating is created
+        // It should only be incremented when shipment delivery is confirmed
+        $this->assertEquals(0, $toUser->completed_deliveries);
     }
 
     public function test_observer_updates_is_recommended_flag_when_criteria_met(): void
@@ -159,7 +161,7 @@ class RatingModelTest extends TestCase
         $fromUser = User::factory()->create();
         $toUser = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 5, // Pre-existing deliveries
             'is_recommended' => false,
         ]);
         
@@ -179,6 +181,7 @@ class RatingModelTest extends TestCase
         }
 
         $toUser->refresh();
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(5, $toUser->completed_deliveries);
         $this->assertEquals(5.0, $toUser->rating);
         $this->assertTrue($toUser->is_recommended);
@@ -189,7 +192,7 @@ class RatingModelTest extends TestCase
         $fromUser = User::factory()->create();
         $toUser = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 5, // Pre-existing deliveries
             'is_recommended' => false,
         ]);
         
@@ -209,6 +212,7 @@ class RatingModelTest extends TestCase
         }
 
         $toUser->refresh();
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(5, $toUser->completed_deliveries);
         $this->assertEquals(3.0, $toUser->rating);
         $this->assertFalse($toUser->is_recommended);
@@ -219,7 +223,7 @@ class RatingModelTest extends TestCase
         $fromUser = User::factory()->create();
         $toUser = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 4, // Pre-existing deliveries (below 5 threshold)
             'is_recommended' => false,
         ]);
         
@@ -239,6 +243,7 @@ class RatingModelTest extends TestCase
         }
 
         $toUser->refresh();
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(4, $toUser->completed_deliveries);
         $this->assertEquals(5.0, $toUser->rating);
         $this->assertFalse($toUser->is_recommended);
@@ -251,7 +256,7 @@ class RatingModelTest extends TestCase
         $fromUser3 = User::factory()->create();
         $toUser = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 3, // Pre-existing deliveries
         ]);
         
         // Create 3 ratings: 3, 4, 5 (average = 4.0)
@@ -290,6 +295,7 @@ class RatingModelTest extends TestCase
 
         $toUser->refresh();
         $this->assertEquals(4.0, $toUser->rating);
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(3, $toUser->completed_deliveries);
     }
 
@@ -318,7 +324,7 @@ class RatingModelTest extends TestCase
         $fromUser = User::factory()->create();
         $toUser = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 5, // Pre-existing deliveries
             'is_recommended' => false,
         ]);
         
@@ -340,6 +346,7 @@ class RatingModelTest extends TestCase
         }
 
         $toUser->refresh();
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(5, $toUser->completed_deliveries);
         $this->assertEquals(4.6, $toUser->rating);
         $this->assertTrue($toUser->is_recommended);
@@ -350,7 +357,7 @@ class RatingModelTest extends TestCase
         $fromUser = User::factory()->create();
         $toUser = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 5, // Pre-existing deliveries
             'is_recommended' => false,
         ]);
         
@@ -372,6 +379,7 @@ class RatingModelTest extends TestCase
         }
 
         $toUser->refresh();
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(5, $toUser->completed_deliveries);
         $this->assertEquals(4.4, $toUser->rating);
         $this->assertFalse($toUser->is_recommended);
