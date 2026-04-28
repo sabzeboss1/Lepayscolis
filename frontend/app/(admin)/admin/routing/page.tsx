@@ -495,10 +495,10 @@ export default function AdminRoutingPage() {
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-medium text-yellow-600">
-                        ⭐ {user.rating.toFixed(1)}
+                        ⭐ {user.rating ? user.rating.toFixed(1) : '0.0'}
                       </span>
                       <p className="text-xs text-gray-500">
-                        {user.completed_deliveries} livraisons
+                        {user.completed_deliveries || 0} livraisons
                       </p>
                     </div>
                   </div>
@@ -662,7 +662,7 @@ export default function AdminRoutingPage() {
                   <p className="text-sm text-green-800">{selectedUser.name}</p>
                   <p className="text-xs text-green-600">{selectedUser.email}</p>
                   <p className="text-xs text-green-600">
-                    ⭐ {selectedUser.rating.toFixed(1)} • {selectedUser.completed_deliveries} livraisons
+                    ⭐ {selectedUser.rating ? selectedUser.rating.toFixed(1) : '0.0'} • {selectedUser.completed_deliveries || 0} livraisons
                   </p>
                 </>
               )}

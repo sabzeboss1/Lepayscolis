@@ -77,11 +77,21 @@ export function AuthProvider({ children, onUserLoaded }: AuthProviderProps) {
   /**
    * Login with email and password
    * Stateless token-based auth: send credentials, receive Bearer token
+   * Automatically detects admin login based on email domain
    */
   const login = async (email: string, password: string): Promise<User> => {
+    // Detect if this is an admin login attempt
+    const isAdminEmail = email.includes('@lepaysexpresscolis.com') || 
+                         email.toLowerCase().includes('admin');
+    
+    // Choose the appropriate endpoint
+    const loginEndpoint = isAdminEmail 
+      ? API_ENDPOINTS.auth.adminLogin 
+      : API_ENDPOINTS.auth.login;
+
     // Send login request (stateless token-based auth, no CSRF needed)
     const response = await apiClient.post<{ token: string; user: User }>(
-      API_ENDPOINTS.auth.login,
+      loginEndpoint,
       { email, password }
     );
 

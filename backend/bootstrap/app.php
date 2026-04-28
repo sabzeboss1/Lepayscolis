@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\CurrencyConversionMiddleware::class,
+            \App\Http\Middleware\ConfigureUploadLimits::class,
         ]);
 
         // Configure rate limiting for API

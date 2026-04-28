@@ -5,6 +5,7 @@ use App\Http\Controllers\KYCController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ShipmentController;
+use App\Http\Controllers\StaticPageController;
 use App\Http\Controllers\TravelProofController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
@@ -57,6 +58,13 @@ Route::get('/currencies', function () {
 });
 Route::get('/countries', [CountryController::class, 'index']);
 Route::get('/countries/{id}/cities', [CountryController::class, 'cities']);
+
+// Static pages routes
+Route::get('/privacy', [StaticPageController::class, 'privacy']);
+Route::get('/terms', [StaticPageController::class, 'terms']);
+Route::get('/contact', [StaticPageController::class, 'contact']);
+Route::get('/cookies', [StaticPageController::class, 'cookies']);
+Route::get('/legal', [StaticPageController::class, 'legal']);
 Route::get('/platform/branding', function () {
     $keys = [
         'logo_url', 
@@ -121,6 +129,7 @@ Route::prefix('trips')->group(function () {
         // Routes requiring trip ownership
         Route::middleware('trip.owner')->group(function () {
             Route::put('/{id}', [TripController::class, 'update']);
+            Route::put('/{id}/cancel', [TripController::class, 'cancel']);
             Route::delete('/{id}', [TripController::class, 'destroy']);
         });
     });

@@ -133,9 +133,31 @@ export default function SettingsPage() {
   const fetchCurrencies = async () => {
     try {
       const result = await apiClient.get<{ data: CurrencyItem[] }>(API_ENDPOINTS.currencies.list);
-      setCurrencies(result.data || []);
+      const currenciesData = result.data || [];
+      
+      // Fallback si aucune devise disponible
+      if (currenciesData.length === 0) {
+        console.warn('No currencies returned from API, using defaults');
+        setCurrencies([
+          { code: 'EUR', name: 'Euro', symbol: '€', is_active: true },
+          { code: 'USD', name: 'US Dollar', symbol: '$', is_active: true },
+          { code: 'GBP', name: 'British Pound', symbol: '£', is_active: true },
+          { code: 'XAF', name: 'CFA Franc BEAC', symbol: 'FCFA', is_active: true },
+          { code: 'XOF', name: 'CFA Franc BCEAO', symbol: 'FCFA', is_active: true },
+        ]);
+      } else {
+        setCurrencies(currenciesData);
+      }
     } catch (error) {
       console.error('Failed to fetch currencies:', error);
+      // Utiliser des devises par défaut en cas d'erreur
+      setCurrencies([
+        { code: 'EUR', name: 'Euro', symbol: '€', is_active: true },
+        { code: 'USD', name: 'US Dollar', symbol: '$', is_active: true },
+        { code: 'GBP', name: 'British Pound', symbol: '£', is_active: true },
+        { code: 'XAF', name: 'CFA Franc BEAC', symbol: 'FCFA', is_active: true },
+        { code: 'XOF', name: 'CFA Franc BCEAO', symbol: 'FCFA', is_active: true },
+      ]);
     }
   };
 
@@ -245,17 +267,31 @@ export default function SettingsPage() {
   const handleBrandingUpload = async (file: File, type: 'logo' | 'favicon') => {
     if (!file) return;
 
+    // Validate file size (2MB max)
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setMessage({ type: 'error', text: `Le fichier est trop volumineux. Taille maximale: 2MB` });
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = type === 'favicon' 
+      ? ['image/x-icon', 'image/vnd.microsoft.icon', 'image/png', 'image/svg+xml']
+      : ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+    
+    if (!allowedTypes.includes(file.type)) {
+      setMessage({ type: 'error', text: `Type de fichier non valide pour ${type}` });
+      return;
+    }
+
     setUploading(type);
     setMessage(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', type);
-
-      const data = await apiClient.uploadFile<{ url: string; message: string }>(
+      const data = await apiClient.uploadBrandingAsset<{ url: string; message: string }>(
         '/api/admin/settings/upload',
-        file
+        file,
+        type
       );
 
       // Update local state with the new URL
@@ -265,7 +301,8 @@ export default function SettingsPage() {
       setTimeout(() => setMessage(null), 3000);
     } catch (error: any) {
       console.error(`Failed to upload ${type}:`, error);
-      setMessage({ type: 'error', text: error.message || `Failed to upload ${type}` });
+      const errorMsg = error?.message || `Échec de l'upload du ${type}`;
+      setMessage({ type: 'error', text: errorMsg });
     } finally {
       setUploading(null);
     }
@@ -803,6 +840,7 @@ export default function SettingsPage() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={settings.withdrawal_fee}
                         onChange={(e) => updateSetting('withdrawal_fee', parseFloat(e.target.value) || 0)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -816,6 +854,7 @@ export default function SettingsPage() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={settings.min_withdrawal_amount}
                         onChange={(e) => updateSetting('min_withdrawal_amount', parseFloat(e.target.value) || 0)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -829,6 +868,7 @@ export default function SettingsPage() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={settings.max_withdrawal_amount}
                         onChange={(e) => updateSetting('max_withdrawal_amount', parseFloat(e.target.value) || 0)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1230,6 +1270,7 @@ export default function SettingsPage() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     value={settings.min_shipment_price}
                     onChange={(e) => updateSetting('min_shipment_price', parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1243,6 +1284,7 @@ export default function SettingsPage() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     value={settings.max_shipment_price}
                     onChange={(e) => updateSetting('max_shipment_price', parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

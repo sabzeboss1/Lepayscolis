@@ -14,14 +14,18 @@ class AdminRatingResource extends JsonResource
             'rating' => $this->rating,
             'comment' => $this->comment,
             'shipment_id' => $this->shipment_id,
-            'from_user' => $this->when($this->relationLoaded('fromUser') && $this->fromUser, [
+            
+            // Reviewer (person who gave the rating)
+            'reviewer' => $this->when($this->relationLoaded('fromUser') && $this->fromUser, [
                 'id' => $this->fromUser?->id,
                 'name' => $this->fromUser?->name,
                 'email' => $this->fromUser?->email,
                 'phone' => $this->fromUser?->phone,
                 'rating' => $this->fromUser?->rating,
             ]),
-            'to_user' => $this->when($this->relationLoaded('toUser') && $this->toUser, [
+            
+            // Reviewed user (person who received the rating)
+            'reviewed_user' => $this->when($this->relationLoaded('toUser') && $this->toUser, [
                 'id' => $this->toUser?->id,
                 'name' => $this->toUser?->name,
                 'email' => $this->toUser?->email,
@@ -31,10 +35,14 @@ class AdminRatingResource extends JsonResource
                     return $this->toUser?->ratingsReceived()->count() ?? 0;
                 }),
             ]),
-            'shipment' => $this->when($this->relationLoaded('shipment') && $this->shipment, [
+            
+            // Related resource (shipment)
+            'related_resource' => $this->when($this->relationLoaded('shipment') && $this->shipment, [
+                'type' => 'shipment',
                 'id' => $this->shipment?->id,
-                'description' => $this->shipment?->package_description,
+                'reference' => $this->shipment?->tracking_number ?? "SHP-{$this->shipment?->id}",
             ]),
+            
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

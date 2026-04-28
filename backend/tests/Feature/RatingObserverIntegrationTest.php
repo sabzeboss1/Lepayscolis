@@ -14,10 +14,10 @@ class RatingObserverIntegrationTest extends TestCase
 
     public function test_complete_rating_workflow_updates_user_correctly(): void
     {
-        // Create a traveler with no ratings
+        // Create a traveler with existing deliveries (since completed_deliveries is now only updated on delivery confirmation)
         $traveler = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 5, // Pre-existing deliveries
             'is_recommended' => false,
         ]);
 
@@ -46,6 +46,7 @@ class RatingObserverIntegrationTest extends TestCase
 
         // Verify all updates happened correctly
         $this->assertEquals(4.6, $traveler->rating);
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(5, $traveler->completed_deliveries);
         $this->assertTrue($traveler->is_recommended);
     }
@@ -54,7 +55,7 @@ class RatingObserverIntegrationTest extends TestCase
     {
         $traveler = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 5, // Pre-existing deliveries
             'is_recommended' => false,
         ]);
 
@@ -79,6 +80,7 @@ class RatingObserverIntegrationTest extends TestCase
         $traveler->refresh();
 
         $this->assertEquals(4.0, $traveler->rating);
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(5, $traveler->completed_deliveries);
         $this->assertFalse($traveler->is_recommended); // Not recommended due to low rating
     }
@@ -87,7 +89,7 @@ class RatingObserverIntegrationTest extends TestCase
     {
         $traveler = User::factory()->create([
             'rating' => 0,
-            'completed_deliveries' => 0,
+            'completed_deliveries' => 3, // Pre-existing deliveries (below 5 threshold)
             'is_recommended' => false,
         ]);
 
@@ -111,6 +113,7 @@ class RatingObserverIntegrationTest extends TestCase
         $traveler->refresh();
 
         $this->assertEquals(5.0, $traveler->rating);
+        // completed_deliveries should remain the same since rating doesn't increment it
         $this->assertEquals(3, $traveler->completed_deliveries);
         $this->assertFalse($traveler->is_recommended); // Not recommended due to few deliveries
     }

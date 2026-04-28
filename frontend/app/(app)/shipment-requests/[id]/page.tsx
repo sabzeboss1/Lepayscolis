@@ -709,9 +709,24 @@ export default function ShipmentRequestDetailPage() {
                                   const response = await apiClient.get<{ data: ShipmentRequest }>(`/api/shipment-requests/${params.id}`);
                                   setRequest(response.data);
                                   setShowAcceptedModal(true);
-                                } catch (err) {
-                                  const errorMsg = ErrorHandler.handle(err);
-                                  setErrorMessage(errorMsg.message);
+                                } catch (err: any) {
+                                  console.error('Error accepting bid:', err);
+                                  
+                                  // Gestion spécifique des erreurs
+                                  let errorMsg = 'Une erreur est survenue lors de l\'acceptation de la soumission.';
+                                  
+                                  if (err.response?.data?.error_type === 'insufficient_balance') {
+                                    errorMsg = err.response.data.message || 'Solde insuffisant pour accepter cette soumission. Veuillez recharger votre wallet.';
+                                  } else if (err.response?.data?.error_type === 'wallet_not_found') {
+                                    errorMsg = err.response.data.message || 'Wallet non trouvé. Veuillez contacter le support.';
+                                  } else if (err.response?.data?.message) {
+                                    errorMsg = err.response.data.message;
+                                  } else {
+                                    const errorResponse = ErrorHandler.handle(err);
+                                    errorMsg = errorResponse.message;
+                                  }
+                                  
+                                  setErrorMessage(errorMsg);
                                   setShowErrorModal(true);
                                 }
                               }}
@@ -1232,13 +1247,37 @@ export default function ShipmentRequestDetailPage() {
               <p className="mb-6" style={{ color: 'var(--color-body-text)' }}>
                 {errorMessage || 'Une erreur est survenue. Veuillez réessayer.'}
               </p>
-              <Button
-                variant="primary"
-                onClick={() => setShowErrorModal(false)}
-                className="w-full"
-              >
-                Fermer
-              </Button>
+              <div className="flex gap-2">
+                {errorMessage?.includes('Solde insuffisant') || errorMessage?.includes('recharger votre wallet') ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowErrorModal(false)}
+                      className="flex-1"
+                    >
+                      Fermer
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        setShowErrorModal(false);
+                        router.push('/wallet/recharge');
+                      }}
+                      className="flex-1"
+                    >
+                      Recharger
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="primary"
+                    onClick={() => setShowErrorModal(false)}
+                    className="w-full"
+                  >
+                    Fermer
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

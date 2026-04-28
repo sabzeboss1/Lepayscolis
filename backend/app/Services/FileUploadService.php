@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\AutoEncoder;
@@ -139,10 +140,32 @@ class FileUploadService
         $extension = $file->getClientOriginalExtension();
         $filename = "branding/{$type}_" . time() . ".{$extension}";
 
-        // Store on public disk
-        Storage::disk('public')->put($filename, file_get_contents($file->getRealPath()));
+        try {
+            // Store on public disk
+            $path = Storage::disk('public')->put($filename, file_get_contents($file->getRealPath()));
 
-        return Storage::disk('public')->url($filename);
+            if (!$path) {
+                throw new \Exception("Échec de l'enregistrement du fichier {$type}");
+            }
+
+            $url = Storage::disk('public')->url($filename);
+
+            Log::info('Branding asset stored successfully', [
+                'type' => $type,
+                'filename' => $filename,
+                'url' => $url,
+            ]);
+
+            return $url;
+        } catch (\Exception $e) {
+            Log::error('Failed to store branding asset', [
+                'type' => $type,
+                'filename' => $filename,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new \Exception("Échec de l'upload du {$type}: " . $e->getMessage());
+        }
     }
 
     /**

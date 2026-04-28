@@ -92,8 +92,8 @@ export default function WalletsPage() {
       label: t('admin.wallets.columns.user'),
       render: (wallet) => (
         <div>
-          <div className="font-medium text-gray-900">{wallet.user.name}</div>
-          <div className="text-sm text-gray-500">{wallet.user.email}</div>
+          <div className="font-medium text-gray-900">{wallet.user?.name || 'N/A'}</div>
+          <div className="text-sm text-gray-500">{wallet.user?.email || 'N/A'}</div>
         </div>
       ),
     },
@@ -180,7 +180,7 @@ export default function WalletsPage() {
         data={wallets}
         loading={loading}
         emptyMessage={t('admin.wallets.noWallets')}
-        onRowClick={(wallet) => router.push(`/admin/wallets/${wallet.user.id}`)}
+        onRowClick={(wallet) => wallet.user?.id && router.push(`/admin/wallets/${wallet.user.id}`)}
         getRowId={(wallet) => wallet.id}
       />
 

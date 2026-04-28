@@ -23,6 +23,7 @@ interface ShipmentRequest {
   estimated_value: number;
   currency_code: string;
   status: 'open' | 'assigned' | 'completed' | 'cancelled';
+  verification_status?: 'pending' | 'verified' | 'rejected';
   bids_count: number;
   created_at: string;
 }
@@ -209,7 +210,7 @@ export default function ShipmentRequestsPage() {
       label: 'Actions',
       render: (request) => (
         <div className="flex gap-2">
-          {request.status === 'open' && (
+          {request.status === 'open' && request.verification_status !== 'verified' && request.verification_status !== 'rejected' && (
             <>
               <button
                 onClick={(e) => {
@@ -230,6 +231,16 @@ export default function ShipmentRequestsPage() {
                 Rejeter
               </button>
             </>
+          )}
+          {request.verification_status === 'verified' && (
+            <span className="px-3 py-1 text-xs font-medium text-green-700 bg-green-50 rounded">
+              ✓ Approuvé
+            </span>
+          )}
+          {request.verification_status === 'rejected' && (
+            <span className="px-3 py-1 text-xs font-medium text-red-700 bg-red-50 rounded">
+              ✗ Rejeté
+            </span>
           )}
         </div>
       )

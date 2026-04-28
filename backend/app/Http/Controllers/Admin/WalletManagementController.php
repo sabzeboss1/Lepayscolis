@@ -47,6 +47,11 @@ class WalletManagementController extends Controller
 
         // Transform wallets with aggregated data
         $transformedWallets = $wallets->map(function ($wallet) {
+            // Skip wallets without users (orphaned wallets)
+            if (!$wallet->user) {
+                return null;
+            }
+
             $totalCredits = $wallet->transactions()
                 ->whereIn('type', ['credit', 'refund'])
                 ->sum('amount');
@@ -65,7 +70,7 @@ class WalletManagementController extends Controller
                     'id' => $wallet->user->id,
                     'name' => $wallet->user->name,
                     'email' => $wallet->user->email,
-                    'phone' => $wallet->user->phone,
+                    'phone' => $wallet->user->phone ?? '',
                 ],
                 'balance' => (float) $wallet->balance,
                 'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
@@ -73,7 +78,7 @@ class WalletManagementController extends Controller
                 'total_debits' => (float) $totalDebits,
                 'last_transaction_at' => $lastTransaction?->created_at?->toIso8601String(),
             ];
-        });
+        })->filter();
 
         return response()->json([
             'success' => true,
