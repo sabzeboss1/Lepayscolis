@@ -304,7 +304,7 @@ class AdminUserService
         $user->update([
             'name' => 'Deleted User',
             'email' => 'deleted_' . $userId . '@deleted.com',
-            'phone' => null,
+            'phone' => '+000000000' . str_pad($userId, 4, '0', STR_PAD_LEFT), // Anonymized phone
             'avatar' => null,
         ]);
 
