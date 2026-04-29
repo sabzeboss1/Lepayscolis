@@ -53,26 +53,31 @@ class AdminAnalyticsService
             $usersQuery = User::where('role', 'user');
             $tripsQuery = Trip::query();
             $shipmentsQuery = Shipment::query();
-            $revenueQuery = Payment::where('payments.status', 'released')
-                ->join('currencies', 'payments.currency_code', '=', 'currencies.code');
+            
+            // Use shipments table for revenue calculation instead of payments table
+            $revenueQuery = Shipment::where('shipments.payment_status', 'released')
+                ->join('currencies', 'shipments.currency_code', '=', 'currencies.code');
 
             if ($dateFrom) {
                 $usersQuery->where('created_at', '>=', $dateFrom);
                 $tripsQuery->where('created_at', '>=', $dateFrom);
                 $shipmentsQuery->where('created_at', '>=', $dateFrom);
-                $revenueQuery->where('payments.created_at', '>=', $dateFrom);
+                $revenueQuery->where('shipments.created_at', '>=', $dateFrom);
             }
 
             if ($dateTo) {
                 $usersQuery->where('created_at', '<=', $dateTo);
                 $tripsQuery->where('created_at', '<=', $dateTo);
                 $shipmentsQuery->where('created_at', '<=', $dateTo);
-                $revenueQuery->where('payments.created_at', '<=', $dateTo);
+                $revenueQuery->where('shipments.created_at', '<=', $dateTo);
             }
 
             $targetRate = $this->getTargetRate();
+            
+            // Calculate platform fee as a percentage of payment_amount (assuming 5% platform fee)
+            $platformFeePercentage = 0.05; // 5% - you can make this configurable
             $revenue = (float) $revenueQuery
-                ->selectRaw('SUM(payments.platform_fee * (? / currencies.exchange_rate)) as total', [$targetRate])
+                ->selectRaw('SUM(shipments.payment_amount * ? * (? / currencies.exchange_rate)) as total', [$platformFeePercentage, $targetRate])
                 ->value('total') ?? 0.0;
 
             return [
@@ -158,19 +163,22 @@ class AdminAnalyticsService
 
         return Cache::remember($cacheKey, self::ANALYTICS_CACHE_TTL, function () use ($dateFrom, $dateTo) {
             $targetRate = $this->getTargetRate();
-            $dateExpr = $this->dateFormatMonth('payments.created_at');
-            $query = Payment::join('currencies', 'payments.currency_code', '=', 'currencies.code')
-                ->selectRaw("{$dateExpr} as month, SUM(payments.platform_fee * (? / currencies.exchange_rate)) as total", [$targetRate])
-                ->where('payments.status', 'released');
+            $dateExpr = $this->dateFormatMonth('shipments.created_at');
+            
+            // Calculate platform fee as a percentage of payment_amount (assuming 5% platform fee)
+            $platformFeePercentage = 0.05; // 5% - you can make this configurable
+            $query = Shipment::join('currencies', 'shipments.currency_code', '=', 'currencies.code')
+                ->selectRaw("{$dateExpr} as month, SUM(shipments.payment_amount * ? * (? / currencies.exchange_rate)) as total", [$platformFeePercentage, $targetRate])
+                ->where('shipments.payment_status', 'released');
 
             if ($dateFrom) {
-                $query->where('payments.created_at', '>=', $dateFrom);
+                $query->where('shipments.created_at', '>=', $dateFrom);
             } else {
-                $query->where('payments.created_at', '>=', now()->subMonths(12));
+                $query->where('shipments.created_at', '>=', now()->subMonths(12));
             }
 
             if ($dateTo) {
-                $query->where('payments.created_at', '<=', $dateTo);
+                $query->where('shipments.created_at', '<=', $dateTo);
             }
 
             $data = $query->groupBy('month')
@@ -195,7 +203,9 @@ class AdminAnalyticsService
 
         return Cache::remember($cacheKey, self::ANALYTICS_CACHE_TTL, function () use ($dateFrom, $dateTo) {
             $dateExpr = $this->dateFormatMonth('created_at');
-            $query = Payment::selectRaw("{$dateExpr} as month, COUNT(*) as count");
+            // Use shipments table for transaction volume instead of payments table
+            $query = Shipment::selectRaw("{$dateExpr} as month, COUNT(*) as count")
+                ->where('payment_status', '!=', 'pending'); // Count all processed transactions
 
             if ($dateFrom) {
                 $query->where('created_at', '>=', $dateFrom);
