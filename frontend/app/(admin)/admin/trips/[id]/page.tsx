@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Ban, MapPin, Calendar, User, Package, TrendingUp, CheckCircle, XCircle, Loader2, FileText, Download } from 'lucide-react';
+import { ArrowLeft, Ban, MapPin, Calendar, User, Package, TrendingUp, CheckCircle, XCircle, Loader2, FileText, Download, Trash2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 import { apiClient } from '@/lib/api/client';
@@ -69,6 +69,10 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
   // Verify action
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Delete dialog
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     params.then(p => setTripId(p.id));
   }, [params]);
@@ -132,6 +136,21 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
       console.error('Failed to reject trip:', error);
     } finally {
       setIsRejecting(false);
+    }
+  };
+
+  const handleDeleteTrip = async () => {
+    if (!tripId) return;
+    setIsDeleting(true);
+    try {
+      await apiClient.delete<any>(API_ENDPOINTS.admin.trips.delete(tripId));
+      router.push('/admin/trips');
+    } catch (error: any) {
+      console.error('Failed to delete trip:', error);
+      alert(error?.message || 'Erreur lors de la suppression');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -240,6 +259,13 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
               {t('admin.trips.detail.cancelTrip')}
             </button>
           )}
+          <button
+            onClick={() => setShowDeleteDialog(true)}
+            className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Supprimer
+          </button>
         </div>
       </div>
 
@@ -563,6 +589,36 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
                   {t('admin.trips.detail.cancelDialog.confirm')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Supprimer ce voyage</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Cette action est irréversible. Les expéditions en attente associées seront annulées.
+              Les voyages avec des expéditions actives ne peuvent pas être supprimés.
+            </p>
+            <div className="flex items-center justify-end space-x-2">
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteTrip}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center"
+              >
+                {isDeleting && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+                Supprimer définitivement
+              </button>
             </div>
           </div>
         </div>

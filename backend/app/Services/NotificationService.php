@@ -119,6 +119,62 @@ class NotificationService
     }
 
     /**
+     * Send a notification to all admin users (in-app + email), respecting each admin's locale.
+     */
+    public function notifyAdmins(string $type, string $translationKey, array $translationParams = [], array $data = [], string $emailTemplate = null): void
+    {
+        try {
+            $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+
+            foreach ($admins as $admin) {
+                $locale = $admin->locale ?? 'fr';
+
+                $title = __("notifications.{$translationKey}.title", $translationParams, $locale);
+                $body = __("notifications.{$translationKey}.body", $translationParams, $locale);
+
+                $this->createNotification($admin, $type, $title, $body, $data);
+
+                if ($emailTemplate) {
+                    $this->sendEmail($admin, $emailTemplate, $data);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to notify admins', [
+                'type' => $type,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Notify admins of a new user registration.
+     */
+    public function sendNewUserRegistrationNotification(User $user): void
+    {
+        $this->notifyAdmins(
+            'new_user',
+            'admin_new_user',
+            ['name' => $user->name, 'email' => $user->email],
+            ['user_id' => $user->id, 'name' => $user->name, 'email' => $user->email],
+            'admin_new_user'
+        );
+    }
+
+    /**
+     * Notify admins of a new KYC submission.
+     */
+    public function sendKYCSubmittedNotification(User $user, string $documentType): void
+    {
+        $this->notifyAdmins(
+            'kyc_submitted',
+            'admin_kyc_submitted',
+            ['name' => $user->name, 'document_type' => $documentType],
+            ['user_id' => $user->id, 'user_name' => $user->name, 'user_email' => $user->email, 'document_type' => $documentType],
+            'admin_kyc_submitted'
+        );
+    }
+
+    /**
      * Notify traveler that their trip has been verified.
      */
     public function sendTripVerifiedNotification(Trip $trip): void

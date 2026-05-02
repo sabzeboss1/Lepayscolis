@@ -34,4 +34,14 @@ return [
     ],
     'kyc_approved_body' => 'Your identity verification has been approved. You can now create trips and shipments.',
     'kyc_rejected_body' => 'Your identity verification has been rejected. Reason: :reason',
+
+    // Admin notifications
+    'admin_new_user' => [
+        'title' => 'New user registered',
+        'body' => ':name (:email) just created an account.',
+    ],
+    'admin_kyc_submitted' => [
+        'title' => 'New KYC submission',
+        'body' => ':name submitted a KYC document (:document_type) for verification.',
+    ],
 ];

@@ -303,6 +303,34 @@ class AdminTripService
     }
 
     /**
+     * Delete a trip (soft delete if has shipments, hard delete otherwise).
+     */
+    public function deleteTrip(string $tripId, User $admin): void
+    {
+        $trip = Trip::with('shipments')->findOrFail($tripId);
+
+        // Cannot delete trips with active shipments
+        $activeShipments = $trip->shipments->whereIn('status', ['accepted', 'in_transit', 'picked_up']);
+        if ($activeShipments->count() > 0) {
+            throw new \Exception('Cannot delete a trip with active shipments. Cancel it first.');
+        }
+
+        DB::transaction(function () use ($trip, $admin) {
+            // Cancel any pending shipments
+            foreach ($trip->shipments->where('status', 'pending') as $shipment) {
+                $shipment->update(['status' => 'cancelled']);
+            }
+
+            AuditLog::log($admin, 'delete', 'trip', $trip->id,
+                ['status' => $trip->status, 'origin' => $trip->departure_city, 'destination' => $trip->arrival_city],
+                []
+            );
+
+            $trip->delete();
+        });
+    }
+
+    /**
      * Get trip analytics.
      *
      * @return array

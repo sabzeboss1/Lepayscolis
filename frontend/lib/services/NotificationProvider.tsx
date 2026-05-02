@@ -7,6 +7,11 @@ import { usePusher } from '@/lib/websocket/PusherContext';
 import { useAuth } from '@/lib/auth';
 import type { Notification } from '@/lib/types/api';
 
+function getAuthToken(): string | null {
+  const match = document.cookie.split('; ').find(row => row.startsWith('auth-token='));
+  return match ? match.split('=')[1] : null;
+}
+
 interface NotificationContextValue {
   toasts: Toast[];
   notifications: Notification[];
@@ -47,9 +52,10 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) return;
 
-    setIsLoading(true);
+    // Only show loading spinner on first fetch
+    if (notifications.length === 0) setIsLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       const response = await fetch('/api/notifications', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -79,7 +85,7 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     if (!isAuthenticated) return;
 
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       const response = await fetch(`/api/notifications/${id}/read`, {
         method: 'PUT',
         headers: {
@@ -106,7 +112,7 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     if (!isAuthenticated) return;
 
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       const response = await fetch('/api/notifications/read-all', {
         method: 'PUT',
         headers: {
@@ -175,11 +181,14 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     };
   }, [isAuthenticated, user, isConnected, subscribeToPrivateChannel]);
 
-  // Fetch notifications on mount
+  // Fetch notifications on mount + poll every 20s
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchNotifications();
-    }
+    if (!isAuthenticated) return;
+
+    fetchNotifications();
+
+    const interval = setInterval(fetchNotifications, 20000);
+    return () => clearInterval(interval);
   }, [isAuthenticated, fetchNotifications]);
 
   const value: NotificationContextValue = {

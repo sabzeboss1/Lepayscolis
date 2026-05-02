@@ -112,6 +112,13 @@ export default function TripsPage() {
             apiClient.post<any>(API_ENDPOINTS.admin.trips.reject(id), { reason })
           )
         );
+      } else if (actionKey === 'delete') {
+        if (!confirm('Supprimer les voyages sélectionnés ? Cette action est irréversible.')) return;
+        await Promise.all(
+          selectedIds.map(id =>
+            apiClient.delete<any>(API_ENDPOINTS.admin.trips.delete(id))
+          )
+        );
       }
       fetchTrips();
       setSelectedRows(new Set());
@@ -241,7 +248,8 @@ export default function TripsPage() {
 
   const bulkActions: BulkAction[] = [
     { key: 'verify', label: t('admin.trips.bulk.verifySelected'), variant: 'default' as const },
-    { key: 'reject', label: t('admin.trips.bulk.rejectSelected'), variant: 'danger' as const }
+    { key: 'reject', label: t('admin.trips.bulk.rejectSelected'), variant: 'danger' as const },
+    { key: 'delete', label: 'Supprimer', variant: 'danger' as const },
   ];
 
   return (

@@ -124,6 +124,15 @@ class AdminTripController extends Controller
         ], 200);
     }
 
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        $this->tripService->deleteTrip($id, $request->user());
+
+        return response()->json([
+            'message' => 'Trip deleted successfully',
+        ], 200);
+    }
+
     public function analytics(): JsonResponse
     {
         $analytics = $this->tripService->getTripAnalytics();

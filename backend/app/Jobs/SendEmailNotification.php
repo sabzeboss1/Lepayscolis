@@ -84,6 +84,8 @@ class SendEmailNotification implements ShouldQueue
             'rating_received' => \App\Mail\RatingReceived::class,
             'payment_released' => \App\Mail\PaymentReleased::class,
             'payment_refunded' => \App\Mail\PaymentRefunded::class,
+            'admin_new_user' => \App\Mail\AdminNewUserRegistered::class,
+            'admin_kyc_submitted' => \App\Mail\AdminKYCSubmitted::class,
         ];
 
         return $mailables[$template] ?? null;
