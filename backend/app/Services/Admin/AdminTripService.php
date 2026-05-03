@@ -365,6 +365,8 @@ class AdminTripService
             'failed' => $failed,
         ];
     }
+
+    /**
      * Get trip analytics.
      *
      * @return array
