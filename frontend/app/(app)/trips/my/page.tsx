@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Trip } from '@/lib/types/trip';
 import { apiClient } from '@/lib/api/client';
-import { formatCurrency } from '@/lib/utils/formatting';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 
 type TripStatus = 'all' | 'active' | 'completed' | 'cancelled';
 type SortOption = 'date' | 'price' | 'capacity';
@@ -17,6 +17,7 @@ export default function MyTripsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
+  const { formatCurrency } = useUserCurrency();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -233,9 +234,7 @@ export default function MyTripsPage() {
                     <div>
                       <span className="font-medium">{t('trips.pricePerKg')}:</span>{' '}
                       <span className="text-gray-700">
-                        {trip.price_converted
-                          ? formatCurrency(trip.price_converted.amount, trip.price_converted.currency_code)
-                          : formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}
+                        {formatCurrency(trip.price_per_kg_converted || trip.price_per_kg)}
                       </span>
                     </div>
                     {trip.travel_proof_url && (

@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
@@ -57,6 +58,9 @@ class AuthController extends Controller
                 'ip_address' => $ipAddress,
                 'timestamp' => now(),
             ]);
+
+            // Notify admins of new registration
+            app(NotificationService::class)->sendNewUserRegistrationNotification($user);
 
             return response()->json([
                 'message' => __('messages.auth.register_success'),

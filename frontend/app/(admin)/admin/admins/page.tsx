@@ -1,10 +1,17 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Plus, Trash2, RefreshCw, Activity, X, Eye, EyeOff } from 'lucide-react';
+import { Shield, Plus, Trash2, RefreshCw, Activity, X, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+
+interface Country {
+  id: number;
+  code: string;
+  name: string;
+  phone_code: string;
+}
 
 interface Admin {
   id: number;
@@ -38,7 +45,9 @@ export default function AdminsPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   // Create form
-  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'admin' as 'admin' | 'super_admin' });
+  const [createForm, setCreateForm] = useState({ name: '', email: '', phone: '', password: '', role: 'admin' as 'admin' | 'super_admin' });
+  const [phoneCountry, setPhoneCountry] = useState('');
+  const [countries, setCountries] = useState<Country[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
@@ -65,6 +74,9 @@ export default function AdminsPage() {
 
   useEffect(() => {
     fetchAdmins();
+    apiClient.get<any>(API_ENDPOINTS.countries.list).then(res => {
+      setCountries(res.data || []);
+    }).catch(() => {});
   }, [fetchAdmins]);
 
   const openModal = (type: ModalType, admin?: Admin) => {
@@ -72,7 +84,10 @@ export default function AdminsPage() {
     setError(null);
     setSuccess(null);
     if (type === 'updateRole' && admin) setNewRole(admin.role);
-    if (type === 'create') setCreateForm({ name: '', email: '', password: '', role: 'admin' });
+    if (type === 'create') {
+      setCreateForm({ name: '', email: '', phone: '', password: '', role: 'admin' });
+      setPhoneCountry('');
+    }
     setCreateErrors({});
     setModal(type);
   };
@@ -97,10 +112,47 @@ export default function AdminsPage() {
     }
   };
 
+  const buildPhoneNumber = (): string => {
+    const raw = createForm.phone.trim().replace(/[\s\-()]/g, '');
+    if (!phoneCountry) return raw;
+    const country = countries.find(c => c.code === phoneCountry);
+    if (!country) return raw;
+    let digits = raw;
+    if (digits.startsWith('+')) {
+      digits = digits.substring(1);
+      const prefix = country.phone_code.replace('+', '');
+      if (digits.startsWith(prefix)) digits = digits.substring(prefix.length);
+    }
+    if (digits.startsWith('0')) digits = digits.substring(1);
+    return country.phone_code + digits;
+  };
+
+  const getExpectedDigits = (phoneCode: string): number | null => {
+    const rules: Record<string, number> = { '+237': 9, '+7': 10, '+33': 9, '+1': 10 };
+    return rules[phoneCode] ?? null;
+  };
+
   const handleCreate = async () => {
     const errors: Record<string, string> = {};
     if (!createForm.name.trim()) errors.name = t('admin.admins.createModal.errors.nameRequired');
     if (!createForm.email.trim()) errors.email = t('admin.admins.createModal.errors.emailRequired');
+    if (!phoneCountry) {
+      errors.phone = 'Veuillez sélectionner un pays';
+    } else if (!createForm.phone.trim()) {
+      errors.phone = 'Le numéro de téléphone est requis';
+    } else {
+      const country = countries.find(c => c.code === phoneCountry);
+      if (country) {
+        const fullNumber = buildPhoneNumber();
+        const localDigits = fullNumber.replace(country.phone_code, '');
+        const expected = getExpectedDigits(country.phone_code);
+        if (!/^\d+$/.test(localDigits)) {
+          errors.phone = 'Le numéro ne doit contenir que des chiffres';
+        } else if (expected && localDigits.length !== expected) {
+          errors.phone = `Le numéro doit contenir ${expected} chiffres après l'indicatif ${country.phone_code}`;
+        }
+      }
+    }
     if (!createForm.password) errors.password = t('admin.admins.createModal.errors.passwordRequired');
     else if (createForm.password.length < 8) errors.password = t('admin.admins.createModal.errors.passwordMin');
     if (Object.keys(errors).length > 0) { setCreateErrors(errors); return; }
@@ -108,12 +160,34 @@ export default function AdminsPage() {
     setCreating(true);
     setCreateErrors({});
     try {
-      await apiClient.post<any>(API_ENDPOINTS.admin.admins.create, createForm);
+      const payload = {
+        name: createForm.name,
+        email: createForm.email,
+        phone: buildPhoneNumber(),
+        password: createForm.password,
+        role: createForm.role,
+      };
+      await apiClient.post<any>(API_ENDPOINTS.admin.admins.create, payload);
       setSuccess(t('admin.admins.createSuccess'));
       closeModal();
       fetchAdmins();
     } catch (e: any) {
-      setCreateErrors({ general: e.message });
+      if (e.errors && typeof e.errors === 'object') {
+        const fieldErrors: Record<string, string> = {};
+        for (const [field, messages] of Object.entries(e.errors)) {
+          const msgs = messages as string[];
+          if (field === 'email' && msgs.some(m => m.includes('unique') || m.includes('taken'))) {
+            fieldErrors.email = 'Cet email est déjà utilisé';
+          } else if (field === 'phone' && msgs.some(m => m.includes('unique') || m.includes('taken'))) {
+            fieldErrors.phone = 'Ce numéro de téléphone est déjà utilisé';
+          } else {
+            fieldErrors[field] = msgs[0];
+          }
+        }
+        setCreateErrors(fieldErrors);
+      } else {
+        setCreateErrors({ general: e.message });
+      }
     } finally {
       setCreating(false);
     }
@@ -314,6 +388,34 @@ export default function AdminsPage() {
                   placeholder="admin@example.com"
                 />
                 {createErrors.email && <p className="mt-1 text-xs text-red-600">{createErrors.email}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                <div className="flex">
+                  <div className="relative">
+                    <select
+                      value={phoneCountry}
+                      onChange={(e) => setPhoneCountry(e.target.value)}
+                      className={`h-[42px] appearance-none pl-3 pr-7 border border-r-0 rounded-l-lg text-sm text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 ${createErrors.phone ? 'border-red-300' : 'border-gray-300'}`}
+                    >
+                      <option value="">Pays</option>
+                      {countries.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name} ({c.phone_code})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                  </div>
+                  <input
+                    type="tel"
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm(f => ({ ...f, phone: e.target.value }))}
+                    className={`flex-1 px-3 py-2 border rounded-r-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${createErrors.phone ? 'border-red-300' : 'border-gray-300'}`}
+                    placeholder="690000000"
+                  />
+                </div>
+                {createErrors.phone && <p className="mt-1 text-xs text-red-600">{createErrors.phone}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.admins.createModal.password')}</label>

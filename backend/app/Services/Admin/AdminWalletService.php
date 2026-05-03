@@ -58,38 +58,43 @@ class AdminWalletService
      */
     private function ensureUsersHaveWallets(): void
     {
-        $usersWithoutWallets = User::whereDoesntHave('wallet')->get();
-        
-        foreach ($usersWithoutWallets as $user) {
-            \App\Models\Wallet::create([
-                'user_id' => $user->id,
-                'balance' => 0.00,
-                'currency_code' => \App\Models\PlatformSetting::get('default_currency', 'EUR'),
-                'held_balance' => 0.00,
-            ]);
+        try {
+            $usersWithoutWallets = User::whereDoesntHave('wallet')->get();
+            $currency = \App\Models\PlatformSetting::get('default_currency', 'XAF');
+
+            foreach ($usersWithoutWallets as $user) {
+                \App\Models\Wallet::create([
+                    'user_id' => $user->id,
+                    'balance' => 0.00,
+                    'currency_code' => $currency,
+                    'held_balance' => 0.00,
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('ensureUsersHaveWallets failed: ' . $e->getMessage());
         }
     }
 
     public function getWalletDetails(int $userId): array
     {
         $user = User::findOrFail($userId);
+        $wallet = $user->wallet;
+        $walletId = $wallet?->id;
 
         $transactions = DB::table('wallet_transactions')
-            ->where('user_id', $userId)
+            ->where('wallet_id', $walletId)
             ->latest('created_at')
             ->paginate(50);
 
-        $balance = DB::table('wallet_transactions')
-            ->where('user_id', $userId)
-            ->sum('amount');
+        $balance = $wallet?->balance ?? 0;
 
         $totals = [
             'credits' => DB::table('wallet_transactions')
-                ->where('user_id', $userId)
+                ->where('wallet_id', $walletId)
                 ->where('amount', '>', 0)
                 ->sum('amount'),
             'debits' => abs(DB::table('wallet_transactions')
-                ->where('user_id', $userId)
+                ->where('wallet_id', $walletId)
                 ->where('amount', '<', 0)
                 ->sum('amount')),
         ];
@@ -105,33 +110,40 @@ class AdminWalletService
     public function adjustBalance(int $userId, float $amount, string $reason, string $type, User $admin): void
     {
         $user = User::findOrFail($userId);
+        $wallet = $user->wallet;
+
+        if (!$wallet) {
+            throw new \Exception('User does not have a wallet.');
+        }
 
         $adjustmentAmount = $type === 'debit' ? -abs($amount) : abs($amount);
 
-        // Check for negative balance
-        $currentBalance = DB::table('wallet_transactions')
-            ->where('user_id', $userId)
-            ->sum('amount');
+        $currentBalance = (float) $wallet->balance;
 
         if ($currentBalance + $adjustmentAmount < 0) {
             throw new \Exception('Adjustment would result in negative balance.');
         }
 
-        DB::transaction(function () use ($userId, $adjustmentAmount, $reason, $admin) {
+        DB::transaction(function () use ($wallet, $adjustmentAmount, $reason, $admin, $userId, $currentBalance) {
+            $newBalance = $currentBalance + $adjustmentAmount;
+
             // Create wallet transaction
             DB::table('wallet_transactions')->insert([
-                'user_id' => $userId,
+                'wallet_id' => $wallet->id,
                 'amount' => $adjustmentAmount,
-                'type' => 'admin_adjustment',
+                'type' => 'adjustment',
                 'description' => $reason,
+                'balance_after' => $newBalance,
                 'created_at' => now(),
-                'updated_at' => now(),
             ]);
 
+            // Update wallet balance
+            $wallet->update(['balance' => $newBalance]);
+
             // Create audit log
-            AuditLog::log($admin, 'adjust_balance', 'wallet', $userId, 
-                ['amount' => 0], 
-                ['amount' => $adjustmentAmount, 'reason' => $reason]
+            AuditLog::log($admin, 'adjust_balance', 'wallet', $userId,
+                ['amount' => $currentBalance],
+                ['amount' => $newBalance, 'reason' => $reason]
             );
         });
     }

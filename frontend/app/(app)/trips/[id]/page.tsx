@@ -8,7 +8,7 @@ import { RatingStars } from '@/components/ui/RatingStars';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
-import { formatCurrency } from '@/lib/utils/formatting';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import {
   ArrowLeft,
   Plane,
@@ -152,6 +152,7 @@ export default function TripDetailPage() {
   const params = useParams();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { formatCurrency } = useUserCurrency();
   const tripId = params.id as string;
 
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -359,13 +360,11 @@ export default function TripDetailPage() {
                   className="text-3xl font-bold mt-1"
                   style={{ color: 'var(--color-vibrant-orange)', fontFamily: 'var(--font-heading)' }}
                 >
-                  {trip.price_converted
-                    ? formatCurrency(trip.price_converted.amount, trip.price_converted.currency_code)
-                    : trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg
+                  {formatCurrency(trip.price_per_kg_converted || trip.price_per_kg)}/kg
                 </p>
-                {trip.price_converted && (
+                {trip.currency_code && trip.price_per_kg_converted && (
                   <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg
+                    {formatCurrency(trip.price_per_kg, trip.currency_code)}/kg
                   </p>
                 )}
                 <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>

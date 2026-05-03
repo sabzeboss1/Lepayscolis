@@ -57,18 +57,42 @@ export function PlatformBrandingProvider({ children }: { children: ReactNode }) 
     fetchBranding();
   }, []);
 
-  // Update favicon dynamically
+  // Update favicon and apple-touch-icon dynamically
   useEffect(() => {
-    if (branding.favicon_url) {
-      let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!branding.favicon_url) return;
+
+    const setLink = (rel: string, href: string, sizes?: string) => {
+      let selector = `link[rel="${rel}"]`;
+      if (sizes) selector += `[sizes="${sizes}"]`;
+      let link = document.querySelector<HTMLLinkElement>(selector);
       if (!link) {
         link = document.createElement('link');
-        link.rel = 'icon';
+        link.rel = rel;
+        if (sizes) link.setAttribute('sizes', sizes);
         document.head.appendChild(link);
       }
-      link.href = branding.favicon_url;
+      link.href = href;
+    };
+
+    setLink('icon', branding.favicon_url);
+    // Use logo as apple-touch-icon (higher res)
+    const touchIcon = branding.logo_url || branding.favicon_url;
+    setLink('apple-touch-icon', touchIcon, '180x180');
+    setLink('icon', touchIcon, '192x192');
+
+    // Update theme-color meta
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (meta && branding.primary_color) {
+      meta.content = branding.primary_color;
     }
-  }, [branding.favicon_url]);
+  }, [branding.favicon_url, branding.logo_url, branding.primary_color]);
+
+  // Register service worker for PWA
+  useEffect(() => {
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  }, []);
 
   return (
     <PlatformBrandingContext.Provider value={branding}>

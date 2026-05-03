@@ -7,12 +7,16 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function NotificationDropdown() {
   const { t, locale } = useTranslation();
   const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith('/admin');
+  const notificationsHref = isAdmin ? '/admin/notifications/inbox' : '/notifications';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -128,7 +132,7 @@ export function NotificationDropdown() {
           {notifications.length > 0 && (
             <div className="p-2.5 sm:p-3 border-t border-gray-200">
               <Link
-                href="/notifications"
+                href={notificationsHref}
                 className="block text-center text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium"
                 onClick={() => setIsOpen(false)}
               >
