@@ -6,7 +6,6 @@ import { Trip } from '@/lib/types/trip';
 import { Button } from '@/components/ui/Button';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { useRealtimeTripStatus } from '@/lib/hooks/useRealtimeStatusUpdates';
 import { useAuth } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
 import { formatCurrency } from '@/lib/utils/formatting';
@@ -159,11 +158,12 @@ export default function TripDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useRealtimeTripStatus(tripId, (data) => {
-    if (trip && data.id === tripId) {
-      setTrip({ ...trip, status: data.status as Trip['status'] });
-    }
-  });
+  // Real-time updates removed - using polling system instead
+  // useRealtimeTripStatus(tripId, (data) => {
+  //   if (trip && data.id === tripId) {
+  //     setTrip({ ...trip, status: data.status as Trip['status'] });
+  //   }
+  // });
 
   useEffect(() => {
     const fetchTrip = async () => {

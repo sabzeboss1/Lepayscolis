@@ -166,11 +166,14 @@ class AdminDashboardService
     protected function getRevenue30Days(): float
     {
         $targetRate = $this->getTargetRate();
-
-        return (float) Payment::where('payments.status', 'released')
-            ->where('payments.created_at', '>=', now()->subDays(30))
-            ->join('currencies', 'payments.currency_code', '=', 'currencies.code')
-            ->selectRaw('SUM(payments.platform_fee * (? / currencies.exchange_rate)) as total', [$targetRate])
+        
+        // Calculate platform fee as a percentage of payment_amount (5% platform fee)
+        $platformFeePercentage = 0.05;
+        
+        return (float) Shipment::where('shipments.payment_status', 'released')
+            ->where('shipments.created_at', '>=', now()->subDays(30))
+            ->join('currencies', 'shipments.currency_code', '=', 'currencies.code')
+            ->selectRaw('SUM(shipments.payment_amount * ? * (? / currencies.exchange_rate)) as total', [$platformFeePercentage, $targetRate])
             ->value('total') ?? 0.0;
     }
 
@@ -224,13 +227,16 @@ class AdminDashboardService
         $targetRate = $this->getTargetRate();
         $data = [];
         $startDate = now()->subDays(29);
+        
+        // Calculate platform fee as a percentage of payment_amount (5% platform fee)
+        $platformFeePercentage = 0.05;
 
         for ($i = 0; $i < 30; $i++) {
             $date = $startDate->copy()->addDays($i);
-            $amount = (float) Payment::where('payments.status', 'released')
-                ->whereDate('payments.created_at', $date->toDateString())
-                ->join('currencies', 'payments.currency_code', '=', 'currencies.code')
-                ->selectRaw('SUM(payments.platform_fee * (? / currencies.exchange_rate)) as total', [$targetRate])
+            $amount = (float) Shipment::where('shipments.payment_status', 'released')
+                ->whereDate('shipments.created_at', $date->toDateString())
+                ->join('currencies', 'shipments.currency_code', '=', 'currencies.code')
+                ->selectRaw('SUM(shipments.payment_amount * ? * (? / currencies.exchange_rate)) as total', [$platformFeePercentage, $targetRate])
                 ->value('total') ?? 0.0;
 
             $data[] = [

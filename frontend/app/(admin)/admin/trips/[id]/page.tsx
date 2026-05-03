@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Ban, MapPin, Calendar, User, Package, TrendingUp, CheckCircle, XCircle, Loader2, FileText, Download } from 'lucide-react';
+import { ArrowLeft, Ban, MapPin, Calendar, User, Package, TrendingUp, CheckCircle, XCircle, Loader2, FileText, Download, Trash2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 import { apiClient } from '@/lib/api/client';
@@ -69,6 +69,9 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
   // Verify action
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Delete action
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     params.then(p => setTripId(p.id));
   }, [params]);
@@ -89,6 +92,30 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
       console.error('Failed to fetch trip details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTrip = async () => {
+    if (!tripId) return;
+    
+    const confirmed = confirm(
+      'Êtes-vous sûr de vouloir supprimer ce voyage ? Cette action est irréversible.\n\n' +
+      'Note: Les voyages avec des expéditions actives ne peuvent pas être supprimés.'
+    );
+    
+    if (!confirmed) return;
+    
+    setIsDeleting(true);
+    try {
+      await apiClient.delete<any>(API_ENDPOINTS.admin.trips.delete(tripId));
+      alert('Voyage supprimé avec succès');
+      router.push('/admin/trips');
+    } catch (error: any) {
+      console.error('Failed to delete trip:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la suppression';
+      alert(errorMessage);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -240,6 +267,18 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
               {t('admin.trips.detail.cancelTrip')}
             </button>
           )}
+          <button
+            onClick={handleDeleteTrip}
+            disabled={isDeleting}
+            className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            {isDeleting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4 mr-2" />
+            )}
+            Supprimer
+          </button>
         </div>
       </div>
 

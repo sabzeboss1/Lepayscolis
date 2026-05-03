@@ -21,11 +21,18 @@ class NotificationController extends Controller
             ->paginate($perPage);
 
         $unreadCount = Notification::where('user_id', Auth::id())
-            ->where('is_read', false)
+            ->whereNull('read_at')
             ->count();
 
+        // Transform notifications to include is_read and message fields
+        $transformedNotifications = $notifications->items();
+        foreach ($transformedNotifications as $notification) {
+            $notification->is_read = $notification->isRead();
+            $notification->message = $notification->body;
+        }
+
         return response()->json([
-            'notifications' => $notifications->items(),
+            'notifications' => $transformedNotifications,
             'unread_count' => $unreadCount,
             'pagination' => [
                 'current_page' => $notifications->currentPage(),
@@ -42,7 +49,7 @@ class NotificationController extends Controller
     public function unreadCount(): JsonResponse
     {
         $count = Notification::where('user_id', Auth::id())
-            ->where('is_read', false)
+            ->whereNull('read_at')
             ->count();
 
         return response()->json([
@@ -58,7 +65,7 @@ class NotificationController extends Controller
         $notification = Notification::where('user_id', Auth::id())
             ->findOrFail($id);
 
-        $notification->update(['is_read' => true]);
+        $notification->markAsRead();
 
         return response()->json([
             'success' => true,
@@ -72,8 +79,8 @@ class NotificationController extends Controller
     public function markAllAsRead(): JsonResponse
     {
         Notification::where('user_id', Auth::id())
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
 
         return response()->json([
             'success' => true,

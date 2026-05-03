@@ -360,11 +360,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::get('/pending', [AdminTripController::class, 'pending'])->middleware('throttle:60,1');
         Route::get('/{id}', [AdminTripController::class, 'show'])->middleware('throttle:60,1');
         Route::put('/{id}', [AdminTripController::class, 'update'])->middleware('throttle:30,1');
+        Route::delete('/{id}', [AdminTripController::class, 'destroy'])->middleware('throttle:30,1');
         Route::post('/{id}/verify', [AdminTripController::class, 'verify'])->middleware('throttle:30,1');
         Route::post('/{id}/reject', [AdminTripController::class, 'reject'])->middleware('throttle:30,1');
         Route::post('/{id}/cancel', [AdminTripController::class, 'cancel'])->middleware('throttle:30,1');
         Route::post('/bulk-verify', [AdminTripController::class, 'bulkVerify'])->middleware('throttle:30,1');
         Route::post('/bulk-reject', [AdminTripController::class, 'bulkReject'])->middleware('throttle:30,1');
+        Route::post('/bulk-delete', [AdminTripController::class, 'bulkDelete'])->middleware('throttle:30,1');
     });
 
     // Shipment Management

@@ -187,6 +187,8 @@ export const API_ENDPOINTS = {
       verify: (id: string) => `/api/admin/trips/${id}/verify`,
       reject: (id: string) => `/api/admin/trips/${id}/reject`,
       update: (id: string) => `/api/admin/trips/${id}`,
+      delete: (id: string) => `/api/admin/trips/${id}`,
+      bulkDelete: '/api/admin/trips/bulk-delete',
     },
     
     shipments: {

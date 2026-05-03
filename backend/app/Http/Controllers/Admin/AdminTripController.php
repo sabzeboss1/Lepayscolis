@@ -124,6 +124,37 @@ class AdminTripController extends Controller
         ], 200);
     }
 
+    public function destroy(string $id, Request $request): JsonResponse
+    {
+        try {
+            $this->tripService->deleteTrip($id, $request->user());
+
+            return response()->json([
+                'message' => 'Trip deleted successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|string|exists:trips,id',
+        ]);
+
+        $result = $this->tripService->bulkDeleteTrips($request->ids, $request->user());
+
+        return response()->json([
+            'deleted' => $result['deleted'],
+            'failed' => $result['failed'],
+            'message' => count($result['deleted']) . ' trip(s) deleted successfully',
+        ], 200);
+    }
+
     public function analytics(): JsonResponse
     {
         $analytics = $this->tripService->getTripAnalytics();

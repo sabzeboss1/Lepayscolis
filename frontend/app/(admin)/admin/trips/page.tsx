@@ -112,11 +112,25 @@ export default function TripsPage() {
             apiClient.post<any>(API_ENDPOINTS.admin.trips.reject(id), { reason })
           )
         );
+      } else if (actionKey === 'delete') {
+        const confirmed = confirm(
+          `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} voyage(s) ? Cette action est irréversible.`
+        );
+        if (!confirmed) return;
+        
+        const result = await apiClient.post<any>(API_ENDPOINTS.admin.trips.bulkDelete, { 
+          ids: selectedIds 
+        });
+        
+        if (result.failed && result.failed.length > 0) {
+          alert(`${result.deleted.length} voyage(s) supprimé(s). ${result.failed.length} échec(s).`);
+        }
       }
       fetchTrips();
       setSelectedRows(new Set());
     } catch (error) {
       console.error('Bulk action failed:', error);
+      alert('Une erreur est survenue lors de l\'opération.');
     }
   };
 
@@ -241,7 +255,8 @@ export default function TripsPage() {
 
   const bulkActions: BulkAction[] = [
     { key: 'verify', label: t('admin.trips.bulk.verifySelected'), variant: 'default' as const },
-    { key: 'reject', label: t('admin.trips.bulk.rejectSelected'), variant: 'danger' as const }
+    { key: 'reject', label: t('admin.trips.bulk.rejectSelected'), variant: 'danger' as const },
+    { key: 'delete', label: 'Supprimer sélectionnés', variant: 'danger' as const }
   ];
 
   return (

@@ -8,7 +8,6 @@ import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import { NotificationService } from '@/lib/services/NotificationService';
-import { useRealtimeMessages } from '@/lib/hooks/useRealtimeMessages';
 import {
   ArrowLeft,
   Send,
@@ -223,19 +222,19 @@ export default function ConversationPage() {
     }
   }, [conversationId]);
 
-  /* real-time */
-  useRealtimeMessages({
-    conversationId,
-    onNewMessage: (newMessage: Message) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === newMessage.id)) return prev;
-        return [...prev, newMessage];
-      });
-      if (newMessage.sender_id !== user?.id && !newMessage.read) {
-        markMessageAsRead(newMessage.id);
-      }
-    },
-  });
+  /* real-time removed - using polling system instead */
+  // useRealtimeMessages({
+  //   conversationId,
+  //   onNewMessage: (newMessage: Message) => {
+  //     setMessages((prev) => {
+  //       if (prev.some((m) => m.id === newMessage.id)) return prev;
+  //       return [...prev, newMessage];
+  //     });
+  //     if (newMessage.sender_id !== user?.id && !newMessage.read) {
+  //       markMessageAsRead(newMessage.id);
+  //     }
+  //   },
+  // });
 
   /* scroll */
   useEffect(() => {
