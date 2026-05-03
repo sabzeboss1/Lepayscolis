@@ -18,22 +18,14 @@ class AdminWalletController extends Controller
         $this->walletService = $walletService;
     }
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $filters = $request->only(['search', 'sort']);
         $perPage = $request->input('per_page', 50);
 
         $wallets = $this->walletService->getWallets($filters, $perPage);
 
-        return response()->json([
-            'data' => WalletResource::collection($wallets),
-            'meta' => [
-                'current_page' => $wallets->currentPage(),
-                'last_page' => $wallets->lastPage(),
-                'per_page' => $wallets->perPage(),
-                'total' => $wallets->total(),
-            ],
-        ], 200);
+        return WalletResource::collection($wallets);
     }
 
     public function show(int $userId): JsonResponse

@@ -31,4 +31,10 @@ return [
     'wallet_credited' => [
         'subject' => 'Your Wallet Has Been Credited',
     ],
+    'admin_new_user' => [
+        'subject' => 'New User Registered on the Platform',
+    ],
+    'admin_kyc_submitted' => [
+        'subject' => 'New KYC Submission to Review',
+    ],
 ];

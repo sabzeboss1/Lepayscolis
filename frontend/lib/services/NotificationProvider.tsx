@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { Toast, ToastContainer } from '@/components/ui/Toast';
 import { NotificationService } from './NotificationService';
-import { usePusher } from '@/lib/websocket/PusherContext';
 import { useAuth } from '@/lib/auth';
 import type { Notification } from '@/lib/types/api';
 
@@ -28,7 +27,6 @@ interface NotificationProviderProps {
 
 export function NotificationProvider({ children, position = 'top-right' }: NotificationProviderProps) {
   const { user, isAuthenticated } = useAuth();
-  const { subscribeToPrivateChannel, isConnected } = usePusher();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -50,19 +48,42 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     setIsLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/notifications', {
+      if (!token) {
+        console.log('No auth token found');
+        setNotifications([]);
+        setUnreadCount(0);
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       });
       
       if (response.ok) {
         const data = await response.json();
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unread_count || 0);
+        const newNotifications = data.notifications || [];
+        const newUnreadCount = data.unread_count || 0;
+        
+        // Check if there are new notifications
+        if (notifications.length > 0 && newNotifications.length > notifications.length) {
+          const latestNotification = newNotifications[0];
+          // Show toast for new notification
+          NotificationService.show({
+            type: 'info',
+            title: latestNotification.title,
+            message: latestNotification.message || latestNotification.body,
+            duration: 5000,
+          });
+        }
+        
+        setNotifications(newNotifications);
+        setUnreadCount(newUnreadCount);
       } else if (response.status === 401) {
-        // Handle unauthorized - user is not authenticated
         console.log('User not authenticated for notifications');
         setNotifications([]);
         setUnreadCount(0);
@@ -72,7 +93,7 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, notifications.length]);
 
   // Mark notification as read
   const markAsRead = useCallback(async (id: string) => {
@@ -80,11 +101,14 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/notifications/${id}/read`, {
+      if (!token) return;
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/${id}/read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       });
 
@@ -107,11 +131,14 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/notifications/read-all', {
+      if (!token) return;
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/read-all`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       });
 
@@ -141,45 +168,19 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  // Subscribe to WebSocket notifications
+  // Polling for new notifications every 30 seconds
   useEffect(() => {
-    if (!isAuthenticated || !user || !isConnected) return;
+    if (!isAuthenticated) return;
 
-    const channel = subscribeToPrivateChannel(`user.${user.id}`);
-    if (!channel) return;
+    // Initial fetch
+    fetchNotifications();
 
-    // Listen for notification.created event
-    channel.bind('notification.created', (data: Notification) => {
-      console.log('Received notification via WebSocket:', data);
-
-      // Add to notifications list
-      setNotifications((prev) => [data, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-
-      // Show toast notification
-      NotificationService.show({
-        type: 'info',
-        title: data.title,
-        message: data.message,
-        duration: 5000,
-      });
-
-      // Play sound for high-priority notifications
-      if (data.type === 'urgent' || data.type === 'payment') {
-        playNotificationSound();
-      }
-    });
-
-    return () => {
-      channel.unbind('notification.created');
-    };
-  }, [isAuthenticated, user, isConnected, subscribeToPrivateChannel]);
-
-  // Fetch notifications on mount
-  useEffect(() => {
-    if (isAuthenticated) {
+    // Poll every 30 seconds
+    const interval = setInterval(() => {
       fetchNotifications();
-    }
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [isAuthenticated, fetchNotifications]);
 
   const value: NotificationContextValue = {
@@ -208,17 +209,4 @@ export function useNotifications(): NotificationContextValue {
     throw new Error('useNotifications must be used within a NotificationProvider');
   }
   return context;
-}
-
-// Helper function to play notification sound
-function playNotificationSound() {
-  try {
-    const audio = new Audio('/sounds/notification.mp3');
-    audio.volume = 0.5;
-    audio.play().catch((error) => {
-      console.warn('Failed to play notification sound:', error);
-    });
-  } catch (error) {
-    console.warn('Notification sound not available:', error);
-  }
 }

@@ -35,20 +35,38 @@ class AdminUserManagementController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
+            'phone' => ['required', 'string', 'unique:users,phone', 'regex:/^\+[1-9]\d{7,14}$/'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['required', Rule::in(['admin', 'super_admin'])],
         ]);
 
+        // Validate phone length per country prefix
+        $phone = $validated['phone'];
+        $phoneLengthRules = ['+237' => 9, '+7' => 10, '+33' => 9, '+1' => 10];
+        foreach ($phoneLengthRules as $prefix => $expectedDigits) {
+            if (str_starts_with($phone, $prefix)) {
+                $localDigits = substr($phone, strlen($prefix));
+                if (strlen($localDigits) !== $expectedDigits) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'phone' => ["Le numéro doit contenir {$expectedDigits} chiffres après l'indicatif {$prefix}."],
+                    ]);
+                }
+                break;
+            }
+        }
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'phone' => $validated['phone'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
+            'kyc_status' => 'approved',
         ]);
 
         // Create audit log
         \App\Models\AuditLog::log(
-            $request->user()->id,
+            $request->user(),
             'create_admin',
             'user',
             $user->id,
@@ -78,7 +96,7 @@ class AdminUserManagementController extends Controller
 
         // Create audit log
         \App\Models\AuditLog::log(
-            $request->user()->id,
+            $request->user(),
             'update_admin_role',
             'user',
             $user->id,
@@ -119,7 +137,7 @@ class AdminUserManagementController extends Controller
 
         // Create audit log
         \App\Models\AuditLog::log(
-            $request->user()->id,
+            $request->user(),
             'remove_admin_access',
             'user',
             $user->id,

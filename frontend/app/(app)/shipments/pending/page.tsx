@@ -306,7 +306,7 @@ export default function PendingShipmentsPage() {
                           className="text-2xl font-bold mt-1"
                           style={{ color: 'var(--color-vibrant-orange)', fontFamily: 'var(--font-heading)' }}
                         >
-                          {formatCurrency(shipment.payment_amount, 'EUR')}
+                          {formatCurrency(shipment.payment_amount)}
                         </p>
                       </div>
                     )}

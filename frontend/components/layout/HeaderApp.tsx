@@ -386,7 +386,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
         aria-label="Navigation mobile"
       >
         <div className="flex items-stretch">
-          {NAV_ITEMS.filter(({ href }) => href !== '/shipments').map(({ href, labelKey, icon: Icon }) => {
+          {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
             const active = isActive(href);
             const isMsgs = href === '/messages';
             return (

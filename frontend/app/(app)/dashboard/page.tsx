@@ -30,7 +30,7 @@ import {
   Loader2,
   MapPin,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils/formatting';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 
 /* ── helpers ─────────────────────────────────── */
 function getDayGreeting() {
@@ -109,6 +109,7 @@ export default function DashboardPage() {
   const { needsKYC, isKYCPending, isKYCRejected, isKYCNotSubmitted } = useKYCCheck();
   const router = useRouter();
   const { t } = useTranslation();
+  const { formatCurrency } = useUserCurrency();
 
   // Redirect admin users to admin dashboard
   useEffect(() => {
@@ -555,7 +556,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right shrink-0 ml-3">
                         <p className="text-sm font-semibold text-navy">{trip.available_capacity} kg</p>
-                        <p className="text-xs text-muted-text">{trip.price_per_kg_formatted || formatCurrency(trip.price_per_kg, trip.currency_code || 'EUR')}/kg</p>
+                        <p className="text-xs text-muted-text">{formatCurrency(trip.price_per_kg_converted || trip.price_per_kg)}/kg</p>
                       </div>
                     </button>
                   ))}

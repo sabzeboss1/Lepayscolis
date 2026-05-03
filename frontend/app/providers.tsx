@@ -2,7 +2,6 @@
 
 import { AuthProvider } from '@/lib/auth';
 import { LocaleProvider, useLocale } from '@/lib/i18n/LocaleContext';
-import { PusherProvider } from '@/lib/websocket/PusherContext';
 import { NotificationProvider } from '@/lib/services/NotificationProvider';
 import { PlatformBrandingProvider } from '@/lib/hooks/usePlatformBranding';
 import { Locale } from '@/lib/i18n/config';
@@ -27,11 +26,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <LocaleProvider>
       <PlatformBrandingProvider>
         <AuthWithLocaleSync>
-          <PusherProvider>
-            <NotificationProvider>
-              {children}
-            </NotificationProvider>
-          </PusherProvider>
+          <NotificationProvider>
+            {children}
+          </NotificationProvider>
         </AuthWithLocaleSync>
       </PlatformBrandingProvider>
     </LocaleProvider>

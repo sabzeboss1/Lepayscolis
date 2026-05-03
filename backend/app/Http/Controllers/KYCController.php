@@ -85,6 +85,12 @@ class KYCController extends Controller
                 'kyc_document_id' => $kycDocument->id,
             ]);
 
+            // Notify admins of new KYC submission
+            app(\App\Services\NotificationService::class)->sendKYCSubmittedNotification(
+                $request->user(),
+                $request->input('document_type')
+            );
+
             return response()->json([
                 'message' => 'KYC document submitted successfully',
                 'data' => new KYCDocumentResource($kycDocument->load(['user', 'reviewer'])),

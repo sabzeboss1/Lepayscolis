@@ -31,4 +31,10 @@ return [
     'wallet_credited' => [
         'subject' => 'Votre portefeuille a été crédité',
     ],
+    'admin_new_user' => [
+        'subject' => 'Nouvel utilisateur inscrit sur la plateforme',
+    ],
+    'admin_kyc_submitted' => [
+        'subject' => 'Nouvelle soumission KYC à vérifier',
+    ],
 ];

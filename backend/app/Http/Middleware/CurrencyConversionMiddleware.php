@@ -68,6 +68,7 @@ class CurrencyConversionMiddleware
      */
     private function processArrayForCurrencyConversion(array $data, $user): array
     {
+        $isSequential = array_is_list($data);
         $processed = [];
 
         foreach ($data as $key => $value) {
@@ -98,6 +99,11 @@ class CurrencyConversionMiddleware
                     }
                 }
             }
+        }
+
+        // Re-index sequential arrays to prevent JSON object serialization
+        if ($isSequential && !empty($processed)) {
+            $processed = array_values($processed);
         }
 
         return $processed;

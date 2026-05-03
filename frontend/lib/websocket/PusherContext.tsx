@@ -40,6 +40,9 @@ export function PusherProvider({ children }: PusherProviderProps) {
 
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
     const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'eu';
+    const pusherHost = process.env.NEXT_PUBLIC_PUSHER_HOST;
+    const pusherPort = parseInt(process.env.NEXT_PUBLIC_PUSHER_PORT || '443');
+    const pusherScheme = process.env.NEXT_PUBLIC_PUSHER_SCHEME || 'https';
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     if (!pusherKey) {
@@ -63,10 +66,8 @@ export function PusherProvider({ children }: PusherProviderProps) {
       return csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : null;
     };
 
-    // Create Pusher instance
-    const pusherInstance = new Pusher(pusherKey, {
-      cluster: pusherCluster,
-      forceTLS: true,
+    // Create Pusher instance with custom host configuration
+    const pusherConfig: any = {
       authEndpoint: `${apiUrl}/api/broadcasting/auth`,
       auth: {
         headers: {
@@ -75,9 +76,26 @@ export function PusherProvider({ children }: PusherProviderProps) {
           'X-XSRF-TOKEN': getCsrfToken() || '',
         },
       },
-      // Enable for debugging
-      // enabledTransports: ['ws', 'wss'],
-    });
+    };
+
+    // If custom host is provided, use it (Soketi)
+    if (pusherHost) {
+      pusherConfig.wsHost = pusherHost;
+      pusherConfig.wsPort = pusherPort;
+      pusherConfig.wssPort = pusherPort;
+      pusherConfig.forceTLS = pusherScheme === 'https';
+      pusherConfig.enabledTransports = ['ws', 'wss'];
+      pusherConfig.disableStats = true;
+      console.log('Using custom Pusher host (Soketi):', pusherHost);
+    } else {
+      // Use default Pusher configuration
+      pusherConfig.cluster = pusherCluster;
+      pusherConfig.forceTLS = true;
+      console.log('Using default Pusher cluster:', pusherCluster);
+    }
+
+    // Create Pusher instance
+    const pusherInstance = new Pusher(pusherKey, pusherConfig);
 
     // Connection state handlers
     pusherInstance.connection.bind('connected', () => {

@@ -34,4 +34,14 @@ return [
     ],
     'kyc_approved_body' => 'Votre vérification d\'identité a été approuvée. Vous pouvez maintenant créer des voyages et des expéditions.',
     'kyc_rejected_body' => 'Votre vérification d\'identité a été rejetée. Motif : :reason',
+
+    // Admin notifications
+    'admin_new_user' => [
+        'title' => 'Nouvel utilisateur inscrit',
+        'body' => ':name (:email) vient de créer un compte.',
+    ],
+    'admin_kyc_submitted' => [
+        'title' => 'Nouvelle soumission KYC',
+        'body' => ':name a soumis un document KYC (:document_type) pour vérification.',
+    ],
 ];

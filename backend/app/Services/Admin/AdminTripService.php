@@ -303,6 +303,70 @@ class AdminTripService
     }
 
     /**
+     * Delete a trip permanently.
+     *
+     * @param string $tripId
+     * @param User $admin
+     * @return bool
+     * @throws \Exception
+     */
+    public function deleteTrip(string $tripId, User $admin): bool
+    {
+        $trip = Trip::with('shipments')->findOrFail($tripId);
+
+        // Check if trip has active shipments
+        $activeShipments = $trip->shipments()
+            ->whereIn('status', ['pending', 'accepted', 'in_transit'])
+            ->count();
+
+        if ($activeShipments > 0) {
+            throw new \Exception("Cannot delete trip with active shipments. Please cancel the trip first.");
+        }
+
+        return DB::transaction(function () use ($trip, $admin) {
+            $before = $trip->toArray();
+
+            // Log the deletion
+            AuditLog::log($admin, 'delete', 'trip', $trip->id, $before, ['deleted' => true]);
+
+            // Delete the trip (cascade will handle related records based on migration)
+            $deleted = $trip->delete();
+
+            // Clear cache
+            Cache::forget('admin_trip_analytics');
+
+            return $deleted;
+        });
+    }
+
+    /**
+     * Bulk delete trips.
+     *
+     * @param array $tripIds
+     * @param User $admin
+     * @return array
+     */
+    public function bulkDeleteTrips(array $tripIds, User $admin): array
+    {
+        $deleted = [];
+        $failed = [];
+
+        foreach ($tripIds as $tripId) {
+            try {
+                $this->deleteTrip($tripId, $admin);
+                $deleted[] = $tripId;
+            } catch (\Exception $e) {
+                $failed[] = ['id' => $tripId, 'error' => $e->getMessage()];
+            }
+        }
+
+        return [
+            'deleted' => $deleted,
+            'failed' => $failed,
+        ];
+    }
+
+    /**
      * Get trip analytics.
      *
      * @return array
