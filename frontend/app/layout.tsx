@@ -13,18 +13,50 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "TumaPlus - Community Parcel Delivery",
-  description: "Send packages between Russia and Africa with trusted travelers",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'TumaPlus',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-};
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+export async function generateMetadata(): Promise<Metadata> {
+  let platformName = 'TumaPlus';
+  let faviconUrl: string | undefined;
+  let logoUrl: string | undefined;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/platform/branding`, {
+      next: { revalidate: 300 },
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const data = json.data || {};
+      platformName = data.platform_name || platformName;
+      faviconUrl = data.favicon_url || undefined;
+      logoUrl = data.logo_url || undefined;
+    }
+  } catch {
+    // Use defaults
+  }
+
+  const iconUrl = faviconUrl || logoUrl;
+
+  return {
+    title: `${platformName} - Community Parcel Delivery`,
+    description: "Send packages between Russia and Africa with trusted travelers",
+    icons: iconUrl
+      ? {
+          icon: iconUrl,
+          shortcut: iconUrl,
+          apple: logoUrl || iconUrl,
+        }
+      : undefined,
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: platformName,
+    },
+    formatDetection: {
+      telephone: false,
+    },
+  };
+}
 
 export default function RootLayout({
   children,
