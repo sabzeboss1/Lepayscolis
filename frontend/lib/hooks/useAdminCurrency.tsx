@@ -16,14 +16,14 @@ interface AdminCurrencyContextType {
 }
 
 const AdminCurrencyContext = createContext<AdminCurrencyContextType>({
-  defaultCurrency: 'EUR',
+  defaultCurrency: 'XAF',
   formatCurrency: (amount: number) =>
-    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount),
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(amount),
   convertToDefault: (amount: number) => amount,
 });
 
 export function AdminCurrencyProvider({ children }: { children: ReactNode }) {
-  const [defaultCurrency, setDefaultCurrency] = useState('EUR');
+  const [defaultCurrency, setDefaultCurrency] = useState('XAF');
   const [rates, setRates] = useState<Record<string, number>>({});
 
   useEffect(() => {

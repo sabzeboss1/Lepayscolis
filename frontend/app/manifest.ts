@@ -24,9 +24,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     // Use defaults
   }
 
-  // Use Next.js image optimization to serve correctly sized icons
-  const icon192 = `/_next/image?url=${encodeURIComponent(logoUrl)}&w=256&q=90`;
-  const icon512 = `/_next/image?url=${encodeURIComponent(logoUrl)}&w=640&q=90`;
+  // Use the absolute backend logo URL directly for PWA icons
+  // logoUrl is now an absolute URL from the backend (e.g. https://api.domain.com/storage/branding/logo_xxx.png)
+  const iconSrc = logoUrl;
 
   return {
     name: platformName,
@@ -40,13 +40,13 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     categories: ['logistics', 'travel', 'shipping'],
     icons: [
       {
-        src: icon192,
+        src: iconSrc,
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: icon512,
+        src: iconSrc,
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
@@ -54,14 +54,14 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     ],
     screenshots: [
       {
-        src: icon512,
+        src: iconSrc,
         sizes: '512x512',
         type: 'image/png',
         form_factor: 'wide' as const,
         label: platformName,
       } as any,
       {
-        src: icon512,
+        src: iconSrc,
         sizes: '512x512',
         type: 'image/png',
         label: platformName,

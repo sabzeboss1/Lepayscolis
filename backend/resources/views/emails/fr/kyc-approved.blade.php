@@ -7,7 +7,7 @@
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background-color: #10b981; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0;">
-        <h1 style="margin: 0;">Le Pays Express Colis</h1>
+        <h1 style="margin: 0;">{{ $platformName }}</h1>
     </div>
     
     <div style="background-color: #f9fafb; padding: 30px; border-radius: 0 0 5px 5px;">
@@ -30,12 +30,12 @@
         </div>
         
         <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-            Merci de faire confiance à Le Pays Express Colis pour vos envois internationaux.
+            Merci de faire confiance à {{ $platformName }} pour vos envois internationaux.
         </p>
     </div>
     
     <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
-        <p>&copy; {{ date('Y') }} Le Pays Express Colis. Tous droits réservés.</p>
+        <p>&copy; {{ date('Y') }} {{ $platformName }}. Tous droits réservés.</p>
     </div>
 </body>
 </html>

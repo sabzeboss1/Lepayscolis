@@ -60,7 +60,7 @@ export function useLocaleFormatting() {
   );
 
   const formatCurrency = useCallback(
-    (amount: number, currency: string = 'EUR') => {
+    (amount: number, currency: string = 'XAF') => {
       return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency,

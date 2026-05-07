@@ -8,10 +8,13 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\PlatformSetting;
 
 class WalletBalanceAdjusted extends Mailable
 {
     use Queueable, SerializesModels;
+
+    public string $platformName;
 
     /**
      * Create a new message instance.
@@ -19,7 +22,9 @@ class WalletBalanceAdjusted extends Mailable
     public function __construct(
         public User $user,
         public array $data
-    ) {}
+    ) {
+        $this->platformName = PlatformSetting::get('platform_name', 'TumaPlus');
+    }
 
     /**
      * Get the message envelope.

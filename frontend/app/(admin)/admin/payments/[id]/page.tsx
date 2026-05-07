@@ -150,7 +150,7 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const currency = payment.currency || 'EUR';
+  const currency = payment.currency || 'XAF';
 
   return (
     <div className="space-y-6">

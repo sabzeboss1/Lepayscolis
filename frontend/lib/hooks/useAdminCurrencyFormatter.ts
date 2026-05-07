@@ -39,16 +39,16 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 const AdminCurrencyFormatterContext = createContext<AdminCurrencyFormatterContextType>({
-  defaultCurrency: 'EUR',
+  defaultCurrency: 'XAF',
   formatCurrency: (amount: number) =>
-    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount),
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(amount),
   convertToDefault: (amount: number) => amount,
   formatWithConversion: (amount: number) =>
-    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount),
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(amount),
 });
 
 export function AdminCurrencyFormatterProvider({ children }: { children: ReactNode }) {
-  const [defaultCurrency, setDefaultCurrency] = useState('EUR');
+  const [defaultCurrency, setDefaultCurrency] = useState('XAF');
   const [rates, setRates] = useState<Record<string, number>>({});
 
   useEffect(() => {

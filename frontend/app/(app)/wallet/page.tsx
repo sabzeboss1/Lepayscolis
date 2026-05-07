@@ -6,8 +6,7 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { KYCBlocker } from '@/components/features/KYCBlocker';
-import { CurrencyDisplay } from '@/components/ui/CurrencyDisplay';
-import { useCurrencyFormatter } from '@/lib/hooks/useCurrencyFormatter';
+import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
@@ -33,11 +32,12 @@ const FILTER_TABS: { key: FilterType; label: string }[] = [
   { key: 'debit', label: 'Débits' },
 ];
 
-function TransactionRow({ transaction }: {
+function TransactionRow({ transaction, formatAmount }: {
   transaction: WalletTransaction;
+  formatAmount: (amount: number, currencyCode?: string) => string;
 }) {
   const isCredit = transaction.type === 'credit';
-  
+
   return (
     <div className="flex items-center gap-4 py-3.5 border-b border-slate-100 last:border-0 group">
       {/* Icon */}
@@ -70,10 +70,7 @@ function TransactionRow({ transaction }: {
       {/* Amount */}
       <div className={`text-sm font-bold shrink-0 ${isCredit ? 'text-emerald-600' : 'text-red-500'}`}>
         {isCredit ? '+' : '-'}
-        {transaction.formatted_amount || new Intl.NumberFormat('fr-FR', {
-          style: 'currency',
-          currency: transaction.currency_code || 'EUR',
-        }).format(transaction.amount)}
+        {formatAmount(transaction.amount, transaction.currency_code)}
       </div>
     </div>
   );
@@ -87,7 +84,7 @@ export default function WalletPage() {
   const [balance, setBalance] = useState(0);
   const [heldBalance, setHeldBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
-  const [currency, setCurrency] = useState('EUR');
+  const [currency, setCurrency] = useState('XAF');
   const [originalCurrency, setOriginalCurrency] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -96,6 +93,7 @@ export default function WalletPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  const { formatCurrency: formatUserCurrency } = useUserCurrency();
   const { balance: realtimeBalance } = useRealtimeWalletBalance();
 
   useEffect(() => {
@@ -120,7 +118,7 @@ export default function WalletPage() {
       setBalance(walletData.balance || 0);
       setHeldBalance(walletData.held_balance || 0);
       setAvailableBalance(walletData.available_balance || walletData.balance || 0);
-      setCurrency(walletData.currency_code || 'EUR');
+      setCurrency(walletData.currency_code || 'XAF');
       setOriginalCurrency(walletData.original_currency_code || null);
 
       const transactionsResponse = await apiClient.get<PaginatedResponse<WalletTransaction>>(
@@ -138,13 +136,8 @@ export default function WalletPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fr-FR', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: currency === 'XAF' || currency === 'XOF' ? 0 : 2,
-      maximumFractionDigits: currency === 'XAF' || currency === 'XOF' ? 0 : 2,
-    }).format(amount);
+  const formatCurrency = (amount: number, currencyCode?: string) => {
+    return formatUserCurrency(amount, currencyCode || currency);
   };
 
   const formatDate = (dateString: string) => {
@@ -331,6 +324,7 @@ export default function WalletPage() {
                       <TransactionRow
                         key={transaction.id}
                         transaction={transaction}
+                        formatAmount={formatCurrency}
                       />
                     ))}
                   </div>

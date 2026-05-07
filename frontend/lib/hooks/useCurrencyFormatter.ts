@@ -38,7 +38,7 @@ export function useCurrencyFormatter() {
     setIsHydrated(true);
   }, []);
   
-  const userCurrency = (isHydrated && user?.currency_code) || 'EUR';
+  const userCurrency = (isHydrated && user?.currency_code) || 'XAF';
 
   /**
    * Formate un montant avec la devise appropriée
