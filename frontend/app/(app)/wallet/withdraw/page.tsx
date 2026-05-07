@@ -40,7 +40,7 @@ export default function WithdrawPage() {
   const { countries } = useCountries();
 
   const [balance, setBalance] = useState(0);
-  const [walletCurrency, setWalletCurrency] = useState('EUR');
+  const [walletCurrency, setWalletCurrency] = useState('XAF');
   const [amount, setAmount] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
@@ -67,7 +67,7 @@ export default function WithdrawPage() {
     try {
       const walletResponse = await apiClient.get<{ data: Wallet }>(API_ENDPOINTS.wallet.balance);
       setBalance(walletResponse.data.balance);
-      setWalletCurrency(walletResponse.data.currency_code || 'EUR');
+      setWalletCurrency(walletResponse.data.currency_code || 'XAF');
     } catch (err) {
       const errorResponse = ErrorHandler.handle(err, locale);
       setError(errorResponse.message);

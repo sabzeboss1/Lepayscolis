@@ -354,7 +354,7 @@ export default function NewTripPage() {
       const formDataToSend = new FormData();
 
       // S'assurer qu'on a une devise valide
-      const validCurrencyCode = currencyCode || 'EUR';
+      const validCurrencyCode = currencyCode || 'XAF';
 
       // Ajouter les champs en snake_case (format attendu par le backend)
       formDataToSend.append('departure_country_id', String(formData.departureCountryId!));

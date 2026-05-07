@@ -7,4 +7,3 @@ export { WhyChooseSection } from './WhyChooseSection';
 export { TestimonialsSection } from './TestimonialsSection';
 export { PopularDestinationsSection } from './PopularDestinationsSection';
 export { CTASection } from './CTASection';
-export { ImagePlaceholder } from './ImagePlaceholder';

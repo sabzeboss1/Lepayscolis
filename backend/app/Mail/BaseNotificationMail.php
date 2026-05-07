@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\PlatformSetting;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -13,13 +14,17 @@ abstract class BaseNotificationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public string $platformName;
+
     /**
      * Create a new message instance.
      */
     public function __construct(
         public User $user,
         public array $data = []
-    ) {}
+    ) {
+        $this->platformName = PlatformSetting::get('platform_name', 'TumaPlus');
+    }
 
     /**
      * Get the message envelope.

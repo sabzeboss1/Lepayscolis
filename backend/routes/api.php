@@ -67,10 +67,10 @@ Route::get('/cookies', [StaticPageController::class, 'cookies']);
 Route::get('/legal', [StaticPageController::class, 'legal']);
 Route::get('/platform/branding', function () {
     $keys = [
-        'logo_url', 
-        'favicon_url', 
-        'primary_color', 
-        'secondary_color', 
+        'logo_url',
+        'favicon_url',
+        'primary_color',
+        'secondary_color',
         'platform_name',
         'contact_email',
         'contact_phone',
@@ -84,8 +84,13 @@ Route::get('/platform/branding', function () {
         'max_shipment_price',
     ];
     $settings = [];
+    $urlKeys = ['logo_url', 'favicon_url'];
     foreach ($keys as $key) {
-        $settings[$key] = \App\Models\PlatformSetting::get($key);
+        $value = \App\Models\PlatformSetting::get($key);
+        if ($value && in_array($key, $urlKeys) && !str_starts_with($value, 'http')) {
+            $value = rtrim(config('app.url'), '/') . '/' . ltrim($value, '/');
+        }
+        $settings[$key] = $value;
     }
     return response()->json(['data' => $settings]);
 })->middleware('throttle:60,1');

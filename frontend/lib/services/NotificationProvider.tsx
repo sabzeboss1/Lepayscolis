@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
 import { Toast, ToastContainer } from '@/components/ui/Toast';
 import { NotificationService } from './NotificationService';
 import { useAuth } from '@/lib/auth';
@@ -31,6 +31,7 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const prevCountRef = useRef(0);
 
   // Subscribe to NotificationService for toasts
   useEffect(() => {
@@ -68,11 +69,10 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
         const data = await response.json();
         const newNotifications = data.notifications || [];
         const newUnreadCount = data.unread_count || 0;
-        
-        // Check if there are new notifications
-        if (notifications.length > 0 && newNotifications.length > notifications.length) {
+
+        // Check if there are new notifications since last fetch
+        if (prevCountRef.current > 0 && newNotifications.length > prevCountRef.current) {
           const latestNotification = newNotifications[0];
-          // Show toast for new notification
           NotificationService.show({
             type: 'info',
             title: latestNotification.title,
@@ -80,7 +80,8 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
             duration: 5000,
           });
         }
-        
+        prevCountRef.current = newNotifications.length;
+
         setNotifications(newNotifications);
         setUnreadCount(newUnreadCount);
       } else if (response.status === 401) {
@@ -93,7 +94,7 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, notifications.length]);
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mark notification as read
   const markAsRead = useCallback(async (id: string) => {

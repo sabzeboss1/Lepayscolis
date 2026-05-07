@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\PlatformSetting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,6 +15,7 @@ class PasswordResetMail extends Mailable
 
     public string $resetUrl;
     public string $userName;
+    public string $platformName;
 
     /**
      * Create a new message instance.
@@ -22,6 +24,7 @@ class PasswordResetMail extends Mailable
     {
         $this->resetUrl = $resetUrl;
         $this->userName = $userName;
+        $this->platformName = PlatformSetting::get('platform_name', 'TumaPlus');
     }
 
     /**

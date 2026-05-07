@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 
 /**
  * Hook that provides currency formatting based on the logged-in user's currency_code preference.
- * Falls back to 'EUR' if no user or no currency_code set.
+ * Falls back to 'XAF' if no user or no currency_code set.
  * Handles SSR hydration properly.
  */
 export function useUserCurrency() {
@@ -17,7 +17,7 @@ export function useUserCurrency() {
     setIsHydrated(true);
   }, []);
   
-  const currencyCode = (isHydrated && user?.currency_code) || 'EUR';
+  const currencyCode = (isHydrated && user?.currency_code) || 'XAF';
 
   const formatCurrency = useCallback(
     (amount: number, overrideCurrency?: string) => {
