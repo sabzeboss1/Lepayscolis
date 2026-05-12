@@ -89,7 +89,7 @@ export default function AdminProfilePage() {
 
     setUploadingAvatar(true);
     try {
-      await apiClient.uploadFile(API_ENDPOINTS.auth.uploadAvatar, file);
+      await apiClient.uploadFile(API_ENDPOINTS.auth.uploadAvatar, file, undefined, 'avatar');
       await refreshUser();
       showMessage('success', t('admin.profile.success.avatarUpdated'));
     } catch (err: any) {

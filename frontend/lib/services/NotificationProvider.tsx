@@ -4,6 +4,9 @@ import React, { useState, useEffect, useCallback, useRef, createContext, useCont
 import { Toast, ToastContainer } from '@/components/ui/Toast';
 import { NotificationService } from './NotificationService';
 import { useAuth } from '@/lib/auth';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
+
 import type { Notification } from '@/lib/types/api';
 
 interface NotificationContextValue {
@@ -48,79 +51,49 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        console.log('No auth token found');
-        setNotifications([]);
-        setUnreadCount(0);
-        setIsLoading(false);
-        return;
+      const response = await apiClient.get<{
+        notifications: Notification[];
+        unread_count: number;
+        pagination: { current_page: number; last_page: number; per_page: number; total: number };
+      }>(API_ENDPOINTS.notifications.list);
+
+      const newNotifications = response.notifications || [];
+      const newUnreadCount = response.unread_count || 0;
+
+      // Check if there are new notifications since last fetch
+      if (prevCountRef.current > 0 && newNotifications.length > prevCountRef.current) {
+        const latestNotification = newNotifications[0];
+        NotificationService.show({
+          type: 'info',
+          title: latestNotification.title,
+          message: latestNotification.message || (latestNotification as any).body,
+          duration: 5000,
+        });
       }
+      prevCountRef.current = newNotifications.length;
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const newNotifications = data.notifications || [];
-        const newUnreadCount = data.unread_count || 0;
-
-        // Check if there are new notifications since last fetch
-        if (prevCountRef.current > 0 && newNotifications.length > prevCountRef.current) {
-          const latestNotification = newNotifications[0];
-          NotificationService.show({
-            type: 'info',
-            title: latestNotification.title,
-            message: latestNotification.message || latestNotification.body,
-            duration: 5000,
-          });
-        }
-        prevCountRef.current = newNotifications.length;
-
-        setNotifications(newNotifications);
-        setUnreadCount(newUnreadCount);
-      } else if (response.status === 401) {
-        console.log('User not authenticated for notifications');
-        setNotifications([]);
-        setUnreadCount(0);
-      }
+      setNotifications(newNotifications);
+      setUnreadCount(newUnreadCount);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Mark notification as read
   const markAsRead = useCallback(async (id: string) => {
     if (!isAuthenticated) return;
 
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) return;
+      await apiClient.put(API_ENDPOINTS.notifications.markRead(id));
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/${id}/read`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((notif) =>
-            notif.id === id ? { ...notif, is_read: true } : notif
-          )
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif.id === id ? { ...notif, is_read: true } : notif
+        )
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
@@ -131,24 +104,12 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     if (!isAuthenticated) return;
 
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) return;
+      await apiClient.put(API_ENDPOINTS.notifications.markAllRead);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/read-all`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((notif) => ({ ...notif, is_read: true }))
-        );
-        setUnreadCount(0);
-      }
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, is_read: true }))
+      );
+      setUnreadCount(0);
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
     }
@@ -169,17 +130,15 @@ export function NotificationProvider({ children, position = 'top-right' }: Notif
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  // Polling for new notifications every 30 seconds
+  // Poll for notifications every 15 seconds
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Initial fetch
     fetchNotifications();
 
-    // Poll every 30 seconds
     const interval = setInterval(() => {
       fetchNotifications();
-    }, 30000);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [isAuthenticated, fetchNotifications]);

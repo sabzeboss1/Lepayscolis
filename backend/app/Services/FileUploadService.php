@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -51,10 +52,16 @@ class FileUploadService
         $encodedImage = $image->encode($encoder);
 
         // Upload to public disk (storage/app/public)
-        Storage::disk('public')->put($filename, (string) $encodedImage);
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+        $stored = $disk->put($filename, (string) $encodedImage);
+
+        if (!$stored) {
+            throw new \Exception('Failed to upload avatar');
+        }
 
         // Return public URL (accessible via /storage symlink)
-        return Storage::disk('public')->url($filename);
+        return $disk->url($filename);
     }
 
     /**
@@ -117,7 +124,9 @@ class FileUploadService
         }
 
         // Return URL (served by Laravel via local disk with serve => true)
-        return Storage::disk('local')->url($filename);
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('local');
+        return $disk->url($filename);
     }
 
     /**
@@ -188,7 +197,7 @@ class FileUploadService
             return false;
         } catch (\Exception $e) {
             // Log error but don't throw exception
-            \Log::error('Failed to delete file from storage', [
+            Log::error('Failed to delete file from storage', [
                 'path' => $path,
                 'error' => $e->getMessage()
             ]);
@@ -230,7 +239,7 @@ class FileUploadService
         if (isset($allowedMimeTypes[$extension])) {
             if (!in_array($mimeType, $allowedMimeTypes[$extension])) {
                 // Log warning but don't throw exception - trust extension validation
-                \Log::warning("MIME type mismatch for {$fileType}", [
+                Log::warning("MIME type mismatch for {$fileType}", [
                     'expected' => $allowedMimeTypes[$extension],
                     'actual' => $mimeType,
                     'extension' => $extension,

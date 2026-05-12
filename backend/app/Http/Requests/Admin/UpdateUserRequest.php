@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -23,7 +24,14 @@ class UpdateUserRequest extends FormRequest
 
         return [
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'email', 'max:255', 'unique:users,email,' . $userId],
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')
+                    ->ignore($userId)
+                    ->whereNull('deleted_at'),
+            ],
             'phone' => ['sometimes', 'string', 'max:20'],
         ];
     }
