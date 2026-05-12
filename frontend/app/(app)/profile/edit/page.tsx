@@ -226,20 +226,7 @@ export default function ProfileEditPage() {
 
       // Upload avatar separately if changed
       if (avatarFile) {
-        const fd = new FormData();
-        fd.append('avatar', avatarFile);
-
-        const apiUrl = apiClient.baseUrl;
-        const token = document.cookie.split('; ').find(c => c.startsWith('auth-token='))?.split('=')[1];
-
-        await fetch(`${apiUrl}${API_ENDPOINTS.auth.uploadAvatar}`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: fd,
-        });
+        await apiClient.uploadFile(API_ENDPOINTS.auth.uploadAvatar, avatarFile, undefined, 'avatar');
       }
 
       // Refresh auth context with updated user data

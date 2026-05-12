@@ -73,6 +73,12 @@ class UserController extends Controller
         
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
             'phone' => [
                 'sometimes',
                 'string',

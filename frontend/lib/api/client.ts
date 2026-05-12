@@ -338,11 +338,12 @@ export class ApiClient {
   async uploadFile<T>(
     endpoint: string,
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    fieldName = 'file'
   ): Promise<T> {
     const url = new URL(endpoint, this.config.baseUrl);
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append(fieldName, file);
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -380,6 +381,7 @@ export class ApiClient {
       });
 
       xhr.open('POST', url.toString());
+      xhr.setRequestHeader('Accept', 'application/json');
       
       // Add auth headers
       const token = this.getAuthToken();
@@ -447,6 +449,7 @@ export class ApiClient {
       });
 
       xhr.open('POST', url.toString());
+      xhr.setRequestHeader('Accept', 'application/json');
       
       const token = this.getAuthToken();
       if (token) {
@@ -512,6 +515,7 @@ export class ApiClient {
       });
 
       xhr.open('POST', url.toString());
+      xhr.setRequestHeader('Accept', 'application/json');
       
       const token = this.getAuthToken();
       if (token) {
