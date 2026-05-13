@@ -210,7 +210,7 @@ class UserController extends Controller
             
             return response()->json([
                 'message' => __('messages.profile.avatar_uploaded'),
-                'avatar_url' => $avatarUrl,
+                'avatar_url' => asset('storage/' . $avatarUrl),
                 'user' => new UserResource($user),
             ]);
         } catch (\Exception $e) {
@@ -276,14 +276,15 @@ class UserController extends Controller
     private function deleteOldAvatar(string $avatarUrl): void
     {
         try {
-            // Extract path from local storage URL
-            // URL format: http://host/storage/avatars/user_id_timestamp.ext
-            $path = parse_url($avatarUrl, PHP_URL_PATH);
+            // Support both legacy full URLs and new relative paths
+            if (str_starts_with($avatarUrl, 'http')) {
+                $path = parse_url($avatarUrl, PHP_URL_PATH);
+                $path = preg_replace('#^/storage/#', '', ltrim($path, '/'));
+            } else {
+                $path = $avatarUrl;
+            }
 
             if ($path) {
-                // Remove /storage/ prefix to get the relative path within the public disk
-                $path = preg_replace('#^/storage/#', '', ltrim($path, '/'));
-
                 // Delete file
                 $this->fileUploadService->deleteFile($path);
 

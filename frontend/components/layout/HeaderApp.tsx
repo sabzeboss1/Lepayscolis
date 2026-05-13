@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { NotificationDropdown } from '@/components/features/NotificationDropdown';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -227,11 +226,9 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                     }}
                   >
                     {user.avatar ? (
-                      <Image
+                      <img
                         src={user.avatar}
                         alt={user.name}
-                        width={32}
-                        height={32}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -278,7 +275,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                           }}
                         >
                           {user.avatar ? (
-                            <Image src={user.avatar} alt={user.name} width={40} height={40} className="object-cover" />
+                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
                             user.name.charAt(0).toUpperCase()
                           )}
@@ -354,11 +351,9 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                 aria-label="Mon profil"
               >
                 {user.avatar ? (
-                  <Image
+                  <img
                     src={user.avatar}
                     alt={user.name}
-                    width={36}
-                    height={36}
                     className="w-full h-full object-cover"
                   />
                 ) : (

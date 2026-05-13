@@ -60,8 +60,8 @@ class FileUploadService
             throw new \Exception('Failed to upload avatar');
         }
 
-        // Return public URL (accessible via /storage symlink)
-        return $disk->url($filename);
+        // Return relative path — URL is built in UserResource
+        return $filename;
     }
 
     /**

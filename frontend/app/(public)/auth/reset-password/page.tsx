@@ -75,7 +75,7 @@ function ResetPasswordContent() {
     setStatusMessage('Réinitialisation en cours...');
 
     try {
-      await apiClient.post('/auth/reset-password', {
+      await apiClient.post('/api/auth/reset-password', {
         email,
         token,
         password: data.password,
