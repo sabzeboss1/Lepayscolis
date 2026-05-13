@@ -41,11 +41,14 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
         $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
         $resetUrl = $frontendUrl . '/auth/reset-password?token=' . $this->token . '&email=' . urlencode($this->email);
 
+        $platformName = \App\Models\PlatformSetting::get('platform_name', config('app.name'));
+
         return (new MailMessage)
             ->subject('Réinitialisation de votre mot de passe')
             ->view('emails.password-reset', [
                 'resetUrl' => $resetUrl,
                 'userName' => $notifiable->name,
+                'platformName' => $platformName,
             ]);
     }
 

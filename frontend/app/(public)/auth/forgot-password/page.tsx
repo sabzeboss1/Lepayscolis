@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
     setStatusMessage('Envoi en cours...');
 
     try {
-      await apiClient.post('/auth/forgot-password', data);
+      await apiClient.post('/api/auth/forgot-password', data);
       setSuccess(true);
       setStatusMessage('Email envoyé avec succès');
     } catch (err) {
