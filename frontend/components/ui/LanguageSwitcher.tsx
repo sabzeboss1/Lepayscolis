@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Locale, locales, localeNames } from '@/lib/i18n/config';
 import { ChevronDown } from 'lucide-react';
+import { setGoogleTranslateLanguage } from './GoogleTranslateWidget';
 
 export interface LanguageSwitcherProps {
   currentLocale: Locale;
@@ -44,6 +45,9 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         localStorage.setItem('locale', newLocale);
       }
       onLocaleChange(newLocale);
+
+      // Trigger Google Translate in the background
+      setGoogleTranslateLanguage(newLocale);
     }
     setIsOpen(false);
   };

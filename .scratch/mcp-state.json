@@ -1,0 +1,89 @@
+{
+  "diffs": [
+    {
+      "file": "c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\diagnostics\\build-diagnostics.json",
+      "timestamp": 1779962242271,
+      "toonString": "type: FileDiff\nfile: c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\diagnostics\\build-diagnostics.json\ntimestamp: 1779962239744\nchanges:\n  - line: 2-1\n    removed: |\n        \"buildStage\": \"type-checking\",\n    modified: |\n        \"buildStage\": \"static-generation\",\nsummary: |\n  Failed to generate summary: Canceled\ncontextAware: false\n",
+      "diff": {
+        "type": "FileDiff",
+        "file": "c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\diagnostics\\build-diagnostics.json",
+        "timestamp": 1779962239744,
+        "changes": [
+          {
+            "line": "2-1",
+            "added": "",
+            "removed": "  \"buildStage\": \"type-checking\",",
+            "modified": "  \"buildStage\": \"static-generation\","
+          }
+        ],
+        "summary": "Failed to generate summary: Canceled",
+        "contextAware": false
+      },
+      "summary": "Failed to generate summary: Canceled"
+    },
+    {
+      "file": "c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\static\\enVgDt4TFO3Mg6phzzItn\\_clientMiddlewareManifest.js",
+      "timestamp": 1779962242276,
+      "toonString": "type: FileDiff\nfile: c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\static\\enVgDt4TFO3Mg6phzzItn\\_clientMiddlewareManifest.js\ntimestamp: 1779962239745\nchanges:\n  - line: 1-0\n    removed: |\n      self.__MIDDLEWARE_MATCHERS = [];self.__MIDDLEWARE_MATCHERS_CB && self.__MIDDLEWARE_MATCHERS_CB()\n    modified: |\n      self.__MIDDLEWARE_MATCHERS = [\n        {\n          \"regexp\": \"^(?:\\\\/(_next\\\\/data\\\\/[^/]{1,}))?(?:\\\\/((?!api|_next\\\\/static|_next\\\\/image|favicon.ico|.*\\\\.svg|.*\\\\.png|.*\\\\.jpg|.*\\\\.jpeg|.*\\\\.gif|.*\\\\.webp).*))(\\\\.json|\\\\.rsc|\\\\.segments\\\\/.+\\\\.segment\\\\.rsc)?[\\\\/#\\\\?]?$\",\n          \"originalSource\": \"/((?!api|_next/static|_next/image|favicon.ico|.*\\\\.svg|.*\\\\.png|.*\\\\.jpg|.*\\\\.jpeg|.*\\\\.gif|.*\\\\.webp).*)\"\n        }\n      ];self.__MIDDLEWARE_MATCHERS_CB && self.__MIDDLEWARE_MATCHERS_CB()\nsummary: |\n  Failed to generate summary: Canceled\ncontextAware: false\n",
+      "diff": {
+        "type": "FileDiff",
+        "file": "c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\static\\enVgDt4TFO3Mg6phzzItn\\_clientMiddlewareManifest.js",
+        "timestamp": 1779962239745,
+        "changes": [
+          {
+            "line": "1-0",
+            "added": "",
+            "removed": "self.__MIDDLEWARE_MATCHERS = [];self.__MIDDLEWARE_MATCHERS_CB && self.__MIDDLEWARE_MATCHERS_CB()",
+            "modified": "self.__MIDDLEWARE_MATCHERS = [\n  {\n    \"regexp\": \"^(?:\\\\/(_next\\\\/data\\\\/[^/]{1,}))?(?:\\\\/((?!api|_next\\\\/static|_next\\\\/image|favicon.ico|.*\\\\.svg|.*\\\\.png|.*\\\\.jpg|.*\\\\.jpeg|.*\\\\.gif|.*\\\\.webp).*))(\\\\.json|\\\\.rsc|\\\\.segments\\\\/.+\\\\.segment\\\\.rsc)?[\\\\/#\\\\?]?$\",\n    \"originalSource\": \"/((?!api|_next/static|_next/image|favicon.ico|.*\\\\.svg|.*\\\\.png|.*\\\\.jpg|.*\\\\.jpeg|.*\\\\.gif|.*\\\\.webp).*)\"\n  }\n];self.__MIDDLEWARE_MATCHERS_CB && self.__MIDDLEWARE_MATCHERS_CB()"
+          }
+        ],
+        "summary": "Failed to generate summary: Canceled",
+        "contextAware": false
+      },
+      "summary": "Failed to generate summary: Canceled"
+    },
+    {
+      "file": "c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\server\\pages-manifest.json",
+      "timestamp": 1779962242277,
+      "toonString": "type: FileDiff\nfile: c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\server\\pages-manifest.json\ntimestamp: 1779962240127\nchanges:\n  - line: 1-0\n    removed: |\n      {}\n    modified: |\n      {\n        \"/404\": \"pages/404.html\",\n        \"/500\": \"pages/500.html\"\n      }\nsummary: |\n  Failed to generate summary: Canceled\ncontextAware: false\n",
+      "diff": {
+        "type": "FileDiff",
+        "file": "c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\server\\pages-manifest.json",
+        "timestamp": 1779962240127,
+        "changes": [
+          {
+            "line": "1-0",
+            "added": "",
+            "removed": "{}",
+            "modified": "{\n  \"/404\": \"pages/404.html\",\n  \"/500\": \"pages/500.html\"\n}"
+          }
+        ],
+        "summary": "Failed to generate summary: Canceled",
+        "contextAware": false
+      },
+      "summary": "Failed to generate summary: Canceled"
+    },
+    {
+      "file": "c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\static\\enVgDt4TFO3Mg6phzzItn\\_ssgManifest.js",
+      "timestamp": 1779962242286,
+      "toonString": "type: FileDiff\nfile: c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\static\\enVgDt4TFO3Mg6phzzItn\\_ssgManifest.js\ntimestamp: 1779962240127\nchanges:\n  - line: 1-0\n    removed: |\n      self.__SSG_MANIFEST=new Set;self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()\n    modified: |\n      self.__SSG_MANIFEST=new Set([]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()\nsummary: |\n  Failed to generate summary: Canceled\ncontextAware: false\n",
+      "diff": {
+        "type": "FileDiff",
+        "file": "c:\\laragon\\www\\leo\\Lepayscolis\\frontend\\.next\\static\\enVgDt4TFO3Mg6phzzItn\\_ssgManifest.js",
+        "timestamp": 1779962240127,
+        "changes": [
+          {
+            "line": "1-0",
+            "added": "",
+            "removed": "self.__SSG_MANIFEST=new Set;self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()",
+            "modified": "self.__SSG_MANIFEST=new Set([]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()"
+          }
+        ],
+        "summary": "Failed to generate summary: Canceled",
+        "contextAware": false
+      },
+      "summary": "Failed to generate summary: Canceled"
+    }
+  ],
+  "lastUpdated": 1779962242286
+}

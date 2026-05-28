@@ -114,7 +114,7 @@ class KYCController extends Controller
             
             return response()->json([
                 'message' => 'Failed to submit KYC document',
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }
@@ -210,7 +210,7 @@ class KYCController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to approve KYC document',
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }
@@ -249,7 +249,7 @@ class KYCController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to reject KYC document',
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }

@@ -85,14 +85,14 @@ class FileUploadService
         $extension = $file->getClientOriginalExtension();
         $filename = "kyc/{$userId}/{$type}_" . time() . ".{$extension}";
 
-        // Upload to public storage (accessible via /storage symlink)
-        $path = $file->storeAs('', $filename, 'public');
+        // HIGH-3: Store on private local disk — serve via authenticated controller only
+        $path = $file->storeAs('', $filename, 'local');
 
         if (!$path) {
             throw new \Exception('Failed to upload KYC document');
         }
 
-        // Return relative path (full URL built by resource)
+        // Return relative path (served via KYCDocumentController with auth check)
         return $filename;
     }
 
@@ -238,12 +238,10 @@ class FileUploadService
 
         if (isset($allowedMimeTypes[$extension])) {
             if (!in_array($mimeType, $allowedMimeTypes[$extension])) {
-                // Log warning but don't throw exception - trust extension validation
-                Log::warning("MIME type mismatch for {$fileType}", [
-                    'expected' => $allowedMimeTypes[$extension],
-                    'actual' => $mimeType,
-                    'extension' => $extension,
-                ]);
+                // MED-3: Hard rejection — MIME type must match the declared extension
+                throw new \Exception(
+                    "File content type '{$mimeType}' does not match extension '.{$extension}' for {$fileType}. Upload rejected."
+                );
             }
         }
     }
@@ -274,13 +272,13 @@ class FileUploadService
      */
     private function getDiskFromPath(string $path): string
     {
-        // Avatars, branding assets, and KYC documents are stored in public disk
-        if (str_starts_with($path, 'avatars/') || str_starts_with($path, 'branding/') || str_starts_with($path, 'kyc/')) {
+        // Avatars and branding assets are stored in public disk
+        if (str_starts_with($path, 'avatars/') || str_starts_with($path, 'branding/')) {
             return 'public';
         }
 
-        // Travel proofs are stored in local (private) disk
-        if (str_starts_with($path, 'travel-proofs/')) {
+        // HIGH-3: KYC documents and travel proofs are private — use local disk
+        if (str_starts_with($path, 'kyc/') || str_starts_with($path, 'travel-proofs/')) {
             return 'local';
         }
 
@@ -296,8 +294,8 @@ class FileUploadService
      */
     private function getStorageDisk(string $type = 'private'): string
     {
-        // Check if AWS is configured
-        $awsConfigured = !empty(env('AWS_ACCESS_KEY_ID')) && !empty(env('AWS_SECRET_ACCESS_KEY'));
+        // HIGH-5: Use config() not env() so this works with config:cache in production
+        $awsConfigured = !empty(config('services.aws.key')) && !empty(config('services.aws.secret'));
         
         if (!$awsConfigured) {
             // Use local storage as fallback

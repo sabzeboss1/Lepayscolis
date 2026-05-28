@@ -176,9 +176,12 @@ class MessageController extends Controller
      */
     private function findOrCreateConversation(int $userId1, int $userId2, ?string $conversationId = null): Conversation
     {
-        // If conversation_id provided, verify and return it
+        // If conversation_id provided, verify the caller is a participant before reusing it
         if ($conversationId) {
-            $conversation = Conversation::find($conversationId);
+            $conversation = Conversation::where('id', $conversationId)
+                ->where(function ($q) use ($userId1) {
+                    $q->where('user1_id', $userId1)->orWhere('user2_id', $userId1);
+                })->first();
             if ($conversation) {
                 return $conversation;
             }

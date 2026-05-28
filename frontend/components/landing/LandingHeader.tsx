@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Menu, X, Globe, ChevronDown } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
+import { Locale, defaultLocale } from '@/lib/i18n/config';
 
 const NAV_LINKS = [
   { label: 'Accueil', href: '/' },
@@ -17,6 +19,13 @@ const NAV_LINKS = [
 export function LandingHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [locale, setLocale] = useState<Locale>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('lepaysexpresscolis-locale') as Locale | null;
+      if (stored === 'fr' || stored === 'en') return stored;
+    }
+    return defaultLocale;
+  });
   const { logo_url } = usePlatformBranding();
 
   useEffect(() => {
@@ -65,19 +74,13 @@ export function LandingHeader() {
 
           {/* Right Side */}
           <div className="flex items-center gap-3">
-            {/* Language */}
-            <button
-              className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isScrolled
-                  ? 'text-gray-600 hover:bg-gray-100'
-                  : 'text-white/80 hover:bg-white/10'
-              }`}
-              aria-label="Changer de langue"
-            >
-              <Globe className="w-4 h-4" />
-              <span>FR</span>
-              <ChevronDown className="w-3 h-3" />
-            </button>
+            {/* Language Switcher */}
+            <div className="hidden md:block">
+              <LanguageSwitcher
+                currentLocale={locale}
+                onLocaleChange={setLocale}
+              />
+            </div>
 
             {/* Auth */}
             <div className="hidden md:flex items-center gap-2">
@@ -138,6 +141,15 @@ export function LandingHeader() {
                   {link.label}
                 </Link>
               ))}
+
+              {/* Language Switcher in mobile menu */}
+              <div className="px-4 py-2">
+                <LanguageSwitcher
+                  currentLocale={locale}
+                  onLocaleChange={setLocale}
+                />
+              </div>
+
               <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-gray-100 pb-2">
                 <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
                   <Button

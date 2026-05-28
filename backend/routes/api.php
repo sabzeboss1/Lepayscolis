@@ -38,10 +38,10 @@ Route::get('/health', [SetupController::class, 'health']);
 
 // Public authentication routes
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth-login');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth-login');
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,15');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,15');
 });
 
 // Broadcasting authentication (for Pusher private/presence channels)
@@ -140,8 +140,8 @@ Route::prefix('trips')->group(function () {
     Route::get('/{id}', [TripController::class, 'show'])->middleware('optional.auth');
 });
 
-// Serve travel proof files (public - anyone can view) - Outside trips group to avoid route conflict
-Route::get('/trips/{id}/travel-proof', [TravelProofController::class, 'show']);
+// Serve travel proof files (private - owner, assigned sender, or admin only)
+Route::middleware('auth:sanctum')->get('/trips/{id}/travel-proof', [TravelProofController::class, 'show']);
 
 // Shipment routes
 Route::prefix('shipments')->group(function () {
