@@ -73,7 +73,7 @@ export default function RatingDetailPage({ params }: { params: Promise<{ id: str
     }
 
     try {
-      await apiClient.delete<any>(API_ENDPOINTS.admin.ratings.delete(ratingId), { params: { reason: deleteReason } });
+      await apiClient.delete<any>(API_ENDPOINTS.admin.ratings.delete(ratingId), { body: { reason: deleteReason } });
       router.push('/admin/ratings');
     } catch (error) {
       console.error('Failed to delete rating:', error);
