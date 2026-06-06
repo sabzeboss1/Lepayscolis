@@ -164,7 +164,7 @@ class TripController extends Controller
                     
                     return response()->json([
                         'message' => 'Failed to upload travel proof',
-                        'error' => $e->getMessage()
+                        ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
                     ], 500);
                 }
             }
@@ -203,7 +203,7 @@ class TripController extends Controller
 
             return response()->json([
                 'message' => 'Failed to create trip',
-                'error' => $e->getMessage()
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }
@@ -346,7 +346,7 @@ class TripController extends Controller
 
             return response()->json([
                 'message' => 'Failed to update trip',
-                'error' => $e->getMessage()
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }

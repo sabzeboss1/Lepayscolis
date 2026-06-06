@@ -52,6 +52,17 @@ export default function LineChart({
     );
   }
 
+  if (data.length === 1) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        {title && <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>}
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          <p>Not enough data to display a chart</p>
+        </div>
+      </div>
+    );
+  }
+
   const padding = { top: 50, right: 20, bottom: 40, left: 60 };
   const chartWidth = 800;
   const chartHeight = height;
@@ -66,6 +77,7 @@ export default function LineChart({
     return innerHeight - ((value - minValue) / valueRange) * innerHeight;
   };
   const xScale = (index: number) => {
+    if (data.length <= 1) return innerWidth / 2;
     return (index / (data.length - 1)) * innerWidth;
   };
 

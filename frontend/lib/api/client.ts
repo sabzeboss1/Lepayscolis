@@ -30,6 +30,7 @@ interface ApiClientConfig {
 interface RequestConfig {
   headers?: Record<string, string>;
   params?: Record<string, any>;
+  body?: Record<string, any>;
   signal?: AbortSignal;
 }
 
@@ -313,6 +314,15 @@ export class ApiClient {
    */
   async delete<T>(endpoint: string, config?: RequestConfig): Promise<T> {
     const url = new URL(endpoint, this.config.baseUrl);
+
+    if (config?.params) {
+      Object.entries(config.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          url.searchParams.append(key, String(value));
+        }
+      });
+    }
+
     const skipCSRF = endpoint.includes('/admin/');
     const headers = this.addHeaders(config?.headers, true, skipCSRF);
     const controller = new AbortController();
@@ -324,6 +334,7 @@ export class ApiClient {
           method: 'DELETE',
           headers,
           credentials: 'include',
+          body: config?.body ? JSON.stringify(config.body) : undefined,
           signal: config?.signal || controller.signal,
         })
       );

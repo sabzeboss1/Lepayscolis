@@ -360,6 +360,14 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                   user.name.charAt(0).toUpperCase()
                 )}
               </Link>
+
+              {/* Language switcher on mobile */}
+              <div className="md:hidden">
+                <LanguageSwitcher
+                  currentLocale={locale}
+                  onLocaleChange={setLocale}
+                />
+              </div>
             </div>
           </div>
         </div>

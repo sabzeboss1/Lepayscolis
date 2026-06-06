@@ -13,6 +13,8 @@ export type { RatingStarsProps } from './RatingStars';
 export { LanguageSwitcher } from './LanguageSwitcher';
 export type { LanguageSwitcherProps } from './LanguageSwitcher';
 
+export { GoogleTranslateLoader, setGoogleTranslateLanguage } from './GoogleTranslateWidget';
+
 export { UserCard } from './UserCard';
 export type { UserCardProps } from './UserCard';
 

@@ -141,7 +141,7 @@ class ShipmentController extends Controller
                 
                 return response()->json([
                     'message' => 'Failed to hold funds. Please try again.',
-                    'error' => $e->getMessage(),
+                    ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
                 ], 500);
             }
 
@@ -468,7 +468,7 @@ class ShipmentController extends Controller
 
             return response()->json([
                 'message' => 'Payment processing failed. No changes were made. Please contact support.',
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }

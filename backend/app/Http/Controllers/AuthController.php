@@ -78,7 +78,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => __('messages.auth.register_failed'),
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }
@@ -140,7 +140,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => __('messages.auth.login_failed'),
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }
@@ -254,7 +254,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => __('messages.auth.password_reset_failed'),
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }
@@ -322,7 +322,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => __('messages.auth.password_reset_failed'),
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }

@@ -119,7 +119,7 @@ class UserController extends Controller
                 
                 return response()->json([
                     'message' => __('messages.profile.avatar_failed'),
-                    'error' => $e->getMessage(),
+                    ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
                 ], 500);
             }
         }
@@ -221,7 +221,7 @@ class UserController extends Controller
             
             return response()->json([
                 'message' => __('messages.profile.avatar_failed'),
-                'error' => $e->getMessage(),
+                ...(config('app.debug') ? ['debug' => $e->getMessage()] : []),
             ], 500);
         }
     }

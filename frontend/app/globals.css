@@ -288,3 +288,36 @@ html {
 .animate-slide-in-right {
   animation: slide-in-right 0.3s ease-out;
 }
+
+/* ═══════════════════════════════════════════════
+   Google Translate — Background Mode
+   The widget UI is completely hidden. Translation is
+   triggered programmatically via LanguageSwitcher.
+   ═══════════════════════════════════════════════ */
+
+/* Hide the Google Translate top banner bar */
+body > .skiptranslate {
+  display: none !important;
+}
+
+/* Prevent Google from pushing the body down */
+body {
+  top: 0 !important;
+}
+
+/* Hide the Google Translate notification bar / iframe */
+.goog-te-banner-frame,
+iframe.goog-te-banner-frame {
+  display: none !important;
+}
+
+/* Hide the tooltip popup on hover */
+#goog-gt-tt {
+  display: none !important;
+}
+
+/* Remove highlight effect on translated text */
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}

@@ -39,8 +39,10 @@ use App\Observers\UserObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -59,6 +61,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Configure rate limiters
         $this->configureRateLimiting();
+
+        // HIGH-2: Restrict Log Viewer to super admins only
+        // Gate defined here so it applies regardless of environment.
+        LogViewer::auth(function (Request $request) {
+            return $request->user()?->isSuperAdmin() === true;
+        });
         
         // Register User observer
         User::observe(UserObserver::class);
@@ -148,6 +156,11 @@ class AppServiceProvider extends ServiceProvider
         // Authentication endpoints: 5 requests per minute per IP
         RateLimiter::for('auth', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip());
+        });
+
+        // MED-1: Login / register rate limiter — 10 attempts per minute per IP
+        RateLimiter::for('auth-login', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
         });
     }
 }

@@ -38,10 +38,10 @@ Route::get('/health', [SetupController::class, 'health']);
 
 // Public authentication routes
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth-login');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth-login');
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,15');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,15');
 });
 
 // Broadcasting authentication (for Pusher private/presence channels)
@@ -140,8 +140,8 @@ Route::prefix('trips')->group(function () {
     Route::get('/{id}', [TripController::class, 'show'])->middleware('optional.auth');
 });
 
-// Serve travel proof files (public - anyone can view) - Outside trips group to avoid route conflict
-Route::get('/trips/{id}/travel-proof', [TravelProofController::class, 'show']);
+// Serve travel proof files (private - owner, assigned sender, or admin only)
+Route::middleware('auth:sanctum')->get('/trips/{id}/travel-proof', [TravelProofController::class, 'show']);
 
 // Shipment routes
 Route::prefix('shipments')->group(function () {
@@ -336,6 +336,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::prefix('users')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->middleware('throttle:60,1');
         Route::post('/', [AdminUserController::class, 'store'])->middleware('throttle:30,1');
+        Route::post('/export', [AdminUserController::class, 'export'])->middleware('throttle:60,1');
         Route::post('/bulk-suspend', [AdminUserController::class, 'bulkSuspend'])->middleware('throttle:30,1');
         Route::post('/bulk-activate', [AdminUserController::class, 'bulkActivate'])->middleware('throttle:30,1');
         Route::get('/{id}', [AdminUserController::class, 'show'])->middleware('throttle:60,1');
@@ -393,6 +394,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         Route::post('/{id}/approve', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'approve'])->middleware('throttle:30,1');
         Route::post('/{id}/reject', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'reject'])->middleware('throttle:30,1');
         Route::delete('/{id}', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'destroy'])->middleware('throttle:30,1');
+        Route::post('/bulk-delete', [\App\Http\Controllers\Admin\AdminShipmentRequestController::class, 'bulkDelete'])->middleware('throttle:30,1');
     });
 
     // Manual Routing Management

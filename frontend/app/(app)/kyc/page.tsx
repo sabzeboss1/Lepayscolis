@@ -103,7 +103,6 @@ export default function KYCVerificationPage() {
     try {
       setIsLoading(true);
       const response = await apiClient.get<{ data: KYCDocument }>('/api/kyc');
-      console.log('fetchKYCDocument response:', response);
       setKycDocument(response.data);
     } catch (err: any) {
       if (err.status !== 404) {
@@ -111,7 +110,6 @@ export default function KYCVerificationPage() {
         setError('Erreur lors du chargement du statut KYC');
       } else {
         // 404 means no document submitted yet, which is normal
-        console.log('No KYC document found (404), setting to null');
         setKycDocument(null);
       }
     } finally {
@@ -166,7 +164,6 @@ export default function KYCVerificationPage() {
       }
 
       const data = await response.json();
-      console.log('KYC submission response:', data);
       setKycDocument(data.data);
       setSuccess(t('kyc.submitSuccess'));
       setDocumentFile(null);
@@ -178,8 +175,6 @@ export default function KYCVerificationPage() {
         fetchKYCDocument(),
         refreshUser?.()
       ]);
-      
-      console.log('KYC document after refresh:', kycDocument);
     } catch (err: any) {
       setError(err.message || t('kyc.submitError'));
       console.error('Error submitting KYC document:', err);
@@ -235,17 +230,12 @@ export default function KYCVerificationPage() {
   // ─── Status helpers ───────────────────────────────────────────────────────
   // Determine the actual KYC status based on both user status and document existence
   const getActualKycStatus = () => {
-    console.log('getActualKycStatus - kycDocument:', kycDocument);
-    console.log('getActualKycStatus - user kyc_status:', user?.kyc_status);
-    
     // If no document has been submitted, always show 'not_submitted'
     if (!kycDocument) {
-      console.log('No KYC document found, returning not_submitted');
       return 'not_submitted';
     }
     
     // If document exists, use the document status
-    console.log('KYC document found with status:', kycDocument.status);
     return kycDocument.status;
   };
 
@@ -652,8 +642,10 @@ export default function KYCVerificationPage() {
                 }
                 loading={isSubmitting}
               >
-                {!isSubmitting && <Shield className="w-4 h-4 mr-2" />}
-                {isSubmitting ? t('kyc.submitting') : t('kyc.submitDocument')}
+                <span className="inline-flex items-center">
+                  {isSubmitting ? null : <Shield className="w-4 h-4 mr-2" />}
+                  <span>{isSubmitting ? t('kyc.submitting') : t('kyc.submitDocument')}</span>
+                </span>
               </Button>
             </div>
           </form>
