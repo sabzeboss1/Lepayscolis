@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAdminCurrency } from '@/lib/hooks/useAdminCurrency';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
+import BulkActions, { BulkAction } from '@/components/admin/BulkActions';
 import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 interface ShipmentRequest {
   id: string;
@@ -48,10 +50,13 @@ export default function ShipmentRequestsPage() {
     status: ''
   });
   const [selectedRequest, setSelectedRequest] = useState<ShipmentRequest | null>(null);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [showActionModal, setShowActionModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [actionType, setActionType] = useState<'approve' | 'reject' | 'delete' | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [deleteReason, setDeleteReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -96,6 +101,58 @@ export default function ShipmentRequestsPage() {
     setActionType('reject');
     setRejectReason('');
     setShowActionModal(true);
+  };
+
+  const handleDelete = (request: ShipmentRequest) => {
+    setSelectedRequest(request);
+    setDeleteReason('');
+    setShowDeleteModal(true);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedRows.size === 0) return;
+    
+    const confirmed = window.confirm(
+      `Voulez-vous vraiment supprimer ${selectedRows.size} annonce(s) ? Cette action est irréversible.`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      console.log('Sending bulk delete with IDs:', Array.from(selectedRows));
+      await apiClient.post(API_ENDPOINTS.admin.shipmentRequests.bulkDelete, {
+        ids: Array.from(selectedRows),
+        reason: 'Suppression en masse par l\'administrateur',
+      });
+      
+      setSelectedRows(new Set());
+      fetchShipmentRequests();
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      if (error instanceof Error && 'details' in error) {
+        console.error('Error details:', (error as any).details);
+      }
+      alert('Échec de la suppression en masse');
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedRequest) return;
+
+    setActionLoading(true);
+    try {
+      await apiClient.delete(API_ENDPOINTS.admin.shipmentRequests.delete(selectedRequest.id));
+      
+      setShowDeleteModal(false);
+      setSelectedRequest(null);
+      setDeleteReason('');
+      fetchShipmentRequests();
+    } catch (error) {
+      console.error('Delete failed:', error);
+      alert('Échec de la suppression');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const confirmAction = async () => {
@@ -147,6 +204,24 @@ export default function ShipmentRequestsPage() {
         {statusLabels[status] || status}
       </span>
     );
+  };
+
+  const handleSelectRow = (id: string) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedRows(newSelected);
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      setSelectedRows(new Set(shipmentRequests.map(req => req.id)));
+    } else {
+      setSelectedRows(new Set());
+    }
   };
 
   const columns: Column<ShipmentRequest>[] = [
@@ -242,6 +317,16 @@ export default function ShipmentRequestsPage() {
               ✗ Rejeté
             </span>
           )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(request);
+            }}
+            className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+            title="Supprimer"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       )
     }
@@ -267,6 +352,10 @@ export default function ShipmentRequestsPage() {
     }
   ];
 
+  const bulkActions: BulkAction[] = [
+    { key: 'delete', label: 'Supprimer sélectionnés', variant: 'danger' as const }
+  ];
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -290,6 +379,16 @@ export default function ShipmentRequestsPage() {
         onReset={() => setFilters({ search: '', status: '' })}
       />
 
+      {/* Bulk Actions */}
+      {selectedRows.size > 0 && (
+        <BulkActions
+          selectedCount={selectedRows.size}
+          actions={bulkActions}
+          onAction={handleBulkDelete}
+          onClearSelection={() => setSelectedRows(new Set())}
+        />
+      )}
+
       {/* Data Table */}
       <DataTable
         columns={columns}
@@ -301,6 +400,10 @@ export default function ShipmentRequestsPage() {
           setShowDetailsModal(true);
         }}
         getRowId={(request) => request.id}
+        selectable={true}
+        selectedRows={selectedRows}
+        onSelectRow={handleSelectRow}
+        onSelectAll={handleSelectAll}
       />
 
       {/* Pagination */}
@@ -508,6 +611,50 @@ export default function ShipmentRequestsPage() {
                 }`}
               >
                 {actionLoading ? 'En cours...' : actionType === 'approve' ? 'Approuver' : 'Rejeter'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && selectedRequest && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Supprimer l'annonce
+            </h3>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Voulez-vous vraiment supprimer cette annonce ? Cette action est irréversible.
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
+                <span className="font-medium">Titre:</span> {selectedRequest.title}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Expéditeur:</span> {selectedRequest.sender?.name ?? 'Utilisateur supprimé'}
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedRequest(null);
+                  setDeleteReason('');
+                }}
+                disabled={actionLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={actionLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {actionLoading ? 'En cours...' : 'Supprimer'}
               </button>
             </div>
           </div>

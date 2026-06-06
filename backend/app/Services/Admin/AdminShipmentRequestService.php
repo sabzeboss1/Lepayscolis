@@ -205,4 +205,31 @@ class AdminShipmentRequestService
             'without_bids' => ShipmentRequest::doesntHave('bids')->where('status', 'open')->count(),
         ];
     }
+
+    public function bulkDeleteShipmentRequests(array $ids, ?string $reason, User $admin): int
+    {
+        $count = 0;
+        DB::beginTransaction();
+        try {
+            $shipmentRequests = ShipmentRequest::whereIn('id', $ids)->get();
+            foreach ($shipmentRequests as $shipmentRequest) {
+                AuditLog::create([
+                    'admin_id' => $admin->id,
+                    'action' => 'bulk_delete_shipment_request',
+                    'resource_type' => 'shipment_request',
+                    'resource_id' => $shipmentRequest->id,
+                    'ip_address' => request()->ip(),
+                    'before' => ['title' => $shipmentRequest->title, 'status' => $shipmentRequest->status],
+                    'after' => ['reason' => $reason, 'deleted_by' => $admin->name],
+                ]);
+                $shipmentRequest->delete();
+                $count++;
+            }
+            DB::commit();
+            return $count;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 }

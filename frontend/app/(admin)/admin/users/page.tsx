@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Download } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
@@ -48,6 +48,61 @@ export default function UsersPage() {
     kyc_status: ''
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async (format: 'csv' | 'excel') => {
+    setExporting(true);
+    try {
+      // Get auth token from cookie
+      const cookies = document.cookie.split(';');
+      const authCookie = cookies.find(c => c.trim().startsWith('auth-token='));
+      const token = authCookie ? decodeURIComponent(authCookie.split('=')[1]) : null;
+
+      if (!token) {
+        alert('Session expirée. Veuillez vous reconnecter.');
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_ENDPOINTS.admin.users.export}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/csv',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          format,
+          filters: {
+            search: filters.search || undefined,
+            status: filters.status || undefined,
+            kyc_status: filters.kyc_status || undefined,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Export failed:', response.status, errorText);
+        throw new Error(`Export failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `users_export_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Échec de l\'export. Veuillez réessayer.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -273,13 +328,31 @@ export default function UsersPage() {
             {t('admin.users.subtitle')}
           </p>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          {t('admin.users.addUser')}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleExport('csv')}
+            disabled={exporting}
+            className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+          <button
+            onClick={() => handleExport('excel')}
+            disabled={exporting}
+            className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {exporting ? 'Exporting...' : 'Export Excel'}
+          </button>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            {t('admin.users.addUser')}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

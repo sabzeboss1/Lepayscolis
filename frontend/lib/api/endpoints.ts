@@ -144,6 +144,7 @@ export const API_ENDPOINTS = {
     users: {
       list: '/api/admin/users',
       create: '/api/admin/users',
+      export: '/api/admin/users/export',
       show: (id: string) => `/api/admin/users/${id}`,
       update: (id: string) => `/api/admin/users/${id}`,
       delete: (id: string) => `/api/admin/users/${id}`,
@@ -204,6 +205,7 @@ export const API_ENDPOINTS = {
       approve: (id: string) => `/api/admin/shipment-requests/${id}/approve`,
       reject: (id: string) => `/api/admin/shipment-requests/${id}/reject`,
       delete: (id: string) => `/api/admin/shipment-requests/${id}`,
+      bulkDelete: '/api/admin/shipment-requests/bulk-delete',
       analytics: '/api/admin/shipment-requests/analytics',
     },
 
