@@ -154,6 +154,29 @@ class AdminShipmentRequestController extends Controller
     }
 
     /**
+     * Bulk delete shipment requests
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|string|exists:shipment_requests,id',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $count = $this->shipmentRequestService->bulkDeleteShipmentRequests(
+            $request->ids,
+            $request->reason,
+            $request->user()
+        );
+
+        return response()->json([
+            'message' => "{$count} shipment request(s) deleted successfully",
+            'count' => $count,
+        ], 200);
+    }
+
+    /**
      * Get shipment request analytics
      */
     public function analytics(): JsonResponse

@@ -356,9 +356,9 @@ class AdminAnalyticsService
 
         return [
             'status' => 'completed',
-            'download_url' => "/admin/exports/{$filename}",
             'filename' => $filename,
             'record_count' => $count,
+            'csv' => $csv,
         ];
     }
 

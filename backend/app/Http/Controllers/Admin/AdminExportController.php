@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Admin\AdminAnalyticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminExportController extends Controller
 {
@@ -16,49 +17,56 @@ class AdminExportController extends Controller
         $this->analyticsService = $analyticsService;
     }
 
-    public function users(Request $request): JsonResponse
+    public function users(Request $request): StreamedResponse|JsonResponse
     {
         $filters = $request->only(['date_from', 'date_to', 'status', 'kyc_status']);
-        
-        $result = $this->analyticsService->exportToCSV('users', $filters);
-
-        return response()->json($result, 200);
+        return $this->streamCsv('users', $filters);
     }
 
-    public function trips(Request $request): JsonResponse
+    public function trips(Request $request): StreamedResponse|JsonResponse
     {
         $filters = $request->only(['date_from', 'date_to', 'status']);
-        
-        $result = $this->analyticsService->exportToCSV('trips', $filters);
-
-        return response()->json($result, 200);
+        return $this->streamCsv('trips', $filters);
     }
 
-    public function shipments(Request $request): JsonResponse
+    public function shipments(Request $request): StreamedResponse|JsonResponse
     {
         $filters = $request->only(['date_from', 'date_to', 'status']);
-        
-        $result = $this->analyticsService->exportToCSV('shipments', $filters);
-
-        return response()->json($result, 200);
+        return $this->streamCsv('shipments', $filters);
     }
 
-    public function payments(Request $request): JsonResponse
+    public function payments(Request $request): StreamedResponse|JsonResponse
     {
         $filters = $request->only(['date_from', 'date_to', 'status']);
-        
-        $result = $this->analyticsService->exportToCSV('payments', $filters);
-
-        return response()->json($result, 200);
+        return $this->streamCsv('payments', $filters);
     }
 
-    public function withdrawals(Request $request): JsonResponse
+    public function withdrawals(Request $request): StreamedResponse|JsonResponse
     {
         $filters = $request->only(['date_from', 'date_to', 'status']);
-        
-        $result = $this->analyticsService->exportToCSV('withdrawals', $filters);
+        return $this->streamCsv('withdrawals', $filters);
+    }
 
-        return response()->json($result, 200);
+    /**
+     * Stream CSV export as a download response.
+     */
+    private function streamCsv(string $dataType, array $filters): StreamedResponse|JsonResponse
+    {
+        $result = $this->analyticsService->exportToCSV($dataType, $filters);
+
+        // Large datasets are queued — return JSON with job info
+        if ($result['status'] === 'queued') {
+            return response()->json($result, 200);
+        }
+
+        $filename = $result['filename'];
+        $csv = $result['csv'] ?? '';
+
+        return response()->streamDownload(function () use ($csv) {
+            echo $csv;
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function status(string $jobId): JsonResponse
