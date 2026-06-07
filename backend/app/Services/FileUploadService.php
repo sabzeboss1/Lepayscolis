@@ -85,14 +85,16 @@ class FileUploadService
         $extension = $file->getClientOriginalExtension();
         $filename = "kyc/{$userId}/{$type}_" . time() . ".{$extension}";
 
-        // HIGH-3: Store on private local disk — serve via authenticated controller only
-        $path = $file->storeAs('', $filename, 'local');
+        // Store on public disk (accessible via /storage symlink)
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+        $stored = $disk->put($filename, file_get_contents($file->getRealPath()));
 
-        if (!$path) {
+        if (!$stored) {
             throw new \Exception('Failed to upload KYC document');
         }
 
-        // Return relative path (served via KYCDocumentController with auth check)
+        // Return relative path (e.g. kyc/11/document_front_xxx.png)
         return $filename;
     }
 

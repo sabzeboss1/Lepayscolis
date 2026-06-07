@@ -336,7 +336,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::prefix('users')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->middleware('throttle:60,1');
         Route::post('/', [AdminUserController::class, 'store'])->middleware('throttle:30,1');
-        Route::post('/export', [AdminUserController::class, 'export'])->middleware('throttle:60,1');
+        Route::post('/export', [AdminExportController::class, 'users'])->middleware('throttle:60,1');
         Route::post('/bulk-suspend', [AdminUserController::class, 'bulkSuspend'])->middleware('throttle:30,1');
         Route::post('/bulk-activate', [AdminUserController::class, 'bulkActivate'])->middleware('throttle:30,1');
         Route::get('/{id}', [AdminUserController::class, 'show'])->middleware('throttle:60,1');
