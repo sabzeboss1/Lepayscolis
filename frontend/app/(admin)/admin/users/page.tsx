@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, Download } from 'lucide-react';
+import { UserPlus, FileSpreadsheet } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
@@ -11,6 +11,7 @@ import BulkActions, { BulkAction } from '@/components/admin/BulkActions';
 import CreateUserModal from '@/components/admin/CreateUserModal';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { useAuth } from '@/lib/auth';
 
 interface User {
   id: string;
@@ -34,6 +35,8 @@ interface UserFilterValues {
 export default function UsersPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { user: authUser } = useAuth();
+  const isSuperAdmin = authUser?.role === 'super_admin';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -50,10 +53,9 @@ export default function UsersPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const handleExport = async (format: 'csv' | 'excel') => {
+  const handleExport = async () => {
     setExporting(true);
     try {
-      // Get auth token from cookie
       const cookies = document.cookie.split(';');
       const authCookie = cookies.find(c => c.trim().startsWith('auth-token='));
       const token = authCookie ? decodeURIComponent(authCookie.split('=')[1]) : null;
@@ -68,16 +70,12 @@ export default function UsersPage() {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'text/csv',
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          format,
-          filters: {
-            search: filters.search || undefined,
-            status: filters.status || undefined,
-            kyc_status: filters.kyc_status || undefined,
-          },
+          status: filters.status || undefined,
+          kyc_status: filters.kyc_status || undefined,
         }),
       });
 
@@ -91,7 +89,7 @@ export default function UsersPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `users_export_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+      a.download = `utilisateurs_export_${new Date().toISOString().split('T')[0]}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -329,22 +327,16 @@ export default function UsersPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => handleExport('csv')}
-            disabled={exporting}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {exporting ? 'Exporting...' : 'Export CSV'}
-          </button>
-          <button
-            onClick={() => handleExport('excel')}
-            disabled={exporting}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {exporting ? 'Exporting...' : 'Export Excel'}
-          </button>
+          {isSuperAdmin && (
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              {exporting ? 'Export en cours...' : 'Export Excel'}
+            </button>
+          )}
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"

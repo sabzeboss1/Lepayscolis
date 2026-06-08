@@ -17,7 +17,8 @@ class AdminCountryController extends Controller
      */
     public function index(): JsonResponse
     {
-        $countries = Country::with(['cities', 'defaultCurrency'])
+        $countries = Country::withCount('cities')
+            ->with('defaultCurrency')
             ->orderBy('name_en')
             ->get();
 
