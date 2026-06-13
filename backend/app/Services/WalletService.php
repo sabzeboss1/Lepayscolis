@@ -291,10 +291,13 @@ class WalletService
      * Funds are moved from available balance to held_balance.
      *
      * @param Wallet $wallet
-     * @param float $amount
+     * @param float $amount Amount to hold in wallet's currency
      * @param string $description
      * @param string|null $referenceType
      * @param string|null $referenceId
+     * @param float|null $originalAmount Original amount before conversion
+     * @param string|null $originalCurrencyCode Original currency before conversion
+     * @param float|null $exchangeRateUsed Exchange rate used for conversion
      * @return WalletTransaction
      * @throws InsufficientBalanceException
      */
@@ -303,9 +306,12 @@ class WalletService
         float $amount,
         string $description,
         ?string $referenceType = null,
-        ?string $referenceId = null
+        ?string $referenceId = null,
+        ?float $originalAmount = null,
+        ?string $originalCurrencyCode = null,
+        ?float $exchangeRateUsed = null
     ): WalletTransaction {
-        return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId) {
+        return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId, $originalAmount, $originalCurrencyCode, $exchangeRateUsed) {
             // Lock wallet row for update to prevent race conditions
             $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
             
@@ -321,7 +327,7 @@ class WalletService
             $wallet->held_balance += $amount;
             $wallet->save();
             
-            // Create transaction record
+            // Create transaction record with currency conversion info
             $transaction = WalletTransaction::create([
                 'wallet_id' => $wallet->id,
                 'type' => 'hold',
@@ -330,6 +336,10 @@ class WalletService
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
                 'balance_after' => $wallet->balance,
+                'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
+                'original_amount' => $originalAmount,
+                'original_currency_code' => $originalCurrencyCode,
+                'exchange_rate_used' => $exchangeRateUsed,
             ]);
             
             // Clear balance cache

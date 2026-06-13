@@ -126,7 +126,7 @@ class AdminShipmentRequestController extends Controller
     public function destroy(Request $request, string $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'reason' => 'required|string|max:500',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -139,7 +139,7 @@ class AdminShipmentRequestController extends Controller
         try {
             $this->shipmentRequestService->deleteShipmentRequest(
                 $id,
-                $request->reason,
+                $request->input('reason', 'Supprimé par administrateur'),
                 $request->user()
             );
 
@@ -158,22 +158,35 @@ class AdminShipmentRequestController extends Controller
      */
     public function bulkDelete(Request $request): JsonResponse
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'ids' => 'required|array|min:1',
-            'ids.*' => 'required|string|exists:shipment_requests,id',
+            'ids.*' => 'string|exists:shipment_requests,id',
             'reason' => 'nullable|string|max:500',
         ]);
 
-        $count = $this->shipmentRequestService->bulkDeleteShipmentRequests(
-            $request->ids,
-            $request->reason,
-            $request->user()
-        );
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => "{$count} shipment request(s) deleted successfully",
-            'count' => $count,
-        ], 200);
+        try {
+            $count = $this->shipmentRequestService->bulkDeleteShipmentRequests(
+                $request->ids,
+                $request->input('reason', 'Suppression en masse par administrateur'),
+                $request->user()
+            );
+
+            return response()->json([
+                'message' => "{$count} shipment request(s) deleted successfully",
+                'count' => $count,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
     /**

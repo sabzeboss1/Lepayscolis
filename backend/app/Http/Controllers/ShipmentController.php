@@ -88,9 +88,12 @@ class ShipmentController extends Controller
 
             $trip = Trip::findOrFail($tripId);
 
-            // Calculate payment amount
+            // Calculate payment amount in trip's currency
             $packageWeight = $data['package_weight'];
-            $paymentAmount = $packageWeight * $trip->price_per_kg;
+            $paymentAmountInTripCurrency = $packageWeight * $trip->price_per_kg;
+            
+            // Get trip currency (defaults to platform default if not set)
+            $tripCurrency = $trip->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
             // Get sender's wallet
             $wallet = $user->wallet;
@@ -100,16 +103,38 @@ class ShipmentController extends Controller
                 ], 500);
             }
 
-            // Check available balance (balance - held_balance)
+            // Get sender's wallet currency
+            $walletCurrency = $wallet->currency_code
+                ?? $user->currency_code
+                ?? \App\Models\PlatformSetting::getDefaultCurrency();
+
+            // Convert payment amount to sender's wallet currency if needed
             $walletService = app(\App\Services\WalletService::class);
+            $currencyService = app(\App\Services\CurrencyService::class);
+            
+            $paymentAmountInWalletCurrency = $paymentAmountInTripCurrency;
+            $exchangeRate = null;
+            
+            if ($tripCurrency !== $walletCurrency) {
+                $conversion = $currencyService->convert(
+                    $paymentAmountInTripCurrency,
+                    $tripCurrency,
+                    $walletCurrency
+                );
+                $paymentAmountInWalletCurrency = $conversion['converted_amount'];
+                $exchangeRate = $conversion['exchange_rate'];
+            }
+
+            // Check available balance in wallet currency
             $availableBalance = $walletService->getAvailableBalance($wallet);
 
-            if ($availableBalance < $paymentAmount) {
+            if ($availableBalance < $paymentAmountInWalletCurrency) {
                 return response()->json([
                     'message' => 'Insufficient balance. Please recharge your wallet.',
-                    'required_amount' => number_format($paymentAmount, 2),
+                    'required_amount' => number_format($paymentAmountInWalletCurrency, 2),
+                    'required_currency' => $walletCurrency,
                     'available_balance' => number_format($availableBalance, 2),
-                    'shortfall' => number_format($paymentAmount - $availableBalance, 2),
+                    'shortfall' => number_format($paymentAmountInWalletCurrency - $availableBalance, 2),
                 ], 422);
             }
 
@@ -118,22 +143,23 @@ class ShipmentController extends Controller
             $shipment->sender_id = $user->id;
             $shipment->status = 'pending';
             $shipment->payment_status = 'escrowed';
-            $shipment->payment_amount = $paymentAmount;
-            $shipment->currency_code = $shipment->currency_code
-                ?? $wallet->currency_code
-                ?? $user->currency_code
-                ?? \App\Models\PlatformSetting::getDefaultCurrency();
+            // Store the payment amount in the trip's currency (original amount)
+            $shipment->payment_amount = $paymentAmountInTripCurrency;
+            $shipment->currency_code = $tripCurrency;
 
             $shipment->save();
             
-            // Hold funds in wallet
+            // Hold funds in wallet (using converted amount in wallet currency)
             try {
                 $walletService->hold(
                     $wallet,
-                    $paymentAmount,
+                    $paymentAmountInWalletCurrency,
                     "Funds held for shipment #{$shipment->id}",
                     'shipment',
-                    $shipment->id
+                    $shipment->id,
+                    $tripCurrency !== $walletCurrency ? $paymentAmountInTripCurrency : null,
+                    $tripCurrency !== $walletCurrency ? $tripCurrency : null,
+                    $exchangeRate
                 );
             } catch (\Exception $e) {
                 // If hold fails, delete the shipment
