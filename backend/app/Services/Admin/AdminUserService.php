@@ -329,4 +329,42 @@ class AdminUserService
         // Create audit log
         AuditLog::log($admin, 'delete', 'user', $userId, $before, $after);
     }
+
+    /**
+     * Get users for export with all relations.
+     *
+     * @param array $filters
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getUsersForExport(array $filters = [])
+    {
+        $query = User::with(['wallet', 'trips', 'shipmentsAsSender', 'shipmentsAsTraveler'])
+            ->withCount(['trips', 'shipmentsAsSender as shipments_count'])
+            ->withAvg('ratingsReceived as average_rating', 'rating');
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'suspended') {
+                $query->withTrashed()->whereNotNull('deleted_at');
+            } else {
+                $query->whereNull('deleted_at');
+            }
+        }
+
+        if (!empty($filters['kyc_status'])) {
+            $query->where('kyc_status', $filters['kyc_status']);
+        }
+
+        $query->where('role', 'user');
+
+        return $query->orderBy('created_at', 'desc')->get();
+    }
 }

@@ -32,9 +32,9 @@ export function LandingFooter() {
   // Defensive defaults
   const logo_url = branding?.logo_url || '/logo.png';
   const contact_email = branding?.contact_email || 'contact@tumaplus.com';
-  const contact_phone = branding?.contact_phone || '+33 1 23 45 67 89';
-  const contact_address = branding?.contact_address || 'Paris, France';
-  const whatsapp_number = branding?.whatsapp_number || '33123456789';
+  const contact_phone = branding?.contact_phone || '+7 960 566 10 05';
+  const contact_address = branding?.contact_address || 'Moscou, Russie';
+  const whatsapp_number = branding?.whatsapp_number || '79605661005';
   const facebook_url = branding?.facebook_url || '#';
   const twitter_url = branding?.twitter_url || '#';
   const instagram_url = branding?.instagram_url || '#';

@@ -18,24 +18,24 @@ class AdminShipmentResource extends JsonResource
         return [
             'id' => $this->id,
             'tracking_number' => strtoupper(substr(str_replace('-', '', $this->id), 0, 10)),
-            'sender' => [
+            'sender' => $this->sender ? [
                 'id' => $this->sender->id,
                 'name' => $this->sender->name,
                 'email' => $this->sender->email,
                 'phone' => $this->sender->phone ?? null,
-            ],
-            'traveler' => $this->whenLoaded('traveler', fn() => [
+            ] : null,
+            'traveler' => $this->whenLoaded('traveler', fn() => $this->traveler ? [
                 'id' => $this->traveler->id,
                 'name' => $this->traveler->name,
                 'email' => $this->traveler->email,
-            ]),
-            'trip' => $this->whenLoaded('trip', fn() => [
+            ] : null),
+            'trip' => $this->whenLoaded('trip', fn() => $this->trip ? [
                 'id' => $this->trip->id,
                 'origin' => "{$this->trip->departure_city}, {$this->trip->departure_country}",
                 'destination' => "{$this->trip->arrival_city}, {$this->trip->arrival_country}",
                 'traveler_name' => $this->trip->traveler?->name,
                 'departure_date' => $this->trip->departure_date,
-            ]),
+            ] : null),
             'package_description' => $this->package_description,
             'package_weight' => $this->package_weight,
             'package_length' => $this->package_length,
@@ -67,11 +67,11 @@ class AdminShipmentResource extends JsonResource
             'payment_amount' => $this->payment_amount,
             'currency_code' => $this->currency_code ?? PlatformSetting::get('default_currency', 'EUR'),
             'payment_status' => $this->payment_status,
-            'payment' => $this->whenLoaded('payment', fn() => [
+            'payment' => $this->whenLoaded('payment', fn() => $this->payment ? [
                 'id' => $this->payment->id,
                 'amount' => $this->payment->amount,
                 'status' => $this->payment->status,
-            ]),
+            ] : null),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

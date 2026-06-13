@@ -13,6 +13,7 @@ use App\Services\Admin\AdminMessagingService;
 use App\Services\Admin\AdminUserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminUserController extends Controller
 {
@@ -216,5 +217,68 @@ class AdminUserController extends Controller
             'data' => new AdminUserResource($user),
             'message' => 'User unbanned from messaging successfully',
         ], 200);
+    }
+
+    /**
+     * Export users data
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $request->validate([
+            'format' => 'required|in:csv,excel',
+            'filters' => 'nullable|array',
+        ]);
+
+        $format = $request->input('format', 'csv');
+        $filters = $request->input('filters', []);
+
+        $users = $this->userService->getUsersForExport($filters);
+
+        $filename = 'users_export_' . date('Y-m-d_His') . '.' . ($format === 'excel' ? 'xlsx' : 'csv');
+
+        return $this->exportToCsv($users, $filename);
+    }
+
+    private function exportToCsv($users, string $filename): StreamedResponse
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control' => 'max-age=0',
+        ];
+
+        $callback = function () use ($users) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['ID', 'Name', 'Email', 'Phone', 'Role', 'Status', 'KYC Status', 'Email Verified', 'Phone Verified', 'Country', 'City', 'Address', 'Wallet Balance', 'Total Shipments', 'Total Trips', 'Average Rating', 'Created At', 'Last Login']);
+
+            foreach ($users as $user) {
+                fputcsv($file, [
+                    $user->id,
+                    $user->name,
+                    $user->email,
+                    $user->phone,
+                    $user->role,
+                    $user->status,
+                    $user->kyc_status ?? 'not_submitted',
+                    $user->email_verified_at ? 'Yes' : 'No',
+                    $user->phone_verified_at ? 'Yes' : 'No',
+                    $user->country ?? '',
+                    $user->city ?? '',
+                    $user->address ?? '',
+                    $user->wallet ? number_format($user->wallet->balance, 2) : '0.00',
+                    $user->shipments_count ?? 0,
+                    $user->trips_count ?? 0,
+                    $user->average_rating ?? 'N/A',
+                    $user->created_at->format('Y-m-d H:i:s'),
+                    $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i:s') : 'Never',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
