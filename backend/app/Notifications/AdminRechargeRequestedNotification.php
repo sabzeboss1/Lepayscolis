@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notification;
 
 class AdminRechargeRequestedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, SerializesModels;
 
     public function __construct(public RechargeRequest $rechargeRequest) {}
 

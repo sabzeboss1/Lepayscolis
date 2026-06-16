@@ -90,8 +90,9 @@ class AdminRechargeRequestController extends Controller
             'processed_by' => $request->user()->id,
         ]);
 
-        // Notify the user
-        $rechargeRequest->user->notify(new RechargeRequestProcessingNotification($rechargeRequest));
+        // Notify the user (guard against soft-deleted user)
+        $rechargeRequest->load('user');
+        $rechargeRequest->user?->notify(new RechargeRequestProcessingNotification($rechargeRequest));
 
         return response()->json([
             'success' => true,
@@ -147,7 +148,7 @@ class AdminRechargeRequestController extends Controller
         $fresh = $rechargeRequest->fresh(['user', 'processedBy']);
 
         // Notify the user
-        $fresh->user->notify(new RechargeRequestCompletedNotification($fresh));
+        $fresh->user?->notify(new RechargeRequestCompletedNotification($fresh));
 
         // Notify all admins and super_admins (confirmation de traitement)
         $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
@@ -188,7 +189,7 @@ class AdminRechargeRequestController extends Controller
         $fresh = $rechargeRequest->fresh(['user', 'processedBy']);
 
         // Notify the user
-        $fresh->user->notify(new RechargeRequestRejectedNotification($fresh));
+        $fresh->user?->notify(new RechargeRequestRejectedNotification($fresh));
 
         return response()->json([
             'success' => true,
