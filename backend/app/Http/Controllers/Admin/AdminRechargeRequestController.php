@@ -136,6 +136,9 @@ class AdminRechargeRequestController extends Controller
             ], 422);
         }
 
+        // Capture before transaction so withTrashed context is preserved for notification
+        $user = $rechargeRequest->user;
+
         DB::transaction(function () use ($rechargeRequest, $validated, $request) {
             // Credit user wallet
             $this->walletService->credit(
@@ -157,8 +160,8 @@ class AdminRechargeRequestController extends Controller
 
         $fresh = $rechargeRequest->fresh(['user', 'processedBy']);
 
-        // Notify the user
-        $fresh->user?->notify(new RechargeRequestCompletedNotification($fresh));
+        // Notify the user (use pre-captured instance to preserve withTrashed context)
+        $user->notify(new RechargeRequestCompletedNotification($fresh));
 
         // Notify all admins and super_admins (confirmation de traitement)
         $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
