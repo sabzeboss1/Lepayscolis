@@ -18,8 +18,8 @@
         <p>The following recharge request has been approved and the user's wallet has been credited.</p>
 
         <div style="background-color: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>User:</strong> {{ $rechargeRequest->user->name }}</p>
-            <p style="margin: 5px 0;"><strong>Email:</strong> {{ $rechargeRequest->user->email }}</p>
+            <p style="margin: 5px 0;"><strong>User:</strong> {{ $rechargeRequest->user?->name ?? '—' }}</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> {{ $rechargeRequest->user?->email ?? '—' }}</p>
             <p style="margin: 5px 0;"><strong>Amount credited:</strong> <span style="color: #10b981; font-size: 20px; font-weight: bold;">{{ number_format($rechargeRequest->amount, 2) }} {{ $rechargeRequest->currency_code }}</span></p>
             <p style="margin: 5px 0;"><strong>Payment method:</strong> {{ $rechargeRequest->payment_method }}</p>
             <p style="margin: 5px 0;"><strong>Reference:</strong> #{{ $rechargeRequest->id }}</p>

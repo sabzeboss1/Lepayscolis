@@ -18,8 +18,8 @@
         <p>A user has just submitted a wallet recharge request. It is waiting to be processed.</p>
 
         <div style="background-color: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>User:</strong> {{ $rechargeRequest->user->name }}</p>
-            <p style="margin: 5px 0;"><strong>Email:</strong> {{ $rechargeRequest->user->email }}</p>
+            <p style="margin: 5px 0;"><strong>User:</strong> {{ $rechargeRequest->user?->name ?? '—' }}</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> {{ $rechargeRequest->user?->email ?? '—' }}</p>
             <p style="margin: 5px 0;"><strong>Amount:</strong> <span style="color: #f59e0b; font-size: 20px; font-weight: bold;">{{ number_format($rechargeRequest->amount, 2) }} {{ $rechargeRequest->currency_code }}</span></p>
             <p style="margin: 5px 0;"><strong>Payment method:</strong> {{ $rechargeRequest->payment_method }}</p>
             <p style="margin: 5px 0;"><strong>Reference:</strong> #{{ $rechargeRequest->id }}</p>

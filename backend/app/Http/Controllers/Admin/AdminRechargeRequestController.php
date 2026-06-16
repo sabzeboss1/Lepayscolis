@@ -110,12 +110,22 @@ class AdminRechargeRequestController extends Controller
             'admin_notes' => 'nullable|string|max:1000',
         ]);
 
-        $rechargeRequest = RechargeRequest::with('user.wallet')->findOrFail($id);
+        // Load user with trashed so soft-deleted users don't return null
+        $rechargeRequest = RechargeRequest::with([
+            'user' => fn ($q) => $q->withTrashed()->with('wallet'),
+        ])->findOrFail($id);
 
         if (!in_array($rechargeRequest->status, ['pending', 'processing'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cette demande a déjà été traitée',
+            ], 422);
+        }
+
+        if (!$rechargeRequest->user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'L\'utilisateur associé à cette demande est introuvable',
             ], 422);
         }
 
