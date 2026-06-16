@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\RechargeRequest;
 use App\Models\User;
+use App\Notifications\AdminRechargeCompletedNotification;
+use App\Notifications\RechargeRequestCompletedNotification;
+use App\Notifications\RechargeRequestProcessingNotification;
+use App\Notifications\RechargeRequestRejectedNotification;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class AdminRechargeRequestController extends Controller
 {
@@ -85,6 +90,9 @@ class AdminRechargeRequestController extends Controller
             'processed_by' => $request->user()->id,
         ]);
 
+        // Notify the user
+        $rechargeRequest->user->notify(new RechargeRequestProcessingNotification($rechargeRequest));
+
         return response()->json([
             'success' => true,
             'message' => 'Demande marquée comme en cours de traitement',
@@ -136,10 +144,19 @@ class AdminRechargeRequestController extends Controller
             ]);
         });
 
+        $fresh = $rechargeRequest->fresh(['user', 'processedBy']);
+
+        // Notify the user
+        $fresh->user->notify(new RechargeRequestCompletedNotification($fresh));
+
+        // Notify all admins and super_admins (confirmation de traitement)
+        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        Notification::send($admins, new AdminRechargeCompletedNotification($fresh));
+
         return response()->json([
             'success' => true,
             'message' => 'Recharge effectuée avec succès',
-            'data' => $rechargeRequest->fresh(['user', 'processedBy']),
+            'data' => $fresh,
         ]);
     }
 
@@ -168,10 +185,15 @@ class AdminRechargeRequestController extends Controller
             'processed_at' => now(),
         ]);
 
+        $fresh = $rechargeRequest->fresh(['user', 'processedBy']);
+
+        // Notify the user
+        $fresh->user->notify(new RechargeRequestRejectedNotification($fresh));
+
         return response()->json([
             'success' => true,
             'message' => 'Demande rejetée',
-            'data' => $rechargeRequest->fresh(['user', 'processedBy']),
+            'data' => $fresh,
         ]);
     }
 }
