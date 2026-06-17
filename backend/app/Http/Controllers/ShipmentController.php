@@ -324,13 +324,55 @@ class ShipmentController extends Controller
     public function update(UpdateShipmentRequest $request, string $id): JsonResponse
     {
         return DB::transaction(function () use ($request, $id) {
-            $shipment = Shipment::findOrFail($id);
+            $shipment = Shipment::with('sender.wallet')->findOrFail($id);
 
             // Restore trip capacity if transitioning from accepted to cancelled
             if ($request->status === 'cancelled' && $shipment->status === 'accepted' && $shipment->trip_id) {
                 $trip = $shipment->trip;
                 $trip->available_capacity += $shipment->package_weight;
                 $trip->save();
+            }
+
+            // Release held funds when shipment is cancelled
+            if ($request->status === 'cancelled' && $shipment->payment_status === 'escrowed' && $shipment->sender && $shipment->sender->wallet) {
+                try {
+                    $walletService = app(\App\Services\WalletService::class);
+                    $currencyService = app(\App\Services\CurrencyService::class);
+                    
+                    // Get currencies
+                    $senderCurrency = $shipment->sender->wallet->currency_code
+                        ?? $shipment->sender->currency_code
+                        ?? \App\Models\PlatformSetting::getDefaultCurrency();
+                    $shipmentCurrency = $shipment->currency_code ?? $senderCurrency;
+                    
+                    // Convert payment amount to sender's wallet currency if needed
+                    $amountToRelease = $shipment->payment_amount;
+                    if ($shipmentCurrency !== $senderCurrency) {
+                        $conversion = $currencyService->convert(
+                            $shipment->payment_amount,
+                            $shipmentCurrency,
+                            $senderCurrency
+                        );
+                        $amountToRelease = $conversion['converted_amount'];
+                    }
+                    
+                    // Cancel hold to release funds back to available balance
+                    $walletService->cancelHold(
+                        $shipment->sender->wallet,
+                        $amountToRelease,
+                        "Funds released for cancelled shipment #{$shipment->id}",
+                        'shipment',
+                        $shipment->id
+                    );
+                    
+                    // Update payment status
+                    $shipment->payment_status = 'refunded';
+                } catch (\Exception $e) {
+                    \Log::error("Failed to release held funds for shipment #{$shipment->id}", [
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Continue with status update even if refund fails
+                }
             }
 
             $shipment->status = $request->status;
@@ -508,7 +550,7 @@ class ShipmentController extends Controller
     public function reject(string $id): JsonResponse
     {
         return DB::transaction(function () use ($id) {
-            $shipment = Shipment::findOrFail($id);
+            $shipment = Shipment::with('sender.wallet')->findOrFail($id);
             $user = auth()->user();
 
             // Must be the traveler assigned to this shipment or the trip owner
@@ -536,6 +578,48 @@ class ShipmentController extends Controller
                 $trip = $shipment->trip;
                 $trip->available_capacity += $shipment->package_weight;
                 $trip->save();
+            }
+
+            // Release held funds when shipment is rejected
+            if ($shipment->payment_status === 'escrowed' && $shipment->sender && $shipment->sender->wallet) {
+                try {
+                    $walletService = app(\App\Services\WalletService::class);
+                    $currencyService = app(\App\Services\CurrencyService::class);
+                    
+                    // Get currencies
+                    $senderCurrency = $shipment->sender->wallet->currency_code
+                        ?? $shipment->sender->currency_code
+                        ?? \App\Models\PlatformSetting::getDefaultCurrency();
+                    $shipmentCurrency = $shipment->currency_code ?? $senderCurrency;
+                    
+                    // Convert payment amount to sender's wallet currency if needed
+                    $amountToRelease = $shipment->payment_amount;
+                    if ($shipmentCurrency !== $senderCurrency) {
+                        $conversion = $currencyService->convert(
+                            $shipment->payment_amount,
+                            $shipmentCurrency,
+                            $senderCurrency
+                        );
+                        $amountToRelease = $conversion['converted_amount'];
+                    }
+                    
+                    // Cancel hold to release funds back to available balance
+                    $walletService->cancelHold(
+                        $shipment->sender->wallet,
+                        $amountToRelease,
+                        "Funds released for rejected shipment #{$shipment->id}",
+                        'shipment',
+                        $shipment->id
+                    );
+                    
+                    // Update payment status
+                    $shipment->payment_status = 'refunded';
+                } catch (\Exception $e) {
+                    \Log::error("Failed to release held funds for shipment #{$shipment->id}", [
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Continue with rejection even if refund fails
+                }
             }
 
             $shipment->status = 'cancelled';
