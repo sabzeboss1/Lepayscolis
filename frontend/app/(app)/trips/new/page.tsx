@@ -369,8 +369,15 @@ export default function NewTripPage() {
       formData.acceptedPackageTypes!.forEach((type, index) => {
         formDataToSend.append(`accepted_package_types[${index}]`, type);
       });
-      formDataToSend.append('pickup_address', formData.pickupAddress!);
-      formDataToSend.append('delivery_address', formData.deliveryAddress!);
+      
+      // Ajouter les adresses seulement si elles sont renseignées (min 5 caractères)
+      if (formData.pickupAddress && formData.pickupAddress.trim().length >= 5) {
+        formDataToSend.append('pickup_address', formData.pickupAddress);
+      }
+      if (formData.deliveryAddress && formData.deliveryAddress.trim().length >= 5) {
+        formDataToSend.append('delivery_address', formData.deliveryAddress);
+      }
+      
       if (travelProof) formDataToSend.append('travel_proof', travelProof);
 
       const response = await fetch('/api/trips', {

@@ -144,7 +144,7 @@ export default function EditTripPage() {
 
     setIsSubmitting(true);
     try {
-      const payload = {
+      const payload: any = {
         departure_country_id: formData.departureCountryId,
         departure_city_id: formData.departureCityId,
         departure_date: formData.departureDate,
@@ -155,9 +155,15 @@ export default function EditTripPage() {
         price_per_kg: formData.pricePerKg,
         currency_code: currencyCode || 'EUR',
         accepted_package_types: formData.acceptedPackageTypes,
-        pickup_address: formData.pickupAddress || '',
-        delivery_address: formData.deliveryAddress || '',
       };
+
+      // Ajouter les adresses seulement si elles sont renseignées (min 5 caractères)
+      if (formData.pickupAddress && formData.pickupAddress.trim().length >= 5) {
+        payload.pickup_address = formData.pickupAddress;
+      }
+      if (formData.deliveryAddress && formData.deliveryAddress.trim().length >= 5) {
+        payload.delivery_address = formData.deliveryAddress;
+      }
 
       await apiClient.put(`/api/trips/${tripId}`, payload);
       
