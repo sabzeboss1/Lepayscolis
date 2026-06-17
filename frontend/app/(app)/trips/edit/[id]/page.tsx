@@ -12,6 +12,8 @@ import { CitySelect } from '@/components/ui/CitySelect';
 import { useCountries } from '@/lib/hooks/useCountries';
 import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import { apiClient } from '@/lib/api/client';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { translateValidationErrors } from '@/lib/errors/errorMessages';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 
 interface TripFormData {
@@ -40,6 +42,7 @@ export default function EditTripPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string>('');
   const [formData, setFormData] = useState<Partial<TripFormData>>({});
 
   useEffect(() => {
@@ -167,21 +170,30 @@ export default function EditTripPage() {
 
       await apiClient.put(`/api/trips/${tripId}`, payload);
       
-      alert('Voyage modifié avec succès!');
+      // Rediriger sans alert
       router.push('/trips/my');
       
     } catch (error: any) {
       console.error('Failed to update trip:', error);
       
       if (error.errors) {
-        const validationErrors: Record<string, string> = {};
-        Object.entries(error.errors).forEach(([key, messages]) => {
-          validationErrors[key] = (messages as string[])[0];
-        });
-        setErrors(validationErrors);
+        // Traduire les erreurs en français
+        const translatedErrors = translateValidationErrors(error.errors, 'fr');
+        setErrors(translatedErrors);
+        
+        // Message général
+        const errorCount = Object.keys(translatedErrors).length;
+        const summaryMessage = errorCount === 1
+          ? 'Veuillez corriger l\'erreur ci-dessous'
+          : `Veuillez corriger les ${errorCount} erreurs ci-dessous`;
+        
+        setSubmitError(summaryMessage);
+      } else {
+        setSubmitError(error.message || 'Impossible de modifier le voyage');
       }
       
-      alert('Erreur: ' + (error.message || 'Impossible de modifier le voyage'));
+      // Scroll vers le haut pour voir l'erreur
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
@@ -226,6 +238,22 @@ export default function EditTripPage() {
         <h1 className="text-3xl font-bold">Modifier le voyage</h1>
         <p className="text-gray-600 mt-2">Modifiez les détails de votre voyage</p>
       </div>
+
+      {/* Error Alert */}
+      {submitError && (
+        <div className="mb-6">
+          <ErrorAlert
+            message={submitError}
+            severity="error"
+            fieldErrors={Object.keys(errors).length > 0 ? errors : undefined}
+            dismissible
+            onDismiss={() => {
+              setSubmitError('');
+              setErrors({});
+            }}
+          />
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Card className="p-6 space-y-6">

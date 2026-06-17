@@ -14,6 +14,8 @@ import { CountrySelect } from '@/components/ui/CountrySelect';
 import { CitySelect } from '@/components/ui/CitySelect';
 import { useCountries } from '@/lib/hooks/useCountries';
 import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { translateValidationErrors } from '@/lib/errors/errorMessages';
 import { z } from 'zod';
 import {
   MapPin,
@@ -113,6 +115,7 @@ export default function NewTripPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string>('');
   const [minShipmentPrice, setMinShipmentPrice] = useState<number>(1);
   const [maxShipmentPrice, setMaxShipmentPrice] = useState<number>(1000);
 
@@ -396,19 +399,20 @@ export default function NewTripPage() {
         setIsSubmitting(false);
         
         if (response.status === 422 && error.errors) {
-          const validationErrors: Record<string, string> = {};
-          Object.entries(error.errors).forEach(([key, messages]) => {
-            validationErrors[key] = (messages as string[])[0];
-          });
-          setErrors(validationErrors);
+          // Traduire les erreurs en français
+          const translatedErrors = translateValidationErrors(error.errors, 'fr');
+          setErrors(translatedErrors);
           
-          const errorMessages = Object.entries(validationErrors)
-            .map(([key, message]) => `• ${message}`)
-            .join('\n');
+          // Message général
+          const errorCount = Object.keys(translatedErrors).length;
+          const summaryMessage = errorCount === 1
+            ? 'Veuillez corriger l\'erreur ci-dessous'
+            : `Veuillez corriger les ${errorCount} erreurs ci-dessous`;
           
-          alert('Erreur de validation:\n\n' + (error.message || errorMessages));
+          setSubmitError(summaryMessage);
           
-          const errorKeys = Object.keys(validationErrors);
+          // Retourner à l'étape appropriée
+          const errorKeys = Object.keys(translatedErrors);
           if (errorKeys.some(k => k.includes('country') || k.includes('city'))) {
             setCurrentStep(1);
           } else if (errorKeys.some(k => k.includes('date'))) {
@@ -416,10 +420,15 @@ export default function NewTripPage() {
           } else {
             setCurrentStep(3);
           }
+          
+          // Scroll vers le haut pour voir l'erreur
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
         
-        alert('Erreur: ' + (error.message || t('trips.publishError')));
+        // Autres erreurs (non-validation)
+        setSubmitError(error.message || t('trips.publishError'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
@@ -1226,6 +1235,22 @@ export default function NewTripPage() {
 
         <div className="max-w-3xl mx-auto px-4 py-8">
           {renderStepIndicator()}
+
+          {/* Error Alert */}
+          {submitError && (
+            <div className="mb-6">
+              <ErrorAlert
+                message={submitError}
+                severity="error"
+                fieldErrors={Object.keys(errors).length > 0 ? errors : undefined}
+                dismissible
+                onDismiss={() => {
+                  setSubmitError('');
+                  setErrors({});
+                }}
+              />
+            </div>
+          )}
 
           {/* Form Card */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
