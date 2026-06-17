@@ -339,27 +339,121 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                 )}
               </div>
 
-              {/* Mobile: avatar link to profile */}
-              <Link
-                href="/profile"
-                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-full overflow-hidden text-white text-sm font-bold shrink-0"
-                style={{
-                  background: user.avatar
-                    ? 'transparent'
-                    : 'linear-gradient(135deg,#3b82f6,#1d4ed8)',
-                }}
-                aria-label="Mon profil"
-              >
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  user.name.charAt(0).toUpperCase()
+              {/* Mobile: user menu */}
+              <div className="lg:hidden relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen((v) => !v)}
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="true"
+                  aria-label="Menu utilisateur"
+                  className="flex items-center justify-center w-9 h-9 rounded-full overflow-hidden text-white text-sm font-bold shrink-0"
+                  style={{
+                    background: user.avatar
+                      ? 'transparent'
+                      : 'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+                  }}
+                >
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    user.name.charAt(0).toUpperCase()
+                  )}
+                </button>
+
+                {/* Mobile Dropdown */}
+                {isUserMenuOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-60 rounded-2xl py-2 z-50"
+                    style={{
+                      background: 'rgba(255,255,255,0.96)',
+                      backdropFilter: 'blur(16px)',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                    }}
+                    role="menu"
+                    aria-orientation="vertical"
+                  >
+                    {/* User info */}
+                    <div className="px-4 pt-2 pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold shrink-0"
+                          style={{
+                            background: user.avatar
+                              ? 'transparent'
+                              : 'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+                          }}
+                        >
+                          {user.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                          ) : (
+                            user.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-navy truncate">{user.name}</p>
+                          <p className="text-xs text-muted-text truncate">{user.email}</p>
+                          {user.is_recommended && (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1"
+                              style={{ background: 'rgba(249,115,22,0.12)', color: '#c2410c' }}
+                            >
+                              <Star className="w-3 h-3" />
+                              Recommandé
+                            </span>
+                          )}
+                          <KycBadge status={user.kyc_status} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu items */}
+                    <div className="py-1">
+                      <Link
+                        href="/profile"
+                        role="menuitem"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-navy hover:bg-slate-50 transition-colors"
+                      >
+                        <UserIcon className="w-4 h-4 text-slate-400" />
+                        {t('navigation.profile')}
+                      </Link>
+
+                      {user.kyc_status !== 'approved' && (
+                        <Link
+                          href="/kyc"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors"
+                          style={{ color: 'var(--color-royal-blue)' }}
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          {user.kyc_status === 'rejected'
+                            ? 'Resoumettre les documents'
+                            : user.kyc_status === 'pending'
+                            ? 'Voir le statut KYC'
+                            : 'Compléter la vérification'}
+                        </Link>
+                      )}
+
+                      <div className="border-t border-slate-100 mt-1 pt-1">
+                        <button
+                          role="menuitem"
+                          onClick={() => { setIsUserMenuOpen(false); onLogout(); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          {t('common.logout')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </Link>
+              </div>
 
               {/* Language switcher on mobile */}
               <div className="md:hidden">

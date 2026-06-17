@@ -125,13 +125,27 @@ export class ErrorHandler {
    * Handle validation errors (422)
    */
   private static handleValidationError(error: ApiError, locale: string): ErrorResponse {
-    const fieldErrors = this.handleValidationErrors(error.errors || {});
+    const fieldErrors = this.handleValidationErrors(error.errors || {}, locale);
+    const errorCount = Object.keys(fieldErrors).length;
+    
+    let summaryMessage = error.message;
+    
+    // Provide a clear summary message
+    if (!summaryMessage || summaryMessage === 'Validation failed') {
+      if (errorCount === 1) {
+        summaryMessage = locale === 'fr'
+          ? 'Veuillez corriger l\'erreur ci-dessous'
+          : 'Please correct the error below';
+      } else {
+        summaryMessage = locale === 'fr'
+          ? `Veuillez corriger les ${errorCount} erreurs ci-dessous`
+          : `Please correct the ${errorCount} errors below`;
+      }
+    }
     
     return {
       type: 'validation',
-      message: error.message || (locale === 'fr' 
-        ? 'Les données fournies sont invalides.' 
-        : 'The provided data is invalid.'),
+      message: summaryMessage,
       fieldErrors,
     };
   }
@@ -174,13 +188,20 @@ export class ErrorHandler {
   }
 
   /**
-   * Convert validation errors to field-level errors
+   * Convert validation errors to field-level errors with translations
    */
-  static handleValidationErrors(errors: Record<string, string[]>): Record<string, string> {
-    const fieldErrors: Record<string, string> = {};
+  static handleValidationErrors(errors: Record<string, string[]>, locale: string = 'fr'): Record<string, string> {
+    const { translateValidationErrors } = require('./errorMessages');
     
+    // Use translation system if locale is French
+    if (locale === 'fr') {
+      return translateValidationErrors(errors, locale);
+    }
+    
+    // Otherwise, just take first error message
+    const fieldErrors: Record<string, string> = {};
     Object.entries(errors).forEach(([field, messages]) => {
-      fieldErrors[field] = messages[0]; // Take first error message
+      fieldErrors[field] = messages[0];
     });
     
     return fieldErrors;
