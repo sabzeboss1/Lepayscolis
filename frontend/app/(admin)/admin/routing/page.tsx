@@ -141,8 +141,12 @@ export default function AdminRoutingPage() {
     if (!selectedTrip || !selectedShipment) return;
 
     // Pre-validate capacity before making the API call
-    if (selectedTrip.available_capacity < selectedShipment.package_weight) {
-      alert(`Capacité insuffisante: Le voyage a ${selectedTrip.available_capacity}kg disponible mais l'expédition pèse ${selectedShipment.package_weight}kg`);
+    // CRITICAL: Convert to Number to handle string values from backend
+    const tripCapacity = Number(selectedTrip.available_capacity);
+    const shipmentWeight = Number(selectedShipment.package_weight);
+    
+    if (isNaN(tripCapacity) || isNaN(shipmentWeight) || tripCapacity < shipmentWeight) {
+      alert(`Capacité insuffisante: Le voyage a ${tripCapacity}kg disponible mais l'expédition pèse ${shipmentWeight}kg`);
       return;
     }
 
@@ -254,6 +258,16 @@ export default function AdminRoutingPage() {
   };
 
   /**
+   * Helper to check if trip has sufficient capacity for item
+   * CRITICAL: Converts to Number to handle string values from backend
+   */
+  const hasInsufficientCapacity = (trip: Trip, item: Shipment | ShipmentRequest): boolean => {
+    const tripCapacity = Number(trip.available_capacity);
+    const itemWeight = Number('package_weight' in item ? item.package_weight : item.weight);
+    return isNaN(tripCapacity) || isNaN(itemWeight) || tripCapacity < itemWeight;
+  };
+
+  /**
    * Normalize city name for comparison (handles Moscow/Moscou, etc.)
    */
   const normalizeCityName = (cityName: string): string => {
@@ -328,7 +342,31 @@ export default function AdminRoutingPage() {
     const deliveryMatch = citiesMatch(trip.arrival_city, deliveryCity);
     const routeMatch = pickupMatch && deliveryMatch;
 
-    const capacityMatch = trip.available_capacity >= weight;
+    // CRITICAL FIX: Convert to Number to handle string values from backend
+    const tripCapacity = Number(trip.available_capacity);
+    const itemWeight = Number(weight);
+    const capacityMatch = !isNaN(tripCapacity) && !isNaN(itemWeight) && tripCapacity >= itemWeight;
+
+    // Get item identifier safely for debugging
+    const itemIdentifier = 'package_weight' in item 
+      ? `Shipment: ${item.title}` 
+      : `Request: ${item.title}`;
+
+    // Debug log
+    console.log('Route Compatibility Check:', {
+      trip: `${trip.traveler.name} - ${trip.departure_city} → ${trip.arrival_city}`,
+      tripCapacityRaw: trip.available_capacity,
+      tripCapacityParsed: tripCapacity,
+      tripCapacityType: typeof trip.available_capacity,
+      item: itemIdentifier,
+      itemWeightRaw: weight,
+      itemWeightParsed: itemWeight,
+      itemWeightType: typeof weight,
+      routeMatch,
+      capacityMatch,
+      comparison: `${tripCapacity} >= ${itemWeight}`,
+      compatible: routeMatch && capacityMatch
+    });
 
     return { routeMatch, capacityMatch, compatible: routeMatch && capacityMatch };
   };
@@ -751,9 +789,9 @@ export default function AdminRoutingPage() {
               {selectedTrip && selectedShipment && (
                 <>
                   {getCompatibilityBadge(selectedTrip, selectedShipment)}
-                  {selectedTrip.available_capacity < selectedShipment.package_weight && (
+                  {hasInsufficientCapacity(selectedTrip, selectedShipment) && (
                     <span className="text-sm text-red-600">
-                      Capacité: {selectedTrip.available_capacity}kg disponible / {selectedShipment.package_weight}kg requis
+                      Capacité: {Number(selectedTrip.available_capacity).toFixed(2)}kg disponible / {Number(selectedShipment.package_weight).toFixed(2)}kg requis
                     </span>
                   )}
                 </>
@@ -761,9 +799,9 @@ export default function AdminRoutingPage() {
               {selectedTrip && selectedRequest && (
                 <>
                   {getCompatibilityBadge(selectedTrip, selectedRequest)}
-                  {selectedTrip.available_capacity < selectedRequest.weight && (
+                  {hasInsufficientCapacity(selectedTrip, selectedRequest) && (
                     <span className="text-sm text-red-600">
-                      Capacité: {selectedTrip.available_capacity}kg disponible / {selectedRequest.weight}kg requis
+                      Capacité: {Number(selectedTrip.available_capacity).toFixed(2)}kg disponible / {Number(selectedRequest.weight).toFixed(2)}kg requis
                     </span>
                   )}
                 </>
@@ -797,11 +835,11 @@ export default function AdminRoutingPage() {
               <Button
                 variant="primary"
                 onClick={handleAssignShipmentToTrip}
-                disabled={selectedTrip.available_capacity < selectedShipment.package_weight}
+                disabled={hasInsufficientCapacity(selectedTrip, selectedShipment)}
                 className="flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                {selectedTrip.available_capacity < selectedShipment.package_weight 
+                {hasInsufficientCapacity(selectedTrip, selectedShipment)
                   ? 'Capacité insuffisante' 
                   : 'Assigner l\'Expédition au Voyage'
                 }
@@ -812,11 +850,11 @@ export default function AdminRoutingPage() {
               <Button
                 variant="primary"
                 onClick={handleRecommendTravelerForRequest}
-                disabled={selectedTrip.available_capacity < selectedRequest.weight}
+                disabled={hasInsufficientCapacity(selectedTrip, selectedRequest)}
                 className="flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                {selectedTrip.available_capacity < selectedRequest.weight 
+                {hasInsufficientCapacity(selectedTrip, selectedRequest)
                   ? 'Capacité insuffisante' 
                   : 'Recommander ce Voyageur'
                 }
