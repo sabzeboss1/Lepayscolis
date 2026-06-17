@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\RechargeRequest;
 use App\Models\User;
+use App\Notifications\AdminRechargeCompletedNotification;
+use App\Notifications\RechargeRequestCompletedNotification;
+use App\Notifications\RechargeRequestProcessingNotification;
+use App\Notifications\RechargeRequestRejectedNotification;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class AdminRechargeRequestController extends Controller
 {
@@ -85,6 +90,10 @@ class AdminRechargeRequestController extends Controller
             'processed_by' => $request->user()->id,
         ]);
 
+        // Notify the user (guard against soft-deleted user)
+        $rechargeRequest->load('user');
+        $rechargeRequest->user?->notify(new RechargeRequestProcessingNotification($rechargeRequest));
+
         return response()->json([
             'success' => true,
             'message' => 'Demande marquée comme en cours de traitement',
@@ -101,12 +110,22 @@ class AdminRechargeRequestController extends Controller
             'admin_notes' => 'nullable|string|max:1000',
         ]);
 
-        $rechargeRequest = RechargeRequest::with('user.wallet')->findOrFail($id);
+        // Load user with trashed so soft-deleted users don't return null
+        $rechargeRequest = RechargeRequest::with([
+            'user' => fn ($q) => $q->withTrashed()->with('wallet'),
+        ])->findOrFail($id);
 
         if (!in_array($rechargeRequest->status, ['pending', 'processing'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cette demande a déjà été traitée',
+            ], 422);
+        }
+
+        if (!$rechargeRequest->user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'L\'utilisateur associé à cette demande est introuvable',
             ], 422);
         }
 
@@ -116,6 +135,9 @@ class AdminRechargeRequestController extends Controller
                 'message' => 'L\'utilisateur n\'a pas de portefeuille',
             ], 422);
         }
+
+        // Capture before transaction so withTrashed context is preserved for notification
+        $user = $rechargeRequest->user;
 
         DB::transaction(function () use ($rechargeRequest, $validated, $request) {
             // Credit user wallet
@@ -136,10 +158,19 @@ class AdminRechargeRequestController extends Controller
             ]);
         });
 
+        $fresh = $rechargeRequest->fresh(['user', 'processedBy']);
+
+        // Notify the user (use pre-captured instance to preserve withTrashed context)
+        $user->notify(new RechargeRequestCompletedNotification($fresh));
+
+        // Notify all admins and super_admins (confirmation de traitement)
+        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        Notification::send($admins, new AdminRechargeCompletedNotification($fresh));
+
         return response()->json([
             'success' => true,
             'message' => 'Recharge effectuée avec succès',
-            'data' => $rechargeRequest->fresh(['user', 'processedBy']),
+            'data' => $fresh,
         ]);
     }
 
@@ -168,10 +199,15 @@ class AdminRechargeRequestController extends Controller
             'processed_at' => now(),
         ]);
 
+        $fresh = $rechargeRequest->fresh(['user', 'processedBy']);
+
+        // Notify the user
+        $fresh->user?->notify(new RechargeRequestRejectedNotification($fresh));
+
         return response()->json([
             'success' => true,
             'message' => 'Demande rejetée',
-            'data' => $rechargeRequest->fresh(['user', 'processedBy']),
+            'data' => $fresh,
         ]);
     }
 }

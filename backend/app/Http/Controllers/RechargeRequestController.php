@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\RechargeRequest;
+use App\Models\User;
+use App\Notifications\AdminRechargeRequestedNotification;
+use App\Notifications\RechargeRequestSubmittedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class RechargeRequestController extends Controller
 {
@@ -67,8 +71,12 @@ class RechargeRequestController extends Controller
             'status' => 'pending',
         ]);
 
-        // TODO: Send notification to admins via email or push notification
-        // For now, admins will see the request in their dashboard
+        // Notify the user (confirmation)
+        $user->notify(new RechargeRequestSubmittedNotification($rechargeRequest));
+
+        // Notify all admins and super_admins so the first available can take charge
+        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        Notification::send($admins, new AdminRechargeRequestedNotification($rechargeRequest->load('user')));
 
         return response()->json([
             'success' => true,
