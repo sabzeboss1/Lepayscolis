@@ -253,6 +253,52 @@ export default function AdminRoutingPage() {
     }
   };
 
+  /**
+   * Normalize city name for comparison (handles Moscow/Moscou, etc.)
+   */
+  const normalizeCityName = (cityName: string): string => {
+    const normalized = cityName
+      .toLowerCase()
+      .trim()
+      .normalize('NFD') // Decompose accents
+      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .replace(/[^a-z0-9]/g, ''); // Remove non-alphanumeric
+
+    // Common city name variations (add more as needed)
+    const variations: Record<string, string> = {
+      'moscow': 'moscow',
+      'moscou': 'moscow',
+      'moskva': 'moscow',
+      'moskwa': 'moscow',
+      'douala': 'douala',
+      'yaounde': 'yaounde',
+      'yaound': 'yaounde',
+      'paris': 'paris',
+      'saratov': 'saratov',
+      'saratow': 'saratov',
+    };
+
+    return variations[normalized] || normalized;
+  };
+
+  /**
+   * Check if two cities match (handles name variations)
+   */
+  const citiesMatch = (city1: string, city2: string): boolean => {
+    const norm1 = normalizeCityName(city1);
+    const norm2 = normalizeCityName(city2);
+    
+    // Exact match after normalization
+    if (norm1 === norm2) return true;
+    
+    // One contains the other (for partial matches)
+    if (norm1.length > 3 && norm2.length > 3) {
+      return norm1.includes(norm2) || norm2.includes(norm1);
+    }
+    
+    return false;
+  };
+
   const isRouteCompatible = (trip: Trip, item: Shipment | ShipmentRequest) => {
     // Handle different object structures for pickup/delivery locations
     let pickupCity: string;
@@ -277,13 +323,10 @@ export default function AdminRoutingPage() {
       weight = item.weight;
     }
 
-    const routeMatch = (
-      trip.departure_city.toLowerCase().includes(pickupCity.toLowerCase()) ||
-      pickupCity.toLowerCase().includes(trip.departure_city.toLowerCase())
-    ) && (
-      trip.arrival_city.toLowerCase().includes(deliveryCity.toLowerCase()) ||
-      deliveryCity.toLowerCase().includes(trip.arrival_city.toLowerCase())
-    );
+    // Use intelligent city matching
+    const pickupMatch = citiesMatch(trip.departure_city, pickupCity);
+    const deliveryMatch = citiesMatch(trip.arrival_city, deliveryCity);
+    const routeMatch = pickupMatch && deliveryMatch;
 
     const capacityMatch = trip.available_capacity >= weight;
 

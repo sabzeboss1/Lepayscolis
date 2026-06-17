@@ -11,6 +11,8 @@ import { CitySelect } from '@/components/ui/CitySelect';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { apiClient } from '@/lib/api/client';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { getErrorSummary } from '@/lib/errors/errorMessages';
 import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 import { z } from 'zod';
 import {
@@ -84,6 +86,7 @@ export default function NewShipmentRequestPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string>('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showProhibitedItems, setShowProhibitedItems] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -282,14 +285,18 @@ export default function NewShipmentRequestPage() {
     e.preventDefault();
     
     if (!acceptedTerms) {
-      setErrors({ submit: 'Vous devez certifier que votre colis ne contient aucun objet interdit' });
+      setSubmitError('Vous devez certifier que votre colis ne contient aucun objet interdit');
       return;
     }
     
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      setSubmitError(getErrorSummary(errors, 'fr'));
+      return;
+    }
 
     setIsSubmitting(true);
     setErrors({});
+    setSubmitError('');
 
     try {
       let photoUrls: string[] = [];
@@ -343,8 +350,18 @@ export default function NewShipmentRequestPage() {
       }, 3000);
     } catch (error) {
       console.error('Failed to create shipment request:', error);
-      const errorMessage = ErrorHandler.handle(error);
-      setErrors({ submit: errorMessage.message });
+      const errorResponse = ErrorHandler.handle(error, 'fr');
+      
+      // Set field-specific errors if available
+      if (errorResponse.fieldErrors) {
+        setErrors(errorResponse.fieldErrors);
+      }
+      
+      // Set general error message
+      setSubmitError(errorResponse.message);
+      
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
@@ -810,12 +827,18 @@ export default function NewShipmentRequestPage() {
               </div>
             </div>
 
-            {/* Error */}
-            {errors.submit && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                {errors.submit}
-              </div>
+            {/* Error Alert */}
+            {submitError && (
+              <ErrorAlert
+                message={submitError}
+                severity="error"
+                fieldErrors={Object.keys(errors).length > 0 ? errors : undefined}
+                dismissible
+                onDismiss={() => {
+                  setSubmitError('');
+                  setErrors({});
+                }}
+              />
             )}
 
             {/* Action buttons */}
