@@ -335,44 +335,32 @@ class ShipmentController extends Controller
 
             // Release held funds when shipment is cancelled
             if ($request->status === 'cancelled' && $shipment->payment_status === 'escrowed' && $shipment->sender && $shipment->sender->wallet) {
-                try {
-                    $walletService = app(\App\Services\WalletService::class);
-                    $currencyService = app(\App\Services\CurrencyService::class);
-                    
-                    // Get currencies
-                    $senderCurrency = $shipment->sender->wallet->currency_code
-                        ?? $shipment->sender->currency_code
-                        ?? \App\Models\PlatformSetting::getDefaultCurrency();
-                    $shipmentCurrency = $shipment->currency_code ?? $senderCurrency;
-                    
-                    // Convert payment amount to sender's wallet currency if needed
-                    $amountToRelease = $shipment->payment_amount;
-                    if ($shipmentCurrency !== $senderCurrency) {
-                        $conversion = $currencyService->convert(
-                            $shipment->payment_amount,
-                            $shipmentCurrency,
-                            $senderCurrency
-                        );
-                        $amountToRelease = $conversion['converted_amount'];
-                    }
-                    
-                    // Cancel hold to release funds back to available balance
-                    $walletService->cancelHold(
-                        $shipment->sender->wallet,
-                        $amountToRelease,
-                        "Funds released for cancelled shipment #{$shipment->id}",
-                        'shipment',
-                        $shipment->id
-                    );
-                    
-                    // Update payment status
-                    $shipment->payment_status = 'refunded';
-                } catch (\Exception $e) {
-                    \Log::error("Failed to release held funds for shipment #{$shipment->id}", [
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Continue with status update even if refund fails
+                $walletService = app(\App\Services\WalletService::class);
+                $wallet = $shipment->sender->wallet;
+
+                // Use the original hold transaction amount to avoid exchange rate drift
+                // between creation and cancellation causing "Insufficient held balance" errors
+                $holdTransaction = \App\Models\WalletTransaction::where('wallet_id', $wallet->id)
+                    ->where('reference_type', 'shipment')
+                    ->where('reference_id', $shipment->id)
+                    ->where('type', 'hold')
+                    ->first();
+
+                if (!$holdTransaction) {
+                    return response()->json([
+                        'message' => 'Impossible de retrouver la transaction de blocage des fonds. Contactez le support.',
+                    ], 422);
                 }
+
+                $walletService->cancelHold(
+                    $wallet,
+                    $holdTransaction->amount,
+                    "Fonds libérés suite à l'annulation de l'expédition #{$shipment->id}",
+                    'shipment',
+                    $shipment->id
+                );
+
+                $shipment->payment_status = 'refunded';
             }
 
             $shipment->status = $request->status;
@@ -582,43 +570,27 @@ class ShipmentController extends Controller
 
             // Release held funds when shipment is rejected
             if ($shipment->payment_status === 'escrowed' && $shipment->sender && $shipment->sender->wallet) {
-                try {
-                    $walletService = app(\App\Services\WalletService::class);
-                    $currencyService = app(\App\Services\CurrencyService::class);
-                    
-                    // Get currencies
-                    $senderCurrency = $shipment->sender->wallet->currency_code
-                        ?? $shipment->sender->currency_code
-                        ?? \App\Models\PlatformSetting::getDefaultCurrency();
-                    $shipmentCurrency = $shipment->currency_code ?? $senderCurrency;
-                    
-                    // Convert payment amount to sender's wallet currency if needed
-                    $amountToRelease = $shipment->payment_amount;
-                    if ($shipmentCurrency !== $senderCurrency) {
-                        $conversion = $currencyService->convert(
-                            $shipment->payment_amount,
-                            $shipmentCurrency,
-                            $senderCurrency
-                        );
-                        $amountToRelease = $conversion['converted_amount'];
-                    }
-                    
-                    // Cancel hold to release funds back to available balance
+                $walletService = app(\App\Services\WalletService::class);
+                $wallet = $shipment->sender->wallet;
+
+                // Use the original hold transaction amount to avoid exchange rate drift
+                $holdTransaction = \App\Models\WalletTransaction::where('wallet_id', $wallet->id)
+                    ->where('reference_type', 'shipment')
+                    ->where('reference_id', $shipment->id)
+                    ->where('type', 'hold')
+                    ->first();
+
+                if ($holdTransaction) {
                     $walletService->cancelHold(
-                        $shipment->sender->wallet,
-                        $amountToRelease,
-                        "Funds released for rejected shipment #{$shipment->id}",
+                        $wallet,
+                        $holdTransaction->amount,
+                        "Fonds libérés suite au refus de l'expédition #{$shipment->id}",
                         'shipment',
                         $shipment->id
                     );
-                    
-                    // Update payment status
                     $shipment->payment_status = 'refunded';
-                } catch (\Exception $e) {
-                    \Log::error("Failed to release held funds for shipment #{$shipment->id}", [
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Continue with rejection even if refund fails
+                } else {
+                    \Log::warning("Hold transaction not found for rejected shipment #{$shipment->id}");
                 }
             }
 
