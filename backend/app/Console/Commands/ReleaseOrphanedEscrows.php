@@ -52,7 +52,7 @@ class ReleaseOrphanedEscrows extends Command
         $this->info("Expéditions annulées avec fonds toujours bloqués : {$shipments->count()}");
         $this->newLine();
 
-        $headers = ['Shipment ID', 'Sender', 'Montant bloqué', 'Devise', 'Créé le'];
+        $headers = ['Shipment ID', 'Sender', 'Email', 'Trajet', 'Montant bloqué', 'Devise', 'Créé le'];
         $rows = [];
         $toProcess = [];
 
@@ -87,9 +87,13 @@ class ReleaseOrphanedEscrows extends Command
                 continue;
             }
 
+            $trajet = trim(($shipment->pickup_country ?? '?') . ' → ' . ($shipment->delivery_country ?? '?'));
+
             $rows[] = [
                 $shipment->id,
                 $shipment->sender->name ?? '—',
+                $shipment->sender->email ?? '—',
+                $trajet,
                 number_format($holdTx->amount, 2),
                 $wallet->currency_code ?? '?',
                 $shipment->created_at->format('Y-m-d'),
