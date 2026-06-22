@@ -3,11 +3,15 @@
 namespace App\Console\Commands;
 
 use App\Models\Shipment;
+use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Notifications\AdminEscrowReleasedNotification;
+use App\Notifications\EscrowReleasedNotification;
 use App\Services\WalletService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class ReleaseOrphanedEscrows extends Command
 {
@@ -129,14 +133,30 @@ class ReleaseOrphanedEscrows extends Command
                     $shipment->update(['payment_status' => 'refunded']);
                 });
 
-                $this->line("  [OK] Shipment #{$shipment->id} — {$holdTx->amount} {$wallet->currency_code} restitués à {$shipment->sender->name}");
+                $currency = $wallet->currency_code;
+
+                // Notify the sender
+                if ($shipment->sender) {
+                    $shipment->sender->notify(
+                        new EscrowReleasedNotification($shipment, $holdTx->amount, $currency)
+                    );
+                }
+
+                // Notify all admins and super_admins
+                $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+                Notification::send(
+                    $admins,
+                    new AdminEscrowReleasedNotification($shipment, $holdTx->amount, $currency)
+                );
+
+                $this->line("  [OK] Shipment #{$shipment->id} — {$holdTx->amount} {$currency} restitués à {$shipment->sender->name}");
                 $released++;
 
                 Log::info('Orphaned escrow released', [
                     'shipment_id' => $shipment->id,
                     'wallet_id'   => $wallet->id,
                     'amount'      => $holdTx->amount,
-                    'currency'    => $wallet->currency_code,
+                    'currency'    => $currency,
                 ]);
             } catch (\Exception $e) {
                 $this->error("  [FAIL] Shipment #{$shipment->id} — {$e->getMessage()}");

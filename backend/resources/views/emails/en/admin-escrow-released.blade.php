@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escrow Released</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #f59e0b; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0;">
+        <h1 style="margin: 0;">{{ $platformName }}</h1>
+    </div>
+
+    <div style="background-color: #f9fafb; padding: 30px; border-radius: 0 0 5px 5px;">
+        <h2 style="color: #f59e0b;">Escrow funds manually released</h2>
+
+        <p>Hello {{ $admin->name }},</p>
+
+        <p>Escrow funds for a cancelled shipment have been manually returned to the concerned user via the correction command.</p>
+
+        <div style="background-color: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>User:</strong> {{ $shipment->sender?->name ?? '—' }}</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> {{ $shipment->sender?->email ?? '—' }}</p>
+            <p style="margin: 5px 0;"><strong>Amount returned:</strong> <span style="color: #f59e0b; font-size: 20px; font-weight: bold;">{{ number_format($amount, 2) }} {{ $currency }}</span></p>
+            <p style="margin: 5px 0;"><strong>Shipment:</strong> #{{ $shipment->id }}</p>
+            <p style="margin: 5px 0;"><strong>Title:</strong> {{ $shipment->title ?? '—' }}</p>
+            <p style="margin: 5px 0;"><strong>Shipment date:</strong> {{ $shipment->created_at?->format('m/d/Y') }}</p>
+            <p style="margin: 5px 0;"><strong>Processed at:</strong> {{ now()->format('m/d/Y g:i A') }}</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ config('app.frontend_url') }}/admin/shipments"
+               style="background-color: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                View shipments
+            </a>
+        </div>
+    </div>
+
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+        <p>&copy; {{ date('Y') }} {{ $platformName }}. All rights reserved.</p>
+    </div>
+</body>
+</html>
