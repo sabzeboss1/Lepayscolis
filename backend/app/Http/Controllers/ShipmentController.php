@@ -10,9 +10,13 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\Shipment;
 use App\Models\Trip;
+use App\Models\User;
+use App\Notifications\AdminEscrowReleasedNotification;
+use App\Notifications\EscrowReleasedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * ShipmentController - Handle shipment CRUD operations
@@ -323,7 +327,10 @@ class ShipmentController extends Controller
      */
     public function update(UpdateShipmentRequest $request, string $id): JsonResponse
     {
-        return DB::transaction(function () use ($request, $id) {
+        $releasedAmount   = null;
+        $releasedCurrency = null;
+
+        $response = DB::transaction(function () use ($request, $id, &$releasedAmount, &$releasedCurrency) {
             $shipment = Shipment::with('sender.wallet')->findOrFail($id);
 
             // Restore trip capacity if transitioning from accepted to cancelled
@@ -361,6 +368,8 @@ class ShipmentController extends Controller
                 );
 
                 $shipment->payment_status = 'refunded';
+                $releasedAmount   = $holdTransaction->amount;
+                $releasedCurrency = $wallet->currency_code;
             }
 
             $shipment->status = $request->status;
@@ -371,6 +380,18 @@ class ShipmentController extends Controller
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });
+
+        // Send notifications after transaction commits (queued — no risk of holding the transaction)
+        if ($releasedAmount !== null) {
+            $shipment = Shipment::with('sender')->find($id);
+            if ($shipment?->sender) {
+                $shipment->sender->notify(new EscrowReleasedNotification($shipment, $releasedAmount, $releasedCurrency));
+            }
+            $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+            Notification::send($admins, new AdminEscrowReleasedNotification($shipment, $releasedAmount, $releasedCurrency));
+        }
+
+        return $response;
     }
 
     /**
@@ -537,7 +558,10 @@ class ShipmentController extends Controller
      */
     public function reject(string $id): JsonResponse
     {
-        return DB::transaction(function () use ($id) {
+        $releasedAmount   = null;
+        $releasedCurrency = null;
+
+        $response = DB::transaction(function () use ($id, &$releasedAmount, &$releasedCurrency) {
             $shipment = Shipment::with('sender.wallet')->findOrFail($id);
             $user = auth()->user();
 
@@ -589,6 +613,8 @@ class ShipmentController extends Controller
                         $shipment->id
                     );
                     $shipment->payment_status = 'refunded';
+                    $releasedAmount   = $holdTransaction->amount;
+                    $releasedCurrency = $wallet->currency_code;
                 } else {
                     \Log::warning("Hold transaction not found for rejected shipment #{$shipment->id}");
                 }
@@ -602,6 +628,18 @@ class ShipmentController extends Controller
                 'data' => new ShipmentResource($shipment->load(['sender', 'traveler', 'trip'])),
             ]);
         });
+
+        // Send notifications after transaction commits
+        if ($releasedAmount !== null) {
+            $shipment = Shipment::with('sender')->find($id);
+            if ($shipment?->sender) {
+                $shipment->sender->notify(new EscrowReleasedNotification($shipment, $releasedAmount, $releasedCurrency));
+            }
+            $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+            Notification::send($admins, new AdminEscrowReleasedNotification($shipment, $releasedAmount, $releasedCurrency));
+        }
+
+        return $response;
     }
 
     /**
