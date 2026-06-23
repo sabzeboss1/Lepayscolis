@@ -17,7 +17,8 @@ class ReleaseOrphanedEscrows extends Command
 {
     protected $signature = 'escrow:release-orphaned
                             {--dry-run : Affiche les cas sans effectuer de modifications}
-                            {--shipment= : Traiter uniquement un shipment spécifique (UUID)}';
+                            {--shipment= : Traiter uniquement un shipment spécifique (UUID)}
+                            {--trip= : Traiter tous les shipments orphelins d\'un trip spécifique (UUID)}';
 
     protected $description = 'Libère les fonds en escrow pour les expéditions annulées dont le remboursement a échoué';
 
@@ -28,8 +29,9 @@ class ReleaseOrphanedEscrows extends Command
 
     public function handle(): int
     {
-        $isDryRun = $this->option('dry-run');
+        $isDryRun   = $this->option('dry-run');
         $specificId = $this->option('shipment');
+        $tripId     = $this->option('trip');
 
         $this->info($isDryRun ? '[DRY-RUN] Simulation — aucune modification ne sera effectuée.' : 'Libération des escrows orphelins...');
         $this->newLine();
@@ -40,6 +42,8 @@ class ReleaseOrphanedEscrows extends Command
 
         if ($specificId) {
             $query->where('id', $specificId);
+        } elseif ($tripId) {
+            $query->where('trip_id', $tripId);
         }
 
         $shipments = $query->get();
