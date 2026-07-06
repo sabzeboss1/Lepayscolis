@@ -15,7 +15,7 @@ class WalletResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $currency = PlatformSetting::get('default_currency', 'EUR');
+        $currency = PlatformSetting::getDefaultCurrency();
 
         return [
             'id' => 'wallet_' . $this->id, // User ID for wallet identification

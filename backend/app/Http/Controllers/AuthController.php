@@ -32,7 +32,7 @@ class AuthController extends Controller
             // Resolve locale and currency from the selected country
             $country = Country::findByCode($request->country);
             $locale = $request->locale ?? ($country?->default_locale ?? 'fr');
-            $currencyCode = $country?->default_currency_code ?? 'EUR';
+            $currencyCode = $country?->default_currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
             // Create user with hashed password (bcrypt cost 10)
             $user = User::create([

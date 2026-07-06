@@ -68,8 +68,8 @@ class AdminSettingsService
             'secondary_color' => '#F97316',
             
             // Currency
-            'default_currency' => 'EUR',
-            'supported_currencies' => ['EUR', 'USD', 'GBP', 'XAF', 'XOF', 'RUB', 'CAD'],
+            'default_currency' => PlatformSetting::getDefaultCurrency(),
+            'supported_currencies' => ['XAF', 'USD', 'GBP', 'XOF', 'RUB', 'CAD'],
             
             // Security
             'kyc_required' => true,

@@ -490,7 +490,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
                 <div>
                   <a
-                    href={`/api/trips/${trip.id}/travel-proof`}
+                    href={trip.travel_proof_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors w-full justify-center mb-2"
@@ -499,7 +499,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
                     Télécharger le document
                   </a>
                   <button
-                    onClick={() => window.open(`/api/trips/${trip.id}/travel-proof`, '_blank')}
+                    onClick={() => window.open(trip.travel_proof_url, '_blank')}
                     className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors w-full justify-center"
                   >
                     <FileText className="w-4 h-4 mr-2" />

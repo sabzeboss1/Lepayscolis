@@ -99,7 +99,7 @@ class FileUploadService
     }
 
     /**
-     * Upload travel proof document to private local storage
+     * Upload travel proof document to public storage
      *
      * @param UploadedFile $file
      * @param string $tripId
@@ -118,17 +118,15 @@ class FileUploadService
         $extension = $file->getClientOriginalExtension();
         $filename = "travel-proofs/{$tripId}_" . time() . ".{$extension}";
 
-        // Upload to local private storage
-        $path = $file->storeAs('', $filename, 'local');
+        // Upload to public storage
+        $disk = Storage::disk('public');
+        $stored = $disk->put($filename, file_get_contents($file->getRealPath()));
 
-        if (!$path) {
+        if (!$stored) {
             throw new \Exception('Failed to upload travel proof');
         }
 
-        // Return URL (served by Laravel via local disk with serve => true)
-        /** @var FilesystemAdapter $disk */
-        $disk = Storage::disk('local');
-        return $disk->url($filename);
+        return asset('storage/' . $filename);
     }
 
     /**
@@ -279,9 +277,9 @@ class FileUploadService
             return 'public';
         }
 
-        // HIGH-3: KYC documents and travel proofs are private — use local disk
+        // KYC documents and travel proofs are stored on public disk
         if (str_starts_with($path, 'kyc/') || str_starts_with($path, 'travel-proofs/')) {
-            return 'local';
+            return 'public';
         }
 
         // Default to local (private) for security

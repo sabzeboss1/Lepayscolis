@@ -800,7 +800,8 @@
       "version": "Admin Dashboard v1.0",
       "currencies": "Currencies",
       "countries": "Countries",
-      "cities": "Cities"
+      "cities": "Cities",
+      "backups": "Backups"
     },
     "dashboard": {
       "title": "Dashboard",

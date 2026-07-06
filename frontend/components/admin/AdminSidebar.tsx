@@ -28,6 +28,7 @@ import {
   ChevronRight,
   TrendingUp,
   Route,
+  HardDrive,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
@@ -102,7 +103,8 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
       titleKey: 'admin.sidebar.superAdmin',
       items: [
         { labelKey: 'admin.sidebar.adminUsers', href: '/admin/admins', icon: Shield, superAdminOnly: true },
-        { labelKey: 'admin.sidebar.notifications', href: '/admin/notifications', icon: Bell, superAdminOnly: true }
+        { labelKey: 'admin.sidebar.notifications', href: '/admin/notifications', icon: Bell, superAdminOnly: true },
+        { labelKey: 'admin.sidebar.backups', href: '/admin/backups', icon: HardDrive, superAdminOnly: true }
       ]
     }
   ];

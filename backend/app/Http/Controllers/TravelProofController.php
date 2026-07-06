@@ -41,18 +41,18 @@ class TravelProofController extends Controller
             abort(403, 'You are not authorized to view this document.');
         }
         
-        // Extract the file path from the URL
-        // travel_proof_url format: /storage/travel-proofs/filename.pdf
-        $relativePath = str_replace('/storage/', '', $trip->travel_proof_url);
-        // Don't add 'private/' because the local disk root is already storage/app/private
-        $path = $relativePath;
-        
-        if (!Storage::disk('local')->exists($path)) {
+        // Extract the relative path from the URL
+        // travel_proof_url format: http://host/storage/travel-proofs/filename.pdf or /storage/travel-proofs/filename.pdf
+        $url = $trip->travel_proof_url;
+        $relativePath = preg_replace('#^https?://[^/]+/storage/#', '', $url);
+        $relativePath = preg_replace('#^/storage/#', '', $relativePath);
+
+        if (!Storage::disk('public')->exists($relativePath)) {
             abort(404, 'File not found');
         }
-        
-        $file     = Storage::disk('local')->get($path);
-        $mimeType = Storage::disk('local')->mimeType($path);
+
+        $file     = Storage::disk('public')->get($relativePath);
+        $mimeType = Storage::disk('public')->mimeType($relativePath);
         
         return response($file, 200)
             ->header('Content-Type', $mimeType)

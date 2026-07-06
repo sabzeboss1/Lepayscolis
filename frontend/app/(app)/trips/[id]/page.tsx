@@ -419,7 +419,7 @@ export default function TripDetailPage() {
                 label="Preuve"
                 value={
                   <a
-                    href={`/api/trips/${trip.id}/travel-proof`}
+                    href={trip.travel_proof_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline text-xs font-semibold"

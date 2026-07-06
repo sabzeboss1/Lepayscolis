@@ -465,20 +465,42 @@ class ShipmentController extends Controller
             $walletService = app(\App\Services\WalletService::class);
             $currencyService = app(\App\Services\CurrencyService::class);
 
-            // 1. Debit sender's wallet - release held funds if available, otherwise simple debit
+            // 1. Debit sender's wallet - use original hold amount (already converted to wallet currency)
             $senderWallet = $shipment->sender->wallet->fresh();
-            if ($senderWallet->held_balance >= $shipment->payment_amount) {
+            $holdTransaction = \App\Models\WalletTransaction::where('wallet_id', $senderWallet->id)
+                ->where('reference_type', 'shipment')
+                ->where('reference_id', $shipment->id)
+                ->where('type', 'hold')
+                ->first();
+
+            if ($holdTransaction && $senderWallet->held_balance >= $holdTransaction->amount) {
+                // Release the exact held amount (in wallet currency)
                 $walletService->releaseAndDebit(
                     $senderWallet,
-                    $shipment->payment_amount,
+                    $holdTransaction->amount,
                     "Payment for shipment #{$shipment->id} - Delivered",
                     'shipment',
                     $shipment->id
                 );
             } else {
+                // Fallback: convert payment_amount to wallet currency before debiting
+                $shipmentCurrency = $shipment->currency_code
+                    ?? $senderWallet->currency_code
+                    ?? \App\Models\PlatformSetting::getDefaultCurrency();
+
+                $debitAmount = $shipment->payment_amount;
+                if ($shipmentCurrency !== $senderWallet->currency_code) {
+                    $conversion = $currencyService->convert(
+                        $shipment->payment_amount,
+                        $shipmentCurrency,
+                        $senderWallet->currency_code
+                    );
+                    $debitAmount = $conversion['converted_amount'];
+                }
+
                 $walletService->debit(
                     $senderWallet,
-                    $shipment->payment_amount,
+                    $debitAmount,
                     "Payment for shipment #{$shipment->id} - Delivered",
                     'shipment',
                     $shipment->id

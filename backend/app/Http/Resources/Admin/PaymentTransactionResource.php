@@ -15,7 +15,7 @@ class PaymentTransactionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $currency = $this->currency_code ?? PlatformSetting::get('default_currency', 'EUR');
+        $currency = $this->currency_code ?? PlatformSetting::getDefaultCurrency();
 
         return [
             'id' => $this->id,

@@ -65,7 +65,7 @@ class RechargeRequestController extends Controller
         $rechargeRequest = RechargeRequest::create([
             'user_id' => $user->id,
             'amount' => $validated['amount'],
-            'currency_code' => $user->currency_code ?? 'EUR',
+            'currency_code' => $user->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
             'payment_method' => $validated['payment_method'],
             'payment_details' => $validated['payment_details'] ?? null,
             'status' => 'pending',
