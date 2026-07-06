@@ -94,7 +94,9 @@ class TripResource extends JsonResource
             'verification_status' => $this->verification_status,
             'rejection_reason' => $this->when($this->verification_status === 'rejected', $this->rejection_reason),
             'verified_at' => $this->when($this->verified_at, fn() => $this->verified_at?->toISOString()),
-            'travel_proof_url' => $this->travel_proof_url,
+            'travel_proof_url' => $this->travel_proof_url
+                ? (str_starts_with($this->travel_proof_url, 'http') ? $this->travel_proof_url : asset($this->travel_proof_url))
+                : null,
             'remaining_capacity' => $this->remainingCapacity(),
             'accepted_shipments_count' => $this->when(
                 $this->relationLoaded('shipments'),

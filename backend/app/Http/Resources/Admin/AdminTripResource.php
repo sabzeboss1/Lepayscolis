@@ -58,7 +58,9 @@ class AdminTripResource extends JsonResource
                 'name' => $this->verifiedBy?->name,
             ]),
             'verified_at' => $this->verified_at?->toIso8601String(),
-            'travel_proof_url' => $this->travel_proof_url,
+            'travel_proof_url' => $this->travel_proof_url
+                ? (str_starts_with($this->travel_proof_url, 'http') ? $this->travel_proof_url : asset($this->travel_proof_url))
+                : null,
             'shipments_count' => $this->whenLoaded('shipments', fn() => $this->shipments->count(), 0),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
