@@ -87,7 +87,7 @@ export default function BackupsPage() {
 
   const loadSettings = useCallback(async () => {
     try {
-      const res = await apiClient.get(API_ENDPOINTS.admin.backups.settings);
+      const res: any = await apiClient.get(API_ENDPOINTS.admin.backups.settings);
       const data = res.data;
       setSettings(data);
       setFormData(data);
@@ -107,7 +107,7 @@ export default function BackupsPage() {
 
   const loadBackups = useCallback(async (page = 1) => {
     try {
-      const res = await apiClient.get(API_ENDPOINTS.admin.backups.list, { params: { page, per_page: 15 } });
+      const res: any = await apiClient.get(API_ENDPOINTS.admin.backups.list, { params: { page, per_page: 15 } });
       setBackups(res.data || []);
       setMeta(res.meta || { current_page: 1, last_page: 1, total: 0 });
     } catch {
@@ -139,7 +139,7 @@ export default function BackupsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await apiClient.put(API_ENDPOINTS.admin.backups.updateSettings, formData);
+      const res: any = await apiClient.put(API_ENDPOINTS.admin.backups.updateSettings, formData);
       setSettings(res.data || res);
       showMessage('success', 'Configuration sauvegardée.');
     } catch (err: any) {
@@ -183,7 +183,7 @@ export default function BackupsPage() {
     setTestingConnection(true);
     setMessage(null);
     try {
-      const res = await apiClient.post(API_ENDPOINTS.admin.backups.googleDriveTest);
+      const res: any = await apiClient.post(API_ENDPOINTS.admin.backups.googleDriveTest);
       if (res.data.connected) {
         showMessage('success', `Google Drive connecté (${res.data.email}).`);
         await loadSettings();
@@ -201,7 +201,7 @@ export default function BackupsPage() {
     setCreatingFolder(true);
     setMessage(null);
     try {
-      const res = await apiClient.post(API_ENDPOINTS.admin.backups.googleDriveCreateFolder);
+      const res: any = await apiClient.post(API_ENDPOINTS.admin.backups.googleDriveCreateFolder);
       setFormData(prev => ({ ...prev, google_drive_folder_id: res.data.folder_id }));
       showMessage('success', 'Dossier créé sur Google Drive.');
       await loadSettings();
@@ -214,7 +214,7 @@ export default function BackupsPage() {
 
   const handleConnectDrive = async () => {
     try {
-      const res = await apiClient.get(API_ENDPOINTS.admin.backups.googleDriveAuthUrl);
+      const res: any = await apiClient.get(API_ENDPOINTS.admin.backups.googleDriveAuthUrl);
       window.open(res.data.url, '_blank', 'width=600,height=700');
     } catch (err: any) {
       showMessage('error', 'Impossible de générer l\'URL OAuth.');
