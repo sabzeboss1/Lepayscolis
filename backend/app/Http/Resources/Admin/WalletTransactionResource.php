@@ -19,7 +19,7 @@ class WalletTransactionResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'amount' => $this->amount,
-            'amount_formatted' => number_format($this->amount, 2) . ' ' . PlatformSetting::get('default_currency', 'EUR'),
+            'amount_formatted' => number_format($this->amount, 2) . ' ' . PlatformSetting::getDefaultCurrency(),
             'description' => $this->description,
             'reference_type' => $this->reference_type,
             'reference_id' => $this->reference_id,

@@ -175,7 +175,7 @@ class WalletManagementController extends Controller
         $admin = $request->user();
 
         // Use system default currency from platform settings
-        $systemCurrencyCode = PlatformSetting::get('default_currency', 'EUR');
+        $systemCurrencyCode = PlatformSetting::getDefaultCurrency();
         $walletCurrencyCode = $user->wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
 
         // Convert amount if system currency differs from wallet currency

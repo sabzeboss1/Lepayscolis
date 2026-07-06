@@ -23,7 +23,7 @@ class AdminAnalyticsService
      */
     protected function getTargetRate(): float
     {
-        $defaultCurrency = PlatformSetting::get('default_currency', 'EUR');
+        $defaultCurrency = PlatformSetting::getDefaultCurrency();
         return (float) (Currency::findByCode($defaultCurrency)?->exchange_rate ?? 1.0);
     }
 

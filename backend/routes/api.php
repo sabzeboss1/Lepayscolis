@@ -308,6 +308,7 @@ use App\Http\Controllers\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AdminExportController;
+use App\Http\Controllers\Admin\AdminBackupController;
 use App\Http\Controllers\Admin\AdminUserManagementController;
 use App\Http\Controllers\Admin\AdminCurrencyController;
 use App\Http\Controllers\Admin\AdminCountryController;
@@ -539,5 +540,18 @@ Route::middleware(['auth:sanctum', 'super-admin'])->prefix('admin')->group(funct
     Route::prefix('notifications')->group(function () {
         Route::post('/send', [AdminNotificationController::class, 'send'])->middleware('throttle:30,1');
         Route::get('/history', [AdminNotificationController::class, 'history'])->middleware('throttle:60,1');
+    });
+
+    // Backup Management (super admin + backup_notify_email whitelist)
+    Route::prefix('backups')->middleware('backup.access')->group(function () {
+        Route::get('/settings', [AdminBackupController::class, 'settings'])->middleware('throttle:60,1');
+        Route::put('/settings', [AdminBackupController::class, 'updateSettings'])->middleware('throttle:30,1');
+        Route::get('/google-drive/auth-url', [AdminBackupController::class, 'googleDriveAuthUrl'])->middleware('throttle:10,1');
+        Route::post('/google-drive/callback', [AdminBackupController::class, 'googleDriveCallback'])->middleware('throttle:10,1');
+        Route::post('/google-drive/test', [AdminBackupController::class, 'testGoogleDriveConnection'])->middleware('throttle:10,1');
+        Route::post('/google-drive/create-folder', [AdminBackupController::class, 'createGoogleDriveFolder'])->middleware('throttle:10,1');
+        Route::post('/run', [AdminBackupController::class, 'run'])->middleware('throttle:5,1');
+        Route::get('/', [AdminBackupController::class, 'index'])->middleware('throttle:60,1');
+        Route::delete('/{id}', [AdminBackupController::class, 'destroy'])->middleware('throttle:30,1');
     });
 });

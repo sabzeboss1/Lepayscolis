@@ -44,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\EnsureAdminRole::class,
             'super-admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'optional.auth' => \App\Http\Middleware\OptionalAuth::class,
+            'backup.access' => \App\Http\Middleware\BackupAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

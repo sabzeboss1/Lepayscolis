@@ -297,6 +297,18 @@ export const API_ENDPOINTS = {
       show: (userId: string) => `/api/admin/wallets/${userId}`,
       adjust: (userId: string) => `/api/admin/wallets/${userId}/adjust`,
     },
+
+    backups: {
+      settings: '/api/admin/backups/settings',
+      updateSettings: '/api/admin/backups/settings',
+      list: '/api/admin/backups',
+      run: '/api/admin/backups/run',
+      delete: (id: number) => `/api/admin/backups/${id}`,
+      googleDriveAuthUrl: '/api/admin/backups/google-drive/auth-url',
+      googleDriveCallback: '/api/admin/backups/google-drive/callback',
+      googleDriveTest: '/api/admin/backups/google-drive/test',
+      googleDriveCreateFolder: '/api/admin/backups/google-drive/create-folder',
+    },
   },
 } as const;
 

@@ -126,7 +126,7 @@ class AdminDashboardService
 
             $currencyService = app(CurrencyService::class);
             foreach ($recentPayments as $payment) {
-                $formatted = $currencyService->format($payment->amount, $payment->currency_code ?? 'EUR');
+                $formatted = $currencyService->format($payment->amount, $payment->currency_code ?? PlatformSetting::getDefaultCurrency());
                 $activities[] = [
                     'id' => "payment_completed-{$payment->id}",
                     'type' => 'payment_completed',
@@ -154,7 +154,7 @@ class AdminDashboardService
      */
     protected function getTargetRate(): float
     {
-        $defaultCurrency = PlatformSetting::get('default_currency', 'EUR');
+        $defaultCurrency = PlatformSetting::getDefaultCurrency();
         return (float) (Currency::findByCode($defaultCurrency)?->exchange_rate ?? 1.0);
     }
 

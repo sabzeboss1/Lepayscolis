@@ -16,7 +16,7 @@ class DashboardMetricsResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $defaultCurrency = PlatformSetting::get('default_currency', 'EUR');
+        $defaultCurrency = PlatformSetting::getDefaultCurrency();
         $formatted = app(CurrencyService::class)->format($this->resource['revenue_30_days'], $defaultCurrency);
 
         return [

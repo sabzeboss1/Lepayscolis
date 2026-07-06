@@ -51,7 +51,7 @@ class WithdrawalRequestResource extends JsonResource
      */
     private function formatCurrency(float $amount): string
     {
-        return app(\App\Services\CurrencyService::class)->format($amount, $this->currency ?? 'EUR');
+        return app(\App\Services\CurrencyService::class)->format($amount, $this->currency ?? \App\Models\PlatformSetting::getDefaultCurrency());
     }
 
     /**

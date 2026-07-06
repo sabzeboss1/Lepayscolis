@@ -61,7 +61,7 @@ class WithdrawalManagementController extends Controller
         $withdrawals = $query->paginate($perPage);
 
         // Calculate total pending amount converted to system currency
-        $systemCurrency = PlatformSetting::get('default_currency', 'EUR');
+        $systemCurrency = PlatformSetting::getDefaultCurrency();
         $pendingRequests = WithdrawalRequest::where('status', 'pending')->get(['amount', 'currency']);
 
         $totalPending = 0;

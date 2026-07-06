@@ -48,7 +48,7 @@ class CreateMissingWallets extends Command
                 Wallet::create([
                     'user_id' => $user->id,
                     'balance' => 0.00,
-                    'currency_code' => $user->currency_code ?? 'EUR',
+                    'currency_code' => $user->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
                     'held_balance' => 0.00,
                 ]);
                 $created++;

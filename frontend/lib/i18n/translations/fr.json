@@ -800,7 +800,8 @@
       "version": "Admin Dashboard v1.0",
       "currencies": "Devises",
       "countries": "Pays",
-      "cities": "Villes"
+      "cities": "Villes",
+      "backups": "Sauvegardes"
     },
     "dashboard": {
       "title": "Tableau de bord",
