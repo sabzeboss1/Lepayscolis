@@ -36,6 +36,8 @@ class SendBalanceAdjustmentNotification implements ShouldQueue
             $isPositive = $transaction->type === 'adjustment' && $adjustmentAmount > 0;
 
             // Send email notification
+            $currency = $event->wallet->currency_code ?? 'XAF';
+
             Mail::to($user->email)->send(
                 new WalletBalanceAdjustedMail($user, [
                     'amount' => $adjustmentAmount,
@@ -43,6 +45,7 @@ class SendBalanceAdjustmentNotification implements ShouldQueue
                     'new_balance' => $newBalance,
                     'reason' => $reason,
                     'admin_name' => $admin->name,
+                    'currency' => $currency,
                 ])
             );
 

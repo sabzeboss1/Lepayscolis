@@ -50,6 +50,7 @@ class WithdrawalRejected extends Mailable
                 'amount' => $this->data['amount'],
                 'withdrawal_id' => $this->data['withdrawal_id'],
                 'reason' => $this->data['reason'],
+                'currency' => $this->data['currency'] ?? 'XAF',
             ],
         );
     }

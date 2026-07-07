@@ -18,8 +18,8 @@
         <p>We are pleased to inform you that your wallet has been credited.</p>
         
         <div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #10b981;">
-            <p style="margin: 0 0 10px 0;"><strong>Amount credited:</strong> <span style="color: #10b981; font-size: 24px; font-weight: bold;">€{{ number_format($amount, 2) }}</span></p>
-            <p style="margin: 0;"><strong>New balance:</strong> <span style="font-size: 20px; font-weight: bold;">€{{ number_format($new_balance, 2) }}</span></p>
+            <p style="margin: 0 0 10px 0;"><strong>Amount credited:</strong> <span style="color: #10b981; font-size: 24px; font-weight: bold;">{{ number_format($amount, 2) }} {{ $currency }}</span></p>
+            <p style="margin: 0;"><strong>New balance:</strong> <span style="font-size: 20px; font-weight: bold;">{{ number_format($new_balance, 2) }} {{ $currency }}</span></p>
             @if($description)
             <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 14px;"><strong>Description:</strong> {{ $description }}</p>
             @endif

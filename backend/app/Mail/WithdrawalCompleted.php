@@ -51,6 +51,7 @@ class WithdrawalCompleted extends Mailable
                 'fee' => $this->data['fee'],
                 'net_amount' => $this->data['net_amount'],
                 'withdrawal_id' => $this->data['withdrawal_id'],
+                'currency' => $this->data['currency'] ?? 'XAF',
             ],
         );
     }

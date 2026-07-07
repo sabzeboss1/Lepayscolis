@@ -32,11 +32,14 @@ class SendWalletCreditNotification implements ShouldQueue
             $newBalance = $event->wallet->balance;
 
             // Send email notification
+            $currency = $event->wallet->currency_code ?? 'XAF';
+
             Mail::to($user->email)->send(
                 new WalletCreditedMail($user, [
                     'amount' => $transaction->amount,
                     'new_balance' => $newBalance,
                     'description' => $transaction->description,
+                    'currency' => $currency,
                 ])
             );
 

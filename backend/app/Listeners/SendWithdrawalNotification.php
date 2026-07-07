@@ -35,12 +35,15 @@ class SendWithdrawalNotification implements ShouldQueue
             $withdrawal = $event->withdrawal;
 
             // Send email notification
+            $currency = $withdrawal->user->wallet->currency_code ?? 'XAF';
+
             Mail::to($user->email)->send(
                 new WithdrawalApprovedMail($user, [
                     'amount' => $withdrawal->amount,
                     'fee' => $withdrawal->fee,
                     'net_amount' => $withdrawal->net_amount,
                     'withdrawal_id' => $withdrawal->id,
+                    'currency' => $currency,
                 ])
             );
 
@@ -99,11 +102,14 @@ class SendWithdrawalNotification implements ShouldQueue
             $reason = $event->reason;
 
             // Send email notification
+            $currency = $withdrawal->user->wallet->currency_code ?? 'XAF';
+
             Mail::to($user->email)->send(
                 new WithdrawalRejectedMail($user, [
                     'amount' => $withdrawal->amount,
                     'withdrawal_id' => $withdrawal->id,
                     'reason' => $reason,
+                    'currency' => $currency,
                 ])
             );
 
@@ -163,12 +169,15 @@ class SendWithdrawalNotification implements ShouldQueue
             $withdrawal = $event->withdrawal;
 
             // Send email notification
+            $currency = $withdrawal->user->wallet->currency_code ?? 'XAF';
+
             Mail::to($user->email)->send(
                 new WithdrawalCompletedMail($user, [
                     'amount' => $withdrawal->amount,
                     'fee' => $withdrawal->fee,
                     'net_amount' => $withdrawal->net_amount,
                     'withdrawal_id' => $withdrawal->id,
+                    'currency' => $currency,
                 ])
             );
 

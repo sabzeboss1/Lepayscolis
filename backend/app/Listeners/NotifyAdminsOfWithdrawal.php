@@ -54,6 +54,7 @@ class NotifyAdminsOfWithdrawal implements ShouldQueue
                         'fee' => $withdrawal->fee,
                         'net_amount' => $withdrawal->net_amount,
                         'created_at' => $withdrawal->created_at,
+                        'currency' => $user->wallet->currency_code ?? 'XAF',
                     ])
                 );
 

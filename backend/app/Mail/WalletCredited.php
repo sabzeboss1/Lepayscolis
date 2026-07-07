@@ -23,6 +23,7 @@ class WalletCredited extends BaseNotificationMail
                 'amount' => $this->data['amount'] ?? 0,
                 'new_balance' => $this->data['new_balance'] ?? 0,
                 'description' => $this->data['description'] ?? '',
+                'currency' => $this->data['currency'] ?? 'XAF',
             ],
         );
     }

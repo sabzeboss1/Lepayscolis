@@ -27,12 +27,12 @@
             <p style="margin: 0 0 10px 0;">
                 <strong>Montant :</strong> 
                 <span style="color: {{ $is_positive ? '#10b981' : '#f59e0b' }}; font-size: 24px; font-weight: bold;">
-                    {{ $is_positive ? '+' : '-' }}{{ number_format($amount, 2) }} €
+                    {{ $is_positive ? '+' : '-' }}{{ number_format($amount, 2) }} {{ $currency }}
                 </span>
             </p>
             <p style="margin: 0;">
                 <strong>Nouveau solde :</strong> 
-                <span style="font-size: 20px; font-weight: bold;">{{ number_format($new_balance, 2) }} €</span>
+                <span style="font-size: 20px; font-weight: bold;">{{ number_format($new_balance, 2) }} {{ $currency }}</span>
             </p>
         </div>
         

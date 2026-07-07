@@ -52,6 +52,7 @@ class WalletBalanceAdjusted extends Mailable
                 'new_balance' => $this->data['new_balance'],
                 'reason' => $this->data['reason'],
                 'admin_name' => $this->data['admin_name'],
+                'currency' => $this->data['currency'] ?? 'XAF',
             ],
         );
     }
