@@ -18,9 +18,9 @@
         <p>Nous avons le plaisir de vous informer que votre retrait a été complété avec succès. Les fonds ont été débités de votre portefeuille.</p>
         
         <div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #10b981;">
-            <p style="margin: 0 0 10px 0;"><strong>Montant retiré :</strong> <span style="color: #10b981; font-size: 24px; font-weight: bold;">{{ number_format($amount, 2) }} €</span></p>
-            <p style="margin: 0 0 10px 0;"><strong>Frais de retrait :</strong> <span style="font-size: 18px;">{{ number_format($fee, 2) }} €</span></p>
-            <p style="margin: 0 0 10px 0;"><strong>Montant net reçu :</strong> <span style="font-size: 20px; font-weight: bold; color: #10b981;">{{ number_format($net_amount, 2) }} €</span></p>
+            <p style="margin: 0 0 10px 0;"><strong>Montant retiré :</strong> <span style="color: #10b981; font-size: 24px; font-weight: bold;">{{ number_format($amount, 2) }} {{ $currency }}</span></p>
+            <p style="margin: 0 0 10px 0;"><strong>Frais de retrait :</strong> <span style="font-size: 18px;">{{ number_format($fee, 2) }} {{ $currency }}</span></p>
+            <p style="margin: 0 0 10px 0;"><strong>Montant net reçu :</strong> <span style="font-size: 20px; font-weight: bold; color: #10b981;">{{ number_format($net_amount, 2) }} {{ $currency }}</span></p>
             <p style="margin: 0; color: #6b7280; font-size: 14px;"><strong>Référence :</strong> #{{ $withdrawal_id }}</p>
         </div>
         

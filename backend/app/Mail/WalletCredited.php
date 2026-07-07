@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\PlatformSetting;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
@@ -23,6 +24,7 @@ class WalletCredited extends BaseNotificationMail
                 'amount' => $this->data['amount'] ?? 0,
                 'new_balance' => $this->data['new_balance'] ?? 0,
                 'description' => $this->data['description'] ?? '',
+                'currency' => $this->data['currency'] ?? PlatformSetting::getDefaultCurrency(),
             ],
         );
     }

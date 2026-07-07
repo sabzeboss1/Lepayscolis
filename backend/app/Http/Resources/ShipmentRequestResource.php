@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Services\CurrencyService;
@@ -28,7 +29,7 @@ class ShipmentRequestResource extends JsonResource
         $currencyService = app(CurrencyService::class);
         
         // Get original currency from shipment request
-        $originalCurrency = $this->currency_code ?? 'XAF';
+        $originalCurrency = $this->currency_code ?? PlatformSetting::getDefaultCurrency();
         $originalAmount = $this->max_budget;
         
         // Convert currency if user is authenticated and has different preferred currency

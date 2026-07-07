@@ -33,9 +33,9 @@
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 15px 0;">
             
             <h4 style="margin: 15px 0 10px 0; color: #6b7280;">Montants</h4>
-            <p style="margin: 5px 0;"><strong>Montant demandé :</strong> <span style="color: #3b82f6; font-size: 20px; font-weight: bold;">{{ number_format($amount, 2) }} €</span></p>
-            <p style="margin: 5px 0;"><strong>Frais de retrait :</strong> {{ number_format($fee, 2) }} €</p>
-            <p style="margin: 5px 0;"><strong>Montant net :</strong> <span style="font-weight: bold;">{{ number_format($net_amount, 2) }} €</span></p>
+            <p style="margin: 5px 0;"><strong>Montant demandé :</strong> <span style="color: #3b82f6; font-size: 20px; font-weight: bold;">{{ number_format($amount, 2) }} {{ $currency }}</span></p>
+            <p style="margin: 5px 0;"><strong>Frais de retrait :</strong> {{ number_format($fee, 2) }} {{ $currency }}</p>
+            <p style="margin: 5px 0;"><strong>Montant net :</strong> <span style="font-weight: bold;">{{ number_format($net_amount, 2) }} {{ $currency }}</span></p>
         </div>
         
         <div style="background-color: #fef3c7; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #f59e0b;">

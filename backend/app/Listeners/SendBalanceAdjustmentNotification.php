@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\WalletBalanceAdjusted;
 use App\Mail\WalletBalanceAdjusted as WalletBalanceAdjustedMail;
+use App\Models\PlatformSetting;
 use App\Services\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -36,6 +37,8 @@ class SendBalanceAdjustmentNotification implements ShouldQueue
             $isPositive = $transaction->type === 'adjustment' && $adjustmentAmount > 0;
 
             // Send email notification
+            $currency = $event->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
+
             Mail::to($user->email)->send(
                 new WalletBalanceAdjustedMail($user, [
                     'amount' => $adjustmentAmount,
@@ -43,6 +46,7 @@ class SendBalanceAdjustmentNotification implements ShouldQueue
                     'new_balance' => $newBalance,
                     'reason' => $reason,
                     'admin_name' => $admin->name,
+                    'currency' => $currency,
                 ])
             );
 
