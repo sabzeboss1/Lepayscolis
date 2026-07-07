@@ -60,7 +60,7 @@ class AdminWalletService
     {
         try {
             $usersWithoutWallets = User::whereDoesntHave('wallet')->get();
-            $currency = \App\Models\PlatformSetting::get('default_currency', 'XAF');
+            $currency = \App\Models\PlatformSetting::getDefaultCurrency();
 
             foreach ($usersWithoutWallets as $user) {
                 \App\Models\Wallet::create([

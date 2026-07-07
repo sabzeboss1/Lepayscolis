@@ -55,7 +55,7 @@ class AdminWithdrawalRequested extends Mailable
                 'fee' => $this->data['fee'],
                 'net_amount' => $this->data['net_amount'],
                 'created_at' => $this->data['created_at'],
-                'currency' => $this->data['currency'] ?? 'XAF',
+                'currency' => $this->data['currency'] ?? PlatformSetting::getDefaultCurrency(),
             ],
         );
     }

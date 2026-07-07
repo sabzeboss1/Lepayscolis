@@ -8,6 +8,7 @@ use App\Events\WithdrawalCompleted;
 use App\Mail\WithdrawalApproved as WithdrawalApprovedMail;
 use App\Mail\WithdrawalRejected as WithdrawalRejectedMail;
 use App\Mail\WithdrawalCompleted as WithdrawalCompletedMail;
+use App\Models\PlatformSetting;
 use App\Services\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -35,7 +36,7 @@ class SendWithdrawalNotification implements ShouldQueue
             $withdrawal = $event->withdrawal;
 
             // Send email notification
-            $currency = $withdrawal->user->wallet->currency_code ?? 'XAF';
+            $currency = $withdrawal->user->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
 
             Mail::to($user->email)->send(
                 new WithdrawalApprovedMail($user, [
@@ -102,7 +103,7 @@ class SendWithdrawalNotification implements ShouldQueue
             $reason = $event->reason;
 
             // Send email notification
-            $currency = $withdrawal->user->wallet->currency_code ?? 'XAF';
+            $currency = $withdrawal->user->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
 
             Mail::to($user->email)->send(
                 new WithdrawalRejectedMail($user, [
@@ -169,7 +170,7 @@ class SendWithdrawalNotification implements ShouldQueue
             $withdrawal = $event->withdrawal;
 
             // Send email notification
-            $currency = $withdrawal->user->wallet->currency_code ?? 'XAF';
+            $currency = $withdrawal->user->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
 
             Mail::to($user->email)->send(
                 new WithdrawalCompletedMail($user, [

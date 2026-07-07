@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\WalletCredited;
 use App\Mail\WalletCredited as WalletCreditedMail;
+use App\Models\PlatformSetting;
 use App\Services\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -32,7 +33,7 @@ class SendWalletCreditNotification implements ShouldQueue
             $newBalance = $event->wallet->balance;
 
             // Send email notification
-            $currency = $event->wallet->currency_code ?? 'XAF';
+            $currency = $event->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
 
             Mail::to($user->email)->send(
                 new WalletCreditedMail($user, [

@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\WithdrawalRequested;
 use App\Mail\AdminWithdrawalRequested;
+use App\Models\PlatformSetting;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -54,7 +55,7 @@ class NotifyAdminsOfWithdrawal implements ShouldQueue
                         'fee' => $withdrawal->fee,
                         'net_amount' => $withdrawal->net_amount,
                         'created_at' => $withdrawal->created_at,
-                        'currency' => $user->wallet->currency_code ?? 'XAF',
+                        'currency' => $user->wallet->currency_code ?? PlatformSetting::getDefaultCurrency(),
                     ])
                 );
 
