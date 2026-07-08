@@ -24,13 +24,15 @@ class BackupScheduleCheck extends Command
         $now = now();
         [$hour, $minute] = explode(':', $time);
 
-        // Only run within the scheduled hour
+        // Only run if current hour matches
         if ((int) $now->format('H') !== (int) $hour) {
             return Command::SUCCESS;
         }
 
-        // Only run in the first 10 minutes of the hour to avoid duplicates
-        if ((int) $now->format('i') > 10) {
+        // Only run within 5 minutes after the scheduled minute (to match everyFiveMinutes)
+        $currentMinute = (int) $now->format('i');
+        $scheduledMinute = (int) $minute;
+        if ($currentMinute < $scheduledMinute || $currentMinute > $scheduledMinute + 4) {
             return Command::SUCCESS;
         }
 
