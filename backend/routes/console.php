@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('backup:schedule-check')->everyFiveMinutes();
 Schedule::command('backup:clean-old')->dailyAt('03:00');
+Schedule::command('trips:complete-expired')->dailyAt('00:30');
