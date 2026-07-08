@@ -163,9 +163,19 @@ class AdminBackupService
 
         $encryptedRefreshToken = PlatformSetting::get('google_drive_refresh_token', '');
         if ($encryptedRefreshToken) {
-            $client->fetchAccessTokenWithRefreshToken(
-                Crypt::decryptString($encryptedRefreshToken)
-            );
+            $refreshToken = Crypt::decryptString($encryptedRefreshToken);
+            $token = $client->fetchAccessTokenWithRefreshToken($refreshToken);
+
+            // Google may rotate the refresh token — persist the new one
+            if (isset($token['refresh_token']) && $token['refresh_token'] !== $refreshToken) {
+                PlatformSetting::set('google_drive_refresh_token', Crypt::encryptString($token['refresh_token']));
+                Log::info('Google Drive refresh token rotated and saved.');
+            }
+
+            if (isset($token['error'])) {
+                Log::error('Google Drive token refresh failed', $token);
+                throw new \RuntimeException("Google Drive auth error: {$token['error_description']}");
+            }
         }
 
         return $client;
