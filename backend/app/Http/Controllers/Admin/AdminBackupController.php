@@ -31,6 +31,7 @@ class AdminBackupController extends Controller
             'backup_schedule_frequency' => 'sometimes|string|in:hourly,daily,weekly,monthly',
             'backup_schedule_time'      => 'sometimes|string|date_format:H:i',
             'backup_schedule_day'       => 'sometimes|integer|min:1|max:28',
+            'backup_timezone'           => 'sometimes|string|timezone:all',
             'backup_include_files'      => 'sometimes|boolean',
             'backup_include_db'         => 'sometimes|boolean',
             'backup_retention_days'     => 'sometimes|integer|min:1|max:365',
