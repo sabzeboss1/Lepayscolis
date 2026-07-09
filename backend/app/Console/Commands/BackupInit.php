@@ -65,6 +65,7 @@ class BackupInit extends Command
             'backup_schedule_frequency' => 'daily',
             'backup_schedule_time'      => '02:00',
             'backup_schedule_day'       => '1',
+            'backup_timezone'           => 'UTC',
             'backup_include_files'      => 'true',
             'backup_include_db'         => 'true',
             'backup_retention_days'     => '30',

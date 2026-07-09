@@ -26,6 +26,7 @@ interface BackupSettings {
   backup_schedule_frequency: string;
   backup_schedule_time: string;
   backup_schedule_day: number;
+  backup_timezone: string;
   backup_include_files: boolean;
   backup_include_db: boolean;
   backup_retention_days: number;
@@ -356,6 +357,24 @@ export default function BackupsPage() {
                   onChange={e => updateField('backup_schedule_time', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fuseau horaire</label>
+                <select
+                  value={formData.backup_timezone || 'UTC'}
+                  onChange={e => updateField('backup_timezone', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                >
+                  <option value="UTC">UTC</option>
+                  <option value="Africa/Douala">Africa/Douala (UTC+1)</option>
+                  <option value="Africa/Lagos">Africa/Lagos (UTC+1)</option>
+                  <option value="Africa/Abidjan">Africa/Abidjan (UTC+0)</option>
+                  <option value="Europe/Paris">Europe/Paris (UTC+1/+2)</option>
+                  <option value="Europe/London">Europe/London (UTC+0/+1)</option>
+                  <option value="America/New_York">America/New_York (UTC-5/-4)</option>
+                  <option value="America/Montreal">America/Montreal (UTC-5/-4)</option>
+                  <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
+                </select>
               </div>
               {(formData.backup_schedule_frequency === 'weekly' || formData.backup_schedule_frequency === 'monthly') && (
                 <div>
