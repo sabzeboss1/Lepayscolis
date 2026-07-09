@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\PlatformSetting;
 use App\Services\Admin\AdminBackupService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -24,47 +25,57 @@ class BackupScheduleCheck extends Command
         $frequency = PlatformSetting::get('backup_schedule_frequency', 'daily');
         $time      = PlatformSetting::get('backup_schedule_time', '02:00');
         $day       = (int) PlatformSetting::get('backup_schedule_day', 1);
+        $tz        = PlatformSetting::get('backup_timezone', 'UTC');
 
-        $now = now();
+        // Convert scheduled time from admin's timezone to UTC
         [$hour, $minute] = explode(':', $time);
-        $scheduledHour   = (int) $hour;
-        $scheduledMinute = (int) $minute;
-        $currentHour     = (int) $now->format('H');
-        $currentMinute   = (int) $now->format('i');
+        $scheduledLocal = Carbon::createFromTime((int) $hour, (int) $minute, 0, $tz);
+        $scheduledUtc   = $scheduledLocal->utc();
+
+        $nowUtc       = Carbon::now('UTC');
+        $currentHour  = (int) $nowUtc->format('H');
+        $currentMinute = (int) $nowUtc->format('i');
+        $targetHour   = (int) $scheduledUtc->format('H');
+        $targetMinute = (int) $scheduledUtc->format('i');
+
+        // For frequency checks, use the admin's local "now"
+        $nowLocal = Carbon::now($tz);
 
         Log::info('backup:schedule-check — evaluating', [
-            'now_utc'          => $now->format('Y-m-d H:i:s'),
-            'timezone'         => config('app.timezone'),
-            'scheduled_time'   => sprintf('%02d:%02d', $scheduledHour, $scheduledMinute),
-            'current_time'     => sprintf('%02d:%02d', $currentHour, $currentMinute),
-            'frequency'        => $frequency,
-            'day_setting'      => $day,
-            'current_day_iso'  => $now->dayOfWeekIso,
-            'current_day_month'=> $now->day,
+            'admin_timezone'    => $tz,
+            'admin_time'        => sprintf('%02d:%02d', (int) $hour, (int) $minute),
+            'converted_utc'     => sprintf('%02d:%02d', $targetHour, $targetMinute),
+            'now_utc'           => $nowUtc->format('Y-m-d H:i:s'),
+            'now_local'         => $nowLocal->format('Y-m-d H:i:s'),
+            'frequency'         => $frequency,
+            'day_setting'       => $day,
+            'current_day_iso'   => $nowLocal->dayOfWeekIso,
+            'current_day_month' => $nowLocal->day,
         ]);
 
-        // Only run if current hour matches
-        if ($currentHour !== $scheduledHour) {
-            Log::info("backup:schedule-check — hour mismatch ({$currentHour} !== {$scheduledHour}), skipping.");
+        // Hour must match
+        if ($currentHour !== $targetHour) {
+            Log::info("backup:schedule-check — hour mismatch (now={$currentHour}, target={$targetHour}), skipping.");
             return Command::SUCCESS;
         }
 
-        // Only run within 5 minutes after the scheduled minute
-        if ($currentMinute < $scheduledMinute || $currentMinute > $scheduledMinute + 4) {
-            Log::info("backup:schedule-check — minute outside window (current={$currentMinute}, scheduled={$scheduledMinute}-" . ($scheduledMinute + 4) . "), skipping.");
+        // Minute must be within 5-minute window after scheduled minute
+        if ($currentMinute < $targetMinute || $currentMinute > $targetMinute + 4) {
+            Log::info("backup:schedule-check — minute outside window (now={$currentMinute}, target={$targetMinute}-" . ($targetMinute + 4) . "), skipping.");
             return Command::SUCCESS;
         }
 
+        // Frequency check uses local day
         $shouldRun = match ($frequency) {
             'hourly'  => true,
             'daily'   => true,
-            'weekly'  => $now->dayOfWeekIso === $day,
-            'monthly' => $now->day === $day,
+            'weekly'  => $nowLocal->dayOfWeekIso === $day,
+            'monthly' => $nowLocal->day === $day,
             default   => false,
         };
 
         if (!$shouldRun) {
-            Log::info("backup:schedule-check — frequency '{$frequency}' condition not met (day={$day}, current_iso={$now->dayOfWeekIso}, current_day={$now->day}), skipping.");
+            Log::info("backup:schedule-check — frequency '{$frequency}' condition not met (day_setting={$day}, local_iso={$nowLocal->dayOfWeekIso}, local_day={$nowLocal->day}), skipping.");
             return Command::SUCCESS;
         }
 
