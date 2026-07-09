@@ -140,7 +140,13 @@ export default function BackupsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const res: any = await apiClient.put(API_ENDPOINTS.admin.backups.updateSettings, formData);
+      // Strip read-only fields and empty secret to avoid overwriting encrypted values
+      const { google_drive_client_secret_set, google_drive_refresh_token_set, google_drive_connected, google_drive_client_secret, ...payload } = formData as any;
+      // Only send secret if the user actually typed a new value
+      if (google_drive_client_secret) {
+        (payload as any).google_drive_client_secret = google_drive_client_secret;
+      }
+      const res: any = await apiClient.put(API_ENDPOINTS.admin.backups.updateSettings, payload);
       setSettings(res.data || res);
       showMessage('success', 'Configuration sauvegardée.');
     } catch (err: any) {
