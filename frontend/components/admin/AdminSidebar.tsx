@@ -37,6 +37,7 @@ interface MenuItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   superAdminOnly?: boolean;
+  backupAccessOnly?: boolean;
 }
 
 interface MenuSection {
@@ -46,9 +47,10 @@ interface MenuSection {
 
 interface AdminSidebarProps {
   userRole: 'admin' | 'super_admin';
+  hasBackupAccess?: boolean;
 }
 
-export default function AdminSidebar({ userRole }: AdminSidebarProps) {
+export default function AdminSidebar({ userRole, hasBackupAccess }: AdminSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
@@ -104,7 +106,7 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
       items: [
         { labelKey: 'admin.sidebar.adminUsers', href: '/admin/admins', icon: Shield, superAdminOnly: true },
         { labelKey: 'admin.sidebar.notifications', href: '/admin/notifications', icon: Bell, superAdminOnly: true },
-        { labelKey: 'admin.sidebar.backups', href: '/admin/backups', icon: HardDrive, superAdminOnly: true }
+        { labelKey: 'admin.sidebar.backups', href: '/admin/backups', icon: HardDrive, superAdminOnly: true, backupAccessOnly: true }
       ]
     }
   ];
@@ -118,9 +120,11 @@ export default function AdminSidebar({ userRole }: AdminSidebarProps) {
 
   const filteredSections = menuSections.map(section => ({
     ...section,
-    items: section.items.filter(item =>
-      !item.superAdminOnly || userRole === 'super_admin'
-    )
+    items: section.items.filter(item => {
+      if (item.superAdminOnly && userRole !== 'super_admin') return false;
+      if (item.backupAccessOnly && !hasBackupAccess) return false;
+      return true;
+    })
   })).filter(section => section.items.length > 0);
 
   return (

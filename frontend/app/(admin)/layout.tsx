@@ -52,7 +52,7 @@ export default function AdminLayout({
       <AdminCurrencyProvider>
         <AdminCurrencyFormatterProvider>
           <div className="min-h-screen bg-gray-50">
-            <AdminSidebar userRole={user.role as 'admin' | 'super_admin'} />
+            <AdminSidebar userRole={user.role as 'admin' | 'super_admin'} hasBackupAccess={user.has_backup_access} />
             <div className="lg:pl-64">
               <AdminHeader
                 userName={user.name}

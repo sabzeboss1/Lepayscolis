@@ -11,6 +11,7 @@ export interface User {
   role: 'user' | 'admin' | 'super_admin';
   locale: 'fr' | 'en';
   currency_code: string;
+  has_backup_access?: boolean;
   created_at: string;
   updated_at: string;
 }
