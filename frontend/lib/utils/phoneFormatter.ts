@@ -7,20 +7,23 @@ interface CountryPhoneConfig {
   code: string;
   prefix: string;
   length: number; // Expected length without prefix
+  pattern: RegExp; // Regex to validate local number (without prefix/leading 0)
+  example: string; // Example of a valid local number
 }
 
-// Country phone configurations
+// Country phone configurations with validation patterns
 const COUNTRY_CONFIGS: Record<string, CountryPhoneConfig> = {
-  FR: { code: 'FR', prefix: '+33', length: 9 },
-  CI: { code: 'CI', prefix: '+225', length: 10 },
-  SN: { code: 'SN', prefix: '+221', length: 9 },
-  ML: { code: 'ML', prefix: '+223', length: 8 },
-  BF: { code: 'BF', prefix: '+226', length: 8 },
-  BJ: { code: 'BJ', prefix: '+229', length: 8 },
-  TG: { code: 'TG', prefix: '+228', length: 8 },
-  NE: { code: 'NE', prefix: '+227', length: 8 },
-  GN: { code: 'GN', prefix: '+224', length: 9 },
-  CM: { code: 'CM', prefix: '+237', length: 9 },
+  FR: { code: 'FR', prefix: '+33', length: 9, pattern: /^[1-9]\d{8}$/, example: '612345678' },
+  CI: { code: 'CI', prefix: '+225', length: 10, pattern: /^(01|05|07|21|25|27)\d{8}$/, example: '0123456789' },
+  SN: { code: 'SN', prefix: '+221', length: 9, pattern: /^(70|75|76|77|78)\d{7}$/, example: '771234567' },
+  ML: { code: 'ML', prefix: '+223', length: 8, pattern: /^[5-9]\d{7}$/, example: '70123456' },
+  BF: { code: 'BF', prefix: '+226', length: 8, pattern: /^[5-7]\d{7}$/, example: '70123456' },
+  BJ: { code: 'BJ', prefix: '+229', length: 8, pattern: /^(9[0-8]|6[0-9])\d{6}$/, example: '97123456' },
+  TG: { code: 'TG', prefix: '+228', length: 8, pattern: /^(90|91|92|93|96|97|98|99|70|71)\d{6}$/, example: '90123456' },
+  NE: { code: 'NE', prefix: '+227', length: 8, pattern: /^(80|81|82|83|84|85|86|87|88|89|90|91|92|93|94|96|97)\d{6}$/, example: '90123456' },
+  GN: { code: 'GN', prefix: '+224', length: 9, pattern: /^(620|621|622|623|624|625|626|627|628|629|660|661|662|664|655|656|657)\d{6}$/, example: '620123456' },
+  CM: { code: 'CM', prefix: '+237', length: 9, pattern: /^[62]\d{8}$/, example: '612345678' },
+  RU: { code: 'RU', prefix: '+7', length: 10, pattern: /^9\d{9}$/, example: '9123456789' },
 };
 
 /**
@@ -82,6 +85,64 @@ export function isValidE164(phone: string): boolean {
 }
 
 /**
+ * Validate a phone number against the country-specific pattern
+ * Returns an error message string if invalid, or null if valid
+ */
+export function validatePhoneForCountry(phone: string, countryCode: string): string | null {
+  if (!phone) {
+    return 'Numéro de téléphone requis';
+  }
+  if (!countryCode) {
+    return 'Veuillez sélectionner un pays';
+  }
+
+  const config = COUNTRY_CONFIGS[countryCode.toUpperCase()];
+  if (!config) {
+    // No config for this country — only validate minimum length
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 6) {
+      return 'Le numéro doit contenir au moins 6 chiffres';
+    }
+    return null;
+  }
+
+  // Extract local digits (without prefix or leading 0)
+  let cleaned = cleanPhoneNumber(phone);
+
+  // Strip the country prefix if present
+  if (cleaned.startsWith(config.prefix)) {
+    cleaned = cleaned.substring(config.prefix.length);
+  } else if (cleaned.startsWith('+')) {
+    return `Le préfixe ne correspond pas au pays sélectionné (${config.prefix})`;
+  }
+
+  // Remove leading 0
+  if (cleaned.startsWith('0')) {
+    cleaned = cleaned.substring(1);
+  }
+
+  // Validate length
+  if (cleaned.length !== config.length) {
+    return `Le numéro doit contenir ${config.length} chiffres après le préfixe ${config.prefix}`;
+  }
+
+  // Validate pattern
+  if (!config.pattern.test(cleaned)) {
+    return `Format invalide pour ce pays. Exemple : ${config.prefix} ${config.example}`;
+  }
+
+  return null;
+}
+
+/**
+ * Get the phone prefix for a country code
+ */
+export function getPhonePrefix(countryCode: string): string {
+  const config = COUNTRY_CONFIGS[countryCode?.toUpperCase()];
+  return config?.prefix || '';
+}
+
+/**
  * Get example phone format for a country
  */
 export function getPhoneExample(countryCode: string): string {
@@ -119,6 +180,7 @@ export function getPhonePlaceholder(countryCode: string): string {
     NE: '90 12 34 56',
     GN: '620 12 34 56',
     CM: '6 12 34 56 78',
+    RU: '912 345 67 89',
   };
 
   return examples[countryCode.toUpperCase()] || 'Enter phone number';

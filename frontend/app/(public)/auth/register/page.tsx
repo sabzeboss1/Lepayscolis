@@ -1,17 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { LiveRegion } from '@/components/ui/LiveRegion';
 import { ErrorHandler } from '@/lib/errors/ErrorHandler';
 import { ApiError } from '@/lib/api/client';
-import { formatPhoneToE164, getPhonePlaceholder, getPhoneHelperText } from '@/lib/utils/phoneFormatter';
+import { formatPhoneToE164, getPhonePlaceholder, getPhoneHelperText, validatePhoneForCountry } from '@/lib/utils/phoneFormatter';
 import { useCountries } from '@/lib/hooks/useCountries';
 import Link from 'next/link';
 import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
@@ -21,13 +22,12 @@ import {
   ShieldCheck,
   Star,
   AlertCircle,
-  ChevronDown,
 } from 'lucide-react';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   email: z.string().email('Adresse email invalide'),
-  phone: z.string().min(8, 'Numéro de téléphone invalide'),
+  phone: z.string().min(1, 'Numéro de téléphone requis'),
   country: z.string().min(2, 'Veuillez sélectionner un pays'),
   password: z
     .string()
@@ -36,9 +36,24 @@ const registerSchema = z.object({
     .regex(/[a-z]/, 'Doit contenir au moins une minuscule')
     .regex(/[0-9]/, 'Doit contenir au moins un chiffre'),
   confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Les mots de passe ne correspondent pas',
-  path: ['confirmPassword'],
+}).superRefine((data, ctx) => {
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Les mots de passe ne correspondent pas',
+      path: ['confirmPassword'],
+    });
+  }
+  if (data.country && data.phone) {
+    const phoneError = validatePhoneForCountry(data.phone, data.country);
+    if (phoneError) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: phoneError,
+        path: ['phone'],
+      });
+    }
+  }
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -58,17 +73,37 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
+  const [phoneTouched, setPhoneTouched] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
+    control,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      country: '',
+      phone: '',
+    },
   });
 
   const country = watch('country');
+
+  // Re-validate phone when country changes
+  const phone = watch('phone');
+  React.useEffect(() => {
+    if (phoneTouched && phone && country) {
+      setPhoneValidationError(validatePhoneForCountry(phone, country));
+    } else if (phoneTouched && phone && !country) {
+      setPhoneValidationError('Veuillez sélectionner un pays');
+    } else {
+      setPhoneValidationError(null);
+    }
+  }, [country, phone, phoneTouched]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null);
@@ -255,52 +290,35 @@ export default function RegisterPage() {
               {...register('email')}
             />
 
-            {/* Country select */}
-            <div>
-              <label
-                htmlFor="country"
-                className="block text-sm font-medium mb-1"
-                style={{ color: '#374151' }}
-              >
-                Pays
-              </label>
-              <div className="relative">
-                <select
-                  id="country"
-                  className="w-full appearance-none px-4 py-3 pr-10 min-h-[44px] rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 bg-white"
-                  style={{
-                    borderColor: errors.country || fieldErrors.country ? '#ef4444' : '#d1d5db',
-                    color: '#111827',
+            {/* Phone with integrated country selector */}
+            <Controller
+              name="phone"
+              control={control}
+              render={({ field }) => (
+                <PhoneInput
+                  ref={field.ref}
+                  name={field.name}
+                  value={field.value}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    if (!phoneTouched) setPhoneTouched(true);
                   }}
-                  {...register('country')}
-                >
-                  <option value="">{isLoadingCountries ? 'Chargement...' : 'Sélectionner un pays'}</option>
-                  {countries.map((c) => (
-                    <option key={c.id} value={c.code}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-                  style={{ color: '#6b7280' }}
+                  onBlur={(e) => {
+                    field.onBlur();
+                    if (!phoneTouched) setPhoneTouched(true);
+                  }}
+                  countries={countries}
+                  isLoadingCountries={isLoadingCountries}
+                  selectedCountryCode={country}
+                  onCountryChange={(code) => {
+                    setValue('country', code, { shouldValidate: false });
+                  }}
+                  placeholder={country ? getPhonePlaceholder(country) : 'Sélectionnez un pays'}
+                  error={phoneValidationError || errors.country?.message || fieldErrors.phone}
+                  helperText={!phoneValidationError && country ? getPhoneHelperText(country) : undefined}
+                  disabled={isSubmitting}
                 />
-              </div>
-              {(errors.country || fieldErrors.country) && (
-                <p className="mt-1 text-sm text-red-600" role="alert">
-                  {errors.country?.message || fieldErrors.country}
-                </p>
               )}
-            </div>
-
-            <Input
-              type="tel"
-              label="Numéro de téléphone"
-              placeholder={country ? getPhonePlaceholder(country) : 'Sélectionnez un pays d\'abord'}
-              autoComplete="tel"
-              error={errors.phone?.message || fieldErrors.phone}
-              helperText={country ? getPhoneHelperText(country) : 'Sélectionnez un pays pour voir le format'}
-              {...register('phone')}
             />
 
             <Input
