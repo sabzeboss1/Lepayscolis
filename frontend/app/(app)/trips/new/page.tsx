@@ -155,55 +155,13 @@ export default function NewTripPage() {
     fetchPlatformSettings();
   }, []);
 
-  // Auto-select arrival country based on departure (Russia-Africa logic)
-  useEffect(() => {
-    if (formData.departureCountryId && countries.length > 0) {
-      const departureCountry = getCountryById(formData.departureCountryId);
-      if (departureCountry) {
-        const countryName = departureCountry.name.toLowerCase();
-        
-        // Si le pays de départ est la Russie, sélectionner automatiquement un pays africain
-        if (countryName.includes('russia') || countryName.includes('russie')) {
-          // Trouver un pays africain (par défaut, on cherche le Cameroun, sinon le premier pays non-russe)
-          const africanCountry = countries.find(c => 
-            c.name.toLowerCase().includes('cameroun') || 
-            c.name.toLowerCase().includes('cameroon')
-          ) || countries.find(c => 
-            !c.name.toLowerCase().includes('russia') && 
-            !c.name.toLowerCase().includes('russie')
-          );
-          
-          if (africanCountry && formData.arrivalCountryId !== africanCountry.id) {
-            setFormData(prev => ({
-              ...prev,
-              arrivalCountryId: africanCountry.id,
-              arrivalCityId: undefined, // Reset city
-            }));
-            setAutoSelectedCountry(`${africanCountry.name} (Afrique)`);
-          }
-        } 
-        // Si le pays de départ est africain, sélectionner automatiquement la Russie
-        else {
-          // Trouver la Russie
-          const russia = countries.find(c => 
-            c.name.toLowerCase().includes('russia') || 
-            c.name.toLowerCase().includes('russie')
-          );
-          
-          if (russia && formData.arrivalCountryId !== russia.id) {
-            setFormData(prev => ({
-              ...prev,
-              arrivalCountryId: russia.id,
-              arrivalCityId: undefined, // Reset city
-            }));
-            setAutoSelectedCountry('Russie');
-          }
-        }
-      }
-    } else {
-      setAutoSelectedCountry(null);
-    }
-  }, [formData.departureCountryId, countries, getCountryById]);
+  const isRussiaCountryId = (cId?: number) => {
+    if (!cId) return false;
+    const country = getCountryById(cId);
+    if (!country) return false;
+    const name = country.name.toLowerCase();
+    return name.includes('russia') || name.includes('russie') || country.code?.toUpperCase() === 'RU';
+  };
 
   // Draft functionality - save to localStorage
   const saveDraft = () => {
@@ -225,22 +183,70 @@ export default function NewTripPage() {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
-      // Reset city when country changes
+      // Auto-adjust arrival/departure to enforce Russia <-> Africa route logic
       if (field === 'departureCountryId') { 
         newData.departureCityId = undefined;
-        // La sélection automatique du pays d'arrivée est gérée par useEffect
+        const depId = value as number | undefined;
+        if (depId && countries.length > 0) {
+          const depIsRussia = isRussiaCountryId(depId);
+          const arrIsRussia = isRussiaCountryId(newData.arrivalCountryId);
+
+          if (!newData.arrivalCountryId || (depIsRussia && arrIsRussia) || (!depIsRussia && !arrIsRussia)) {
+            if (depIsRussia) {
+              const african = countries.find(c => c.name.toLowerCase().includes('cameroun') || c.name.toLowerCase().includes('cameroon')) ||
+                              countries.find(c => !isRussiaCountryId(c.id));
+              if (african) {
+                newData.arrivalCountryId = african.id;
+                newData.arrivalCityId = undefined;
+                setAutoSelectedCountry(`${african.name} (Afrique)`);
+              }
+            } else {
+              const russia = countries.find(c => isRussiaCountryId(c.id));
+              if (russia) {
+                newData.arrivalCountryId = russia.id;
+                newData.arrivalCityId = undefined;
+                setAutoSelectedCountry('Russie');
+              }
+            }
+          }
+        }
       }
       
       if (field === 'arrivalCountryId') { 
         newData.arrivalCityId = undefined;
+        const arrId = value as number | undefined;
+        if (arrId && countries.length > 0) {
+          const arrIsRussia = isRussiaCountryId(arrId);
+          const depIsRussia = isRussiaCountryId(newData.departureCountryId);
+
+          if (newData.departureCountryId && ((depIsRussia && arrIsRussia) || (!depIsRussia && !arrIsRussia))) {
+            if (arrIsRussia) {
+              const african = countries.find(c => c.name.toLowerCase().includes('cameroun') || c.name.toLowerCase().includes('cameroon')) ||
+                              countries.find(c => !isRussiaCountryId(c.id));
+              if (african) {
+                newData.departureCountryId = african.id;
+                newData.departureCityId = undefined;
+              }
+            } else {
+              const russia = countries.find(c => isRussiaCountryId(c.id));
+              if (russia) {
+                newData.departureCountryId = russia.id;
+                newData.departureCityId = undefined;
+              }
+            }
+          }
+        }
       }
       
       return newData;
     });
-    if (errors[field]) {
+
+    if (errors[field] || errors.arrivalCountryId || errors.departureCountryId) {
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[field];
+        delete newErrors.arrivalCountryId;
+        delete newErrors.departureCountryId;
         return newErrors;
       });
     }
@@ -254,6 +260,21 @@ export default function NewTripPage() {
       if (!formData.departureCityId) newErrors.departureCityId = t('errors.required');
       if (!formData.arrivalCountryId) newErrors.arrivalCountryId = t('errors.required');
       if (!formData.arrivalCityId) newErrors.arrivalCityId = t('errors.required');
+
+      if (formData.departureCountryId && formData.arrivalCountryId) {
+        if (formData.departureCountryId === formData.arrivalCountryId) {
+          newErrors.arrivalCountryId = 'Le pays de départ et le pays d\'arrivée doivent être différents.';
+        } else {
+          const isDepRussia = isRussiaCountryId(formData.departureCountryId);
+          const isArrRussia = isRussiaCountryId(formData.arrivalCountryId);
+
+          if (isDepRussia && isArrRussia) {
+            newErrors.arrivalCountryId = 'Le trajet doit obligatoirement s\'effectuer entre la Russie et un pays d\'Afrique (pas Russie vers Russie).';
+          } else if (!isDepRussia && !isArrRussia) {
+            newErrors.arrivalCountryId = 'Le trajet doit obligatoirement s\'effectuer entre la Russie et un pays d\'Afrique (pas Afrique vers Afrique).';
+          }
+        }
+      }
     } else if (step === 2) {
       if (!formData.departureDate) newErrors.departureDate = t('errors.required');
       if (!formData.arrivalDate) newErrors.arrivalDate = t('errors.required');

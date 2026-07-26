@@ -72,7 +72,8 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
   const { t } = useTranslation(locale);
   const { logo_url } = usePlatformBranding();
   const pathname = usePathname();
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const desktopUserMenuRef = useRef<HTMLDivElement>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
 
   /* close user menu on route change */
   useEffect(() => {
@@ -82,14 +83,16 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
   /* close on outside click / Escape */
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inDesktop = desktopUserMenuRef.current?.contains(target);
+      const inMobile = mobileUserMenuRef.current?.contains(target);
+      if (!inDesktop && !inMobile) {
         setIsUserMenuOpen(false);
       }
     };
     const onEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isUserMenuOpen) {
         setIsUserMenuOpen(false);
-        userMenuRef.current?.querySelector('button')?.focus();
       }
     };
     if (isUserMenuOpen) {
@@ -199,7 +202,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
               <NotificationDropdown />
 
               {/* User menu (desktop) */}
-              <div className="hidden lg:block relative" ref={userMenuRef}>
+              <div className="hidden lg:block relative" ref={desktopUserMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen((v) => !v)}
                   aria-expanded={isUserMenuOpen}
@@ -264,7 +267,11 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                     }}
                   >
                     {/* User info */}
-                    <div className="px-4 pt-2 pb-3 border-b border-slate-100">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="block px-4 pt-2 pb-3 border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    >
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold shrink-0"
@@ -295,13 +302,14 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                           <KycBadge status={user.kyc_status} />
                         </div>
                       </div>
-                    </div>
+                    </Link>
 
                     {/* Menu items */}
                     <div className="py-1">
                       <Link
                         href="/profile"
                         role="menuitem"
+                        onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-navy hover:bg-slate-50 transition-colors"
                       >
                         <UserIcon className="w-4 h-4 text-slate-400" />
@@ -312,6 +320,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                         <Link
                           href="/kyc"
                           role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors"
                           style={{ color: 'var(--color-royal-blue)' }}
                         >
@@ -340,7 +349,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
               </div>
 
               {/* Mobile: user menu */}
-              <div className="lg:hidden relative" ref={userMenuRef}>
+              <div className="lg:hidden relative" ref={mobileUserMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen((v) => !v)}
                   aria-expanded={isUserMenuOpen}
@@ -378,7 +387,11 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                     aria-orientation="vertical"
                   >
                     {/* User info */}
-                    <div className="px-4 pt-2 pb-3 border-b border-slate-100">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="block px-4 pt-2 pb-3 border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    >
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold shrink-0"
@@ -409,7 +422,7 @@ export const HeaderApp: React.FC<HeaderAppProps> = ({
                           <KycBadge status={user.kyc_status} />
                         </div>
                       </div>
-                    </div>
+                    </Link>
 
                     {/* Menu items */}
                     <div className="py-1">

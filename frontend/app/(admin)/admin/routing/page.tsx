@@ -337,10 +337,19 @@ export default function AdminRoutingPage() {
       weight = item.weight;
     }
 
-    // Use intelligent city matching
-    const pickupMatch = citiesMatch(trip.departure_city, pickupCity);
-    const deliveryMatch = citiesMatch(trip.arrival_city, deliveryCity);
-    const routeMatch = pickupMatch && deliveryMatch;
+    // OPTION B: Hierarchical matching - Perfect match (cities) OR Country fallback
+    // Step 1: Check for perfect city match
+    const pickupCityMatch = citiesMatch(trip.departure_city, pickupCity);
+    const deliveryCityMatch = citiesMatch(trip.arrival_city, deliveryCity);
+    const perfectMatch = pickupCityMatch && deliveryCityMatch;
+
+    // Step 2: Check for country match (fallback)
+    const pickupCountryMatch = trip.departure_country === pickupCountry;
+    const deliveryCountryMatch = trip.arrival_country === deliveryCountry;
+    const countryMatch = pickupCountryMatch && deliveryCountryMatch;
+
+    // Route is compatible if perfect match OR country match
+    const routeMatch = perfectMatch || countryMatch;
 
     // CRITICAL FIX: Convert to Number to handle string values from backend
     const tripCapacity = Number(trip.available_capacity);
@@ -353,43 +362,57 @@ export default function AdminRoutingPage() {
       : `Request: ${item.title}`;
 
     // Debug log
-    console.log('Route Compatibility Check:', {
-      trip: `${trip.traveler.name} - ${trip.departure_city} → ${trip.arrival_city}`,
-      tripCapacityRaw: trip.available_capacity,
-      tripCapacityParsed: tripCapacity,
-      tripCapacityType: typeof trip.available_capacity,
+    console.log('Route Compatibility Check (Hierarchical):', {
+      trip: `${trip.traveler.name} - ${trip.departure_city}, ${trip.departure_country} → ${trip.arrival_city}, ${trip.arrival_country}`,
       item: itemIdentifier,
-      itemWeightRaw: weight,
-      itemWeightParsed: itemWeight,
-      itemWeightType: typeof weight,
-      routeMatch,
-      capacityMatch,
-      comparison: `${tripCapacity} >= ${itemWeight}`,
-      compatible: routeMatch && capacityMatch
+      itemRoute: `${pickupCity}, ${pickupCountry} → ${deliveryCity}, ${deliveryCountry}`,
+      perfectMatch: perfectMatch ? '✅ Perfect (cities match)' : '❌',
+      countryMatch: countryMatch ? '✅ Country match' : '❌',
+      routeMatch: routeMatch ? '✅ Compatible' : '❌',
+      capacityMatch: capacityMatch ? `✅ ${tripCapacity}kg >= ${itemWeight}kg` : `❌ ${tripCapacity}kg < ${itemWeight}kg`,
+      finalCompatible: routeMatch && capacityMatch
     });
 
-    return { routeMatch, capacityMatch, compatible: routeMatch && capacityMatch };
+    return { 
+      routeMatch, 
+      capacityMatch, 
+      compatible: routeMatch && capacityMatch,
+      perfectMatch,  // NEW: for differentiated badges
+      countryMatch   // NEW: for differentiated badges
+    };
   };
 
   const getCompatibilityBadge = (trip: Trip, item: Shipment | ShipmentRequest) => {
-    const { routeMatch, capacityMatch, compatible } = isRouteCompatible(trip, item);
+    const { routeMatch, capacityMatch, compatible, perfectMatch, countryMatch } = isRouteCompatible(trip, item);
     
     if (compatible) {
-      return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-        <CheckCircle2 className="w-3 h-3 mr-1" />
-        Compatible
-      </span>;
-    } else if (routeMatch && !capacityMatch) {
-      return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-        <AlertCircle className="w-3 h-3 mr-1" />
-        Capacité insuffisante
-      </span>;
-    } else if (!routeMatch && capacityMatch) {
+      if (perfectMatch) {
+        // Perfect match: same cities
+        return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <CheckCircle2 className="w-3 h-3 mr-1" />
+          Compatible - Match parfait
+        </span>;
+      } else {
+        // Country match: same country but different cities
+        return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          Compatible - Même pays
+        </span>;
+      }
+    } else if (countryMatch && !capacityMatch) {
+      // Same country but insufficient capacity
       return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
         <AlertCircle className="w-3 h-3 mr-1" />
-        Route différente
+        Même pays - Capacité insuffisante
+      </span>;
+    } else if (!countryMatch && capacityMatch) {
+      // Sufficient capacity but different countries
+      return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <AlertCircle className="w-3 h-3 mr-1" />
+        Pays différents
       </span>;
     } else {
+      // Completely incompatible
       return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
         <AlertCircle className="w-3 h-3 mr-1" />
         Incompatible

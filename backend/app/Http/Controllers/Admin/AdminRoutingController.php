@@ -575,41 +575,45 @@ class AdminRoutingController extends Controller
             ->where('status', 'active')
             ->where('verification_status', 'verified')
             ->where('available_capacity', '>=', $shipment->package_weight)
-            ->where(function ($query) use ($shipment) {
-                $query->where('departure_city', 'LIKE', "%{$shipment->pickup_city}%")
-                      ->orWhere('departure_country', 'LIKE', "%{$shipment->pickup_country}%");
-            })
-            ->where(function ($query) use ($shipment) {
-                $query->where('arrival_city', 'LIKE', "%{$shipment->delivery_city}%")
-                      ->orWhere('arrival_country', 'LIKE', "%{$shipment->delivery_country}%");
-            })
+            // OPTION B: Match on countries (flexible), prioritize city matches
+            ->where('departure_country', $shipment->pickup_country)
+            ->where('arrival_country', $shipment->delivery_country)
+            // Order by: perfect city match first, then by date
+            ->orderByRaw("
+                CASE 
+                    WHEN departure_city = ? AND arrival_city = ? THEN 1
+                    ELSE 2
+                END
+            ", [$shipment->pickup_city, $shipment->delivery_city])
             ->orderBy('departure_date', 'asc')
-            ->limit(10)
+            ->limit(20)  // Increased from 10 to 20 for more options
             ->get();
     }
 
     private function findCompatibleTripsForRequest(ShipmentRequest $request)
     {
+        // Get city and country names for matching
+        $pickupCity = $request->pickup_city ? $request->pickup_city->name : '';
+        $pickupCountry = $request->pickup_country ? $request->pickup_country->name : '';
+        $deliveryCity = $request->delivery_city ? $request->delivery_city->name : '';
+        $deliveryCountry = $request->delivery_country ? $request->delivery_country->name : '';
+
         return Trip::with('traveler')
             ->where('status', 'active')
             ->where('verification_status', 'verified')
             ->where('available_capacity', '>=', $request->weight)
-            ->where(function ($query) use ($request) {
-                $query->whereHas('departureCity', function ($q) use ($request) {
-                    $q->where('id', $request->pickup_city_id);
-                })->orWhereHas('departureCountry', function ($q) use ($request) {
-                    $q->where('id', $request->pickup_country_id);
-                });
-            })
-            ->where(function ($query) use ($request) {
-                $query->whereHas('arrivalCity', function ($q) use ($request) {
-                    $q->where('id', $request->delivery_city_id);
-                })->orWhereHas('arrivalCountry', function ($q) use ($request) {
-                    $q->where('id', $request->delivery_country_id);
-                });
-            })
+            // OPTION B: Match on countries (flexible), prioritize city matches
+            ->where('departure_country', $pickupCountry)
+            ->where('arrival_country', $deliveryCountry)
+            // Order by: perfect city match first, then by date
+            ->orderByRaw("
+                CASE 
+                    WHEN departure_city = ? AND arrival_city = ? THEN 1
+                    ELSE 2
+                END
+            ", [$pickupCity, $deliveryCity])
             ->orderBy('departure_date', 'asc')
-            ->limit(10)
+            ->limit(20)  // Increased from 10 to 20 for more options
             ->get();
     }
 }

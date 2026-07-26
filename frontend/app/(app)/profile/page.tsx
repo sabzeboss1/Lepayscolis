@@ -71,24 +71,27 @@ export default function ProfilePage() {
         apiClient.get<{ stats: any }>('/api/users/stats'),
       ]);
 
-      if (ratingsResult.status === 'fulfilled') {
+      if (ratingsResult.status === 'fulfilled' && ratingsResult.value) {
         setRatings(ratingsResult.value.ratings || []);
       }
 
-      if (statsResult.status === 'fulfilled') {
+      if (statsResult.status === 'fulfilled' && statsResult.value?.stats) {
         const s = statsResult.value.stats;
+        const memberSinceDate = s.member_since ? new Date(s.member_since) : null;
         setStats({
-          totalTrips: s.total_trips,
-          totalShipments: s.total_shipments,
-          totalEarnings: s.total_earnings,
-          successRate: s.success_rate,
-          responseTime: s.response_time,
-          memberSince: new Date(s.member_since).toLocaleDateString('fr-FR', {
-            year: 'numeric',
-            month: 'long',
-          }),
-          earningsThisMonth: s.earnings_this_month,
-          pendingEarnings: s.pending_earnings,
+          totalTrips: s.total_trips ?? 0,
+          totalShipments: s.total_shipments ?? 0,
+          totalEarnings: s.total_earnings ?? 0,
+          successRate: s.success_rate ?? 100,
+          responseTime: s.response_time ?? 'N/A',
+          memberSince: memberSinceDate && !isNaN(memberSinceDate.getTime())
+            ? memberSinceDate.toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+              })
+            : '',
+          earningsThisMonth: s.earnings_this_month ?? 0,
+          pendingEarnings: s.pending_earnings ?? 0,
         });
       }
     } catch (err) {

@@ -78,7 +78,7 @@ class UserStatsController extends Controller
                 'current_balance' => (float) $currentBalance,
                 'success_rate' => $successRate,
                 'response_time' => $responseTime,
-                'member_since' => $user->created_at->format('Y-m-d'),
+                'member_since' => $user->created_at ? $user->created_at->format('Y-m-d') : now()->format('Y-m-d'),
                 'earnings_this_month' => (float) $earningsThisMonth,
                 'pending_earnings' => (float) $pendingEarnings,
             ]

@@ -101,6 +101,7 @@ class CreateTripRequest extends FormRequest
         $validator->after(function ($validator) {
             $this->validateCityBelongsToCountry($validator, 'departure_city_id', 'departure_country_id');
             $this->validateCityBelongsToCountry($validator, 'arrival_city_id', 'arrival_country_id');
+            $this->validateRussiaAfricaRoute($validator);
         });
     }
 
@@ -113,6 +114,31 @@ class CreateTripRequest extends FormRequest
             $city = City::find($cityId);
             if ($city && $city->country_id !== (int) $countryId) {
                 $validator->errors()->add($cityField, __('validation.trip.city_country_mismatch'));
+            }
+        }
+    }
+
+    private function validateRussiaAfricaRoute($validator): void
+    {
+        $depCountryId = $this->input('departure_country_id');
+        $arrCountryId = $this->input('arrival_country_id');
+
+        if ($depCountryId && $arrCountryId) {
+            if ((int) $depCountryId === (int) $arrCountryId) {
+                $validator->errors()->add('arrival_country_id', 'Le pays de départ et le pays d\'arrivée doivent être différents.');
+                return;
+            }
+
+            $depCountry = \App\Models\Country::find($depCountryId);
+            $arrCountry = \App\Models\Country::find($arrCountryId);
+
+            if ($depCountry && $arrCountry) {
+                $isDepRussia = str_contains(strtolower($depCountry->name), 'russia') || str_contains(strtolower($depCountry->name), 'russie') || strtoupper($depCountry->code ?? '') === 'RU';
+                $isArrRussia = str_contains(strtolower($arrCountry->name), 'russia') || str_contains(strtolower($arrCountry->name), 'russie') || strtoupper($arrCountry->code ?? '') === 'RU';
+
+                if (($isDepRussia && $isArrRussia) || (!$isDepRussia && !$isArrRussia)) {
+                    $validator->errors()->add('arrival_country_id', 'Le trajet doit obligatoirement s\'effectuer entre la Russie et un pays d\'Afrique.');
+                }
             }
         }
     }

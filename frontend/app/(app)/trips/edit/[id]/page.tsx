@@ -105,6 +105,14 @@ export default function EditTripPage() {
     }
   };
 
+  const isRussiaCountryId = (cId?: number) => {
+    if (!cId) return false;
+    const country = getCountryById(cId);
+    if (!country) return false;
+    const name = country.name.toLowerCase();
+    return name.includes('russia') || name.includes('russie') || country.code?.toUpperCase() === 'RU';
+  };
+
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -114,6 +122,21 @@ export default function EditTripPage() {
     if (!formData.arrivalCityId) newErrors.arrivalCityId = 'Requis';
     if (!formData.departureDate) newErrors.departureDate = 'Requis';
     if (!formData.arrivalDate) newErrors.arrivalDate = 'Requis';
+
+    if (formData.departureCountryId && formData.arrivalCountryId) {
+      if (formData.departureCountryId === formData.arrivalCountryId) {
+        newErrors.arrivalCountryId = 'Le pays de départ et le pays d\'arrivée doivent être différents.';
+      } else {
+        const isDepRussia = isRussiaCountryId(formData.departureCountryId);
+        const isArrRussia = isRussiaCountryId(formData.arrivalCountryId);
+
+        if (isDepRussia && isArrRussia) {
+          newErrors.arrivalCountryId = 'Le trajet doit obligatoirement s\'effectuer entre la Russie et un pays d\'Afrique (pas Russie vers Russie).';
+        } else if (!isDepRussia && !isArrRussia) {
+          newErrors.arrivalCountryId = 'Le trajet doit obligatoirement s\'effectuer entre la Russie et un pays d\'Afrique (pas Afrique vers Afrique).';
+        }
+      }
+    }
     
     if (formData.departureDate && formData.arrivalDate) {
       const departureDate = new Date(formData.departureDate);
