@@ -25,6 +25,7 @@ import {
   PlaneTakeoff,
   Search,
   PackagePlus,
+  PackageSearch,
   ChevronRight,
   ArrowRight,
   Loader2,
@@ -420,7 +421,7 @@ export default function DashboardPage() {
           <h2 className="text-sm font-semibold text-body-text uppercase tracking-wide mb-3">
             Actions rapides
           </h2>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {/* Publish trip */}
             <button
               onClick={() => router.push('/trips/new')}
@@ -484,6 +485,28 @@ export default function DashboardPage() {
               </p>
               <p className="hidden sm:block text-xs text-muted-text mt-1">
                 Envoyez un colis
+              </p>
+            </button>
+
+            {/* Search shipments */}
+            <button
+              onClick={() => router.push('/shipments/search')}
+              className="group flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white border border-light-border hover:border-purple-500 hover:shadow-md transition-all duration-200 cursor-pointer"
+            >
+              <div
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200"
+                style={{
+                  background: 'linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%)',
+                  boxShadow: '0 4px 14px rgba(139,92,246,0.3)',
+                }}
+              >
+                <PackageSearch className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-navy leading-tight">
+                Chercher un colis
+              </p>
+              <p className="hidden sm:block text-xs text-muted-text mt-1">
+                Trouvez des livraisons
               </p>
             </button>
           </div>
