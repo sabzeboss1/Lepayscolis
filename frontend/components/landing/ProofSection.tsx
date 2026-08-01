@@ -2,44 +2,47 @@
 
 import React from 'react';
 import { Package, Users, MapPin, Star } from 'lucide-react';
-
-const STATS = [
-  {
-    value: '2 000+',
-    label: 'Colis Livrés',
-    icon: Package,
-    color: 'text-royal-blue',
-    bg: 'bg-royal-blue/10',
-  },
-  {
-    value: '500+',
-    label: 'Voyageurs Actifs',
-    icon: Users,
-    color: 'text-vibrant-orange',
-    bg: 'bg-vibrant-orange/10',
-  },
-  {
-    value: '50+',
-    label: 'Destinations',
-    icon: MapPin,
-    color: 'text-success-green',
-    bg: 'bg-success-green/10',
-  },
-  {
-    value: '4.8/5',
-    label: 'Note Moyenne',
-    icon: Star,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-  },
-];
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export function ProofSection() {
+  const { t } = useTranslation();
+
+  const stats = [
+    {
+      value: '2 000+',
+      label: t('home.stats.deliveries') || 'Colis Livrés',
+      icon: Package,
+      color: 'text-royal-blue',
+      bg: 'bg-royal-blue/10',
+    },
+    {
+      value: '500+',
+      label: t('home.stats.travelers') || 'Voyageurs Actifs',
+      icon: Users,
+      color: 'text-vibrant-orange',
+      bg: 'bg-vibrant-orange/10',
+    },
+    {
+      value: '50+',
+      label: t('home.stats.destinations') || 'Destinations',
+      icon: MapPin,
+      color: 'text-success-green',
+      bg: 'bg-success-green/10',
+    },
+    {
+      value: '4.8/5',
+      label: t('home.stats.rating') || 'Note Moyenne',
+      icon: Star,
+      color: 'text-yellow-500',
+      bg: 'bg-yellow-500/10',
+    },
+  ];
+
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {STATS.map((stat, index) => {
+          {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <div
@@ -65,3 +68,4 @@ export function ProofSection() {
     </section>
   );
 }
+

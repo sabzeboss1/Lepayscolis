@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { NotificationDropdown } from '@/components/features/NotificationDropdown';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 import { Locale } from '@/lib/i18n/config';
 import { User } from '@/lib/types/user';
@@ -42,11 +43,12 @@ const NAV_ITEMS = [
 ];
 
 function KycBadge({ status }: { status: User['kyc_status'] }) {
+  const { t } = useTranslation();
   if (status === 'approved') return null;
   const cfg = {
-    pending: { icon: Clock, label: 'KYC en attente', color: '#b45309', bg: '#fef3c7' },
-    rejected: { icon: AlertCircle, label: 'KYC rejeté', color: '#b91c1c', bg: '#fee2e2' },
-    not_submitted: { icon: ShieldCheck, label: 'KYC requis', color: '#1d4ed8', bg: '#dbeafe' },
+    pending: { icon: Clock, label: t('dashboard.kycPendingShort') || 'KYC en attente', color: '#b45309', bg: '#fef3c7' },
+    rejected: { icon: AlertCircle, label: t('dashboard.kycRejectedShort') || 'KYC rejeté', color: '#b91c1c', bg: '#fee2e2' },
+    not_submitted: { icon: ShieldCheck, label: t('dashboard.kycRequiredShort') || 'KYC requis', color: '#1d4ed8', bg: '#dbeafe' },
   }[status];
   if (!cfg) return null;
   const Icon = cfg.icon;
@@ -63,13 +65,12 @@ function KycBadge({ status }: { status: User['kyc_status'] }) {
 
 export const HeaderApp: React.FC<HeaderAppProps> = ({
   user,
-  locale: initialLocale,
   unreadMessages = 0,
   onLogout,
 }) => {
-  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const { locale, setLocale } = useLocale();
+  const { t } = useTranslation();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const { t } = useTranslation(locale);
   const { logo_url } = usePlatformBranding();
   const pathname = usePathname();
   const desktopUserMenuRef = useRef<HTMLDivElement>(null);

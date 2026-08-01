@@ -4,15 +4,18 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Shield, Users, Headphones, Plane } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export function HeroSection() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-navy">
       {/* Background image with overlay */}
       <div className="absolute inset-0">
         <img
           src="https://images.pexels.com/photos/3453030/pexels-photo-3453030.jpeg"
-          alt="Vue aérienne de voyage - Photo par Denniz Futalan sur Pexels"
+          alt="Vue aérienne de voyage"
           className="w-full h-full object-cover"
           style={{ backgroundColor: '#586460' }}
         />
@@ -40,30 +43,16 @@ export function HeroSection() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-green opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success-green" />
               </span>
-              Plateforme de confiance pour vos colis
+              {t('home.hero.badge') || 'Plateforme de confiance pour vos colis'}
             </div>
 
             {/* Title */}
             <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-              Expédiez vos colis
-              <br />
-              entre la{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-ocean-blue to-blue-300">
-                Russie
-              </span>{' '}
-              et l&apos;
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-vibrant-orange to-yellow-400">
-                Afrique
-              </span>
+              {t('home.hero.title') || 'Expédiez vos colis entre la Russie et l\'Afrique'}
             </h1>
 
             <p className="text-lg sm:text-xl text-blue-100/80 mb-10 max-w-lg leading-relaxed font-body">
-              Connectez-vous avec des voyageurs de confiance pour une livraison
-              rapide, sûre et économique.{' '}
-              <span className="text-vibrant-orange font-semibold">
-                Économisez jusqu&apos;à 70%
-              </span>{' '}
-              par rapport aux services traditionnels.
+              {t('home.hero.subtitle') || 'Connectez-vous avec des voyageurs de confiance pour une livraison rapide, sûre et économique.'}
             </p>
 
             {/* CTAs */}
@@ -74,7 +63,7 @@ export function HeroSection() {
                   className="bg-vibrant-orange hover:bg-warm-orange text-white px-8 py-4 text-base font-bold shadow-xl shadow-orange-500/30 border-0 gap-2 group"
                 >
                   <Plane className="w-5 h-5" />
-                  Envoyer un Colis
+                  {t('home.roles.sender.title') || 'Envoyer un Colis'}
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
@@ -84,7 +73,7 @@ export function HeroSection() {
                   variant="outline"
                   className="bg-white/5 backdrop-blur-sm text-white border-white/20 hover:bg-white/15 px-8 py-4 text-base font-semibold"
                 >
-                  Comment ça marche
+                  {t('navigation.howItWorks') || 'Comment ça marche'}
                 </Button>
               </Link>
             </div>
@@ -93,15 +82,15 @@ export function HeroSection() {
             <div className="flex flex-wrap gap-6 text-sm text-white/70">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-success-green" />
-                <span>Paiement Sécurisé</span>
+                <span>{t('home.trustIndicators.securePayment') || 'Paiement Sécurisé'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-success-green" />
-                <span>Utilisateurs Vérifiés</span>
+                <span>{t('home.trustIndicators.verifiedUsers') || 'Utilisateurs Vérifiés'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Headphones className="w-4 h-4 text-success-green" />
-                <span>Support 24/7</span>
+                <span>{t('home.trustIndicators.support247') || 'Support 24/7'}</span>
               </div>
             </div>
           </div>
@@ -116,21 +105,21 @@ export function HeroSection() {
                     <Plane className="w-5 h-5 text-vibrant-orange" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold text-sm">Nouveau Voyage</p>
+                    <p className="text-white font-semibold text-sm">{t('home.roles.traveler.title') || 'Nouveau Voyage'}</p>
                     <p className="text-white/60 text-xs">Moscou → Dakar</p>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-white/60">Capacité</span>
-                    <span className="text-white font-medium">15 kg disponibles</span>
+                    <span className="text-white/60">{t('trips.capacity') || 'Capacité'}</span>
+                    <span className="text-white font-medium">15 kg</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-white/60">Prix/kg</span>
+                    <span className="text-white/60">{t('trips.pricePerKg') || 'Prix/kg'}</span>
                     <span className="text-vibrant-orange font-medium">8 €/kg</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-white/60">Départ</span>
+                    <span className="text-white/60">{t('trips.departureDate') || 'Départ'}</span>
                     <span className="text-white font-medium">25 Mars 2026</span>
                   </div>
                   <div className="w-full h-px bg-white/10 my-1" />
@@ -144,7 +133,7 @@ export function HeroSection() {
                     />
                     <div>
                       <p className="text-white text-xs font-medium">Amadou K.</p>
-                      <p className="text-yellow-400 text-xs">★ 4.9 · 23 livraisons</p>
+                      <p className="text-yellow-400 text-xs">★ 4.9 · 23 {t('home.stats.deliveries') || 'livraisons'}</p>
                     </div>
                   </div>
                 </div>
@@ -152,7 +141,7 @@ export function HeroSection() {
 
               {/* Stats card */}
               <div className="absolute bottom-16 left-0 w-56 bg-white/10 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-2xl">
-                <p className="text-white/60 text-xs font-medium mb-3 uppercase tracking-wider">Cette semaine</p>
+                <p className="text-white/60 text-xs font-medium mb-3 uppercase tracking-wider">{t('home.stats.thisWeek') || 'Cette semaine'}</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-success-green/20 rounded-lg flex items-center justify-center">
@@ -160,7 +149,7 @@ export function HeroSection() {
                     </div>
                     <div>
                       <p className="text-white font-bold text-lg">+127</p>
-                      <p className="text-white/50 text-xs">Nouveaux utilisateurs</p>
+                      <p className="text-white/50 text-xs">{t('home.stats.newUsers') || 'Nouveaux utilisateurs'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -169,7 +158,7 @@ export function HeroSection() {
                     </div>
                     <div>
                       <p className="text-white font-bold text-lg">48</p>
-                      <p className="text-white/50 text-xs">Colis en transit</p>
+                      <p className="text-white/50 text-xs">{t('home.stats.parcelsInTransit') || 'Colis en transit'}</p>
                     </div>
                   </div>
                 </div>
@@ -182,8 +171,8 @@ export function HeroSection() {
                     <span className="text-success-green text-sm">✓</span>
                   </div>
                   <div>
-                    <p className="text-white text-sm font-medium">Livraison confirmée !</p>
-                    <p className="text-white/50 text-xs">Il y a 5 minutes</p>
+                    <p className="text-white text-sm font-medium">{t('home.stats.deliveryConfirmed') || 'Livraison confirmée !'}</p>
+                    <p className="text-white/50 text-xs">5 min</p>
                   </div>
                 </div>
               </div>

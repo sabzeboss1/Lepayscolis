@@ -112,7 +112,7 @@ function SectionCard({ icon, iconBg, title, subtitle, children }: SectionCardPro
 }
 
 export default function NewShipmentPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -159,7 +159,22 @@ export default function NewShipmentPage() {
         try {
           const response = await apiClient.get<{ data: any }>(`/api/trips/${tripId}`);
           console.log('Trip fetched:', response.data);
-          setSelectedTrip(response.data);
+          const trip = response.data;
+          setSelectedTrip(trip);
+          if (trip) {
+            const pCountry = trip.departure_country_id || trip.departure?.country_id;
+            const pCity = trip.departure_city_id || trip.departure?.city_id;
+            const dCountry = trip.arrival_country_id || trip.arrival?.country_id;
+            const dCity = trip.arrival_city_id || trip.arrival?.city_id;
+
+            setFormData(prev => ({
+              ...prev,
+              pickupCountryId: pCountry || prev.pickupCountryId,
+              pickupCityId: pCity || prev.pickupCityId,
+              deliveryCountryId: dCountry || prev.deliveryCountryId,
+              deliveryCityId: dCity || prev.deliveryCityId,
+            }));
+          }
         } catch (error) {
           console.error('Failed to fetch trip:', error);
           setErrors({ submit: 'Voyage non trouvé. Veuillez sélectionner un autre voyage.' });
@@ -362,6 +377,19 @@ export default function NewShipmentPage() {
       return;
     }
     
+    // Ensure pickup and delivery location IDs are auto-filled from selectedTrip
+    if (selectedTrip) {
+      const pCountry = selectedTrip.departure_country_id || selectedTrip.departure?.country_id;
+      const pCity = selectedTrip.departure_city_id || selectedTrip.departure?.city_id;
+      const dCountry = selectedTrip.arrival_country_id || selectedTrip.arrival?.country_id;
+      const dCity = selectedTrip.arrival_city_id || selectedTrip.arrival?.city_id;
+
+      if (pCountry) formData.pickupCountryId = pCountry;
+      if (pCity) formData.pickupCityId = pCity;
+      if (dCountry) formData.deliveryCountryId = dCountry;
+      if (dCity) formData.deliveryCityId = dCity;
+    }
+
     if (!validateForm()) return;
 
     setIsSubmitting(true);
@@ -448,7 +476,7 @@ export default function NewShipmentPage() {
                   className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Retour
+                  {t('common.back') || 'Retour'}
                 </button>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -456,9 +484,9 @@ export default function NewShipmentPage() {
                   </div>
                   <div>
                     <h1 className="text-xl font-bold text-slate-900 font-heading">
-                      Créer une expédition
+                      {t('dashboard.createShipment') || 'Créer une expédition'}
                     </h1>
-                    <p className="text-sm text-slate-500">Choisissez le type d'expédition que vous souhaitez créer</p>
+                    <p className="text-sm text-slate-500">{t('shipments.chooseType') || 'Choisissez le type d\'expédition que vous souhaitez créer'}</p>
                   </div>
                 </div>
               </div>
@@ -476,24 +504,23 @@ export default function NewShipmentPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                      Expédition avec voyage sélectionné
+                      {t('shipments.withTripTitle') || 'Expédition avec voyage sélectionné'}
                     </h3>
                     <p className="text-slate-600 text-sm mb-4">
-                      Choisissez un voyage existant et créez une expédition pour ce voyage spécifique. 
-                      Le prix est calculé selon le tarif du voyageur.
+                      {t('shipments.withTripDesc') || 'Choisissez un voyage existant et créez une expédition pour ce voyage spécifique. Le prix est calculé selon le tarif du voyageur.'}
                     </p>
                     <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-green-500" />
-                        Prix fixe
+                        {t('shipments.fixedPrice') || 'Prix fixe'}
                       </span>
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-green-500" />
-                        Voyage confirmé
+                        {t('shipments.confirmedTrip') || 'Voyage confirmé'}
                       </span>
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-green-500" />
-                        Paiement immédiat
+                        {t('shipments.instantPayment') || 'Paiement immédiat'}
                       </span>
                     </div>
                   </div>
@@ -514,27 +541,26 @@ export default function NewShipmentPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                      Annonce d'expédition avec soumissions
+                      {t('shipments.withBidsTitle') || 'Annonce d\'expédition avec soumissions'}
                       <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                        Nouveau
+                        {t('common.new') || 'Nouveau'}
                       </span>
                     </h3>
                     <p className="text-slate-600 text-sm mb-4">
-                      Publiez une annonce d'expédition et laissez les voyageurs soumissionner avec leurs prix. 
-                      Choisissez la meilleure offre.
+                      {t('shipments.withBidsDesc') || 'Publiez une annonce d\'expédition et laissez les voyageurs soumissionner avec leurs prix. Choisissez la meilleure offre.'}
                     </p>
                     <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-green-500" />
-                        Prix négociable
+                        {t('shipments.negotiablePrice') || 'Prix négociable'}
                       </span>
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-green-500" />
-                        Plusieurs offres
+                        {t('shipments.multipleOffers') || 'Plusieurs offres'}
                       </span>
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-green-500" />
-                        Vous choisissez
+                        {t('shipments.youChoose') || 'Vous choisissez'}
                       </span>
                     </div>
                   </div>
@@ -553,11 +579,11 @@ export default function NewShipmentPage() {
                     <AlertCircle className="w-3 h-3 text-blue-600" />
                   </div>
                   <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Quelle option choisir ?</p>
+                    <p className="font-medium mb-1">{t('shipments.whichOption') || 'Quelle option choisir ?'}</p>
                     <p>
-                      <strong>Voyage sélectionné</strong> : Si vous avez trouvé un voyage qui vous convient et voulez réserver immédiatement.
+                      <strong>{t('shipments.selectedTripLabel') || 'Voyage sélectionné'}</strong> : {t('shipments.selectedTripDesc') || 'Si vous avez trouvé un voyage qui vous convient et voulez réserver immédiatement.'}
                       <br />
-                      <strong>Annonce avec soumissions</strong> : Si vous voulez comparer plusieurs offres et négocier le meilleur prix.
+                      <strong>{t('shipments.withBidsLabel') || 'Annonce avec soumissions'}</strong> : {t('shipments.withBidsDetail') || 'Si vous voulez comparer plusieurs offres et négocier le meilleur prix.'}
                     </p>
                   </div>
                 </div>
@@ -577,7 +603,7 @@ export default function NewShipmentPage() {
                   className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Retour
+                  {t('common.back') || 'Retour'}
                 </button>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -585,9 +611,9 @@ export default function NewShipmentPage() {
                   </div>
                   <div>
                     <h1 className="text-xl font-bold text-slate-900 font-heading">
-                      Créer une expédition
+                      {t('dashboard.createShipment') || 'Créer une expédition'}
                     </h1>
-                    <p className="text-sm text-slate-500">Remplissez les informations de votre colis</p>
+                    <p className="text-sm text-slate-500">{t('shipments.fillInfo') || 'Remplissez les informations de votre colis'}</p>
                   </div>
                 </div>
               </div>
@@ -601,13 +627,13 @@ export default function NewShipmentPage() {
                     <Navigation className="w-4 h-4 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Voyage sélectionné</p>
+                    <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">{t('shipments.selectedTrip') || 'Voyage sélectionné'}</p>
                     <p className="text-sm font-semibold text-slate-900">
                       {selectedTrip.departure_city} → {selectedTrip.arrival_city}
                     </p>
                     <p className="text-xs text-slate-600">
-                      Départ: {new Date(selectedTrip.departure_date).toLocaleDateString('fr-FR')} •
-                      Prix: {selectedTrip.price_converted
+                      {t('trips.departureDate') || 'Départ'}: {new Date(selectedTrip.departure_date).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR')} •
+                      {t('shipments.price') || 'Prix'}: {selectedTrip.price_converted
                         ? formatCurrency(selectedTrip.price_converted.amount, selectedTrip.price_converted.currency_code)
                         : formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}/kg
                       {selectedTrip.price_converted && (
@@ -630,10 +656,11 @@ export default function NewShipmentPage() {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-semibold text-blue-900">Routes Russie ⇄ Afrique</p>
+                    <p className="font-semibold text-blue-900">
+                      {t('shipments.routesTitle') || 'Routes Russie ⇄ Afrique'}
+                    </p>
                     <p className="text-blue-700 mt-1">
-                      Notre plateforme connecte la Russie et l'Afrique. Lorsque vous sélectionnez un pays, 
-                      l'autre sera automatiquement défini pour respecter cette logique.
+                      {t('shipments.routesDesc') || 'Notre plateforme connecte la Russie et l\'Afrique. Lorsque vous sélectionnez un pays, l\'autre sera automatiquement défini pour respecter cette logique.'}
                     </p>
                   </div>
                 </div>
@@ -648,7 +675,7 @@ export default function NewShipmentPage() {
                         <Wallet className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
-                        <p className="text-xs text-slate-600">Solde disponible</p>
+                        <p className="text-xs text-slate-600">{t('common.available') || 'Solde disponible'}</p>
                         <p className="text-lg font-bold text-slate-900">{formatCurrency(walletBalance)}</p>
                         {walletData?.original_balance != null && (
                           <p className="text-[10px] text-slate-400">
@@ -659,7 +686,7 @@ export default function NewShipmentPage() {
                     </div>
                     {estimatedCost !== null && (
                       <div className="text-right">
-                        <p className="text-xs text-slate-600">Coût estimé</p>
+                        <p className="text-xs text-slate-600">{t('shipments.estimatedCost') || 'Coût estimé'}</p>
                         <p className={`text-lg font-bold ${walletBalance >= estimatedCost ? 'text-emerald-600' : 'text-red-600'}`}>
                           {formatCurrency(estimatedCost)}
                         </p>
@@ -674,7 +701,7 @@ export default function NewShipmentPage() {
                   {estimatedCost !== null && walletBalance < estimatedCost && (
                     <div className="mt-3 flex items-center gap-2 text-xs text-red-700 bg-red-50 px-3 py-2 rounded-lg">
                       <AlertCircle className="w-4 h-4 shrink-0" />
-                      Solde insuffisant. Rechargez votre wallet avant de continuer.
+                      {t('shipments.insufficientBalance') || 'Solde insuffisant. Rechargez votre wallet avant de continuer.'}
                     </div>
                   )}
                 </div>
@@ -684,22 +711,22 @@ export default function NewShipmentPage() {
               <SectionCard
                 icon={<Package className="w-4 h-4 text-orange-600" />}
                 iconBg="bg-orange-50"
-                title="Détails du colis"
-                subtitle="Description, poids et valeur du colis à expédier"
+                title={t('shipments.packageDetailsTitle') || 'Détails du colis'}
+                subtitle={t('shipments.packageDetailsSubtitle') || 'Description, poids et valeur du colis à expédier'}
               >
                 <Input
                   type="text"
-                  label="Description du colis"
+                  label={t('shipments.packageDescriptionLabel') || 'Description du colis'}
                   value={formData.description || ''}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   error={errors.description}
                   required
-                  placeholder="ex : Vêtements, Électronique, Documents..."
+                  placeholder={t('shipments.descriptionPlaceholder') || 'ex : Vêtements, Électronique, Documents...'}
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     type="number"
-                    label="Poids (kg)"
+                    label={t('shipments.weightLabel') || 'Poids (kg)'}
                     value={formData.weight?.toString() || ''}
                     onChange={(e) => handleInputChange('weight', parseFloat(e.target.value))}
                     error={errors.weight}
@@ -708,7 +735,7 @@ export default function NewShipmentPage() {
                   />
                   <Input
                     type="number"
-                    label={`Valeur déclarée (${currencyCode})`}
+                    label={`${t('shipments.valueLabel') || 'Valeur déclarée'} (${currencyCode})`}
                     value={formData.value?.toString() || ''}
                     onChange={(e) => handleInputChange('value', parseFloat(e.target.value))}
                     error={errors.value}
@@ -719,7 +746,7 @@ export default function NewShipmentPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <Input
                     type="number"
-                    label="Longueur (cm)"
+                    label={t('shipments.lengthLabel') || 'Longueur (cm)'}
                     value={formData.length?.toString() || ''}
                     onChange={(e) => handleInputChange('length', parseFloat(e.target.value))}
                     error={errors.length}
@@ -727,7 +754,7 @@ export default function NewShipmentPage() {
                   />
                   <Input
                     type="number"
-                    label="Largeur (cm)"
+                    label={t('shipments.widthLabel') || 'Largeur (cm)'}
                     value={formData.width?.toString() || ''}
                     onChange={(e) => handleInputChange('width', parseFloat(e.target.value))}
                     error={errors.width}
@@ -735,7 +762,7 @@ export default function NewShipmentPage() {
                   />
                   <Input
                     type="number"
-                    label="Hauteur (cm)"
+                    label={t('shipments.heightLabel') || 'Hauteur (cm)'}
                     value={formData.height?.toString() || ''}
                     onChange={(e) => handleInputChange('height', parseFloat(e.target.value))}
                     error={errors.height}
@@ -744,12 +771,12 @@ export default function NewShipmentPage() {
                 </div>
                 <Input
                   type="text"
-                  label="Type de colis"
+                  label={t('shipments.packageTypeLabel') || 'Type de colis'}
                   value={formData.packageType || ''}
                   onChange={(e) => handleInputChange('packageType', e.target.value)}
                   error={errors.packageType}
                   required
-                  placeholder="ex : Documents, Électronique, Vêtements..."
+                  placeholder={t('shipments.packageTypePlaceholder') || 'ex : Documents, Électronique, Vêtements...'}
                 />
 
                 {/* Photo Upload */}
@@ -757,8 +784,8 @@ export default function NewShipmentPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
                     <label className="text-sm font-medium text-slate-700">
-                      Photos du colis{' '}
-                      <span className="text-slate-400 font-normal text-xs">(optionnel)</span>
+                      {t('shipments.photosLabel') || 'Photos du colis'}{' '}
+                      <span className="text-slate-400 font-normal text-xs">({t('common.optional') || 'optionnel'})</span>
                     </label>
                   </div>
                   <FileUpload
@@ -766,7 +793,7 @@ export default function NewShipmentPage() {
                     value={photoFile}
                     onChange={(file) => setPhotoFile(file)}
                     maxSize={5}
-                    helperText="Ajoutez une photo pour rassurer les voyageurs"
+                    helperText={t('shipments.photoHelper') || 'Ajoutez une photo pour rassurer les voyageurs'}
                   />
                 </div>
               </SectionCard>
@@ -775,22 +802,22 @@ export default function NewShipmentPage() {
               <SectionCard
                 icon={<User className="w-4 h-4 text-blue-600" />}
                 iconBg="bg-blue-50"
-                title="Informations du destinataire"
-                subtitle="Nom et téléphone du destinataire"
+                title={t('shipments.recipientInfoTitle') || 'Informations du destinataire'}
+                subtitle={t('shipments.recipientInfoSubtitle') || 'Nom et téléphone du destinataire'}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     type="text"
-                    label="Nom du destinataire"
+                    label={t('shipments.recipientNameLabel') || 'Nom du destinataire'}
                     value={formData.recipientName || ''}
                     onChange={(e) => handleInputChange('recipientName', e.target.value)}
                     error={errors.recipientName}
                     required
-                    placeholder="Nom complet du destinataire"
+                    placeholder={t('shipments.recipientNamePlaceholder') || 'Nom complet du destinataire'}
                   />
                   <Input
                     type="tel"
-                    label="Téléphone du destinataire"
+                    label={t('shipments.recipientPhoneLabel') || 'Téléphone du destinataire'}
                     value={formData.recipientPhone || ''}
                     onChange={(e) => handleInputChange('recipientPhone', e.target.value)}
                     error={errors.recipientPhone}
@@ -798,104 +825,6 @@ export default function NewShipmentPage() {
                     placeholder="+33 6 12 34 56 78"
                   />
                 </div>
-              </SectionCard>
-
-              {/* Pickup Location */}
-              <SectionCard
-                icon={<MapPin className="w-4 h-4 text-emerald-600" />}
-                iconBg="bg-emerald-50"
-                title="Lieu de récupération"
-                subtitle="Où le voyageur peut récupérer le colis"
-              >
-                {/* Auto-selection notification for pickup */}
-                {autoSelectedPickupCountry && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <div className="text-sm">
-                        <p className="font-semibold text-emerald-900">Sélection automatique</p>
-                        <p className="text-emerald-700 mt-1">
-                          Vous livrez en {formData.deliveryCountryId ? countries.find(c => c.id === formData.deliveryCountryId)?.name : ''}. 
-                          Le pays de récupération a été automatiquement défini sur <strong>{autoSelectedPickupCountry}</strong>.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <CountrySelect
-                    label="Pays de récupération"
-                    value={formData.pickupCountryId}
-                    onChange={(id) => handleInputChange('pickupCountryId', id ?? undefined)}
-                    error={errors.pickupCountryId}
-                    required
-                  />
-                  <CitySelect
-                    label="Ville de récupération"
-                    countryId={formData.pickupCountryId}
-                    value={formData.pickupCityId}
-                    onChange={(id) => handleInputChange('pickupCityId', id ?? undefined)}
-                    error={errors.pickupCityId}
-                    required
-                  />
-                </div>
-                <Input
-                  type="text"
-                  label="Adresse de récupération"
-                  value={formData.pickupAddress || ''}
-                  onChange={(e) => handleInputChange('pickupAddress', e.target.value)}
-                  error={errors.pickupAddress}
-                  placeholder="Adresse complète où récupérer le colis (optionnel)"
-                />
-              </SectionCard>
-
-              {/* Delivery Location */}
-              <SectionCard
-                icon={<Navigation className="w-4 h-4 text-purple-600" />}
-                iconBg="bg-purple-50"
-                title="Lieu de livraison"
-                subtitle="Où le colis doit être livré"
-              >
-                {/* Auto-selection notification for delivery */}
-                {autoSelectedDeliveryCountry && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <div className="text-sm">
-                        <p className="font-semibold text-emerald-900">Sélection automatique</p>
-                        <p className="text-emerald-700 mt-1">
-                          Vous récupérez en {formData.pickupCountryId ? countries.find(c => c.id === formData.pickupCountryId)?.name : ''}. 
-                          Le pays de livraison a été automatiquement défini sur <strong>{autoSelectedDeliveryCountry}</strong>.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <CountrySelect
-                    label="Pays de livraison"
-                    value={formData.deliveryCountryId}
-                    onChange={(id) => handleInputChange('deliveryCountryId', id ?? undefined)}
-                    error={errors.deliveryCountryId}
-                    required
-                  />
-                  <CitySelect
-                    label="Ville de livraison"
-                    countryId={formData.deliveryCountryId}
-                    value={formData.deliveryCityId}
-                    onChange={(id) => handleInputChange('deliveryCityId', id ?? undefined)}
-                    error={errors.deliveryCityId}
-                    required
-                  />
-                </div>
-                <Input
-                  type="text"
-                  label="Adresse de livraison"
-                  value={formData.deliveryAddress || ''}
-                  onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
-                  error={errors.deliveryAddress}
-                  placeholder="Adresse complète de livraison (optionnel)"
-                />
               </SectionCard>
 
               {/* Prohibited Items */}
@@ -906,9 +835,9 @@ export default function NewShipmentPage() {
                   </div>
                   <div>
                     <h2 className="text-sm font-semibold text-amber-900">
-                      Objets interdits
+                      {t('shipments.prohibitedItemsTitle') || 'Objets interdits'}
                     </h2>
-                    <p className="text-xs text-amber-700">Vérifiez que votre colis ne contient aucun objet interdit</p>
+                    <p className="text-xs text-amber-700">{t('shipments.prohibitedItemsSubtitle') || 'Vérifiez que votre colis ne contient aucun objet interdit'}</p>
                   </div>
                 </div>
                 <div className="p-5">
@@ -920,12 +849,12 @@ export default function NewShipmentPage() {
                     {showProhibitedItems ? (
                       <>
                         <ChevronUp className="w-4 h-4" />
-                        Masquer la liste
+                        {t('shipments.hideProhibitedList') || 'Masquer la liste'}
                       </>
                     ) : (
                       <>
                         <ChevronDown className="w-4 h-4" />
-                        Voir la liste des objets interdits
+                        {t('shipments.showProhibitedList') || 'Voir la liste des objets interdits'}
                       </>
                     )}
                   </button>
@@ -933,40 +862,32 @@ export default function NewShipmentPage() {
                   {showProhibitedItems && (
                     <div className="mb-4 bg-white border border-amber-200 rounded-xl p-4 slide-down">
                       <p className="text-xs font-semibold text-slate-800 mb-2">
-                        Objets strictement interdits :
+                        {t('shipments.strictlyProhibited') || 'Objets strictement interdits :'}
                       </p>
                       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-700">
                         <li className="flex items-start gap-2">
                           <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                          Armes et munitions
+                          {t('shipments.prohibitedWeapons') || 'Armes et munitions'}
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                          Drogues et stupéfiants
+                          {t('shipments.prohibitedDrugs') || 'Drogues et stupéfiants'}
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                          Liquides inflammables
+                          {t('shipments.prohibitedLiquids') || 'Liquides inflammables'}
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                          Produits chimiques
+                          {t('shipments.prohibitedChemicals') || 'Produits chimiques'}
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                          Animaux vivants
+                          {t('shipments.prohibitedAnimals') || 'Animaux vivants'}
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                          Objets de valeur extrême
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                          Documents officiels
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                          Produits périssables
+                          {t('shipments.prohibitedValuables') || 'Objets de valeur extrême'}
                         </li>
                       </ul>
                     </div>
@@ -991,7 +912,7 @@ export default function NewShipmentPage() {
                       </div>
                     </div>
                     <span className="text-xs text-slate-700">
-                      Je certifie que mon colis ne contient aucun objet interdit et respecte les réglementations douanières.
+                      {t('shipments.certifyTerms') || 'Je certifie que mon colis ne contient aucun objet interdit et respecte les réglementations douanières.'}
                     </span>
                   </label>
                 </div>
@@ -1014,7 +935,7 @@ export default function NewShipmentPage() {
                   disabled={isSubmitting}
                   className="flex-1"
                 >
-                  Annuler
+                  {t('common.cancel') || 'Annuler'}
                 </Button>
                 <Button
                   type="submit"
@@ -1023,7 +944,7 @@ export default function NewShipmentPage() {
                   loading={isSubmitting}
                   className="flex-1"
                 >
-                  Créer l'expédition
+                  {t('dashboard.createShipment') || 'Créer l\'expédition'}
                 </Button>
               </div>
             </div>

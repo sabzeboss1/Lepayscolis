@@ -75,26 +75,26 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; bg: 
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, icon: null, bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' };
+  const { t } = useTranslation();
+  const cfg = STATUS_CONFIG[status] ?? { icon: null, bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' };
+  const labelMap: Record<string, string> = {
+    pending: t('common.pending') || 'En attente',
+    accepted: t('shipments.status.accepted') || 'Accepté',
+    paid: t('shipments.status.paid') || 'Payé',
+    in_transit: t('shipments.status.in_transit') || 'En transit',
+    delivered: t('shipments.status.delivered') || 'Livré',
+    cancelled: t('shipments.status.cancelled') || 'Annulé',
+  };
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
       {cfg.icon}
-      {cfg.label}
+      {labelMap[status] || status}
     </span>
   );
 }
 
-const STATUS_FILTERS: { key: ShipmentStatus; label: string }[] = [
-  { key: 'all', label: 'Tout' },
-  { key: 'pending', label: 'En attente' },
-  { key: 'accepted', label: 'Accepté' },
-  { key: 'in_transit', label: 'En transit' },
-  { key: 'delivered', label: 'Livré' },
-  { key: 'cancelled', label: 'Annulé' },
-];
-
 export default function MyShipmentsPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const { formatCurrency, isHydrated } = useUserCurrency();
@@ -104,6 +104,15 @@ export default function MyShipmentsPage() {
   const [statusFilter, setStatusFilter] = useState<ShipmentStatus>('all');
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [isMounted, setIsMounted] = useState(false);
+
+  const statusFilters: { key: ShipmentStatus; label: string }[] = [
+    { key: 'all', label: t('common.all') || 'Tout' },
+    { key: 'pending', label: t('common.pending') || 'En attente' },
+    { key: 'accepted', label: t('shipments.status.accepted') || 'Accepté' },
+    { key: 'in_transit', label: t('shipments.status.in_transit') || 'En transit' },
+    { key: 'delivered', label: t('shipments.status.delivered') || 'Livré' },
+    { key: 'cancelled', label: t('shipments.status.cancelled') || 'Annulé' },
+  ];
 
   // Prevent hydration issues by only rendering after mount
   useEffect(() => {
@@ -130,7 +139,7 @@ export default function MyShipmentsPage() {
   };
 
   const handleCancelShipment = async (shipmentId: string) => {
-    if (!confirm('Confirmer l\'annulation ?')) return;
+    if (!confirm(t('shipments.confirmCancel') || 'Confirmer l\'annulation ?')) return;
     try {
       await apiClient.post<any>(API_ENDPOINTS.shipments.cancel(shipmentId));
       fetchMyShipments();
@@ -150,7 +159,7 @@ export default function MyShipmentsPage() {
   };
 
   const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    new Date(date).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
 
   const filteredShipments = getFilteredAndSortedShipments();
 
@@ -165,9 +174,9 @@ export default function MyShipmentsPage() {
               <Package className="w-5 h-5 text-orange-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-slate-900 font-heading">Mes expéditions</h1>
+              <h1 className="text-xl font-bold text-slate-900 font-heading">{t('nav.myShipments') || 'Mes expéditions'}</h1>
               <p className="text-sm text-slate-500" suppressHydrationWarning>
-                {shipments.length} expédition{shipments.length !== 1 ? 's' : ''} au total
+                {shipments.length} {t('shipments.totalCount') || 'expédition(s) au total'}
               </p>
             </div>
           </div>
@@ -181,8 +190,8 @@ export default function MyShipmentsPage() {
               className="justify-center"
             >
               <Package className="w-4 h-4 sm:mr-1.5" />
-              <span className="hidden sm:inline">Demandes d'expédition</span>
-              <span className="sm:hidden ml-1.5">Demandes</span>
+              <span className="hidden sm:inline">{t('shipments.myRequests') || 'Demandes d\'expédition'}</span>
+              <span className="sm:hidden ml-1.5">{t('shipments.requests') || 'Demandes'}</span>
             </Button>
             <Button
               variant="outline"
@@ -191,8 +200,8 @@ export default function MyShipmentsPage() {
               className="justify-center"
             >
               <Clock className="w-4 h-4 sm:mr-1.5" />
-              <span className="hidden sm:inline">Demandes en attente</span>
-              <span className="sm:hidden ml-1.5">En attente</span>
+              <span className="hidden sm:inline">{t('shipments.pendingRequests') || 'Demandes en attente'}</span>
+              <span className="sm:hidden ml-1.5">{t('common.pending') || 'En attente'}</span>
             </Button>
             <Button 
               variant="primary" 
@@ -200,8 +209,8 @@ export default function MyShipmentsPage() {
               className="col-span-2 sm:col-span-1 justify-center"
             >
               <Plus className="w-4 h-4 mr-1.5" />
-              <span className="hidden sm:inline">Nouvelle expédition</span>
-              <span className="sm:hidden">Nouveau</span>
+              <span className="hidden sm:inline">{t('dashboard.createShipment') || 'Nouvelle expédition'}</span>
+              <span className="sm:hidden">{t('common.new') || 'Nouveau'}</span>
             </Button>
           </div>
         </div>
@@ -219,7 +228,7 @@ export default function MyShipmentsPage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
           {/* Status filter - scrollable */}
           <div className="flex gap-1 bg-slate-100 rounded-xl p-1 overflow-x-auto flex-1">
-            {STATUS_FILTERS.map((f) => (
+            {statusFilters.map((f) => (
               <button
                 key={f.key}
                 onClick={() => setStatusFilter(f.key)}
@@ -240,9 +249,9 @@ export default function MyShipmentsPage() {
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
           >
-            <option value="date">Par date</option>
-            <option value="weight">Par poids</option>
-            <option value="status">Par statut</option>
+            <option value="date">{t('shipments.sortByDate') || 'Par date'}</option>
+            <option value="weight">{t('shipments.sortByWeight') || 'Par poids'}</option>
+            <option value="status">{t('shipments.sortByStatus') || 'Par statut'}</option>
           </select>
         </div>
 
@@ -270,12 +279,12 @@ export default function MyShipmentsPage() {
             </div>
             <p className="text-slate-500 mb-5">
               {statusFilter === 'all'
-                ? "Vous n'avez pas encore d'expédition."
-                : 'Aucune expédition trouvée pour ce statut.'}
+                ? (t('shipments.noShipments') || "Vous n'avez pas encore d'expédition.")
+                : (t('shipments.noShipmentsStatus') || 'Aucune expédition trouvée pour ce statut.')}
             </p>
             <Button variant="primary" onClick={() => router.push('/shipments/new')}>
               <Plus className="w-4 h-4 mr-1.5" />
-              Créer une expédition
+              {t('dashboard.createShipment') || 'Créer une expédition'}
             </Button>
           </div>
         )}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 import { Locale } from '@/lib/i18n/config';
 import { ShieldCheck, CreditCard, UserCheck, Plane, Package } from 'lucide-react';
@@ -44,9 +45,9 @@ const TRUST_BADGES = [
   { icon: UserCheck, label: 'Identité vérifiée', color: 'var(--color-vibrant-orange)' },
 ];
 
-export const Footer: React.FC<FooterProps> = ({ locale: initialLocale }) => {
-  const [locale, setLocale] = useState<Locale>(initialLocale);
-  const { t } = useTranslation(locale);
+export const Footer: React.FC<FooterProps> = () => {
+  const { locale, setLocale } = useLocale();
+  const { t } = useTranslation();
   const { logo_url } = usePlatformBranding();
   const year = new Date().getFullYear();
 

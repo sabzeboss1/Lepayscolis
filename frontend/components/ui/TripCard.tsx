@@ -4,6 +4,7 @@ import React from 'react';
 import { Trip } from '@/lib/types/trip';
 import { RatingStars } from './RatingStars';
 import { CurrencyDisplay } from './CurrencyDisplay';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import {
   Plane,
   Package,
@@ -19,14 +20,16 @@ export interface TripCardProps {
   className?: string;
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('fr-FR', {
+function formatDate(dateStr: string, locale: string = 'fr') {
+  return new Date(dateStr).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
     day: 'numeric',
     month: 'short',
   });
 }
 
 export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '' }) => {
+  const { t, locale } = useTranslation();
+
   return (
     <div
       onClick={onClick}
@@ -57,7 +60,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '
             <p className="text-base font-bold text-navy truncate">{trip.departure_city}</p>
             <div className="flex items-center gap-1 mt-1">
               <CalendarDays className="w-3 h-3 text-muted-text shrink-0" />
-              <p className="text-xs text-muted-text">{formatDate(trip.departure_date)}</p>
+              <p className="text-xs text-muted-text">{formatDate(trip.departure_date, locale)}</p>
             </div>
           </div>
 
@@ -88,7 +91,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '
             <p className="text-base font-bold text-navy truncate">{trip.arrival_city}</p>
             <div className="flex items-center justify-end gap-1 mt-1">
               <CalendarDays className="w-3 h-3 text-muted-text shrink-0" />
-              <p className="text-xs text-muted-text">{formatDate(trip.arrival_date)}</p>
+              <p className="text-xs text-muted-text">{formatDate(trip.arrival_date, locale)}</p>
             </div>
           </div>
         </div>
@@ -101,7 +104,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '
           <div className="flex items-center gap-1.5">
             <Package className="w-3.5 h-3.5 text-muted-text shrink-0" />
             <span className="text-xs font-medium text-body-text">
-              {trip.available_capacity} kg dispo
+              {trip.available_capacity} kg {t('common.available') || 'dispo'}
             </span>
             {trip.travel_proof_url && (
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: '#10b981' }} />
@@ -174,7 +177,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onClick, className = '
               <div className="flex items-center gap-1.5 mt-0.5">
                 <RatingStars rating={trip.traveler.rating} size="sm" />
                 <span className="text-xs text-muted-text">
-                  ({trip.traveler.completed_deliveries} livraisons)
+                  ({trip.traveler.completed_deliveries} {t('home.stats.deliveries') || 'livraisons'})
                 </span>
               </div>
             </div>

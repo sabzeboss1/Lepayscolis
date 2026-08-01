@@ -55,7 +55,30 @@ export function PlatformBrandingProvider({ children }: { children: ReactNode }) 
     };
 
     fetchBranding();
+
+    const handleUpdate = () => fetchBranding();
+    window.addEventListener('platform_branding_updated', handleUpdate);
+    return () => window.removeEventListener('platform_branding_updated', handleUpdate);
   }, []);
+
+  // Update document title dynamically with platform_name
+  useEffect(() => {
+    if (!branding.platform_name || typeof document === 'undefined') return;
+
+    const currentTitle = document.title;
+    if (!currentTitle) {
+      document.title = `${branding.platform_name} - Transport de Colis Russie ↔ Afrique`;
+    } else if (
+      currentTitle.includes('LePaysExpressColis') ||
+      currentTitle.includes('TumaPlus') ||
+      currentTitle.includes('Tuma Plus')
+    ) {
+      document.title = currentTitle.replace(
+        /LePaysExpressColis|TumaPlus|Tuma Plus/g,
+        branding.platform_name
+      );
+    }
+  }, [branding.platform_name]);
 
   // Update favicon and apple-touch-icon dynamically
   useEffect(() => {
