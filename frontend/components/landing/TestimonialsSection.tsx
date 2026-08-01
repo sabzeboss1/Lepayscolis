@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Quote, BadgeCheck } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 // Fallback testimonials if API fails
 const FALLBACK_TESTIMONIALS = [
@@ -44,6 +45,7 @@ interface TestimonialStats {
 }
 
 export function TestimonialsSection() {
+  const { t } = useTranslation();
   const [testimonials, setTestimonials] = useState<Testimonial[]>(FALLBACK_TESTIMONIALS);
   const [stats, setStats] = useState<TestimonialStats>({
     average_rating: 4.8,
@@ -58,11 +60,11 @@ export function TestimonialsSection() {
     try {
       const response = await apiClient.get<{ 
         data: Testimonial[]; 
-        stats: TestimonialStats 
+        stats?: TestimonialStats 
       }>('/api/testimonials');
       
       if (response.data && response.data.length > 0) {
-        setTestimonials(response.data.slice(0, 3)); // Only show 3 testimonials
+        setTestimonials(response.data);
       }
       
       if (response.stats) {
@@ -79,21 +81,24 @@ export function TestimonialsSection() {
     if (testimonial.avatar) {
       return testimonial.avatar;
     }
-    // Use pravatar with name as seed for consistent avatars
-    const seed = testimonial.name.toLowerCase().replace(/\s+/g, '');
-    return `https://i.pravatar.cc/44?u=${seed}${index}`;
+    const avatars = [
+      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+      'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg',
+    ];
+    return avatars[index % avatars.length];
   };
 
   return (
-    <section className="py-20 lg:py-28 bg-soft-gray">
+    <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-vibrant-orange font-semibold text-sm uppercase tracking-wider mb-3 font-heading">
-            Témoignages
+            {t('home.testimonials.badge') || 'Témoignages'}
           </p>
           <h2 className="text-3xl sm:text-4xl font-heading font-bold text-navy mb-4">
-            Ce que disent nos utilisateurs
+            {t('home.testimonials.title') || 'Ce que disent nos utilisateurs'}
           </h2>
           <div className="flex items-center justify-center gap-2 mt-4">
             <div className="flex">
@@ -112,14 +117,14 @@ export function TestimonialsSection() {
               {stats.average_rating}/5
             </span>
             <span className="text-body-text text-sm">
-              basé sur {stats.total_ratings}+ avis
+              {t('home.testimonials.basedOn') || 'basé sur'} {stats.total_ratings}+ {t('home.testimonials.reviews') || 'avis'}
             </span>
           </div>
         </div>
 
         {/* Testimonial Cards */}
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {testimonials.map((testimonial, index) => (
+          {testimonials.slice(0, 3).map((testimonial, index) => (
             <div
               key={testimonial.id || index}
               className="bg-white rounded-2xl p-6 lg:p-8 border border-light-border hover:shadow-lg transition-all duration-300 relative"

@@ -7,3 +7,5 @@ export const localeNames: Record<Locale, string> = {
   fr: 'Français',
   en: 'English',
 };
+
+export const LOCALE_STORAGE_KEY = 'lepaysexpresscolis-locale';

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Clock, Plane } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { apiClient } from '@/lib/api/client';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 // Fallback static data if API fails or returns empty
 const FALLBACK_DESTINATIONS = [
@@ -79,6 +80,7 @@ interface Route {
 }
 
 export function PopularDestinationsSection() {
+  const { t } = useTranslation();
   const [destinations, setDestinations] = useState<Route[]>(FALLBACK_DESTINATIONS);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -101,7 +103,6 @@ export function PopularDestinationsSection() {
       }
     } catch (error) {
       console.log('Using fallback destinations:', error);
-      // Keep fallback data
     } finally {
       setIsLoading(false);
     }
@@ -113,13 +114,13 @@ export function PopularDestinationsSection() {
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-vibrant-orange font-semibold text-sm uppercase tracking-wider mb-3 font-heading">
-            Nos routes
+            {t('navigation.destinations') || 'Nos routes'}
           </p>
           <h2 className="text-3xl sm:text-4xl font-heading font-bold text-navy mb-4">
-            Destinations Populaires
+            {t('home.destinations.title') || 'Destinations Populaires'}
           </h2>
           <p className="text-body-text text-lg max-w-2xl mx-auto">
-            Les routes les plus populaires entre la Russie et l&apos;Afrique
+            {t('home.destinations.subtitle') || 'Les routes les plus populaires entre la Russie et l\'Afrique'}
           </p>
         </div>
 
@@ -160,7 +161,7 @@ export function PopularDestinationsSection() {
                   <div className="flex items-center gap-1.5">
                     <Plane className="w-3.5 h-3.5 text-royal-blue" />
                     <span className="font-semibold text-royal-blue">
-                      {dest.trip_count} voyage{dest.trip_count > 1 ? 's' : ''}
+                      {dest.trip_count} {t('navigation.trips') || 'voyages'}
                     </span>
                   </div>
                 </div>
@@ -176,7 +177,7 @@ export function PopularDestinationsSection() {
               variant="outline"
               className="border-2 border-royal-blue text-royal-blue hover:bg-royal-blue hover:text-white font-semibold gap-2 group"
             >
-              Voir toutes les destinations
+              {t('home.destinations.viewAll') || 'Voir toutes les destinations'}
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
@@ -185,3 +186,4 @@ export function PopularDestinationsSection() {
     </section>
   );
 }
+

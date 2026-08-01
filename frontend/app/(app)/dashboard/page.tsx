@@ -34,15 +34,15 @@ import {
 import { useUserCurrency } from '@/lib/hooks/useUserCurrency';
 
 /* ── helpers ─────────────────────────────────── */
-function getDayGreeting() {
+function getDayGreeting(t: (key: string) => string) {
   const h = new Date().getHours();
-  if (h < 12) return 'Bonjour';
-  if (h < 18) return 'Bon après-midi';
-  return 'Bonsoir';
+  if (h < 12) return t('dashboard.goodMorning') || 'Bonjour';
+  if (h < 18) return t('dashboard.goodAfternoon') || 'Bon après-midi';
+  return t('dashboard.goodEvening') || 'Bonsoir';
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('fr-FR', {
+function formatDate(dateStr: string, locale: string = 'fr') {
+  return new Date(dateStr).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
     day: 'numeric',
     month: 'short',
   });
@@ -109,7 +109,7 @@ export default function DashboardPage() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const { needsKYC, isKYCPending, isKYCRejected, isKYCNotSubmitted } = useKYCCheck();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { formatCurrency } = useUserCurrency();
 
   // Redirect admin users to admin dashboard
@@ -131,8 +131,6 @@ export default function DashboardPage() {
         return;
       }
 
-      // Only fetch data if user has KYC approved
-      // For users without KYC, we'll show empty states with KYC prompts
       if (user.kyc_status !== 'approved') {
         setLoading(false);
         return;
@@ -159,7 +157,6 @@ export default function DashboardPage() {
         setRecentConversations((conversationsResponse.data || []).slice(0, 3));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        // Don't show error to user - just show empty states
       } finally {
         setLoading(false);
       }
@@ -188,9 +185,9 @@ export default function DashboardPage() {
         border: 'rgba(239,68,68,0.2)',
         titleColor: '#b91c1c',
         textColor: '#dc2626',
-        title: t('dashboard.kycRejected') || 'Vérification KYC rejetée',
-        description: 'Votre vérification a été rejetée. Soumettez à nouveau vos documents pour accéder à toutes les fonctionnalités.',
-        btnLabel: 'Resoumettre les documents',
+        title: t('dashboard.kycRejectedTitle') || 'Vérification KYC rejetée',
+        description: t('dashboard.kycRejectedDesc') || 'Votre vérification a été rejetée. Soumettez à nouveau vos documents.',
+        btnLabel: t('dashboard.resubmitDocuments') || 'Resoumettre les documents',
         btnVariant: 'primary' as const,
       }
     : isKYCPending
@@ -201,23 +198,10 @@ export default function DashboardPage() {
         border: 'rgba(245,158,11,0.2)',
         titleColor: '#92400e',
         textColor: '#b45309',
-        title: t('dashboard.kycPending') || 'Vérification KYC en cours',
-        description: 'Vos documents sont en cours d\'examen. Cela prend généralement 1 à 2 jours ouvrables.',
-        btnLabel: 'Voir le statut',
+        title: t('dashboard.kycPendingTitle') || 'Vérification KYC en cours',
+        description: t('dashboard.kycPendingDesc') || 'Vos documents sont en cours d\'examen. Cela prend généralement 1 à 2 jours ouvrables.',
+        btnLabel: t('dashboard.viewStatus') || 'Voir le statut',
         btnVariant: 'outline' as const,
-      }
-    : isKYCNotSubmitted
-    ? {
-        icon: ShieldCheck,
-        iconColor: '#2563eb',
-        bg: 'rgba(37,99,235,0.05)',
-        border: 'rgba(37,99,235,0.2)',
-        titleColor: '#1e40af',
-        textColor: '#1d4ed8',
-        title: t('dashboard.kycRequired') || 'Complétez votre vérification KYC',
-        description: 'Vous devez vérifier votre identité pour publier des voyages et créer des expéditions.',
-        btnLabel: 'Compléter la vérification',
-        btnVariant: 'primary' as const,
       }
     : {
         icon: ShieldCheck,
@@ -226,9 +210,9 @@ export default function DashboardPage() {
         border: 'rgba(37,99,235,0.2)',
         titleColor: '#1e40af',
         textColor: '#1d4ed8',
-        title: t('dashboard.kycRequired') || 'Complétez votre vérification KYC',
-        description: 'Vous devez vérifier votre identité pour publier des voyages et créer des expéditions.',
-        btnLabel: 'Compléter la vérification',
+        title: t('dashboard.kycRequiredTitle') || 'Complétez votre vérification KYC',
+        description: t('dashboard.kycRequiredDesc') || 'Vous devez vérifier votre identité pour publier des voyages et créer des expéditions.',
+        btnLabel: t('dashboard.completeVerification') || 'Compléter la vérification',
         btnVariant: 'primary' as const,
       };
 
@@ -296,7 +280,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-white/60 text-xs font-medium uppercase tracking-wide">
-                    {getDayGreeting()}
+                    {getDayGreeting(t)}
                   </p>
                   <h1
                     className="text-white text-xl sm:text-2xl font-bold leading-tight"
@@ -313,7 +297,7 @@ export default function DashboardPage() {
                         }}
                       >
                         <Star className="w-3 h-3" />
-                        Recommandé
+                        {t('dashboard.recommended') || 'Recommandé'}
                       </span>
                     )}
                   </h1>
@@ -323,9 +307,9 @@ export default function DashboardPage() {
               <p className="text-white/50 text-sm ml-14">
                 {loading
                   ? '…'
-                  : activeTrips.length > 0
-                  ? `${activeTrips.length} voyage(s) actif(s) · ${pendingShipments.length} expédition(s) en attente`
-                  : 'Publiez un voyage ou recherchez un voyageur'}
+                  : activeTrips.length > 0 || pendingShipments.length > 0
+                  ? `${activeTrips.length} ${t('dashboard.activeTrips')} · ${pendingShipments.length} ${t('dashboard.pendingShipments')}`
+                  : (t('dashboard.publishOrSearchPrompt') || 'Publiez un voyage ou recherchez un voyageur')}
               </p>
             </div>
 
@@ -338,7 +322,7 @@ export default function DashboardPage() {
                 style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
               >
                 <PlaneTakeoff className="w-4 h-4 mr-1.5" />
-                Publier un voyage
+                {t('dashboard.publishTrip') || 'Publier un voyage'}
               </Button>
             </div>
           </div>
@@ -348,7 +332,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             icon={Star}
-            label="Note"
+            label={t('dashboard.rating') || 'Note'}
             accentColor="#f59e0b"
             bgColor="#fffbeb"
             value={
@@ -360,19 +344,19 @@ export default function DashboardPage() {
           />
           <StatCard
             icon={CheckCircle2}
-            label="Livraisons complétées"
+            label={t('dashboard.completedDeliveries') || 'Livraisons complétées'}
             accentColor="#10b981"
             bgColor="#f0fdf4"
             value={
               <span>
                 {user.completed_deliveries}
-                <span className="text-sm font-normal text-muted-text ml-1">colis</span>
+                <span className="text-sm font-normal text-muted-text ml-1">{t('dashboard.packages') || 'colis'}</span>
               </span>
             }
           />
           <StatCard
             icon={ShieldCheck}
-            label="Statut KYC"
+            label={t('dashboard.kycStatus') || 'Statut KYC'}
             accentColor={
               user.kyc_status === 'approved'
                 ? '#10b981'
@@ -405,12 +389,12 @@ export default function DashboardPage() {
                 }}
               >
                 {user.kyc_status === 'approved'
-                  ? 'Approuvé'
+                  ? (t('dashboard.kycApproved') || 'Approuvé')
                   : user.kyc_status === 'pending'
-                  ? 'En attente'
+                  ? (t('dashboard.kycPendingShort') || 'En attente')
                   : user.kyc_status === 'rejected'
-                  ? 'Rejeté'
-                  : 'Non soumis'}
+                  ? (t('dashboard.kycRejectedShort') || 'Rejeté')
+                  : (t('dashboard.kycRequiredShort') || 'Non soumis')}
               </span>
             }
           />
@@ -419,7 +403,7 @@ export default function DashboardPage() {
         {/* ── Quick Actions ── */}
         <div>
           <h2 className="text-sm font-semibold text-body-text uppercase tracking-wide mb-3">
-            Actions rapides
+            {t('dashboard.quickActions') || 'Actions rapides'}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {/* Publish trip */}
@@ -437,10 +421,10 @@ export default function DashboardPage() {
                 <PlaneTakeoff className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <p className="text-xs sm:text-sm font-semibold text-navy leading-tight">
-                Publier un voyage
+                {t('dashboard.publishTrip') || 'Publier un voyage'}
               </p>
               <p className="hidden sm:block text-xs text-muted-text mt-1">
-                Gagnez en voyageant
+                {t('dashboard.earnTraveling') || 'Gagnez en voyageant'}
               </p>
             </button>
 
@@ -459,10 +443,10 @@ export default function DashboardPage() {
                 <Search className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <p className="text-xs sm:text-sm font-semibold text-navy leading-tight">
-                Chercher un voyageur
+                {t('dashboard.searchTraveler') || 'Chercher un voyageur'}
               </p>
               <p className="hidden sm:block text-xs text-muted-text mt-1">
-                Trouvez le bon profil
+                {t('dashboard.findRightProfile') || 'Trouvez le bon profil'}
               </p>
             </button>
 
@@ -481,10 +465,10 @@ export default function DashboardPage() {
                 <PackagePlus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <p className="text-xs sm:text-sm font-semibold text-navy leading-tight">
-                Créer une expédition
+                {t('dashboard.createShipment') || 'Créer une expédition'}
               </p>
               <p className="hidden sm:block text-xs text-muted-text mt-1">
-                Envoyez un colis
+                {t('dashboard.sendPackage') || 'Envoyez un colis'}
               </p>
             </button>
 
@@ -503,10 +487,10 @@ export default function DashboardPage() {
                 <PackageSearch className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <p className="text-xs sm:text-sm font-semibold text-navy leading-tight">
-                Chercher un colis
+                {t('dashboard.searchShipments') || 'Chercher un colis'}
               </p>
               <p className="hidden sm:block text-xs text-muted-text mt-1">
-                Trouvez des livraisons
+                {t('dashboard.findDeliveries') || 'Trouvez des livraisons'}
               </p>
             </button>
           </div>
@@ -526,7 +510,7 @@ export default function DashboardPage() {
                   <Plane className="w-3.5 h-3.5" style={{ color: 'var(--color-royal-blue)' }} />
                 </div>
                 <h2 className="text-sm font-semibold text-navy">
-                  Voyages actifs
+                  {t('dashboard.activeTrips') || 'Voyages actifs'}
                 </h2>
                 {!loading && activeTrips.length > 0 && (
                   <span
@@ -545,7 +529,7 @@ export default function DashboardPage() {
                 className="flex items-center gap-1 text-xs font-medium hover:opacity-80 transition-opacity"
                 style={{ color: 'var(--color-royal-blue)' }}
               >
-                Voir tout
+                {t('dashboard.viewAll') || 'Voir tout'}
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -573,7 +557,7 @@ export default function DashboardPage() {
                             {trip.departure_city} → {trip.arrival_city}
                           </p>
                           <p className="text-xs text-muted-text">
-                            {formatDate(trip.departure_date)} – {formatDate(trip.arrival_date)}
+                            {formatDate(trip.departure_date, locale)} – {formatDate(trip.arrival_date, locale)}
                           </p>
                         </div>
                       </div>
@@ -601,7 +585,7 @@ export default function DashboardPage() {
                   <Package className="w-3.5 h-3.5" style={{ color: 'var(--color-vibrant-orange)' }} />
                 </div>
                 <h2 className="text-sm font-semibold text-navy">
-                  Expéditions en attente
+                  {t('dashboard.pendingShipments') || 'Expéditions en attente'}
                 </h2>
                 {!loading && pendingShipments.length > 0 && (
                   <span
@@ -620,7 +604,7 @@ export default function DashboardPage() {
                 className="flex items-center gap-1 text-xs font-medium hover:opacity-80 transition-opacity"
                 style={{ color: 'var(--color-vibrant-orange)' }}
               >
-                Voir tout
+                {t('dashboard.viewAll') || 'Voir tout'}
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -661,7 +645,7 @@ export default function DashboardPage() {
                             color: '#b45309',
                           }}
                         >
-                          En attente
+                          {t('dashboard.kycPendingShort') || 'En attente'}
                         </span>
                       </div>
                     </button>

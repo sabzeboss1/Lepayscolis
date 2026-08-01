@@ -1,31 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
-import { Locale, defaultLocale } from '@/lib/i18n/config';
-
-const NAV_LINKS = [
-  { label: 'Accueil', href: '/' },
-  { label: 'Comment ça marche', href: '/how-it-works' },
-  { label: 'Destinations', href: '/destinations' },
-  { label: 'Sécurité', href: '/security' },
-  { label: 'FAQ', href: '/faq' },
-];
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export function LandingHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('lepaysexpresscolis-locale') as Locale | null;
-      if (stored === 'fr' || stored === 'en') return stored;
-    }
-    return defaultLocale;
-  });
+  const { locale, setLocale } = useLocale();
+  const { t } = useTranslation();
   const { logo_url } = usePlatformBranding();
 
   useEffect(() => {
@@ -35,6 +23,14 @@ export function LandingHeader() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const NAV_LINKS = [
+    { label: t('navigation.home'), href: '/' },
+    { label: t('navigation.howItWorks'), href: '/how-it-works' },
+    { label: t('navigation.destinations'), href: '/destinations' },
+    { label: t('navigation.security'), href: '/security' },
+    { label: t('navigation.faq'), href: '/faq' },
+  ];
 
   return (
     <header
@@ -94,7 +90,7 @@ export function LandingHeader() {
                       : 'text-white hover:bg-white/10'
                   }`}
                 >
-                  Connexion
+                  {t('common.login')}
                 </Button>
               </Link>
               <Link href="/auth/register">
@@ -102,7 +98,7 @@ export function LandingHeader() {
                   size="sm"
                   className="bg-vibrant-orange hover:bg-warm-orange text-white font-semibold shadow-lg shadow-orange-500/25"
                 >
-                  S&apos;inscrire
+                  {t('common.register')}
                 </Button>
               </Link>
             </div>
@@ -157,7 +153,7 @@ export function LandingHeader() {
                     fullWidth
                     className="font-medium border-gray-300 text-gray-700"
                   >
-                    Connexion
+                    {t('common.login')}
                   </Button>
                 </Link>
                 <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
@@ -165,7 +161,7 @@ export function LandingHeader() {
                     fullWidth
                     className="bg-vibrant-orange hover:bg-warm-orange text-white font-semibold"
                   >
-                    S&apos;inscrire
+                    {t('common.register')}
                   </Button>
                 </Link>
               </div>

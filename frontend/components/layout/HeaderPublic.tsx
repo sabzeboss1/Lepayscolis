@@ -11,15 +11,17 @@ import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
 import { Locale } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/auth';
 
+import { useLocale } from '@/lib/i18n/LocaleContext';
+
 export interface HeaderPublicProps {
-  locale: Locale;
+  locale?: Locale;
 }
 
-export const HeaderPublic: React.FC<HeaderPublicProps> = ({ locale: initialLocale }) => {
-  const [locale, setLocale] = useState<Locale>(initialLocale);
+export const HeaderPublic: React.FC<HeaderPublicProps> = () => {
+  const { locale, setLocale } = useLocale();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
-  const { t } = useTranslation(locale);
+  const { t } = useTranslation();
   const pathname = usePathname();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const { logo_url } = usePlatformBranding();

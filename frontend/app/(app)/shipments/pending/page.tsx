@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
@@ -48,8 +49,8 @@ interface Shipment {
 }
 
 export default function PendingShipmentsPage() {
+  const { t, locale } = useTranslation();
   const { formatCurrency } = useUserCurrency();
-
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -202,10 +203,10 @@ export default function PendingShipmentsPage() {
             className="text-3xl sm:text-4xl font-bold text-white leading-tight"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            Demandes d'Expédition
+            {t('shipments.pendingRequests') || 'Demandes en attente'}
           </h1>
           <p className="text-white/70 mt-2">
-            Gérez les demandes d'expédition soumises sur vos trajets
+            {t('shipments.pendingSubtitle') || 'Gérez les demandes d\'expédition soumises sur vos trajets'}
           </p>
         </div>
       </div>
@@ -217,10 +218,10 @@ export default function PendingShipmentsPage() {
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <Package className="w-16 h-16 text-gray-300 mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Aucune demande en attente
+                {t('shipments.noPendingTitle') || 'Aucune demande en attente'}
               </h2>
               <p className="text-gray-600">
-                Vous n'avez pas de demandes d'expédition en attente pour le moment.
+                {t('shipments.noPendingDesc') || 'Vous n\'avez pas de demandes d\'expédition en attente pour le moment.'}
               </p>
             </div>
           </Card>
@@ -246,7 +247,7 @@ export default function PendingShipmentsPage() {
                         <div className="flex items-center gap-1.5">
                           <RatingStars rating={shipment.sender.rating || 0} size="sm" />
                           <span className="text-xs" style={{ color: 'var(--color-muted-text)' }}>
-                            {Number(shipment.sender.rating || 0).toFixed(1)} · {shipment.sender.completed_deliveries || 0} expéditions
+                            {Number(shipment.sender.rating || 0).toFixed(1)} · {shipment.sender.completed_deliveries || 0} {t('shipments.shipmentsCount') || 'expéditions'}
                           </span>
                         </div>
                       </div>
@@ -284,7 +285,7 @@ export default function PendingShipmentsPage() {
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {new Date(shipment.created_at).toLocaleDateString('fr-FR')}
+                        {new Date(shipment.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR')}
                       </span>
                     </div>
                   </div>
@@ -300,7 +301,7 @@ export default function PendingShipmentsPage() {
                         }}
                       >
                         <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#c2410c' }}>
-                          Paiement
+                          {t('shipments.paymentLabel') || 'Paiement'}
                         </p>
                         <p
                           className="text-2xl font-bold mt-1"
@@ -321,7 +322,7 @@ export default function PendingShipmentsPage() {
                         className="w-full"
                       >
                         <CheckCircle2 className="w-4 h-4 mr-1" />
-                        Accepter
+                        {t('common.confirm') || 'Accepter'}
                       </Button>
                       <Button
                         variant="outline"
@@ -332,7 +333,7 @@ export default function PendingShipmentsPage() {
                         style={{ color: '#dc2626', borderColor: '#dc2626' }}
                       >
                         <XCircle className="w-4 h-4 mr-1" />
-                        Refuser
+                        {t('common.cancel') || 'Refuser'}
                       </Button>
                     </div>
                   </div>

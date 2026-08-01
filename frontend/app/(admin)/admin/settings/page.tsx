@@ -249,6 +249,10 @@ export default function SettingsPage() {
 
       await apiClient.put<any>(API_ENDPOINTS.admin.settings.update, tabData);
 
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('platform_branding_updated'));
+      }
+
       setMessage({ type: 'success', text: t('admin.settings.success') });
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {

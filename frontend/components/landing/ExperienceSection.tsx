@@ -2,49 +2,52 @@
 
 import React from 'react';
 import { FileText, Handshake, PackageCheck, CircleDollarSign } from 'lucide-react';
-
-const STEPS = [
-  {
-    number: 1,
-    title: 'Publiez',
-    description: 'Publiez votre annonce de colis ou de voyage en quelques clics',
-    icon: FileText,
-    color: 'from-royal-blue to-ocean-blue',
-  },
-  {
-    number: 2,
-    title: 'Trouvez un match',
-    description: "Trouvez le voyageur ou l'expéditeur parfait pour votre besoin",
-    icon: Handshake,
-    color: 'from-vibrant-orange to-yellow-500',
-  },
-  {
-    number: 3,
-    title: 'Expédiez',
-    description: 'Remettez ou récupérez le colis en toute sécurité',
-    icon: PackageCheck,
-    color: 'from-success-green to-emerald-400',
-  },
-  {
-    number: 4,
-    title: 'Livré !',
-    description: 'Confirmez la livraison et le paiement est libéré',
-    icon: CircleDollarSign,
-    color: 'from-purple-500 to-violet-400',
-  },
-];
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export function ExperienceSection() {
+  const { t } = useTranslation();
+
+  const steps = [
+    {
+      number: 1,
+      title: t('home.howItWorks.senderStep1Title') || 'Publiez',
+      description: t('home.howItWorks.senderStep1') || 'Publiez votre annonce de colis ou de voyage en quelques clics',
+      icon: FileText,
+      color: 'from-royal-blue to-ocean-blue',
+    },
+    {
+      number: 2,
+      title: t('home.howItWorks.senderStep2Title') || 'Trouvez un match',
+      description: t('home.howItWorks.senderStep2') || 'Trouvez le voyageur ou l\'expéditeur parfait pour votre besoin',
+      icon: Handshake,
+      color: 'from-vibrant-orange to-yellow-500',
+    },
+    {
+      number: 3,
+      title: t('home.howItWorks.senderStep3Title') || 'Expédiez',
+      description: t('home.howItWorks.senderStep3') || 'Remettez ou récupérez le colis en toute sécurité',
+      icon: PackageCheck,
+      color: 'from-success-green to-emerald-400',
+    },
+    {
+      number: 4,
+      title: t('home.howItWorks.travelerStep3Title') || 'Livré !',
+      description: t('home.howItWorks.travelerStep3') || 'Confirmez la livraison et le paiement est libéré',
+      icon: CircleDollarSign,
+      color: 'from-purple-500 to-violet-400',
+    },
+  ];
+
   return (
     <section className="py-20 lg:py-28 bg-soft-gray">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-vibrant-orange font-semibold text-sm uppercase tracking-wider mb-3 font-heading">
-            Simple et rapide
+            {t('home.howItWorks.badge') || 'Simple et rapide'}
           </p>
           <h2 className="text-3xl sm:text-4xl font-heading font-bold text-navy">
-            Comment ça fonctionne
+            {t('home.howItWorks.title') || 'Comment ça fonctionne'}
           </h2>
         </div>
 
@@ -53,7 +56,7 @@ export function ExperienceSection() {
           {/* Connection line */}
           <div className="absolute top-14 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-royal-blue via-vibrant-orange to-purple-500 opacity-20" />
 
-          {STEPS.map((step, index) => {
+          {steps.map((step, index) => {
             const Icon = step.icon;
             return (
               <div key={index} className="text-center relative z-10">
@@ -78,7 +81,7 @@ export function ExperienceSection() {
 
         {/* Mobile Steps */}
         <div className="md:hidden space-y-8">
-          {STEPS.map((step, index) => {
+          {steps.map((step, index) => {
             const Icon = step.icon;
             return (
               <div key={index} className="flex items-start gap-5">
@@ -88,14 +91,14 @@ export function ExperienceSection() {
                   >
                     <Icon className="w-8 h-8 text-white" strokeWidth={1.5} />
                   </div>
-                  {index < STEPS.length - 1 && (
+                  {index < steps.length - 1 && (
                     <div className="w-0.5 h-8 bg-light-border mt-2" />
                   )}
                 </div>
                 <div className="pt-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold text-muted-text font-heading">
-                      ÉTAPE {step.number}
+                      {t('common.step') || 'ÉTAPE'} {step.number}
                     </span>
                   </div>
                   <h3 className="text-lg font-heading font-bold text-navy mb-1">
@@ -113,3 +116,4 @@ export function ExperienceSection() {
     </section>
   );
 }
+

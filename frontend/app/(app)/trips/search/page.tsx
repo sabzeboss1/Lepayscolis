@@ -181,16 +181,16 @@ export default function TripSearchPage() {
               }}
             >
               <Plane className="w-3.5 h-3.5" />
-              Trouvez le bon voyageur
+              {t('dashboard.findRightProfile') || 'Trouvez le bon voyageur'}
             </p>
             <h1
               className="text-3xl sm:text-4xl font-bold text-white mb-2"
               style={{ fontFamily: 'Prompt, sans-serif' }}
             >
-              Chercher un voyageur
+              {t('dashboard.searchTraveler') || 'Chercher un voyageur'}
             </h1>
             <p className="text-white/60 text-sm sm:text-base">
-              Connectez-vous avec des voyageurs de confiance qui partent vers votre destination
+              {t('home.hero.subtitle') || 'Connectez-vous avec des voyageurs de confiance qui partent vers votre destination'}
             </p>
           </div>
 
@@ -211,7 +211,7 @@ export default function TripSearchPage() {
                   type="text"
                   value={departureCity}
                   onChange={(e) => setDepartureCity(e.target.value)}
-                  placeholder="Ville de départ (ex: Paris)"
+                  placeholder={t('trips.departureCity') || 'Ville de départ (ex: Paris)'}
                   className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium placeholder:font-normal focus:outline-none focus:ring-2"
                   style={{
                     background: 'rgba(255,255,255,0.1)',
@@ -237,7 +237,7 @@ export default function TripSearchPage() {
                   type="text"
                   value={arrivalCity}
                   onChange={(e) => setArrivalCity(e.target.value)}
-                  placeholder="Ville d'arrivée (ex: Abidjan)"
+                  placeholder={t('trips.arrivalCity') || 'Ville d\'arrivée (ex: Abidjan)'}
                   className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium placeholder:font-normal focus:outline-none focus:ring-2"
                   style={{
                     background: 'rgba(255,255,255,0.1)',
@@ -263,7 +263,7 @@ export default function TripSearchPage() {
                 }}
               >
                 <Search className="w-4 h-4 mr-2" />
-                Rechercher
+                {t('common.search') || 'Rechercher'}
               </Button>
             </div>
 
@@ -276,7 +276,7 @@ export default function TripSearchPage() {
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'; }}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              Filtres avancés
+              {t('trips.filterResults') || 'Filtres avancés'}
               {chips.length > 0 && (
                 <span
                   className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold"
@@ -297,7 +297,7 @@ export default function TripSearchPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     {
-                      label: 'Capacité min. (kg)',
+                      label: t('trips.availableCapacity') || 'Capacité min. (kg)',
                       value: minCapacity,
                       onChange: setMinCapacity,
                       placeholder: 'Ex: 5',
@@ -326,8 +326,8 @@ export default function TripSearchPage() {
 
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { label: 'Départ à partir de', value: dateFrom, onChange: setDateFrom },
-                      { label: "Départ jusqu'au", value: dateTo, onChange: setDateTo },
+                      { label: t('trips.departureDate') || 'Départ', value: dateFrom, onChange: setDateFrom },
+                      { label: t('trips.arrivalDate') || 'Arrivée', value: dateTo, onChange: setDateTo },
                     ].map(({ label, value, onChange }) => (
                       <div key={label}>
                         <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -360,7 +360,7 @@ export default function TripSearchPage() {
         {/* Active chips */}
         {chips.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 mb-5">
-            <span className="text-xs font-medium text-muted-text">Filtres actifs :</span>
+            <span className="text-xs font-medium text-muted-text">{t('common.activeFilters') || 'Filtres actifs :'}</span>
             {chips.map(({ label, clear }, i) => (
               <button
                 key={i}
@@ -380,7 +380,7 @@ export default function TripSearchPage() {
               onClick={handleClear}
               className="text-xs text-muted-text underline hover:text-navy transition-colors ml-1"
             >
-              Tout effacer
+              {t('common.clearAll') || 'Tout effacer'}
             </button>
           </div>
         )}
@@ -390,11 +390,11 @@ export default function TripSearchPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <p className="text-sm font-medium text-body-text">
               <span className="font-bold text-navy">{sorted.length}</span>{' '}
-              {sorted.length === 1 ? 'voyageur trouvé' : 'voyageurs trouvés'}
+              {sorted.length === 1 ? (t('trips.travelerFound') || 'voyageur trouvé') : (t('trips.travelersFound') || 'voyageurs trouvés')}
             </p>
             <div className="flex items-center gap-2">
               <label htmlFor="sort-select" className="text-xs font-medium text-muted-text whitespace-nowrap">
-                Trier par :
+                {t('trips.sortBy') || 'Trier par :'}
               </label>
               <div className="relative">
                 <select
@@ -408,9 +408,9 @@ export default function TripSearchPage() {
                     color: 'var(--color-navy)',
                   }}
                 >
-                  <option value="date">Date de départ</option>
-                  <option value="price">Prix / kg</option>
-                  <option value="rating">Note</option>
+                  <option value="date">{t('trips.sortByDate') || 'Date de départ'}</option>
+                  <option value="price">{t('trips.sortByPrice') || 'Prix / kg'}</option>
+                  <option value="rating">{t('trips.sortByRating') || 'Note'}</option>
                 </select>
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-text pointer-events-none" />
               </div>

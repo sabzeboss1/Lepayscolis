@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -80,6 +81,7 @@ function SectionCard({ icon, iconBg, title, subtitle, children }: SectionCardPro
 }
 
 export default function NewShipmentRequestPage() {
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const { formatCurrency, currencyCode } = useUserCurrency();
@@ -407,7 +409,7 @@ export default function NewShipmentRequestPage() {
               className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Retour
+              {t('common.back') || 'Retour'}
             </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -415,9 +417,9 @@ export default function NewShipmentRequestPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-900 font-heading">
-                  Publier une annonce d'expédition
+                  {t('shipments.publishRequestTitle') || 'Publier une annonce d\'expédition'}
                 </h1>
-                <p className="text-sm text-slate-500">Les voyageurs pourront soumissionner pour transporter votre colis</p>
+                <p className="text-sm text-slate-500">{t('shipments.publishRequestSubtitle') || 'Les voyageurs pourront soumissionner pour transporter votre colis'}</p>
               </div>
             </div>
           </div>
@@ -427,20 +429,6 @@ export default function NewShipmentRequestPage() {
         <form onSubmit={handleSubmit} noValidate>
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
 
-            {/* Info message about Russia-Africa routes */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-blue-900">Routes Russie ⇄ Afrique</p>
-                  <p className="text-blue-700 mt-1">
-                    Notre plateforme connecte la Russie et l'Afrique. Lorsque vous sélectionnez un pays, 
-                    l'autre sera automatiquement défini pour respecter cette logique.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Wallet Balance */}
             {walletBalance !== null && (
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
@@ -449,7 +437,7 @@ export default function NewShipmentRequestPage() {
                     <Wallet className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-600">Solde disponible</p>
+                    <p className="text-xs text-slate-600">{t('common.available') || 'Solde disponible'}</p>
                     <p className="text-lg font-bold text-slate-900">{formatCurrency(walletBalance)}</p>
                   </div>
                 </div>
@@ -460,28 +448,28 @@ export default function NewShipmentRequestPage() {
             <SectionCard
               icon={<Package className="w-4 h-4 text-orange-600" />}
               iconBg="bg-orange-50"
-              title="Informations générales"
-              subtitle="Titre et description de votre annonce"
+              title={t('shipments.generalInfoTitle') || 'Informations générales'}
+              subtitle={t('shipments.generalInfoSubtitle') || 'Titre et description de votre annonce'}
             >
               <Input
                 type="text"
-                label="Titre de l'annonce"
+                label={t('shipments.requestTitleLabel') || 'Titre de l\'annonce'}
                 value={formData.title || ''}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 error={errors.title}
                 required
-                placeholder="ex : Envoi de documents urgents Paris → Abidjan"
+                placeholder={t('shipments.requestTitlePlaceholder') || 'ex : Envoi de documents urgents Paris → Abidjan'}
               />
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
-                  Description détaillée <span className="text-red-500">*</span>
+                  {t('shipments.detailedDescriptionLabel') || 'Description détaillée'} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={formData.description || ''}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   rows={4}
-                  placeholder="Décrivez votre colis, vos exigences particulières, délais souhaités..."
+                  placeholder={t('shipments.descriptionPlaceholderDetailed') || 'Décrivez votre colis, vos exigences particulières, délais souhaités...'}
                 />
                 {errors.description && (
                   <p className="text-sm text-red-600">{errors.description}</p>
@@ -493,13 +481,13 @@ export default function NewShipmentRequestPage() {
             <SectionCard
               icon={<Package className="w-4 h-4 text-blue-600" />}
               iconBg="bg-blue-50"
-              title="Détails du colis"
-              subtitle="Dimensions, poids et valeur"
+              title={t('shipments.packageDetailsTitle') || 'Détails du colis'}
+              subtitle={t('shipments.packageDetailsSubtitle') || 'Dimensions, poids et valeur'}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   type="number"
-                  label="Poids (kg)"
+                  label={t('shipments.weightLabel') || 'Poids (kg)'}
                   value={formData.weight?.toString() || ''}
                   onChange={(e) => handleInputChange('weight', parseFloat(e.target.value))}
                   error={errors.weight}
@@ -508,7 +496,7 @@ export default function NewShipmentRequestPage() {
                 />
                 <Input
                   type="number"
-                  label={`Valeur déclarée (${currencyCode})`}
+                  label={`${t('shipments.valueLabel') || 'Valeur déclarée'} (${currencyCode})`}
                   value={formData.declared_value?.toString() || ''}
                   onChange={(e) => handleInputChange('declared_value', parseFloat(e.target.value))}
                   error={errors.declared_value}
@@ -519,7 +507,7 @@ export default function NewShipmentRequestPage() {
               <div className="grid grid-cols-3 gap-4">
                 <Input
                   type="number"
-                  label="Longueur (cm)"
+                  label={t('shipments.lengthLabel') || 'Longueur (cm)'}
                   value={formData.length?.toString() || ''}
                   onChange={(e) => handleInputChange('length', parseFloat(e.target.value))}
                   error={errors.length}
@@ -527,7 +515,7 @@ export default function NewShipmentRequestPage() {
                 />
                 <Input
                   type="number"
-                  label="Largeur (cm)"
+                  label={t('shipments.widthLabel') || 'Largeur (cm)'}
                   value={formData.width?.toString() || ''}
                   onChange={(e) => handleInputChange('width', parseFloat(e.target.value))}
                   error={errors.width}
@@ -535,7 +523,7 @@ export default function NewShipmentRequestPage() {
                 />
                 <Input
                   type="number"
-                  label="Hauteur (cm)"
+                  label={t('shipments.heightLabel') || 'Hauteur (cm)'}
                   value={formData.height?.toString() || ''}
                   onChange={(e) => handleInputChange('height', parseFloat(e.target.value))}
                   error={errors.height}
@@ -544,12 +532,12 @@ export default function NewShipmentRequestPage() {
               </div>
               <Input
                 type="text"
-                label="Type de colis"
+                label={t('shipments.packageTypeLabel') || 'Type de colis'}
                 value={formData.package_type || ''}
                 onChange={(e) => handleInputChange('package_type', e.target.value)}
                 error={errors.package_type}
                 required
-                placeholder="ex : Documents, Électronique, Vêtements..."
+                placeholder={t('shipments.packageTypePlaceholder') || 'ex : Documents, Électronique, Vêtements...'}
               />
 
               {/* Photo Upload */}
@@ -557,8 +545,8 @@ export default function NewShipmentRequestPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
                   <label className="text-sm font-medium text-slate-700">
-                    Photos du colis{' '}
-                    <span className="text-slate-400 font-normal text-xs">(optionnel)</span>
+                    {t('shipments.photosLabel') || 'Photos du colis'}{' '}
+                    <span className="text-slate-400 font-normal text-xs">({t('common.optional') || 'optionnel'})</span>
                   </label>
                 </div>
                 <FileUpload
@@ -566,7 +554,7 @@ export default function NewShipmentRequestPage() {
                   value={photoFile}
                   onChange={(file) => setPhotoFile(file)}
                   maxSize={5}
-                  helperText="Ajoutez une photo pour rassurer les voyageurs"
+                  helperText={t('shipments.photoHelper') || 'Ajoutez une photo pour rassurer les voyageurs'}
                 />
               </div>
             </SectionCard>
@@ -575,26 +563,26 @@ export default function NewShipmentRequestPage() {
             <SectionCard
               icon={<DollarSign className="w-4 h-4 text-green-600" />}
               iconBg="bg-green-50"
-              title="Budget et délais"
-              subtitle="Vos contraintes financières et temporelles"
+              title={t('shipments.budgetTimelineTitle') || 'Budget et délais'}
+              subtitle={t('shipments.budgetTimelineSubtitle') || 'Vos contraintes financières et temporelles'}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   type="number"
-                  label={`Budget maximum (${currencyCode})`}
+                  label={`${t('shipments.maxBudgetLabel') || 'Budget maximum'} (${currencyCode})`}
                   value={formData.max_budget?.toString() || ''}
                   onChange={(e) => handleInputChange('max_budget', parseFloat(e.target.value))}
                   error={errors.max_budget}
                   placeholder="0.00"
-                  helperText="Montant maximum que vous êtes prêt à payer"
+                  helperText={t('shipments.maxBudgetHelper') || 'Montant maximum que vous êtes prêt à payer'}
                 />
                 <Input
                   type="date"
-                  label="Date limite souhaitée"
+                  label={t('shipments.neededByLabel') || 'Date limite souhaitée'}
                   value={formData.needed_by || ''}
                   onChange={(e) => handleInputChange('needed_by', e.target.value)}
                   error={errors.needed_by}
-                  helperText="Quand avez-vous besoin que le colis arrive ?"
+                  helperText={t('shipments.neededByHelper') || 'Quand avez-vous besoin que le colis arrive ?'}
                 />
               </div>
             </SectionCard>
@@ -603,22 +591,22 @@ export default function NewShipmentRequestPage() {
             <SectionCard
               icon={<User className="w-4 h-4 text-purple-600" />}
               iconBg="bg-purple-50"
-              title="Informations du destinataire"
-              subtitle="Nom et téléphone du destinataire"
+              title={t('shipments.recipientInfoTitle') || 'Informations du destinataire'}
+              subtitle={t('shipments.recipientInfoSubtitle') || 'Nom et téléphone du destinataire'}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   type="text"
-                  label="Nom du destinataire"
+                  label={t('shipments.recipientNameLabel') || 'Nom du destinataire'}
                   value={formData.recipient_name || ''}
                   onChange={(e) => handleInputChange('recipient_name', e.target.value)}
                   error={errors.recipient_name}
                   required
-                  placeholder="Nom complet du destinataire"
+                  placeholder={t('shipments.recipientNamePlaceholder') || 'Nom complet du destinataire'}
                 />
                 <Input
                   type="tel"
-                  label="Téléphone du destinataire"
+                  label={t('shipments.recipientPhoneLabel') || 'Téléphone du destinataire'}
                   value={formData.recipient_phone || ''}
                   onChange={(e) => handleInputChange('recipient_phone', e.target.value)}
                   error={errors.recipient_phone}
@@ -632,8 +620,8 @@ export default function NewShipmentRequestPage() {
             <SectionCard
               icon={<MapPin className="w-4 h-4 text-emerald-600" />}
               iconBg="bg-emerald-50"
-              title="Lieu de récupération"
-              subtitle="Où le voyageur peut récupérer le colis"
+              title={t('shipments.pickupLocationTitle') || 'Lieu de récupération'}
+              subtitle={t('shipments.pickupLocationSubtitle') || 'Où le voyageur peut récupérer le colis'}
             >
               {/* Auto-selection notification for pickup */}
               {autoSelectedPickupCountry && (
@@ -641,9 +629,8 @@ export default function NewShipmentRequestPage() {
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-semibold text-emerald-900">Sélection automatique</p>
+                      <p className="font-semibold text-emerald-900">{t('shipments.autoSelection') || 'Sélection automatique'}</p>
                       <p className="text-emerald-700 mt-1">
-                        Vous livrez en {formData.delivery_country_id ? countries.find(c => c.id === formData.delivery_country_id)?.name : ''}. 
                         Le pays de récupération a été automatiquement défini sur <strong>{autoSelectedPickupCountry}</strong>.
                       </p>
                     </div>
@@ -652,14 +639,14 @@ export default function NewShipmentRequestPage() {
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <CountrySelect
-                  label="Pays de récupération"
+                  label={t('shipments.pickupCountryLabel') || 'Pays de récupération'}
                   value={formData.pickup_country_id}
                   onChange={(id) => handleInputChange('pickup_country_id', id ?? undefined)}
                   error={errors.pickup_country_id}
                   required
                 />
                 <CitySelect
-                  label="Ville de récupération"
+                  label={t('shipments.pickupCityLabel') || 'Ville de récupération'}
                   countryId={formData.pickup_country_id}
                   value={formData.pickup_city_id}
                   onChange={(id) => handleInputChange('pickup_city_id', id ?? undefined)}
@@ -669,12 +656,12 @@ export default function NewShipmentRequestPage() {
               </div>
               <Input
                 type="text"
-                label="Adresse de récupération"
+                label={t('shipments.pickupAddressLabel') || 'Adresse de récupération'}
                 value={formData.pickup_address || ''}
                 onChange={(e) => handleInputChange('pickup_address', e.target.value)}
                 error={errors.pickup_address}
                 required
-                placeholder="Adresse complète où récupérer le colis"
+                placeholder={t('shipments.pickupAddressPlaceholder') || 'Adresse complète où récupérer le colis'}
               />
             </SectionCard>
 
@@ -682,8 +669,8 @@ export default function NewShipmentRequestPage() {
             <SectionCard
               icon={<Navigation className="w-4 h-4 text-indigo-600" />}
               iconBg="bg-indigo-50"
-              title="Lieu de livraison"
-              subtitle="Où le colis doit être livré"
+              title={t('shipments.deliveryLocationTitle') || 'Lieu de livraison'}
+              subtitle={t('shipments.deliveryLocationSubtitle') || 'Où le colis doit être livré'}
             >
               {/* Auto-selection notification for delivery */}
               {autoSelectedDeliveryCountry && (
@@ -691,9 +678,8 @@ export default function NewShipmentRequestPage() {
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-semibold text-emerald-900">Sélection automatique</p>
+                      <p className="font-semibold text-emerald-900">{t('shipments.autoSelection') || 'Sélection automatique'}</p>
                       <p className="text-emerald-700 mt-1">
-                        Vous récupérez en {formData.pickup_country_id ? countries.find(c => c.id === formData.pickup_country_id)?.name : ''}. 
                         Le pays de livraison a été automatiquement défini sur <strong>{autoSelectedDeliveryCountry}</strong>.
                       </p>
                     </div>
@@ -702,14 +688,14 @@ export default function NewShipmentRequestPage() {
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <CountrySelect
-                  label="Pays de livraison"
+                  label={t('shipments.deliveryCountryLabel') || 'Pays de livraison'}
                   value={formData.delivery_country_id}
                   onChange={(id) => handleInputChange('delivery_country_id', id ?? undefined)}
                   error={errors.delivery_country_id}
                   required
                 />
                 <CitySelect
-                  label="Ville de livraison"
+                  label={t('shipments.deliveryCityLabel') || 'Ville de livraison'}
                   countryId={formData.delivery_country_id}
                   value={formData.delivery_city_id}
                   onChange={(id) => handleInputChange('delivery_city_id', id ?? undefined)}
@@ -719,12 +705,12 @@ export default function NewShipmentRequestPage() {
               </div>
               <Input
                 type="text"
-                label="Adresse de livraison"
+                label={t('shipments.deliveryAddressLabel') || 'Adresse de livraison'}
                 value={formData.delivery_address || ''}
                 onChange={(e) => handleInputChange('delivery_address', e.target.value)}
                 error={errors.delivery_address}
                 required
-                placeholder="Adresse complète de livraison"
+                placeholder={t('shipments.deliveryAddressPlaceholder') || 'Adresse complète de livraison'}
               />
             </SectionCard>
 
@@ -736,9 +722,9 @@ export default function NewShipmentRequestPage() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-amber-900">
-                    Objets interdits
+                    {t('shipments.prohibitedItemsTitle') || 'Objets interdits'}
                   </h2>
-                  <p className="text-xs text-amber-700">Vérifiez que votre colis ne contient aucun objet interdit</p>
+                  <p className="text-xs text-amber-700">{t('shipments.prohibitedItemsSubtitle') || 'Vérifiez que votre colis ne contient aucun objet interdit'}</p>
                 </div>
               </div>
               <div className="p-5">
@@ -750,12 +736,12 @@ export default function NewShipmentRequestPage() {
                   {showProhibitedItems ? (
                     <>
                       <ChevronUp className="w-4 h-4" />
-                      Masquer la liste
+                      {t('shipments.hideProhibitedList') || 'Masquer la liste'}
                     </>
                   ) : (
                     <>
                       <ChevronDown className="w-4 h-4" />
-                      Voir la liste des objets interdits
+                      {t('shipments.showProhibitedList') || 'Voir la liste des objets interdits'}
                     </>
                   )}
                 </button>
@@ -763,40 +749,32 @@ export default function NewShipmentRequestPage() {
                 {showProhibitedItems && (
                   <div className="mb-4 bg-white border border-amber-200 rounded-xl p-4 slide-down">
                     <p className="text-xs font-semibold text-slate-800 mb-2">
-                      Objets strictement interdits :
+                      {t('shipments.strictlyProhibited') || 'Objets strictement interdits :'}
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-700">
                       <li className="flex items-start gap-2">
                         <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                        Armes et munitions
+                        {t('shipments.prohibitedWeapons') || 'Armes et munitions'}
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                        Drogues et stupéfiants
+                        {t('shipments.prohibitedDrugs') || 'Drogues et stupéfiants'}
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                        Liquides inflammables
+                        {t('shipments.prohibitedLiquids') || 'Liquides inflammables'}
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                        Produits chimiques
+                        {t('shipments.prohibitedChemicals') || 'Produits chimiques'}
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                        Animaux vivants
+                        {t('shipments.prohibitedAnimals') || 'Animaux vivants'}
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                        Objets de valeur extrême
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                        Documents officiels
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-red-400 shrink-0 mt-0.5">✕</span>
-                        Produits périssables
+                        {t('shipments.prohibitedValuables') || 'Objets de valeur extrême'}
                       </li>
                     </ul>
                   </div>
@@ -821,7 +799,7 @@ export default function NewShipmentRequestPage() {
                     </div>
                   </div>
                   <span className="text-xs text-slate-700">
-                    Je certifie que mon colis ne contient aucun objet interdit et respecte les réglementations douanières.
+                    {t('shipments.certifyTerms') || 'Je certifie que mon colis ne contient aucun objet interdit et respecte les réglementations douanières.'}
                   </span>
                 </label>
               </div>
@@ -850,7 +828,7 @@ export default function NewShipmentRequestPage() {
                 disabled={isSubmitting}
                 className="flex-1"
               >
-                Annuler
+                {t('common.cancel') || 'Annuler'}
               </Button>
               <Button
                 type="submit"
@@ -859,7 +837,7 @@ export default function NewShipmentRequestPage() {
                 loading={isSubmitting}
                 className="flex-1"
               >
-                Publier l'annonce
+                {t('shipments.publishRequestButton') || 'Publier l\'annonce'}
               </Button>
             </div>
           </div>

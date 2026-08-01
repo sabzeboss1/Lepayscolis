@@ -4,29 +4,10 @@ import React from 'react';
 import Link from 'next/link';
 import { Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
 import { usePlatformBranding } from '@/lib/hooks/usePlatformBranding';
-
-const FOOTER_LINKS = {
-  'À propos': [
-    { label: 'Notre histoire', href: '/about' },
-    { label: "L'équipe", href: '/team' },
-    { label: 'Carrières', href: '/careers' },
-    { label: 'Presse', href: '/press' },
-  ],
-  Aide: [
-    { label: 'FAQ', href: '/faq' },
-    { label: 'Comment ça marche', href: '/how-it-works' },
-    { label: 'Sécurité', href: '/security' },
-    { label: 'Support', href: '/support' },
-  ],
-  Légal: [
-    { label: 'Conditions', href: '/terms' },
-    { label: 'Confidentialité', href: '/privacy' },
-    { label: 'Cookies', href: '/cookies' },
-    { label: 'Mentions légales', href: '/legal' },
-  ],
-};
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export function LandingFooter() {
+  const { t } = useTranslation();
   const branding = usePlatformBranding();
   
   // Defensive defaults
@@ -39,6 +20,23 @@ export function LandingFooter() {
   const twitter_url = branding?.twitter_url || '#';
   const instagram_url = branding?.instagram_url || '#';
   const linkedin_url = branding?.linkedin_url || '#';
+
+  const footerLinkGroups = {
+    [t('footer.about') || 'À propos']: [
+      { label: t('navigation.howItWorks') || 'Notre histoire', href: '/how-it-works' },
+      { label: t('navigation.destinations') || 'Destinations', href: '/destinations' },
+      { label: t('navigation.security') || 'Sécurité', href: '/security' },
+    ],
+    [t('common.help') || 'Aide']: [
+      { label: t('navigation.faq') || 'FAQ', href: '/faq' },
+      { label: t('navigation.howItWorks') || 'Comment ça marche', href: '/how-it-works' },
+      { label: t('common.contactUs') || 'Support', href: '/contact' },
+    ],
+    [t('footer.legal') || 'Légal']: [
+      { label: t('footer.terms') || 'Conditions', href: '/terms' },
+      { label: t('footer.privacy') || 'Confidentialité', href: '/privacy' },
+    ],
+  };
 
   return (
     <footer className="bg-navy text-white">
@@ -55,8 +53,7 @@ export function LandingFooter() {
               />
             </Link>
             <p className="text-white/60 text-sm leading-relaxed max-w-xs mb-6">
-              Plateforme communautaire de transport de colis entre la Russie et
-              l&apos;Afrique. Sûr, abordable et fiable.
+              {t('footer.companyInfo') || 'Plateforme communautaire de transport de colis entre la Russie et l\'Afrique. Sûr, abordable et fiable.'}
             </p>
             <div className="space-y-3">
               <a 
@@ -81,7 +78,7 @@ export function LandingFooter() {
           </div>
 
           {/* Link columns */}
-          {Object.entries(FOOTER_LINKS).map(([title, links]) => (
+          {Object.entries(footerLinkGroups).map(([title, links]) => (
             <div key={title}>
               <h3 className="font-heading font-semibold text-sm text-white mb-4 uppercase tracking-wider">
                 {title}
@@ -105,7 +102,7 @@ export function LandingFooter() {
         {/* Bottom bar */}
         <div className="py-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/40 text-sm">
-            © {new Date().getFullYear()} Tuma Plus. Tous droits réservés.
+            {t('footer.copyright', { year: new Date().getFullYear().toString() }) || `© ${new Date().getFullYear()} Tuma Plus. Tous droits réservés.`}
           </p>
 
           <div className="flex items-center gap-4">
@@ -147,3 +144,4 @@ export function LandingFooter() {
     </footer>
   );
 }
+

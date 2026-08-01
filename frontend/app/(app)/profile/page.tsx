@@ -46,7 +46,7 @@ interface UserStats {
 
 export default function ProfilePage() {
   const { user, isLoading } = useAuth();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { formatCurrency } = useUserCurrency();
   const router = useRouter();
   const [ratings, setRatings] = useState<Rating[]>([]);
@@ -85,7 +85,7 @@ export default function ProfilePage() {
           successRate: s.success_rate ?? 100,
           responseTime: s.response_time ?? 'N/A',
           memberSince: memberSinceDate && !isNaN(memberSinceDate.getTime())
-            ? memberSinceDate.toLocaleDateString('fr-FR', {
+            ? memberSinceDate.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
                 year: 'numeric',
                 month: 'long',
               })
@@ -145,13 +145,13 @@ export default function ProfilePage() {
   const getKYCInfo = () => {
     switch (user.kyc_status) {
       case 'approved':
-        return { icon: ShieldCheck, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', label: 'Identité vérifiée', badge: 'bg-green-100 text-green-700' };
+        return { icon: ShieldCheck, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', label: t('dashboard.kycApproved') || 'Identité vérifiée', badge: 'bg-green-100 text-green-700' };
       case 'pending':
-        return { icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', label: 'Vérification en cours', badge: 'bg-yellow-100 text-yellow-700' };
+        return { icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', label: t('dashboard.kycPendingShort') || 'Vérification en cours', badge: 'bg-yellow-100 text-yellow-700' };
       case 'rejected':
-        return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', label: 'Document rejeté', badge: 'bg-red-100 text-red-700' };
+        return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', label: t('dashboard.kycRejectedShort') || 'Document rejeté', badge: 'bg-red-100 text-red-700' };
       default:
-        return { icon: Shield, color: 'text-gray-500', bg: 'bg-gray-50', border: 'border-gray-200', label: 'Non vérifié', badge: 'bg-gray-100 text-gray-600' };
+        return { icon: Shield, color: 'text-gray-500', bg: 'bg-gray-50', border: 'border-gray-200', label: t('dashboard.kycRequiredShort') || 'Non vérifié', badge: 'bg-gray-100 text-gray-600' };
     }
   };
 
@@ -160,9 +160,9 @@ export default function ProfilePage() {
   const avatarSrc = user.avatar || `https://i.pravatar.cc/128?u=${user.id}`;
 
   const TABS = [
-    { id: 'overview' as const, label: 'Vue d\'ensemble' },
-    { id: 'reviews' as const, label: `Avis (${totalRatings})` },
-    { id: 'activity' as const, label: 'Activité' },
+    { id: 'overview' as const, label: t('profile.overview') || 'Vue d\'ensemble' },
+    { id: 'reviews' as const, label: `${t('profile.reviews') || 'Avis'} (${totalRatings})` },
+    { id: 'activity' as const, label: t('profile.activity') || 'Activité' },
   ];
 
   return (
@@ -194,14 +194,14 @@ export default function ProfilePage() {
                 {user.is_recommended && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500/20 text-orange-300 border border-orange-500/30">
                     <Award className="w-3 h-3" />
-                    Recommandé
+                    {t('dashboard.recommended') || 'Recommandé'}
                   </span>
                 )}
               </div>
               <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                 <RatingStars rating={Number(user.rating) || 0} size="sm" />
                 <span className="text-white/90 font-semibold text-sm">{(Number(user.rating) || 0).toFixed(1)}</span>
-                <span className="text-white/50 text-xs">({totalRatings} avis)</span>
+                <span className="text-white/50 text-xs">({totalRatings} {t('profile.reviewsCount') || 'avis'})</span>
               </div>
               <div className="flex items-center justify-center sm:justify-start gap-4 text-white/60 text-xs">
                 <span className="flex items-center gap-1">
@@ -225,7 +225,7 @@ export default function ProfilePage() {
               className="border-white/20 text-white hover:bg-white/10 flex-shrink-0"
             >
               <Edit3 className="w-3.5 h-3.5 mr-1.5" />
-              Modifier
+              {t('profile.edit') || 'Modifier'}
             </Button>
           </div>
         </div>
@@ -235,10 +235,10 @@ export default function ProfilePage() {
       <div className="max-w-4xl mx-auto px-4 -mt-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: Plane, label: 'Voyages', value: stats?.totalTrips ?? 0, color: 'text-blue-600', bg: 'bg-blue-50' },
-            { icon: Package, label: 'Colis', value: stats?.totalShipments ?? 0, color: 'text-green-600', bg: 'bg-green-50' },
-            { icon: CheckCircle, label: 'Succès', value: `${stats?.successRate ?? 0}%`, color: 'text-purple-600', bg: 'bg-purple-50' },
-            { icon: Clock, label: 'Réponse', value: stats?.responseTime ?? 'N/A', color: 'text-orange-600', bg: 'bg-orange-50' },
+            { icon: Plane, label: t('profile.trips') || 'Voyages', value: stats?.totalTrips ?? 0, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { icon: Package, label: t('profile.packages') || 'Colis', value: stats?.totalShipments ?? 0, color: 'text-green-600', bg: 'bg-green-50' },
+            { icon: CheckCircle, label: t('profile.success') || 'Succès', value: `${stats?.successRate ?? 0}%`, color: 'text-purple-600', bg: 'bg-purple-50' },
+            { icon: Clock, label: t('profile.response') || 'Réponse', value: stats?.responseTime ?? 'N/A', color: 'text-orange-600', bg: 'bg-orange-50' },
           ].map((s) => {
             const SIcon = s.icon;
             return (
@@ -262,14 +262,14 @@ export default function ProfilePage() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-gray-800">Vérification d'identité</span>
+              <span className="text-sm font-semibold text-gray-800">{t('profile.identityVerification') || 'Vérification d\'identité'}</span>
               <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${kyc.badge}`}>{kyc.label}</span>
             </div>
             {user.kyc_status === 'approved' && (
               <div className="flex flex-wrap gap-3 mt-1.5">
-                {['Identité', 'Document', 'Selfie'].map((item) => (
+                {[t('profile.kycIdentity') || 'Identité', t('profile.kycDocument') || 'Document', t('profile.kycSelfie') || 'Selfie'].map((item) => (
                   <span key={item} className="flex items-center gap-1 text-xs text-green-700 font-medium">
-                    <CheckCircle className="w-3 h-3" /> {item} validé
+                    <CheckCircle className="w-3 h-3" /> {item} {t('common.validated') || 'validé'}
                   </span>
                 ))}
               </div>
@@ -277,10 +277,10 @@ export default function ProfilePage() {
             {user.kyc_status !== 'approved' && (
               <p className="text-xs text-gray-500 mt-0.5">
                 {user.kyc_status === 'pending'
-                  ? 'Votre document est en cours de vérification (1–2 jours)'
+                  ? (t('dashboard.kycPendingDesc') || 'Votre document est en cours de vérification (1–2 jours)')
                   : user.kyc_status === 'rejected'
-                  ? 'Votre document a été rejeté. Soumettez à nouveau.'
-                  : 'Complétez votre vérification pour accéder à toutes les fonctionnalités'}
+                  ? (t('dashboard.kycRejectedDesc') || 'Votre document a été rejeté. Soumettez à nouveau.')
+                  : (t('dashboard.kycRequiredDesc') || 'Complétez votre vérification pour accéder à toutes les fonctionnalités')}
               </p>
             )}
           </div>
@@ -289,7 +289,7 @@ export default function ProfilePage() {
               onClick={() => router.push('/kyc')}
               className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
             >
-              {user.kyc_status === 'rejected' ? 'Resoumettre' : 'Commencer'}
+              {user.kyc_status === 'rejected' ? (t('dashboard.resubmitDocuments') || 'Resoumettre') : (t('common.start') || 'Commencer')}
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
@@ -322,14 +322,14 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-4 h-4 text-blue-500" />
-                <h2 className="font-bold text-gray-900 text-sm">Statistiques</h2>
+                <h2 className="font-bold text-gray-900 text-sm">{t('profile.statistics') || 'Statistiques'}</h2>
               </div>
               <div className="space-y-2.5">
                 {[
-                  { icon: Plane, label: 'Voyages publiés', value: stats?.totalTrips ?? 0, color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { icon: Package, label: 'Colis livrés', value: stats?.totalShipments ?? 0, color: 'text-green-600', bg: 'bg-green-50' },
-                  { icon: Star, label: 'Note moyenne', value: `${(Number(user.rating) || 0).toFixed(1)} / 5`, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-                  { icon: CheckCircle, label: 'Taux de succès', value: `${stats?.successRate ?? 0}%`, color: 'text-purple-600', bg: 'bg-purple-50' },
+                  { icon: Plane, label: t('profile.publishedTrips') || 'Voyages publiés', value: stats?.totalTrips ?? 0, color: 'text-blue-600', bg: 'bg-blue-50' },
+                  { icon: Package, label: t('profile.deliveredShipments') || 'Colis livrés', value: stats?.totalShipments ?? 0, color: 'text-green-600', bg: 'bg-green-50' },
+                  { icon: Star, label: t('profile.avgRating') || 'Note moyenne', value: `${(Number(user.rating) || 0).toFixed(1)} / 5`, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+                  { icon: CheckCircle, label: t('profile.successRate') || 'Taux de succès', value: `${stats?.successRate ?? 0}%`, color: 'text-purple-600', bg: 'bg-purple-50' },
                 ].map((row) => {
                   const RIcon = row.icon;
                   return (
@@ -351,27 +351,27 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Wallet className="w-4 h-4 text-green-500" />
-                <h2 className="font-bold text-gray-900 text-sm">Gains & Portefeuille</h2>
+                <h2 className="font-bold text-gray-900 text-sm">{t('profile.earningsWallet') || 'Gains & Portefeuille'}</h2>
               </div>
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl p-4 mb-4">
-                <p className="text-xs text-green-700 mb-1 font-medium">Gains totaux</p>
+                <p className="text-xs text-green-700 mb-1 font-medium">{t('profile.totalEarnings') || 'Gains totaux'}</p>
                 <p className="text-3xl font-bold text-green-700">
                   {formatCurrency(stats?.totalEarnings ?? 0)}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 mb-0.5">Ce mois</p>
+                  <p className="text-xs text-gray-400 mb-0.5">{t('profile.thisMonth') || 'Ce mois'}</p>
                   <p className="font-bold text-gray-900 text-base">{formatCurrency(stats?.earningsThisMonth ?? 0)}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 mb-0.5">En attente</p>
+                  <p className="text-xs text-gray-400 mb-0.5">{t('common.pending') || 'En attente'}</p>
                   <p className="font-bold text-gray-900 text-base">{formatCurrency(stats?.pendingEarnings ?? 0)}</p>
                 </div>
               </div>
               <Button variant="primary" fullWidth onClick={() => router.push('/wallet')}>
                 <CreditCard className="w-4 h-4 mr-2" />
-                Voir mon portefeuille
+                {t('profile.viewWallet') || 'Voir mon portefeuille'}
               </Button>
             </div>
 
@@ -379,20 +379,20 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Award className="w-4 h-4 text-orange-500" />
-                <h2 className="font-bold text-gray-900 text-sm">Badges & Réalisations</h2>
+                <h2 className="font-bold text-gray-900 text-sm">{t('profile.badges') || 'Badges & Réalisations'}</h2>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {user.is_recommended && (
                   <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl text-center">
                     <Award className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                    <div className="text-xs font-bold text-gray-800">Recommandé</div>
+                    <div className="text-xs font-bold text-gray-800">{t('dashboard.recommended') || 'Recommandé'}</div>
                     <div className="text-xs text-gray-500 mt-0.5">Membre de confiance</div>
                   </div>
                 )}
                 {user.kyc_status === 'approved' && (
                   <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-center">
                     <ShieldCheck className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                    <div className="text-xs font-bold text-gray-800">Vérifié</div>
+                    <div className="text-xs font-bold text-gray-800">{t('dashboard.kycApproved') || 'Vérifié'}</div>
                     <div className="text-xs text-gray-500 mt-0.5">Identité confirmée</div>
                   </div>
                 )}
@@ -423,14 +423,13 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="w-4 h-4 text-orange-500" />
-                <h2 className="font-bold text-gray-900 text-sm">Actions rapides</h2>
+                <h2 className="font-bold text-gray-900 text-sm">{t('dashboard.quickActions') || 'Actions rapides'}</h2>
               </div>
               <div className="space-y-2">
                 {[
-                  { label: 'Publier un voyage', icon: Plane, path: '/trips/new', color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { label: 'Envoyer un colis', icon: Package, path: '/trips/search', color: 'text-green-600', bg: 'bg-green-50' },
-                  // { label: 'Mes messages', icon: MessageSquare, path: '/messages', color: 'text-purple-600', bg: 'bg-purple-50' }, // Temporairement masqué
-                  { label: 'Retirer mes gains', icon: Wallet, path: '/wallet/withdraw', color: 'text-orange-600', bg: 'bg-orange-50' },
+                  { label: t('dashboard.publishTrip') || 'Publier un voyage', icon: Plane, path: '/trips/new', color: 'text-blue-600', bg: 'bg-blue-50' },
+                  { label: t('dashboard.sendPackage') || 'Envoyer un colis', icon: Package, path: '/trips/search', color: 'text-green-600', bg: 'bg-green-50' },
+                  { label: t('wallet.withdraw') || 'Retirer mes gains', icon: Wallet, path: '/wallet/withdraw', color: 'text-orange-600', bg: 'bg-orange-50' },
                 ].map((action) => {
                   const AIcon = action.icon;
                   return (
@@ -462,8 +461,8 @@ export default function ProfilePage() {
             ) : totalRatings === 0 ? (
               <div className="text-center py-16">
                 <Star className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">Aucun avis pour le moment</p>
-                <p className="text-gray-400 text-sm mt-1">Complétez des livraisons pour recevoir vos premiers avis</p>
+                <p className="text-gray-500 font-medium">{t('profile.noReviews') || 'Aucun avis pour le moment'}</p>
+                <p className="text-gray-400 text-sm mt-1">{t('profile.noReviewsDesc') || 'Complétez des livraisons pour recevoir vos premiers avis'}</p>
               </div>
             ) : (
               <>
@@ -474,7 +473,7 @@ export default function ProfilePage() {
                       {(Number(user.rating) || 0).toFixed(1)}
                     </div>
                     <RatingStars rating={Number(user.rating) || 0} size="lg" />
-                    <p className="text-gray-400 text-sm mt-2">Basé sur {totalRatings} avis</p>
+                    <p className="text-gray-400 text-sm mt-2">{t('profile.basedOn') || 'Basé sur'} {totalRatings} {t('profile.reviewsCount') || 'avis'}</p>
                   </div>
                   <div className="space-y-2">
                     {[5, 4, 3, 2, 1].map(star => {
@@ -512,7 +511,7 @@ export default function ProfilePage() {
                           )}
                           <RatingStars rating={rating.rating} size="sm" />
                           <span className="text-xs text-gray-400">
-                            {new Date(rating.created_at).toLocaleDateString('fr-FR', {
+                            {new Date(rating.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
                               year: 'numeric', month: 'long', day: 'numeric',
                             })}
                           </span>
@@ -539,8 +538,8 @@ export default function ProfilePage() {
             ) : activities.length === 0 ? (
               <div className="text-center py-16">
                 <Clock className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">Aucune activité récente</p>
-                <p className="text-gray-400 text-sm mt-1">Commencez à publier des voyages ou envoyer des colis</p>
+                <p className="text-gray-500 font-medium">{t('profile.noActivity') || 'Aucune activité récente'}</p>
+                <p className="text-gray-400 text-sm mt-1">{t('profile.noActivityDesc') || 'Commencez à publier des voyages ou envoyer des colis'}</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -574,7 +573,7 @@ export default function ProfilePage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900">{activity.title}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
-                          {activity.description} · {new Date(activity.date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })}
+                          {activity.description} · {new Date(activity.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { month: 'short', day: 'numeric' })}
                         </p>
                       </div>
                       {activity.amount && (
@@ -590,7 +589,7 @@ export default function ProfilePage() {
                     onClick={fetchActivities}
                     className="text-xs text-gray-400 hover:text-gray-700 transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
                   >
-                    Actualiser
+                    {t('common.refresh') || 'Actualiser'}
                   </button>
                 </div>
               </div>
@@ -602,7 +601,7 @@ export default function ProfilePage() {
         {stats?.memberSince && (
           <p className="text-center text-xs text-gray-400 flex items-center justify-center gap-1.5">
             <Calendar className="w-3.5 h-3.5" />
-            Membre depuis {stats.memberSince}
+            {t('profile.memberSince') || 'Membre depuis'} {stats.memberSince}
           </p>
         )}
       </div>

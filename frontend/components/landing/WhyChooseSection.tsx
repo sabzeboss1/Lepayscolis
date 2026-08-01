@@ -2,57 +2,57 @@
 
 import React from 'react';
 import { ShieldCheck, Lock, HeartHandshake } from 'lucide-react';
-
-const BENEFITS = [
-  {
-    title: 'Utilisateurs Vérifiés KYC',
-    description:
-      'Tous nos utilisateurs sont vérifiés avec KYC pour garantir votre sécurité et votre tranquillité d\'esprit.',
-    icon: ShieldCheck,
-    gradient: 'from-royal-blue to-ocean-blue',
-    lightBg: 'bg-blue-50',
-    lightColor: 'text-royal-blue',
-  },
-  {
-    title: 'Paiement Sécurisé Escrow',
-    description:
-      'Votre argent est protégé jusqu\'à la livraison confirmée. Système de paiement escrow sécurisé.',
-    icon: Lock,
-    gradient: 'from-vibrant-orange to-yellow-500',
-    lightBg: 'bg-orange-50',
-    lightColor: 'text-vibrant-orange',
-  },
-  {
-    title: 'Transactions Garanties',
-    description:
-      'Protection complète de vos transactions avec notre système de garantie et support 24/7.',
-    icon: HeartHandshake,
-    gradient: 'from-success-green to-emerald-400',
-    lightBg: 'bg-green-50',
-    lightColor: 'text-success-green',
-  },
-];
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export function WhyChooseSection() {
+  const { t } = useTranslation();
+
+  const benefits = [
+    {
+      title: t('home.benefits.safe.title') || 'Utilisateurs Vérifiés KYC',
+      description: t('home.benefits.safe.description') || 'Tous nos utilisateurs sont vérifiés avec KYC pour garantir votre sécurité.',
+      icon: ShieldCheck,
+      gradient: 'from-royal-blue to-ocean-blue',
+      lightBg: 'bg-blue-50',
+      lightColor: 'text-royal-blue',
+    },
+    {
+      title: t('home.benefits.escrow.title') || 'Paiement Sécurisé Escrow',
+      description: t('home.benefits.escrow.description') || 'Votre argent est protégé jusqu\'à la livraison confirmée.',
+      icon: Lock,
+      gradient: 'from-vibrant-orange to-yellow-500',
+      lightBg: 'bg-orange-50',
+      lightColor: 'text-vibrant-orange',
+    },
+    {
+      title: t('home.benefits.affordable.title') || 'Transactions Garanties',
+      description: t('home.benefits.affordable.description') || 'Protection complète de vos transactions avec support 24/7.',
+      icon: HeartHandshake,
+      gradient: 'from-success-green to-emerald-400',
+      lightBg: 'bg-green-50',
+      lightColor: 'text-success-green',
+    },
+  ];
+
   return (
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-vibrant-orange font-semibold text-sm uppercase tracking-wider mb-3 font-heading">
-            Nos avantages
+            {t('home.benefits.badge') || 'Nos avantages'}
           </p>
           <h2 className="text-3xl sm:text-4xl font-heading font-bold text-navy mb-4">
-            Pourquoi choisir Tuma Plus ?
+            {t('home.benefits.title') || 'Pourquoi choisir Tuma Plus ?'}
           </h2>
           <p className="text-body-text text-lg max-w-2xl mx-auto">
-            Une plateforme conçue pour votre sécurité et votre tranquillité d&apos;esprit
+            {t('securityPage.description') || 'Une plateforme conçue pour votre sécurité et votre tranquillité d\'esprit'}
           </p>
         </div>
 
         {/* Cards */}
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {BENEFITS.map((benefit, index) => {
+          {benefits.map((benefit, index) => {
             const Icon = benefit.icon;
             return (
               <div
@@ -84,3 +84,4 @@ export function WhyChooseSection() {
     </section>
   );
 }
+

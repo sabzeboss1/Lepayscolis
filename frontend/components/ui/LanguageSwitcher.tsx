@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Locale, locales, localeNames } from '@/lib/i18n/config';
+import { Locale, locales, localeNames, LOCALE_STORAGE_KEY } from '@/lib/i18n/config';
 import { ChevronDown } from 'lucide-react';
-import { setGoogleTranslateLanguage } from './GoogleTranslateWidget';
 
 export interface LanguageSwitcherProps {
   currentLocale: Locale;
@@ -42,12 +41,9 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
     if (newLocale !== currentLocale) {
       // Persist to localStorage
       if (typeof window !== 'undefined') {
-        localStorage.setItem('locale', newLocale);
+        localStorage.setItem(LOCALE_STORAGE_KEY, newLocale);
       }
       onLocaleChange(newLocale);
-
-      // Trigger Google Translate in the background
-      setGoogleTranslateLanguage(newLocale);
     }
     setIsOpen(false);
   };

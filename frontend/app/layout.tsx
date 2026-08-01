@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { LocaleProvider } from '@/lib/i18n/LocaleContext';
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -22,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   try {
     const res = await fetch(`${BACKEND_URL}/api/platform/branding`, {
-      next: { revalidate: 300 },
+      cache: 'no-store',
     });
     if (res.ok) {
       const json = await res.json();
@@ -38,8 +39,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const iconUrl = faviconUrl || logoUrl;
 
   return {
-    title: `${platformName} - Community Parcel Delivery`,
-    description: "Send packages between Russia and Africa with trusted travelers",
+    title: {
+      default: `${platformName} - Transport de Colis Russie ↔ Afrique`,
+      template: `%s | ${platformName}`,
+    },
+    description: "Envoyez vos colis entre la Russie et l'Afrique avec des voyageurs de confiance",
     icons: iconUrl
       ? {
           icon: iconUrl,
@@ -73,9 +77,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <Providers>
-          {children}
-        </Providers>
+        {/* LocaleProvider au niveau root pour toutes les pages (publiques + privées) */}
+        <LocaleProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </LocaleProvider>
       </body>
     </html>
   );

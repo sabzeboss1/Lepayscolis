@@ -5,6 +5,7 @@ import { Shield, AlertCircle, Clock, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useKYCCheck } from '@/lib/hooks/useKYCCheck';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface KYCBlockerProps {
   action: string; // e.g., "publier un voyage", "envoyer un colis"
@@ -13,6 +14,7 @@ interface KYCBlockerProps {
 
 export function KYCBlocker({ action, children }: KYCBlockerProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { isKYCApproved, isKYCPending, isKYCRejected, isKYCNotSubmitted } = useKYCCheck();
 
   // If KYC is approved, render children
@@ -28,9 +30,9 @@ export function KYCBlocker({ action, children }: KYCBlockerProps) {
         color: 'text-yellow-600',
         bgColor: 'bg-yellow-50',
         borderColor: 'border-yellow-200',
-        title: 'Vérification en cours',
-        message: `Votre document KYC est en cours de vérification. Vous pourrez ${action} une fois votre identité approuvée.`,
-        buttonText: 'Voir le statut KYC',
+        title: t('dashboard.kycPendingTitle') || 'Vérification en cours',
+        message: t('dashboard.kycPendingDesc') || `Votre document KYC est en cours de vérification. Vous pourrez ${action} une fois votre identité approuvée.`,
+        buttonText: t('dashboard.viewStatus') || 'Voir le statut KYC',
         buttonVariant: 'outline' as const
       };
     }
@@ -41,9 +43,9 @@ export function KYCBlocker({ action, children }: KYCBlockerProps) {
         color: 'text-red-600',
         bgColor: 'bg-red-50',
         borderColor: 'border-red-200',
-        title: 'Vérification rejetée',
-        message: `Votre document KYC a été rejeté. Veuillez soumettre à nouveau vos documents pour ${action}.`,
-        buttonText: 'Soumettre à nouveau',
+        title: t('dashboard.kycRejectedTitle') || 'Vérification rejetée',
+        message: t('dashboard.kycRejectedDesc') || `Votre document KYC a été rejeté. Veuillez soumettre à nouveau vos documents pour ${action}.`,
+        buttonText: t('dashboard.resubmitDocuments') || 'Soumettre à nouveau',
         buttonVariant: 'primary' as const
       };
     }
@@ -54,9 +56,9 @@ export function KYCBlocker({ action, children }: KYCBlockerProps) {
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
-      title: 'Vérification KYC requise',
-      message: `Pour ${action}, vous devez d'abord compléter votre vérification d'identité (KYC). Cette étape est obligatoire pour garantir la sécurité de tous les utilisateurs.`,
-      buttonText: 'Compléter la vérification',
+      title: t('dashboard.kycRequiredTitle') || 'Vérification KYC requise',
+      message: t('dashboard.kycRequiredDesc') || `Pour ${action}, vous devez d'abord compléter votre vérification d'identité (KYC). Cette étape est obligatoire pour garantir la sécurité de tous les utilisateurs.`,
+      buttonText: t('dashboard.completeVerification') || 'Compléter la vérification',
       buttonVariant: 'primary' as const
     };
   };

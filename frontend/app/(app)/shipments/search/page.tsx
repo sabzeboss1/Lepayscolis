@@ -552,16 +552,16 @@ export default function ShipmentSearchPage() {
               }}
             >
               <Package className="w-3.5 h-3.5" />
-              Trouvez des colis à transporter
+              {t('dashboard.findDeliveries') || 'Trouvez des colis à transporter'}
             </p>
             <h1
               className="text-3xl sm:text-4xl font-bold text-white mb-2"
               style={{ fontFamily: 'Prompt, sans-serif' }}
             >
-              Chercher des colis
+              {t('dashboard.searchShipments') || 'Chercher des colis'}
             </h1>
             <p className="text-white/60 text-sm sm:text-base">
-              Gagnez de l'argent en transportant des colis sur votre trajet
+              {t('home.roles.traveler.description') || 'Gagnez de l\'argent en transportant des colis sur votre trajet'}
             </p>
           </div>
 
@@ -576,7 +576,7 @@ export default function ShipmentSearchPage() {
               }`}
             >
               <Megaphone className="w-4 h-4" />
-              Annonces d'expédition
+              {t('shipments.requestsTab') || 'Annonces d\'expédition'}
             </button>
             <button
               onClick={() => setActiveTab('shipments')}
@@ -587,7 +587,7 @@ export default function ShipmentSearchPage() {
               }`}
             >
               <Package className="w-4 h-4" />
-              Expéditions directes
+              {t('shipments.directTab') || 'Expéditions directes'}
             </button>
           </div>
 
@@ -606,7 +606,7 @@ export default function ShipmentSearchPage() {
                   type="text"
                   value={pickupCity}
                   onChange={(e) => setPickupCity(e.target.value)}
-                  placeholder="Ville de départ (ex: Paris)"
+                  placeholder={t('trips.departureCity') || 'Ville de départ (ex: Paris)'}
                   className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium placeholder:font-normal focus:outline-none focus:ring-2"
                   style={{
                     background: 'rgba(255,255,255,0.1)',
@@ -627,7 +627,7 @@ export default function ShipmentSearchPage() {
                   type="text"
                   value={deliveryCity}
                   onChange={(e) => setDeliveryCity(e.target.value)}
-                  placeholder="Ville d'arrivée (ex: Abidjan)"
+                  placeholder={t('trips.arrivalCity') || 'Ville d\'arrivée (ex: Abidjan)'}
                   className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium placeholder:font-normal focus:outline-none focus:ring-2"
                   style={{
                     background: 'rgba(255,255,255,0.1)',
@@ -650,7 +650,7 @@ export default function ShipmentSearchPage() {
                 }}
               >
                 <Search className="w-4 h-4 mr-2" />
-                Rechercher
+                {t('common.search') || 'Rechercher'}
               </Button>
             </div>
 
@@ -660,7 +660,7 @@ export default function ShipmentSearchPage() {
               style={{ color: 'rgba(255,255,255,0.55)' }}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              Filtres avancés
+              {t('trips.filterResults') || 'Filtres avancés'}
               {chips.length > 0 && (
                 <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold"
                   style={{ background: 'var(--color-vibrant-orange)', color: '#fff' }}>
@@ -676,7 +676,7 @@ export default function ShipmentSearchPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                      Poids max. (kg)
+                      {t('shipments.maxWeight') || 'Poids max. (kg)'}
                     </label>
                     <input
                       type="number"

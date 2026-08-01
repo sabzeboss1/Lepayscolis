@@ -80,6 +80,12 @@ export default function WalletPage() {
   const { t, locale } = useTranslation();
   const router = useRouter();
   const { user, isLoading } = useAuth();
+
+  const filterTabs: { key: FilterType; label: string }[] = [
+    { key: 'all', label: t('common.all') || 'Tout' },
+    { key: 'credit', label: t('wallet.credits') || 'Crédits' },
+    { key: 'debit', label: t('wallet.debits') || 'Débits' },
+  ];
   
   const [balance, setBalance] = useState(0);
   const [heldBalance, setHeldBalance] = useState(0);
@@ -186,8 +192,8 @@ export default function WalletPage() {
                 <WalletIcon className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900 font-heading">Mon Portefeuille</h1>
-                <p className="text-sm text-slate-500">Gérez vos gains et retraits</p>
+                <h1 className="text-xl font-bold text-slate-900 font-heading">{t('nav.wallet') || 'Mon Portefeuille'}</h1>
+                <p className="text-sm text-slate-500">{t('wallet.manageEarnings') || 'Gérez vos gains et retraits'}</p>
               </div>
             </div>
           </div>
@@ -211,13 +217,13 @@ export default function WalletPage() {
                 <div className="w-7 h-7 bg-white/15 rounded-lg flex items-center justify-center">
                   <WalletIcon className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-sm text-blue-200">Solde total</span>
+                <span className="text-sm text-blue-200">{t('wallet.totalBalance') || 'Solde total'}</span>
               </div>
               <div className="text-4xl sm:text-5xl font-bold tracking-tight mt-2">
                 {formatCurrency(balance)}
                 {originalCurrency && (
                   <div className="text-sm font-normal text-blue-200 mt-1">
-                    (Converti depuis {originalCurrency})
+                    ({t('wallet.convertedFrom') || 'Converti depuis'} {originalCurrency})
                   </div>
                 )}
               </div>
@@ -227,11 +233,11 @@ export default function WalletPage() {
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <Clock className="w-4 h-4 text-amber-300" />
                   <span className="text-blue-200">
-                    {formatCurrency(heldBalance)} en attente
+                    {formatCurrency(heldBalance)} {t('common.pending') || 'en attente'}
                   </span>
                   <span className="text-blue-300/60">•</span>
                   <span className="text-emerald-300 font-semibold">
-                    {formatCurrency(availableBalance)} disponible
+                    {formatCurrency(availableBalance)} {t('common.available') || 'disponible'}
                   </span>
                 </div>
               )}
@@ -241,7 +247,7 @@ export default function WalletPage() {
                 <div>
                   <div className="flex items-center gap-1 text-xs text-blue-300 mb-0.5">
                     <ArrowDownLeft className="w-3 h-3" />
-                    Reçu
+                    {t('wallet.received') || 'Reçu'}
                   </div>
                   <span className="text-sm font-semibold text-emerald-400">
                     +{formatCurrency(creditSum)}
@@ -250,7 +256,7 @@ export default function WalletPage() {
                 <div>
                   <div className="flex items-center gap-1 text-xs text-blue-300 mb-0.5">
                     <ArrowUpRight className="w-3 h-3" />
-                    Envoyé
+                    {t('wallet.sent') || 'Envoyé'}
                   </div>
                   <span className="text-sm font-semibold text-red-400">
                     -{formatCurrency(debitSum)}
@@ -267,7 +273,7 @@ export default function WalletPage() {
                   className="bg-emerald-500 hover:bg-emerald-600"
                 >
                   <TrendingUp className="w-4 h-4 mr-1.5" />
-                  Recharger
+                  {t('wallet.recharge') || 'Recharger'}
                 </Button>
                 <Button
                   variant="primary"
@@ -276,7 +282,7 @@ export default function WalletPage() {
                   className="bg-orange-500 hover:bg-orange-600"
                 >
                   <Banknote className="w-4 h-4 mr-1.5" />
-                  Retirer
+                  {t('wallet.withdraw') || 'Retirer'}
                 </Button>
               </div>
             </div>
@@ -286,9 +292,9 @@ export default function WalletPage() {
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             {/* Header with filters */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
-              <h3 className="font-semibold text-slate-900">Historique des transactions</h3>
+              <h3 className="font-semibold text-slate-900">{t('wallet.transactionHistory') || 'Historique des transactions'}</h3>
               <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
-                {FILTER_TABS.map((tab) => (
+                {filterTabs.map((tab) => (
                   <button
                     key={tab.key}
                     onClick={() => setFilter(tab.key)}
@@ -308,14 +314,14 @@ export default function WalletPage() {
               {isLoadingData ? (
                 <div className="py-12 flex flex-col items-center gap-3">
                   <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent" />
-                  <span className="text-sm text-slate-400">Chargement...</span>
+                  <span className="text-sm text-slate-400">{t('common.loading')}</span>
                 </div>
               ) : filteredTransactions.length === 0 ? (
                 <div className="py-14 flex flex-col items-center gap-3 text-center">
                   <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center">
                     <TrendingUp className="w-7 h-7 text-slate-400" />
                   </div>
-                  <p className="text-sm text-slate-500">Aucune transaction trouvée</p>
+                  <p className="text-sm text-slate-500">{t('wallet.noTransactions') || 'Aucune transaction trouvée'}</p>
                 </div>
               ) : (
                 <>
@@ -337,7 +343,7 @@ export default function WalletPage() {
                         className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
                         <ChevronLeft className="w-4 h-4" />
-                        Précédent
+                        {t('common.previous') || 'Précédent'}
                       </button>
                       <span className="text-xs text-slate-500">
                         Page {currentPage} / {totalPages}
@@ -347,7 +353,7 @@ export default function WalletPage() {
                         disabled={currentPage === totalPages}
                         className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
-                        Suivant
+                        {t('common.next') || 'Suivant'}
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
