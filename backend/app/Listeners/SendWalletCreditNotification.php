@@ -51,12 +51,14 @@ class SendWalletCreditNotification implements ShouldQueue
                 __('notifications.wallet_credited.title', [], $user->locale ?? 'fr'),
                 __('notifications.wallet_credited.body', [
                     'amount' => number_format($transaction->amount, 2),
+                    'currency' => $currency,
                     'balance' => number_format($newBalance, 2),
                 ], $user->locale ?? 'fr'),
                 [
                     'transaction_id' => $transaction->id,
                     'amount' => $transaction->amount,
                     'new_balance' => $newBalance,
+                    'currency' => $currency,
                 ]
             );
 
@@ -66,6 +68,7 @@ class SendWalletCreditNotification implements ShouldQueue
                 __('notifications.wallet_credited.title', [], $user->locale ?? 'fr'),
                 __('notifications.wallet_credited.body', [
                     'amount' => number_format($transaction->amount, 2),
+                    'currency' => $currency,
                     'balance' => number_format($newBalance, 2),
                 ], $user->locale ?? 'fr'),
                 [

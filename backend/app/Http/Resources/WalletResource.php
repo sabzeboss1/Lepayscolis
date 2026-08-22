@@ -63,28 +63,5 @@ class WalletResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
-
-        // Convert balance to user's preferred currency if different
-        $user = $request->user() ?? auth('sanctum')->user();
-        $userCurrency = $user?->currency_code;
-
-        if ($userCurrency && $userCurrency !== $walletCurrency) {
-            try {
-                $conversion = $currencyService->convert(
-                    (float) $this->balance,
-                    $walletCurrency,
-                    $userCurrency
-                );
-                $data['balance_converted'] = [
-                    'amount' => $conversion['converted_amount'],
-                    'currency_code' => $userCurrency,
-                    'exchange_rate' => $conversion['exchange_rate'],
-                ];
-            } catch (\Exception $e) {
-                // If conversion fails, leave balance_converted as null
-            }
-        }
-
-        return $data;
     }
 }

@@ -9,6 +9,7 @@ use App\Notifications\AdminRechargeCompletedNotification;
 use App\Notifications\RechargeRequestCompletedNotification;
 use App\Notifications\RechargeRequestProcessingNotification;
 use App\Notifications\RechargeRequestRejectedNotification;
+use App\Services\CurrencyService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,8 @@ use Illuminate\Support\Facades\Notification;
 class AdminRechargeRequestController extends Controller
 {
     public function __construct(
-        private WalletService $walletService
+        private WalletService $walletService,
+        private CurrencyService $currencyService
     ) {}
 
     /**
@@ -140,13 +142,34 @@ class AdminRechargeRequestController extends Controller
         $user = $rechargeRequest->user;
 
         DB::transaction(function () use ($rechargeRequest, $validated, $request) {
-            // Credit user wallet
+            $wallet = $rechargeRequest->user->wallet;
+            $walletCurrency = $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
+            $rechargeCurrency = $rechargeRequest->currency_code;
+            $amount = (float) $rechargeRequest->amount;
+
+            $originalAmount = null;
+            $originalCurrencyCode = null;
+            $exchangeRateUsed = null;
+
+            // Convert if the recharge currency differs from the wallet currency
+            if ($rechargeCurrency && $rechargeCurrency !== $walletCurrency) {
+                $conversion = $this->currencyService->convert($amount, $rechargeCurrency, $walletCurrency);
+                $originalAmount = $amount;
+                $originalCurrencyCode = $rechargeCurrency;
+                $exchangeRateUsed = $conversion['exchange_rate'];
+                $amount = $conversion['converted_amount'];
+            }
+
+            // Credit user wallet in the wallet's currency
             $this->walletService->credit(
-                $rechargeRequest->user->wallet,
-                $rechargeRequest->amount,
+                $wallet,
+                $amount,
                 "Recharge via {$rechargeRequest->payment_method}",
                 'recharge_request',
-                $rechargeRequest->id
+                $rechargeRequest->id,
+                $originalAmount,
+                $originalCurrencyCode,
+                $exchangeRateUsed
             );
 
             // Update recharge request
