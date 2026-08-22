@@ -13,7 +13,7 @@ return [
     'payment_refunded' => 'Paiement remboursé',
     'wallet_credited' => [
         'title' => 'Portefeuille crédité',
-        'body' => 'Votre portefeuille a été crédité de :amount €. Nouveau solde : :balance €',
+        'body' => 'Votre portefeuille a été crédité de :amount :currency. Nouveau solde : :balance :currency',
     ],
 
     'trip_verified' => [

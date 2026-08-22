@@ -13,7 +13,7 @@ return [
     'payment_refunded' => 'Payment refunded',
     'wallet_credited' => [
         'title' => 'Wallet Credited',
-        'body' => 'Your wallet has been credited with €:amount. New balance: €:balance',
+        'body' => 'Your wallet has been credited with :amount :currency. New balance: :balance :currency',
     ],
 
     'trip_verified' => [

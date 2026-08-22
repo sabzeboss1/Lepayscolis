@@ -126,10 +126,17 @@ class UserController extends Controller
         
         // Update user profile
         $user->update($validated);
-        
-        // Invalidate cached profile data
-        // TODO: Implement cache invalidation when caching is added
-        
+
+        // Sync wallet currency when user changes their preferred currency
+        if (isset($validated['currency_code']) && $user->wallet) {
+            $user->wallet->update(['currency_code' => $validated['currency_code']]);
+
+            Log::info('Wallet currency synced with user profile', [
+                'user_id' => $user->id,
+                'currency_code' => $validated['currency_code'],
+            ]);
+        }
+
         Log::info('User profile updated', [
             'user_id' => $user->id,
             'updated_fields' => array_keys($validated),
