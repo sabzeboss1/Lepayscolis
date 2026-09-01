@@ -40,6 +40,9 @@ export function useCurrencies() {
     fetchCurrencies();
   }, []);
 
+  // The system's base/default currency (from API)
+  const baseCurrency = currencies.find(c => c.is_base)?.code || 'XAF';
+
   // Convert amount to the base currency for comparison/sorting
   const convertToBase = (amount: number, currencyCode: string): number => {
     const currency = currencies.find(c => c.code === currencyCode);
@@ -55,6 +58,7 @@ export function useCurrencies() {
 
   return {
     currencies,
+    baseCurrency,
     isLoading,
     error,
     convertToBase,

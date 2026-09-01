@@ -1,5 +1,6 @@
 /**
- * Default system currency used as fallback when no currency is specified.
- * Must match the backend PlatformSetting::getDefaultCurrency() value.
+ * Static fallback for the system default currency (used before API data loads).
+ * For dynamic access, prefer useCurrencies().baseCurrency which reads the
+ * actual base currency from the /api/currencies endpoint.
  */
 export const DEFAULT_CURRENCY = 'XAF';
