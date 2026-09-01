@@ -59,6 +59,8 @@ class NotifyAdminsOfWithdrawal implements ShouldQueue
                     ])
                 );
 
+                $currency = $user->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
+
                 // Create in-app notification
                 $this->notificationService->createNotification(
                     $admin,
@@ -67,6 +69,7 @@ class NotifyAdminsOfWithdrawal implements ShouldQueue
                     __('notifications.admin.withdrawal_requested.body', [
                         'user_name' => $user->name,
                         'amount' => number_format($withdrawal->amount, 2),
+                        'currency' => $currency,
                     ], $admin->locale ?? 'fr'),
                     [
                         'withdrawal_id' => $withdrawal->id,
@@ -75,6 +78,7 @@ class NotifyAdminsOfWithdrawal implements ShouldQueue
                         'amount' => $withdrawal->amount,
                         'fee' => $withdrawal->fee,
                         'net_amount' => $withdrawal->net_amount,
+                        'currency' => $currency,
                     ]
                 );
 
@@ -85,6 +89,7 @@ class NotifyAdminsOfWithdrawal implements ShouldQueue
                     __('notifications.admin.withdrawal_requested.body', [
                         'user_name' => $user->name,
                         'amount' => number_format($withdrawal->amount, 2),
+                        'currency' => $currency,
                     ], $admin->locale ?? 'fr'),
                     [
                         'type' => 'withdrawal_requested',

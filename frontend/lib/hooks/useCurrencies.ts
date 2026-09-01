@@ -23,11 +23,11 @@ export function useCurrencies() {
           headers: { 'Accept': 'application/json' },
           credentials: 'include',
         });
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch currencies');
         }
-        
+
         const data = await response.json();
         setCurrencies(data.data || []);
       } catch (err) {
@@ -40,24 +40,27 @@ export function useCurrencies() {
     fetchCurrencies();
   }, []);
 
-  // Convert amount to EUR for comparison
-  const convertToEUR = (amount: number, currencyCode: string): number => {
+  // The system's base/default currency (from API)
+  const baseCurrency = currencies.find(c => c.is_base)?.code || 'XAF';
+
+  // Convert amount to the base currency for comparison/sorting
+  const convertToBase = (amount: number, currencyCode: string): number => {
     const currency = currencies.find(c => c.code === currencyCode);
-    if (!currency) return amount; // Fallback if currency not found
-    
-    // If it's already EUR or is the base currency
-    if (currency.is_base || currencyCode === 'EUR') {
+    if (!currency) return amount;
+
+    if (currency.is_base) {
       return amount;
     }
-    
-    // Convert to EUR using exchange rate
+
+    // Convert to base currency using exchange rate
     return amount / currency.exchange_rate;
   };
 
   return {
     currencies,
+    baseCurrency,
     isLoading,
     error,
-    convertToEUR,
+    convertToBase,
   };
 }

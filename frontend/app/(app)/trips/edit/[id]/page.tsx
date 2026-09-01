@@ -179,7 +179,7 @@ export default function EditTripPage() {
         arrival_date: formData.arrivalDate,
         available_capacity: formData.availableCapacity,
         price_per_kg: formData.pricePerKg,
-        currency_code: currencyCode || 'EUR',
+        currency_code: currencyCode,
         accepted_package_types: formData.acceptedPackageTypes,
       };
 

@@ -635,10 +635,10 @@ export default function NewShipmentPage() {
                       {t('trips.departureDate') || 'Départ'}: {new Date(selectedTrip.departure_date).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR')} •
                       {t('shipments.price') || 'Prix'}: {selectedTrip.price_converted
                         ? formatCurrency(selectedTrip.price_converted.amount, selectedTrip.price_converted.currency_code)
-                        : formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}/kg
+                        : formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code)}/kg
                       {selectedTrip.price_converted && (
                         <span className="text-slate-400 ml-1">
-                          ({formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}/kg)
+                          ({formatCurrency(selectedTrip.price_per_kg, selectedTrip.currency_code)}/kg)
                         </span>
                       )}
                     </p>
@@ -692,7 +692,7 @@ export default function NewShipmentPage() {
                         </p>
                         {selectedTrip?.price_converted && formData.weight && (
                           <p className="text-[10px] text-slate-400">
-                            {formatCurrency(formData.weight * selectedTrip.price_per_kg, selectedTrip.currency_code || 'EUR')}
+                            {formatCurrency(formData.weight * selectedTrip.price_per_kg, selectedTrip.currency_code)}
                           </p>
                         )}
                       </div>

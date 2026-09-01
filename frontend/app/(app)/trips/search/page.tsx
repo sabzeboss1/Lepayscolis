@@ -58,7 +58,7 @@ function SkeletonCard() {
 export default function TripSearchPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { convertToEUR } = useCurrencies();
+  const { convertToBase, baseCurrency } = useCurrencies();
 
   /* filter state */
   const [departureCity, setDepartureCity] = useState('');
@@ -126,8 +126,8 @@ export default function TripSearchPage() {
     if (sortBy === 'date')   return new Date(a.departure_date).getTime() - new Date(b.departure_date).getTime();
     if (sortBy === 'price') {
       // Use converted prices if available, otherwise use original prices with conversion
-      const priceA = a.price_per_kg_converted || convertToEUR(a.price_per_kg, a.currency_code || 'EUR');
-      const priceB = b.price_per_kg_converted || convertToEUR(b.price_per_kg, b.currency_code || 'EUR');
+      const priceA = a.price_per_kg_converted || convertToBase(a.price_per_kg, a.currency_code || baseCurrency);
+      const priceB = b.price_per_kg_converted || convertToBase(b.price_per_kg, b.currency_code || baseCurrency);
       return priceA - priceB;
     }
     if (sortBy === 'rating') return (b.traveler?.rating || 0) - (a.traveler?.rating || 0);

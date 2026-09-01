@@ -55,12 +55,14 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_approved.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_approved.body', [
                     'amount' => number_format($withdrawal->amount, 2),
+                    'currency' => $currency,
                 ], $user->locale ?? 'fr'),
                 [
                     'withdrawal_id' => $withdrawal->id,
                     'amount' => $withdrawal->amount,
                     'fee' => $withdrawal->fee,
                     'net_amount' => $withdrawal->net_amount,
+                    'currency' => $currency,
                 ]
             );
 
@@ -70,6 +72,7 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_approved.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_approved.body', [
                     'amount' => number_format($withdrawal->amount, 2),
+                    'currency' => $currency,
                 ], $user->locale ?? 'fr'),
                 [
                     'type' => 'withdrawal_approved',
@@ -121,12 +124,14 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_rejected.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_rejected.body', [
                     'amount' => number_format($withdrawal->amount, 2),
+                    'currency' => $currency,
                     'reason' => $reason,
                 ], $user->locale ?? 'fr'),
                 [
                     'withdrawal_id' => $withdrawal->id,
                     'amount' => $withdrawal->amount,
                     'reason' => $reason,
+                    'currency' => $currency,
                 ]
             );
 
@@ -136,6 +141,7 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_rejected.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_rejected.body', [
                     'amount' => number_format($withdrawal->amount, 2),
+                    'currency' => $currency,
                     'reason' => $reason,
                 ], $user->locale ?? 'fr'),
                 [
@@ -189,12 +195,14 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_completed.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_completed.body', [
                     'amount' => number_format($withdrawal->net_amount, 2),
+                    'currency' => $currency,
                 ], $user->locale ?? 'fr'),
                 [
                     'withdrawal_id' => $withdrawal->id,
                     'amount' => $withdrawal->amount,
                     'fee' => $withdrawal->fee,
                     'net_amount' => $withdrawal->net_amount,
+                    'currency' => $currency,
                 ]
             );
 
@@ -204,6 +212,7 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_completed.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_completed.body', [
                     'amount' => number_format($withdrawal->net_amount, 2),
+                    'currency' => $currency,
                 ], $user->locale ?? 'fr'),
                 [
                     'type' => 'withdrawal_completed',
