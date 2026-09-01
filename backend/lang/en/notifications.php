@@ -35,6 +35,20 @@ return [
     'kyc_approved_body' => 'Your identity verification has been approved. You can now create trips and shipments.',
     'kyc_rejected_body' => 'Your identity verification has been rejected. Reason: :reason',
 
+    // Withdrawal notifications
+    'withdrawal_approved' => [
+        'title' => 'Withdrawal Approved',
+        'body' => 'Your withdrawal request of :amount :currency has been approved.',
+    ],
+    'withdrawal_rejected' => [
+        'title' => 'Withdrawal Rejected',
+        'body' => 'Your withdrawal request of :amount :currency has been rejected. Reason: :reason',
+    ],
+    'withdrawal_completed' => [
+        'title' => 'Withdrawal Completed',
+        'body' => 'Your withdrawal of :amount :currency has been completed successfully.',
+    ],
+
     // Admin notifications
     'admin_new_user' => [
         'title' => 'New user registered',
@@ -43,5 +57,11 @@ return [
     'admin_kyc_submitted' => [
         'title' => 'New KYC submission',
         'body' => ':name submitted a KYC document (:document_type) for verification.',
+    ],
+    'admin' => [
+        'withdrawal_requested' => [
+            'title' => 'New withdrawal request',
+            'body' => ':user_name requested a withdrawal of :amount :currency.',
+        ],
     ],
 ];

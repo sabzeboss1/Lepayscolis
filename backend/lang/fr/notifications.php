@@ -35,6 +35,20 @@ return [
     'kyc_approved_body' => 'Votre vérification d\'identité a été approuvée. Vous pouvez maintenant créer des voyages et des expéditions.',
     'kyc_rejected_body' => 'Votre vérification d\'identité a été rejetée. Motif : :reason',
 
+    // Withdrawal notifications
+    'withdrawal_approved' => [
+        'title' => 'Retrait approuvé',
+        'body' => 'Votre demande de retrait de :amount :currency a été approuvée.',
+    ],
+    'withdrawal_rejected' => [
+        'title' => 'Retrait rejeté',
+        'body' => 'Votre demande de retrait de :amount :currency a été rejetée. Motif : :reason',
+    ],
+    'withdrawal_completed' => [
+        'title' => 'Retrait effectué',
+        'body' => 'Votre retrait de :amount :currency a été effectué avec succès.',
+    ],
+
     // Admin notifications
     'admin_new_user' => [
         'title' => 'Nouvel utilisateur inscrit',
@@ -43,5 +57,11 @@ return [
     'admin_kyc_submitted' => [
         'title' => 'Nouvelle soumission KYC',
         'body' => ':name a soumis un document KYC (:document_type) pour vérification.',
+    ],
+    'admin' => [
+        'withdrawal_requested' => [
+            'title' => 'Nouvelle demande de retrait',
+            'body' => ':user_name a demandé un retrait de :amount :currency.',
+        ],
     ],
 ];

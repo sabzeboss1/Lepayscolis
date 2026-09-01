@@ -6,6 +6,7 @@ import DataTable, { Column } from '@/components/admin/DataTable';
 import TableFilters, { FilterConfig } from '@/components/admin/TableFilters';
 import TablePagination from '@/components/admin/TablePagination';
 import { useTranslation } from '@/lib/i18n';
+import { DEFAULT_CURRENCY } from '@/lib/constants/currency';
 const ZERO_DECIMAL_CURRENCIES = ['XAF', 'XOF', 'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV'];
 
 function formatInCurrency(amount: number, currencyCode: string): string {
@@ -112,7 +113,7 @@ export default function WalletsPage() {
                 : 'text-gray-900'
           }`}
         >
-          {formatInCurrency(wallet.balance, wallet.currency_code ?? 'EUR')}
+          {formatInCurrency(wallet.balance, wallet.currency_code ?? DEFAULT_CURRENCY)}
         </span>
       ),
     },
@@ -121,7 +122,7 @@ export default function WalletsPage() {
       label: t('admin.wallets.columns.totalCredits'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-green-600">{formatInCurrency(wallet.total_credits, wallet.currency_code ?? 'EUR')}</span>
+        <span className="text-sm text-green-600">{formatInCurrency(wallet.total_credits, wallet.currency_code ?? DEFAULT_CURRENCY)}</span>
       ),
     },
     {
@@ -129,7 +130,7 @@ export default function WalletsPage() {
       label: t('admin.wallets.columns.totalDebits'),
       sortable: true,
       render: (wallet) => (
-        <span className="text-sm text-red-600">{formatInCurrency(wallet.total_debits, wallet.currency_code ?? 'EUR')}</span>
+        <span className="text-sm text-red-600">{formatInCurrency(wallet.total_debits, wallet.currency_code ?? DEFAULT_CURRENCY)}</span>
       ),
     },
     {

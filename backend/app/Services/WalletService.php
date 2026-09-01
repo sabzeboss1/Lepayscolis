@@ -370,17 +370,17 @@ class WalletService
         return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId) {
             // Lock wallet row for update
             $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
-            
+
             // Validate sufficient held balance
             if ($wallet->held_balance < $amount) {
                 throw new \Exception("Insufficient held balance. Required: {$amount}, Available: {$wallet->held_balance}");
             }
-            
+
             // Decrease held_balance and actual balance
             $wallet->held_balance -= $amount;
             $wallet->balance -= $amount;
             $wallet->save();
-            
+
             // Create transaction record
             $transaction = WalletTransaction::create([
                 'wallet_id' => $wallet->id,
@@ -390,11 +390,12 @@ class WalletService
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
                 'balance_after' => $wallet->balance,
+                'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
             ]);
-            
+
             // Clear balance cache
             $this->clearBalanceCache($wallet->user_id);
-            
+
             return $transaction;
         });
     }
@@ -420,16 +421,16 @@ class WalletService
         return DB::transaction(function () use ($wallet, $amount, $description, $referenceType, $referenceId) {
             // Lock wallet row for update
             $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
-            
+
             // Validate sufficient held balance
             if ($wallet->held_balance < $amount) {
                 throw new \Exception("Insufficient held balance to cancel. Required: {$amount}, Available: {$wallet->held_balance}");
             }
-            
+
             // Decrease held_balance (funds return to available balance)
             $wallet->held_balance -= $amount;
             $wallet->save();
-            
+
             // Create transaction record
             $transaction = WalletTransaction::create([
                 'wallet_id' => $wallet->id,
@@ -439,11 +440,12 @@ class WalletService
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
                 'balance_after' => $wallet->balance,
+                'currency_code' => $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency(),
             ]);
-            
+
             // Clear balance cache
             $this->clearBalanceCache($wallet->user_id);
-            
+
             return $transaction;
         });
     }
