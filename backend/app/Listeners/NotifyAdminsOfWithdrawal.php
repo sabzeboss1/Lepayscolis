@@ -28,6 +28,10 @@ class NotifyAdminsOfWithdrawal implements ShouldQueue
      */
     public function handle(WithdrawalRequested $event): void
     {
+        // Refresh SMTP settings from DB (queue worker may have stale config)
+        \App\Providers\MailConfigServiceProvider::applySmtpFromDatabase();
+        Mail::purge('smtp');
+
         try {
             $withdrawal = $event->withdrawal;
             $user = $withdrawal->user;

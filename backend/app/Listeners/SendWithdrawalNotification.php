@@ -27,6 +27,23 @@ class SendWithdrawalNotification implements ShouldQueue
     ) {}
 
     /**
+     * Route the event to the appropriate handler method.
+     */
+    public function handle(object $event): void
+    {
+        // Refresh SMTP settings from DB (queue worker may have stale config)
+        \App\Providers\MailConfigServiceProvider::applySmtpFromDatabase();
+        Mail::purge('smtp');
+
+        match (true) {
+            $event instanceof WithdrawalApproved => $this->handleApproved($event),
+            $event instanceof WithdrawalRejected => $this->handleRejected($event),
+            $event instanceof WithdrawalCompleted => $this->handleCompleted($event),
+            default => null,
+        };
+    }
+
+    /**
      * Handle the WithdrawalApproved event.
      */
     public function handleApproved(WithdrawalApproved $event): void

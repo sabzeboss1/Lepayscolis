@@ -27,6 +27,10 @@ class SendWalletCreditNotification implements ShouldQueue
      */
     public function handle(WalletCredited $event): void
     {
+        // Refresh SMTP settings from DB (queue worker may have stale config)
+        \App\Providers\MailConfigServiceProvider::applySmtpFromDatabase();
+        Mail::purge('smtp');
+
         try {
             $user = $event->wallet->user;
             $transaction = $event->transaction;
