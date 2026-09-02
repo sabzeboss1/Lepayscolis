@@ -37,7 +37,7 @@ class NotifyAdminsOfWithdrawal implements ShouldQueue
             $user = $withdrawal->user;
 
             // Get all admin users
-            $admins = User::where('role', 'admin')->get();
+            $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
 
             if ($admins->isEmpty()) {
                 Log::warning('No admin users found to notify about withdrawal request', [
