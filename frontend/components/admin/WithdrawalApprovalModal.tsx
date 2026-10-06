@@ -95,6 +95,8 @@ export default function WithdrawalApprovalModal({
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  const { formatCurrency } = useAdminCurrency();
+
   if (!isOpen || !withdrawal) return null;
 
   const handleApprove = async () => {
@@ -139,8 +141,6 @@ export default function WithdrawalApprovalModal({
   };
 
   const isLoading = loading || isSubmitting;
-
-  const { formatCurrency } = useAdminCurrency();
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('fr-FR', {
