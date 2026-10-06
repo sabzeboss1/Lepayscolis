@@ -19,6 +19,9 @@ class WithdrawalRequest extends Model
     protected $fillable = [
         'user_id',
         'amount',
+        'wallet_amount',
+        'wallet_currency',
+        'exchange_rate',
         'fee',
         'net_amount',
         'country_code',
@@ -41,6 +44,8 @@ class WithdrawalRequest extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'wallet_amount' => 'decimal:2',
+            'exchange_rate' => 'float',
             'fee' => 'decimal:2',
             'net_amount' => 'decimal:2',
             'payment_details' => 'array',

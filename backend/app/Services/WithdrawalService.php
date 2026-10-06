@@ -34,8 +34,10 @@ class WithdrawalService
      *
      * @param WalletService $walletService
      */
-    public function __construct(private WalletService $walletService)
-    {
+    public function __construct(
+        private WalletService $walletService,
+        private CurrencyService $currencyService
+    ) {
     }
 
     /**
@@ -126,19 +128,36 @@ class WithdrawalService
             throw new DuplicatePendingWithdrawalException($existingPending->id);
         }
         
-        // Validate withdrawal request
+        // Validate withdrawal request (amount is in wallet currency)
         $this->validateWithdrawalRequest($user, $amount);
-        
-        // Calculate fee and net amount
+
+        // Calculate fee on wallet amount (fee is deducted from wallet)
         $fee = $this->calculateFee($amount);
         $netAmount = $amount - $fee;
-        
+
+        // Convert amount from wallet currency to destination currency
+        $wallet = $this->walletService->getWallet($user);
+        $walletCurrency = $wallet->currency_code ?? \App\Models\PlatformSetting::getDefaultCurrency();
+
+        $walletAmount = $amount;
+        $convertedAmount = $amount;
+        $exchangeRate = 1.0;
+
+        if (strtoupper($walletCurrency) !== strtoupper($currency)) {
+            $conversion = $this->currencyService->convert($amount, $walletCurrency, $currency);
+            $convertedAmount = $conversion['converted_amount'];
+            $exchangeRate = $conversion['exchange_rate'];
+        }
+
         // Create withdrawal request
         $withdrawal = WithdrawalRequest::create([
             'user_id' => $user->id,
-            'amount' => $amount,
+            'amount' => $convertedAmount,
+            'wallet_amount' => $walletAmount,
+            'wallet_currency' => $walletCurrency,
+            'exchange_rate' => $exchangeRate,
             'fee' => $fee,
-            'net_amount' => $netAmount,
+            'net_amount' => $convertedAmount - $this->calculateFee($amount),
             'country_code' => $countryCode,
             'currency' => $currency,
             'payment_method' => $paymentMethod,
@@ -187,10 +206,11 @@ class WithdrawalService
                 throw new InvalidWithdrawalStatusException($withdrawal->status, 'approved');
             }
             
-            // Re-validate balance at approval time
+            // Re-validate balance at approval time (use wallet_amount which is in wallet currency)
             $wallet = $this->walletService->getWallet($withdrawal->user);
-            $totalRequired = $withdrawal->amount + $withdrawal->fee;
-            
+            $walletAmount = $withdrawal->wallet_amount ?? $withdrawal->amount;
+            $totalRequired = $walletAmount + $withdrawal->fee;
+
             if (!$this->walletService->validateSufficientBalance($wallet, $totalRequired)) {
                 throw new InsufficientBalanceException($totalRequired, $wallet->balance);
             }
@@ -323,10 +343,11 @@ class WithdrawalService
                 throw new InvalidWithdrawalStatusException($withdrawal->status, 'completed');
             }
             
-            // Debit wallet (includes validation and transaction safety)
+            // Debit wallet in wallet currency (use wallet_amount, not converted amount)
+            $walletAmount = $withdrawal->wallet_amount ?? $withdrawal->amount;
             $this->walletService->debit(
                 $withdrawal->user->wallet,
-                $withdrawal->amount + $withdrawal->fee,
+                $walletAmount + $withdrawal->fee,
                 "Withdrawal completed: {$withdrawal->id}",
                 'withdrawal',
                 $withdrawal->id

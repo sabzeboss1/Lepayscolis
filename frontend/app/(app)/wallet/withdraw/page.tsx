@@ -18,6 +18,7 @@ import {
   type PaymentMethodField,
 } from '@/lib/data/withdrawalMethods';
 import { useCountries } from '@/lib/hooks/useCountries';
+import { useCurrencies } from '@/lib/hooks/useCurrencies';
 import type { Wallet } from '@/lib/types/api';
 import {
   ArrowLeft,
@@ -38,6 +39,7 @@ export default function WithdrawPage() {
   const { user, isLoading } = useAuth();
   const { formatWithCurrencyNote } = useCurrencyFormatter();
   const { countries } = useCountries();
+  const { currencies } = useCurrencies();
 
   const [balance, setBalance] = useState(0);
   const [walletCurrency, setWalletCurrency] = useState('XAF');
@@ -76,6 +78,21 @@ export default function WithdrawPage() {
 
   const calculateFee = (n: number) => n * WITHDRAWAL_FEE_PERCENTAGE;
   const calculateNetAmount = (n: number) => n - calculateFee(n);
+
+  const getDestinationCurrency = () => {
+    const config = selectedCountry ? getWithdrawalConfig(selectedCountry) : null;
+    const dbCountry = countries.find(c => c.code === selectedCountry);
+    return config?.currency || dbCountry?.default_currency_code || walletCurrency;
+  };
+
+  const convertAmount = (amount: number, from: string, to: string): number | null => {
+    if (from === to) return amount;
+    const fromCurrency = currencies.find(c => c.code === from);
+    const toCurrency = currencies.find(c => c.code === to);
+    if (!fromCurrency || !toCurrency) return null;
+    const rate = toCurrency.exchange_rate / fromCurrency.exchange_rate;
+    return Math.round(amount * rate * 100) / 100;
+  };
 
   const handlePaymentDetailChange = (fieldName: string, value: string) => {
     setPaymentDetails((prev) => ({ ...prev, [fieldName]: value }));
@@ -321,7 +338,7 @@ export default function WithdrawPage() {
               <div className="bg-white border border-slate-200 rounded-xl p-5">
                 <h3 className="font-semibold text-slate-900 mb-4">Montant du retrait</h3>
                 <Input
-                  label={`Montant (${config.currencySymbol})`}
+                  label={`Montant (${walletCurrency})`}
                   id="amount"
                   type="number"
                   step="0.01"
@@ -333,42 +350,60 @@ export default function WithdrawPage() {
                   required
                 />
 
-                {validAmount && (
-                  <div className="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Montant demandé</span>
-                      <span className="font-medium text-slate-900">
-                        <CurrencyDisplay
-                          amount={parsedAmount}
-                          currency={walletCurrency}
-                        />
-                      </span>
-                    </div>
-                    {WITHDRAWAL_FEE_PERCENTAGE > 0 && (
+                {validAmount && (() => {
+                  const destCurrency = getDestinationCurrency();
+                  const isDifferentCurrency = walletCurrency !== destCurrency;
+                  const converted = isDifferentCurrency ? convertAmount(calculateNetAmount(parsedAmount), walletCurrency, destCurrency) : null;
+
+                  return (
+                    <div className="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Frais ({WITHDRAWAL_FEE_PERCENTAGE * 100}%)</span>
-                        <span className="font-medium text-red-500">
+                        <span className="text-slate-600">Montant demandé</span>
+                        <span className="font-medium text-slate-900">
                           <CurrencyDisplay
-                            amount={calculateFee(parsedAmount)}
+                            amount={parsedAmount}
                             currency={walletCurrency}
-                            showPlusSign={false}
-                            className="!text-red-500"
                           />
                         </span>
                       </div>
-                    )}
-                    <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
-                      <span className="font-semibold text-slate-900">Montant net</span>
-                      <span className="font-bold text-emerald-600">
-                        <CurrencyDisplay
-                          amount={calculateNetAmount(parsedAmount)}
-                          currency={walletCurrency}
-                          className="!text-emerald-600"
-                        />
-                      </span>
+                      {WITHDRAWAL_FEE_PERCENTAGE > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-600">Frais ({WITHDRAWAL_FEE_PERCENTAGE * 100}%)</span>
+                          <span className="font-medium text-red-500">
+                            <CurrencyDisplay
+                              amount={calculateFee(parsedAmount)}
+                              currency={walletCurrency}
+                              showPlusSign={false}
+                              className="!text-red-500"
+                            />
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
+                        <span className="font-semibold text-slate-900">Débité du wallet</span>
+                        <span className="font-bold text-emerald-600">
+                          <CurrencyDisplay
+                            amount={calculateNetAmount(parsedAmount)}
+                            currency={walletCurrency}
+                            className="!text-emerald-600"
+                          />
+                        </span>
+                      </div>
+                      {isDifferentCurrency && converted !== null && (
+                        <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
+                          <span className="font-semibold text-orange-600">Vous recevrez environ</span>
+                          <span className="font-bold text-orange-600">
+                            <CurrencyDisplay
+                              amount={converted}
+                              currency={destCurrency}
+                              className="!text-orange-600"
+                            />
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             )}
 
