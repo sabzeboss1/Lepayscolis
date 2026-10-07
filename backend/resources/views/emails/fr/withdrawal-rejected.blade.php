@@ -18,6 +18,9 @@
         <p>Nous regrettons de vous informer que votre demande de retrait n'a pas pu être approuvée.</p>
         
         <div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ef4444;">
+            @if($wallet_currency !== $currency)
+            <p style="margin: 0 0 10px 0;"><strong>Montant du portefeuille :</strong> <span style="font-size: 18px; font-weight: bold;">{{ number_format($wallet_amount, 2) }} {{ $wallet_currency }}</span></p>
+            @endif
             <p style="margin: 0 0 10px 0;"><strong>Montant demandé :</strong> <span style="font-size: 24px; font-weight: bold;">{{ number_format($amount, 2) }} {{ $currency }}</span></p>
             <p style="margin: 0; color: #6b7280; font-size: 14px;"><strong>Référence :</strong> #{{ $withdrawal_id }}</p>
         </div>

@@ -52,8 +52,10 @@ class SendWithdrawalNotification implements ShouldQueue
             $user = $event->withdrawal->user;
             $withdrawal = $event->withdrawal;
 
-            // Send email notification
-            $currency = $withdrawal->user->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
+            // Use destination currency for display, wallet currency for debit info
+            $destinationCurrency = $withdrawal->currency ?? PlatformSetting::getDefaultCurrency();
+            $walletCurrency = $withdrawal->wallet_currency ?? $destinationCurrency;
+            $walletAmount = $withdrawal->wallet_amount ?? $withdrawal->amount;
 
             Mail::to($user->email)->send(
                 new WithdrawalApprovedMail($user, [
@@ -61,7 +63,9 @@ class SendWithdrawalNotification implements ShouldQueue
                     'fee' => $withdrawal->fee,
                     'net_amount' => $withdrawal->net_amount,
                     'withdrawal_id' => $withdrawal->id,
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
+                    'wallet_amount' => $walletAmount,
+                    'wallet_currency' => $walletCurrency,
                 ])
             );
 
@@ -72,14 +76,16 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_approved.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_approved.body', [
                     'amount' => number_format($withdrawal->amount, 2),
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
                 ], $user->locale ?? 'fr'),
                 [
                     'withdrawal_id' => $withdrawal->id,
                     'amount' => $withdrawal->amount,
                     'fee' => $withdrawal->fee,
                     'net_amount' => $withdrawal->net_amount,
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
+                    'wallet_amount' => $walletAmount,
+                    'wallet_currency' => $walletCurrency,
                 ]
             );
 
@@ -89,7 +95,7 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_approved.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_approved.body', [
                     'amount' => number_format($withdrawal->amount, 2),
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
                 ], $user->locale ?? 'fr'),
                 [
                     'type' => 'withdrawal_approved',
@@ -122,15 +128,19 @@ class SendWithdrawalNotification implements ShouldQueue
             $withdrawal = $event->withdrawal;
             $reason = $event->reason;
 
-            // Send email notification
-            $currency = $withdrawal->user->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
+            // Use destination currency for display, wallet currency for debit info
+            $destinationCurrency = $withdrawal->currency ?? PlatformSetting::getDefaultCurrency();
+            $walletCurrency = $withdrawal->wallet_currency ?? $destinationCurrency;
+            $walletAmount = $withdrawal->wallet_amount ?? $withdrawal->amount;
 
             Mail::to($user->email)->send(
                 new WithdrawalRejectedMail($user, [
                     'amount' => $withdrawal->amount,
                     'withdrawal_id' => $withdrawal->id,
                     'reason' => $reason,
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
+                    'wallet_amount' => $walletAmount,
+                    'wallet_currency' => $walletCurrency,
                 ])
             );
 
@@ -141,14 +151,16 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_rejected.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_rejected.body', [
                     'amount' => number_format($withdrawal->amount, 2),
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
                     'reason' => $reason,
                 ], $user->locale ?? 'fr'),
                 [
                     'withdrawal_id' => $withdrawal->id,
                     'amount' => $withdrawal->amount,
                     'reason' => $reason,
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
+                    'wallet_amount' => $walletAmount,
+                    'wallet_currency' => $walletCurrency,
                 ]
             );
 
@@ -158,7 +170,7 @@ class SendWithdrawalNotification implements ShouldQueue
                 __('notifications.withdrawal_rejected.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_rejected.body', [
                     'amount' => number_format($withdrawal->amount, 2),
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
                     'reason' => $reason,
                 ], $user->locale ?? 'fr'),
                 [
@@ -192,8 +204,10 @@ class SendWithdrawalNotification implements ShouldQueue
             $user = $event->withdrawal->user;
             $withdrawal = $event->withdrawal;
 
-            // Send email notification
-            $currency = $withdrawal->user->wallet->currency_code ?? PlatformSetting::getDefaultCurrency();
+            // Use destination currency for display, wallet currency for debit info
+            $destinationCurrency = $withdrawal->currency ?? PlatformSetting::getDefaultCurrency();
+            $walletCurrency = $withdrawal->wallet_currency ?? $destinationCurrency;
+            $walletAmount = $withdrawal->wallet_amount ?? $withdrawal->amount;
 
             Mail::to($user->email)->send(
                 new WithdrawalCompletedMail($user, [
@@ -201,7 +215,9 @@ class SendWithdrawalNotification implements ShouldQueue
                     'fee' => $withdrawal->fee,
                     'net_amount' => $withdrawal->net_amount,
                     'withdrawal_id' => $withdrawal->id,
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
+                    'wallet_amount' => $walletAmount,
+                    'wallet_currency' => $walletCurrency,
                 ])
             );
 
@@ -211,15 +227,17 @@ class SendWithdrawalNotification implements ShouldQueue
                 'withdrawal_completed',
                 __('notifications.withdrawal_completed.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_completed.body', [
-                    'amount' => number_format($withdrawal->net_amount, 2),
-                    'currency' => $currency,
+                    'amount' => number_format($withdrawal->amount, 2),
+                    'currency' => $destinationCurrency,
                 ], $user->locale ?? 'fr'),
                 [
                     'withdrawal_id' => $withdrawal->id,
                     'amount' => $withdrawal->amount,
                     'fee' => $withdrawal->fee,
                     'net_amount' => $withdrawal->net_amount,
-                    'currency' => $currency,
+                    'currency' => $destinationCurrency,
+                    'wallet_amount' => $walletAmount,
+                    'wallet_currency' => $walletCurrency,
                 ]
             );
 
@@ -228,8 +246,8 @@ class SendWithdrawalNotification implements ShouldQueue
                 $user,
                 __('notifications.withdrawal_completed.title', [], $user->locale ?? 'fr'),
                 __('notifications.withdrawal_completed.body', [
-                    'amount' => number_format($withdrawal->net_amount, 2),
-                    'currency' => $currency,
+                    'amount' => number_format($withdrawal->amount, 2),
+                    'currency' => $destinationCurrency,
                 ], $user->locale ?? 'fr'),
                 [
                     'type' => 'withdrawal_completed',

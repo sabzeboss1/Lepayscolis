@@ -18,6 +18,9 @@
         <p>Nous avons le plaisir de vous informer que votre demande de retrait a été approuvée par notre équipe.</p>
         
         <div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #10b981;">
+            @if($wallet_currency !== $currency)
+            <p style="margin: 0 0 10px 0;"><strong>Débité du portefeuille :</strong> <span style="font-size: 18px; font-weight: bold;">{{ number_format($wallet_amount, 2) }} {{ $wallet_currency }}</span></p>
+            @endif
             <p style="margin: 0 0 10px 0;"><strong>Montant demandé :</strong> <span style="color: #10b981; font-size: 24px; font-weight: bold;">{{ number_format($amount, 2) }} {{ $currency }}</span></p>
             <p style="margin: 0 0 10px 0;"><strong>Frais de retrait :</strong> <span style="font-size: 18px;">{{ number_format($fee, 2) }} {{ $currency }}</span></p>
             <p style="margin: 0;"><strong>Montant net à recevoir :</strong> <span style="font-size: 20px; font-weight: bold;">{{ number_format($net_amount, 2) }} {{ $currency }}</span></p>
