@@ -33,6 +33,9 @@
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 15px 0;">
             
             <h4 style="margin: 15px 0 10px 0; color: #6b7280;">Montants</h4>
+            @if($wallet_currency !== $currency)
+            <p style="margin: 5px 0;"><strong>Débité du portefeuille :</strong> <span style="font-size: 18px; font-weight: bold;">{{ number_format($wallet_amount, 2) }} {{ $wallet_currency }}</span></p>
+            @endif
             <p style="margin: 5px 0;"><strong>Montant demandé :</strong> <span style="color: #3b82f6; font-size: 20px; font-weight: bold;">{{ number_format($amount, 2) }} {{ $currency }}</span></p>
             <p style="margin: 5px 0;"><strong>Frais de retrait :</strong> {{ number_format($fee, 2) }} {{ $currency }}</p>
             <p style="margin: 5px 0;"><strong>Montant net :</strong> <span style="font-weight: bold;">{{ number_format($net_amount, 2) }} {{ $currency }}</span></p>

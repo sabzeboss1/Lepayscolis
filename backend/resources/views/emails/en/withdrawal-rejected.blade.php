@@ -18,6 +18,9 @@
         <p>We regret to inform you that your withdrawal request could not be approved.</p>
 
         <div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ef4444;">
+            @if($wallet_currency !== $currency)
+            <p style="margin: 0 0 10px 0;"><strong>Wallet amount:</strong> <span style="font-size: 18px; font-weight: bold;">{{ number_format($wallet_amount, 2) }} {{ $wallet_currency }}</span></p>
+            @endif
             <p style="margin: 0 0 10px 0;"><strong>Requested amount:</strong> <span style="font-size: 24px; font-weight: bold;">{{ number_format($amount, 2) }} {{ $currency }}</span></p>
             <p style="margin: 0; color: #6b7280; font-size: 14px;"><strong>Reference:</strong> #{{ $withdrawal_id }}</p>
         </div>

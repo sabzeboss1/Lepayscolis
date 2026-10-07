@@ -51,6 +51,8 @@ class WithdrawalRejected extends Mailable
                 'withdrawal_id' => $this->data['withdrawal_id'],
                 'reason' => $this->data['reason'],
                 'currency' => $this->data['currency'] ?? PlatformSetting::getDefaultCurrency(),
+                'wallet_amount' => $this->data['wallet_amount'] ?? $this->data['amount'],
+                'wallet_currency' => $this->data['wallet_currency'] ?? ($this->data['currency'] ?? PlatformSetting::getDefaultCurrency()),
             ],
         );
     }
