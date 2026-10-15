@@ -89,8 +89,8 @@ class AdminKYCService
             $this->clearDashboardCache();
         }
 
-        // TODO: Queue notification
-        // $this->notificationService->sendKYCApprovedNotification($kyc->user);
+        $this->notificationService->sendKYCApprovedNotification($kyc->user);
+        $this->notificationService->sendEmail($kyc->user, 'kyc_approved', []);
 
         return $kyc->fresh(['user']);
     }
@@ -127,8 +127,8 @@ class AdminKYCService
             $this->clearDashboardCache();
         }
 
-        // TODO: Queue notification
-        // $this->notificationService->sendKYCRejectedNotification($kyc->user, $reason);
+        $this->notificationService->sendKYCRejectedNotification($kyc->user, $reason);
+        $this->notificationService->sendEmail($kyc->user, 'kyc_rejected', ['reason' => $reason]);
 
         return $kyc->fresh(['user']);
     }
